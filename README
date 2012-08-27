@@ -1,12 +1,32 @@
+This plugin builds pull requests in github and report results.
+
+When new pull request occures in project and author of the pull
+request isn't whitelisted, builder will ask "Can one of the
+admins verify this patch?" and one of the admins must add the
+author to whitelist with comment "this is ok to test".
+
+If author of the pull request is whitelisted adding new pull
+request or new commit to existing pull request will start new
+rebuild.
+
+New rebuild can be started also with comment "retest this please".
+
+Installation:
+
 install plugin
-got to administration -> system setting -> Github pull requests builder section
-set your bot username and password
+go to administration -> system setting -> Github pull requests builder section
+set your bot github username and password
 add github usernames of admins (will be used for all jobs)
-  if you want to specify phrase for adding users to whitelist and for retesting or specify crontab line click Advanced
+  you can modify phrase for adding users to whitelist (advanced)
+  you can modify phrase for retesting (advanced)
+  you can specify crontab line click (advanced)
 save  
 
+
+Creating job:
+
 create new job
-add url to "GitHub project" field
+add github url to "GitHub project" field
 select Git SCM
 add your github "Repository URL"
 into "refspec" enter "+refs/pull/*:refs/remotes/origin/pr/*"
@@ -14,9 +34,9 @@ into "Branch Specifier" enter "${sha1}"
 save
 go to settings again
 check "Github pull requests builder"
-  if you want, you can edit admins for this specific job
-  if you want, you can change crontab line for this specific job (advanced)
+  you can edit admins for this specific job
+  you can change crontab line for this specific job (advanced)
   you can edit whitelisted users (advanced)
 save
 
-done
+You are done :)
