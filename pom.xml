@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+  
+	<parent>
+		<groupId>org.jenkins-ci.plugins</groupId>
+		<artifactId>plugin</artifactId>
+		<version>1.476</version>
+	</parent>
+
+	<artifactId>ghprb</artifactId>
+	<name>GitHub Pull requests builder</name>
+	<version>1.0-SNAPSHOT</version>
+    <packaging>hpi</packaging>
+
+	<url>http://maven.apache.org</url>
+
+  <developers>
+    <developer>
+      <id>jbrazdil</id>
+      <name>Honza Brázdil</name>
+    </developer>
+  </developers>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.coravy.hudson.plugins.github</groupId>
+			<artifactId>github</artifactId>
+			<version>1.4</version>
+		</dependency>
+	 <dependency>
+	  <groupId>org.jenkins-ci.plugins</groupId>
+	  <artifactId>git-parameter</artifactId>
+	  <version>0.2</version>
+	 </dependency>
+	 <dependency>
+	  <groupId>org.kohsuke</groupId>
+	  <artifactId>github-api</artifactId>
+	  <version>1.30-SNAPSHOT</version>
+	 </dependency>
+	</dependencies>
+  
+	<repositories>
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</pluginRepository>
+	</pluginRepositories>
+</project>

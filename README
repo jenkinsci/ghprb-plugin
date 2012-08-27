@@ -1,0 +1,22 @@
+install plugin
+got to administration -> system setting -> Github pull requests builder section
+set your bot username and password
+add github usernames of admins (will be used for all jobs)
+  if you want to specify phrase for adding users to whitelist and for retesting or specify crontab line click Advanced
+save  
+
+create new job
+add url to "GitHub project" field
+select Git SCM
+add your github "Repository URL"
+into "refspec" enter "+refs/pull/*:refs/remotes/origin/pr/*"
+into "Branch Specifier" enter "${sha1}"
+save
+go to settings again
+check "Github pull requests builder"
+  if you want, you can edit admins for this specific job
+  if you want, you can change crontab line for this specific job (advanced)
+  you can edit whitelisted users (advanced)
+save
+
+done

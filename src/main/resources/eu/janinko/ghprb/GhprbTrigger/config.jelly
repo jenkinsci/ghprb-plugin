@@ -1,0 +1,13 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:entry title="${%Admin list}" field="adminlist">
+    <f:textarea default="${descriptor.adminlist}"/>
+  </f:entry>
+  <f:advanced>
+	<f:entry title="${%Crontab line}" field="cron">
+	  <f:textbox default="${descriptor.cron}"/>
+	</f:entry>
+	<f:entry title="${%White list}" field="whitelist">
+	  <f:textarea />
+	</f:entry>
+  </f:advanced>
+</j:jelly>

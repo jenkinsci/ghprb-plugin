@@ -1,0 +1,24 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="${descriptor.displayName}">
+    <f:entry title="${%Username}" field="username">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="${%Password}" field="password">
+      <f:password />
+    </f:entry>
+    <f:entry title="${%Admin list}" field="adminlist">
+      <f:textarea />
+    </f:entry>
+    <f:advanced>
+	  <f:entry title="${%Add to white list phrase}" field="whitelistPhrase">
+	    <f:textbox default=".*ok\W+to\W+test.*"/>
+      </f:entry>
+      <f:entry title="${%Retest phrase}" field="retestPhrase">
+        <f:textbox default=".*retest\W+this\W+please.*"/>
+      </f:entry>
+      <f:entry title="${%Crontab line}" field="cron">
+        <f:textbox default="*/5 * * * *"/>
+      </f:entry>
+    </f:advanced>
+  </f:section>
+</j:jelly>
