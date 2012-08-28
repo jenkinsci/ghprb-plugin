@@ -49,7 +49,7 @@ public class GhprbPullRequest{
 		repo = ghprbRepo;
 		if(updated.compareTo(pr.getUpdatedAt()) < 0){
 			System.out.println("Pull request builder: pr #" + id + " Updated " + pr.getUpdatedAt());
-			List<GHIssueComment> comments = pr.getComments().iterator().asList();
+			List<GHIssueComment> comments = pr.getComments();
 			for(GHIssueComment comment : comments){
 				if(updated.compareTo(comment.getUpdatedAt()) < 0){
 					checkComment(comment);
