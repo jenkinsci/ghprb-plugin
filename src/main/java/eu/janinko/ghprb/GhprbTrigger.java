@@ -137,11 +137,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		@Override
 		public boolean isApplicable(Item item) {
-			if(!(item instanceof AbstractProject)) return false;
-			
-			AbstractProject<?, ?> project = (AbstractProject) item;
-
-			return project.getProperty(GithubProjectProperty.class) != null && project.getScm() instanceof GitSCM;
+            return item instanceof AbstractProject;
 		}
 
 		@Override
