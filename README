@@ -29,10 +29,8 @@ create new job
 add github url to "GitHub project" field
 select Git SCM
 add your github "Repository URL"
-into "refspec" enter "+refs/pull/*:refs/remotes/origin/pr/*"
+into (advanced) "refspec" enter "+refs/pull/*:refs/remotes/origin/pr/*"
 into "Branch Specifier" enter "${sha1}"
-save
-go to settings again
 check "Github pull requests builder"
   you can edit admins for this specific job
   you can change crontab line for this specific job (advanced)
