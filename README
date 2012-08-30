@@ -11,6 +11,11 @@ rebuild.
 
 New rebuild can be started also with comment "retest this please".
 
+Requirements:
+github-api plugin v1.31 (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
+github plugin (https://wiki.jenkins-ci.org/display/JENKINS/Github+Plugin)
+git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
+
 Installation:
 
 install plugin
