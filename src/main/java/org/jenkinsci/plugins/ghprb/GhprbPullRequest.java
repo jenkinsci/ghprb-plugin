@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package eu.janinko.ghprb;
+package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
 import java.util.Date;
@@ -11,8 +7,7 @@ import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 
 /**
- *
- * @author jbrazdil
+ * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbPullRequest{
 	private int id;

@@ -1,14 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package eu.janinko.ghprb;
+package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.Cause;
 
 /**
- *
- * @author jbrazdil
+ * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbCause extends Cause{
 	private String commit;

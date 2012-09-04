@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package eu.janinko.ghprb;
+package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
@@ -15,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -26,8 +21,7 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
 /**
- *
- * @author jbrazdil
+ * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbRepo {
 	private GhprbTrigger trigger;

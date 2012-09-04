@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package eu.janinko.ghprb;
+package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
@@ -12,7 +8,6 @@ import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
-import hudson.plugins.git.GitSCM;
 import hudson.triggers.TimerTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -33,8 +28,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- *
- * @author jbrazdil
+ * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public final String adminlist;
