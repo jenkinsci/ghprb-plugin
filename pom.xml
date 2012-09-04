@@ -13,11 +13,11 @@
     <version>1.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
-    <url>http://maven.apache.org</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Github+pull+request+builder+plugin</url>
 
     <developers>
         <developer>
-            <id>jbrazdil</id>
+            <id>janinko</id>
             <name>Honza Brázdil</name>
             <email>jbrazdil@redhat.com</email>
         </developer>
@@ -28,6 +28,8 @@
       <developerConnection>scm:git:ssh://git@github.com/jenkinsci/ghprb-plugin.git</developerConnection>
       <url>https://github.com/jenkinsci/ghprb-plugin</url>
    </scm>
+
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
