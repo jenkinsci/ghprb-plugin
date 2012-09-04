@@ -23,7 +23,6 @@ public class GhprbPullRequest{
 	
 	private boolean shouldRun = true;
 	private boolean askedForApproval = false;
-	private int running; // TODO remove
 	
 	private transient GhprbRepo repo;
 
@@ -84,7 +83,6 @@ public class GhprbPullRequest{
 		addComment(sb.toString());
 		System.out.println("Pull request builder: " + sb.toString());
 		repo.startJob(id,head);
-		running = 3;
 	}
 	
 	private void addComment(String comment) throws IOException{

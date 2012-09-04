@@ -42,10 +42,9 @@ public class GhprbRepo {
 	public GhprbRepo(GhprbTrigger trigger, String user, String repository){
 		this.trigger = trigger;
 		reponame = user + "/" + repository;
-		System.out.println("The reponame is " + reponame);
 		gh = GitHub.connect(trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
-		retestPhrasePattern = Pattern.compile(trigger.DESCRIPTOR.getRetestPhrase());
-		whitelistPhrasePattern = Pattern.compile(trigger.DESCRIPTOR.getWhitelistPhrase());
+		retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
+		whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
 		queuedBuilds = new HashMap<Integer, QueueTaskFuture<?>>();
 		runningBuilds = new HashMap<Integer, QueueTaskFuture<?>>();
 	}
