@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 
@@ -43,11 +44,14 @@ public class GhprbPullRequest{
 		repo = ghprbRepo;
 		if(updated.compareTo(pr.getUpdatedAt()) < 0){
 			System.out.println("Pull request builder: pr #" + id + " Updated " + pr.getUpdatedAt());
-			List<GHIssueComment> comments = pr.getComments();
-			for(GHIssueComment comment : comments){
-				if(updated.compareTo(comment.getUpdatedAt()) < 0){
-					checkComment(comment);
+			try {
+				List<GHIssueComment> comments = pr.getComments();
+				for(GHIssueComment comment : comments){
+					if(updated.compareTo(comment.getUpdatedAt()) < 0){
+						checkComment(comment);
+					}
 				}
+			} catch (NoSuchElementException e) {
 			}
 			if(!head.equals(pr.getHead().getSha())){
 				head = pr.getHead().getSha();
