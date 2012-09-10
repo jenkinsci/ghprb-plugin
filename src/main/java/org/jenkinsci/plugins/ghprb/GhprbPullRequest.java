@@ -51,7 +51,7 @@ public class GhprbPullRequest{
 						checkComment(comment);
 					}
 				}
-			} catch (NoSuchElementException e) {
+			} catch (NoSuchElementException e) { // TODO: WA for: https://github.com/kohsuke/github-api/issues/20
 			}
 			if(!head.equals(pr.getHead().getSha())){
 				head = pr.getHead().getSha();
