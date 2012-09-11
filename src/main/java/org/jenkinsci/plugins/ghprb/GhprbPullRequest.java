@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 
@@ -78,8 +79,8 @@ public class GhprbPullRequest{
 		if(repo.cancelBuild(id)){
 			sb.append("Previous build stopped. ");
 		}
-		sb.append("Triggering build using a head: ").append(head);
-		addComment(sb.toString());
+		sb.append("Build triggered.");
+		repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
 		System.out.println("Pull request builder: " + sb.toString());
 		repo.startJob(id,head);
 	}

@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import jenkins.model.Jenkins;
+import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
@@ -88,7 +90,7 @@ public class GhprbRepo {
 					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, null, ex);
 					continue;
 				}
-				addComment(e.getKey(), "Build started: " + Jenkins.getInstance().getRootUrl() + build.getUrl());
+				createCommitStatus(build, GHCommitState.PENDING, "Build started");
 				runningBuilds.put(e.getKey(), e.getValue());
 			}
 		}
@@ -105,10 +107,25 @@ public class GhprbRepo {
 					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, null, ex);
 					continue;
 				}
-				addComment(e.getKey(), "Build finished: **" + build.getResult() + "** " + Jenkins.getInstance().getRootUrl() + build.getUrl() );
+				GHCommitState state;
+				if(build.getResult() == Result.SUCCESS){
+					state = GHCommitState.SUCCESS;
+				}else{
+					state = GHCommitState.FAILURE;
+				}
+				createCommitStatus(build, state, "Build finished");
 			}
 		}
-		
+	}
+
+	public void createCommitStatus(AbstractBuild<?,?> build, GHCommitState state, String message) throws IOException{
+		String sha1 = build.getCause(GhprbCause.class).getCommit();
+		createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message);
+	}
+
+	public void createCommitStatus(String sha1, GHCommitState state, String url, String message) throws IOException{
+		System.out.println("Setting status of " + sha1 + " to " + state + " with url "+ url + " and mesage: "+ message);
+		repo.createCommitStatus(sha1, state, url, message);
 	}
 
 	public boolean cancelBuild(int id) {
