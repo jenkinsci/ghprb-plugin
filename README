@@ -1,5 +1,7 @@
 This plugin builds pull requests in github and report results.
 
+https://wiki.jenkins-ci.org/display/JENKINS/Github+pull+request+builder+plugin
+
 When new pull request occures in project and author of the pull
 request isn't whitelisted, builder will ask "Can one of the
 admins verify this patch?" and one of the admins must add the
@@ -12,7 +14,7 @@ rebuild.
 New rebuild can be started also with comment "retest this please".
 
 Requirements:
-github-api plugin v1.31 (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
+github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
 github plugin (https://wiki.jenkins-ci.org/display/JENKINS/Github+Plugin)
 git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
