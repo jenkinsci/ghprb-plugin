@@ -35,10 +35,20 @@ public class GhprbRepo {
 	private HashMap<Integer, QueueTaskFuture<?>> queuedBuilds;
 	private HashMap<Integer, QueueTaskFuture<?>> runningBuilds;
 	
-	public GhprbRepo(GhprbTrigger trigger, String user, String repository){
+	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
 		reponame = user + "/" + repository;
-		gh = GitHub.connect(trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
+		if(trigger.getDescriptor().getAccessToken() != null) {
+			try {
+				gh = GitHub.connectUsingOAuth(githubServer, trigger.getDescriptor().getAccessToken());
+			} catch(IOException e) {
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't connect using oauth", e);
+			}
+		} else {
+			//TODO: when (if) the github api supports sending in a server w/o a token set it here...
+			//gh = GitHub.connect(githubServer, trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
+			gh = GitHub.connect(trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
+		}
 		retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
 		queuedBuilds = new HashMap<Integer, QueueTaskFuture<?>>();
