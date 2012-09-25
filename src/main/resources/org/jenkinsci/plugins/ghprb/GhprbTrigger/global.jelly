@@ -22,6 +22,9 @@
       <f:entry title="${%Crontab line}" field="cron">
         <f:textbox default="*/5 * * * *"/>
       </f:entry>
+      <f:entry title="${%Access Token}" field="accessToken">
+        <f:password />
+      </f:entry>
     </f:advanced>
   </f:section>
 </j:jelly>

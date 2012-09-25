@@ -35,7 +35,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public String whitelist;
 	public final String cron;
 	
-	private static Pattern githubUserRepoPattern = Pattern.compile(".*github.com/([^/]*)/([^/]*).*");
+	private static Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
 	private transient GhprbRepo repository;
 	transient Map<Integer,GhprbPullRequest> pulls;
 	transient boolean changed;
@@ -63,10 +63,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		
 		GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
 		Matcher m = githubUserRepoPattern.matcher(ghpp.getProjectUrl().baseUrl());
-		if(!m.matches()) return;
-		String user = m.group(1);
-		String repo = m.group(2);
-		repository = new GhprbRepo(this, user, repo);
+		if(!m.matches()) {
+			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: " + ghpp.getProjectUrl().baseUrl());
+			return;
+		}
+		String githubServer = m.group(1);
+		String user = m.group(2);
+		String repo = m.group(3);
+		repository = new GhprbRepo(this, githubServer, user, repo);
 		
 		admins = new HashSet<String>(Arrays.asList(adminlist.split("\\s+")));
 		whitelisted = new HashSet<String>(Arrays.asList(whitelist.split("\\s+")));
@@ -114,6 +118,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public static final class DescriptorImpl extends TriggerDescriptor{
 		private String username;
 		private String password;
+		private String accessToken;
 		private String adminlist;
 		private String publishedURL;
 		private String whitelistPhrase;
@@ -145,6 +150,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
 			username = formData.getString("username");
 			password = formData.getString("password");
+			accessToken = formData.getString("accessToken");
 			adminlist = formData.getString("adminlist");
 			publishedURL = formData.getString("publishedURL");
 			whitelistPhrase = formData.getString("whitelistPhrase");
@@ -175,6 +181,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getPassword() {
 			return password;
+		}
+
+		public String getAccessToken() {
+			return accessToken;
 		}
 
 		public String getAdminlist() {
