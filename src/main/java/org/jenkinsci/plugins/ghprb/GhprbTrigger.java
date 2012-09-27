@@ -115,6 +115,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String username;
 		private String password;
 		private String adminlist;
+		private String publishedURL;
 		private String whitelistPhrase;
 		private String retestPhrase;
 		private String cron;
@@ -145,6 +146,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			username = formData.getString("username");
 			password = formData.getString("password");
 			adminlist = formData.getString("adminlist");
+			publishedURL = formData.getString("publishedURL");
 			whitelistPhrase = formData.getString("whitelistPhrase");
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
@@ -177,6 +179,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getAdminlist() {
 			return adminlist;
+		}
+
+		public String getPublishedURL() {
+			return publishedURL;
 		}
 
 		public String getWhitelistPhrase() {

@@ -10,8 +10,11 @@
       <f:textarea />
     </f:entry>
     <f:advanced>
-	  <f:entry title="${%Add to white list phrase}" field="whitelistPhrase">
-	    <f:textbox default=".*ok\W+to\W+test.*"/>
+      <f:entry title="${%Published Jenkins URL}" field="publishedURL">
+        <f:textbox/>
+      </f:entry>
+      <f:entry title="${%Add to white list phrase}" field="whitelistPhrase">
+        <f:textbox default=".*ok\W+to\W+test.*"/>
       </f:entry>
       <f:entry title="${%Retest phrase}" field="retestPhrase">
         <f:textbox default=".*retest\W+this\W+please.*"/>
