@@ -85,7 +85,7 @@ public class GhprbPullRequest{
 		try {
 			repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
 		} catch(IOException ioe) {
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Could not update status of the Pull Request on Github.", ex);
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Could not update status of the Pull Request on Github.", ioe);
 		}
 		
 		System.out.println("Pull request builder: " + sb.toString());
