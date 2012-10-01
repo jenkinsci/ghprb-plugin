@@ -20,6 +20,9 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
 Installation:
 
+create github 'bot' user for commenting in pull requests
+add the bot as colabolator to your repository
+
 install plugin
 go to administration -> system setting -> Github pull requests builder section
 set your bot github username and password
