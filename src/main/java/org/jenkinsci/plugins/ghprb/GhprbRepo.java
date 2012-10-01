@@ -38,9 +38,10 @@ public class GhprbRepo {
 	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
 		reponame = user + "/" + repository;
-		if(trigger.getDescriptor().getAccessToken() != null) {
+		String accessToken = trigger.getDescriptor().getAccessToken();
+		if(accessToken != null && !accessToken.isEmpty()) {
 			try {
-				gh = GitHub.connectUsingOAuth(githubServer, trigger.getDescriptor().getAccessToken());
+				gh = GitHub.connectUsingOAuth(githubServer, accessToken);
 			} catch(IOException e) {
 				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't connect using oauth", e);
 			}
