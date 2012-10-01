@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.ghprb;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.NoSuchElementException;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
@@ -80,7 +82,13 @@ public class GhprbPullRequest{
 			sb.append("Previous build stopped. ");
 		}
 		sb.append("Build triggered.");
-		repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
+
+		try {
+			repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
+		} catch(IOException ioe) {
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Could not update status of the Pull Request on Github.", ioe);
+		}
+		
 		System.out.println("Pull request builder: " + sb.toString());
 		repo.startJob(id,head);
 	}
