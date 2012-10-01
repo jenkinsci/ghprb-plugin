@@ -115,7 +115,7 @@ public class GhprbRepo {
 				}
 				createCommitStatus(build, state, "Build finished");
 				String publishedURL = trigger.getDescriptor().getPublishedURL();
-				if (publishedURL != null) {
+				if (publishedURL != null && !publishedURL.isEmpty()) {
 					addComment(e.getKey(), "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
 				}
 			}
