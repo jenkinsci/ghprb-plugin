@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.NoSuchElementException;
 import org.kohsuke.github.GHCommitState;
