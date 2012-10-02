@@ -8,19 +8,27 @@ import hudson.model.Cause;
 public class GhprbCause extends Cause{
 	private String commit;
 	private int pullID;
+	private boolean merged;
 	
 	public GhprbCause(String commit, int pullID){
+		this(commit, pullID, false);
+	}
+	public GhprbCause(String commit, int pullID, boolean merged){
 		this.commit = commit;
 		this.pullID = pullID;
+		this.merged = merged;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Github pull request #" + pullID + " of commit " + commit;
+		return "Github pull request #" + pullID + " of commit " + commit + (merged? " automatically merged." : ".");
 	}
 
 	String getCommit() {
 		return commit;
 	}
 	
+	boolean isMerged() {
+		return merged;
+	}
 }

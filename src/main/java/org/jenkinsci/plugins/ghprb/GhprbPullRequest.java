@@ -85,12 +85,11 @@ public class GhprbPullRequest{
 
 		if(mergeable){
 			sb.append("Merged build triggered.");
-			repo.startMergeJob(id);
 		}else{
 			sb.append("Build triggered.");
-			repo.startJob(id,head);
 		}
 
+		repo.startJob(id,head, mergeable);
 		try {
 			repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
 		} catch(IOException ioe) {

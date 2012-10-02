@@ -147,17 +147,8 @@ public class GhprbRepo {
 		return trigger.getDescriptor().getUsername().equals(username);
 	}
 
-	public void startJob(int id, String commit){
-		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause(commit, id));
-		if(build == null){
-			System.out.println("WUUUT?!!");
-			return;
-		}
-		builds.add(new GhprbBuild(this, id, build, false));
-	}
-
-	public void startMergeJob(int id){
-		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause("**/pr/1/merge", id));
+	public void startJob(int id, String commit, boolean merged){
+		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause(commit, id, merged));
 		if(build == null){
 			System.out.println("WUUUT?!!");
 			return;

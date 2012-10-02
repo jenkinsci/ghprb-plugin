@@ -85,7 +85,12 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	}
 	
 	public QueueTaskFuture<?> startJob(GhprbCause cause){
-		StringParameterValue paramSha1 = new StringParameterValue("sha1",cause.getCommit());
+		StringParameterValue paramSha1;
+		if(cause.isMerged()){
+			paramSha1 = new StringParameterValue("sha1","**/pr/1/merge");
+		}else{
+			paramSha1 = new StringParameterValue("sha1",cause.getCommit());
+		}
 		return this.job.scheduleBuild2(0,cause,new ParametersAction(paramSha1));
 	}
 
