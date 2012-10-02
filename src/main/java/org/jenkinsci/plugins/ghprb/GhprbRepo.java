@@ -1,16 +1,12 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
-import hudson.model.Result;
-import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,9 +28,9 @@ public class GhprbRepo {
 	private Pattern retestPhrasePattern;
 	private Pattern whitelistPhrasePattern;
 	private String reponame;
-	private HashMap<Integer, QueueTaskFuture<?>> queuedBuilds;
-	private HashMap<Integer, QueueTaskFuture<?>> runningBuilds;
-	
+
+	private HashSet<GhprbBuild> builds;
+
 	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
 		reponame = user + "/" + repository;
@@ -52,8 +48,7 @@ public class GhprbRepo {
 		}
 		retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
-		queuedBuilds = new HashMap<Integer, QueueTaskFuture<?>>();
-		runningBuilds = new HashMap<Integer, QueueTaskFuture<?>>();
+		builds = new HashSet<GhprbBuild>();
 	}
 	
 	public void check(Map<Integer,GhprbPullRequest> pulls) throws IOException{
@@ -88,47 +83,12 @@ public class GhprbRepo {
 	}
 	
 	private void checkBuilds() throws IOException{
-		Iterator<Entry<Integer, QueueTaskFuture<?>>> it;
-		it = queuedBuilds.entrySet().iterator();
+		Iterator<GhprbBuild> it = builds.iterator();
 		while(it.hasNext()){
-			Entry<Integer, QueueTaskFuture<?>> e =it.next();
-			if(e.getValue().getStartCondition().isDone()){
+			GhprbBuild build = it.next();
+			build.check();
+			if(build.isFinished()){
 				it.remove();
-				AbstractBuild<?,?> build;
-				try {
-					build = (AbstractBuild<?, ?>) e.getValue().getStartCondition().get();
-				} catch (Exception ex) {
-					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, null, ex);
-					continue;
-				}
-				createCommitStatus(build, GHCommitState.PENDING, "Build started");
-				runningBuilds.put(e.getKey(), e.getValue());
-			}
-		}
-		
-		it = runningBuilds.entrySet().iterator();
-		while(it.hasNext()){
-			Entry<Integer, QueueTaskFuture<?>> e =it.next();
-			if(e.getValue().isDone()){
-				it.remove();
-				AbstractBuild<?,?> build;
-				try {
-					build = (AbstractBuild<?, ?>) e.getValue().get();
-				} catch (Exception ex) {
-					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, null, ex);
-					continue;
-				}
-				GHCommitState state;
-				if(build.getResult() == Result.SUCCESS){
-					state = GHCommitState.SUCCESS;
-				}else{
-					state = GHCommitState.FAILURE;
-				}
-				createCommitStatus(build, state, "Build finished");
-				String publishedURL = trigger.getDescriptor().getPublishedURL();
-				if (publishedURL != null && !publishedURL.isEmpty()) {
-					addComment(e.getKey(), "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
-				}
 			}
 		}
 	}
@@ -144,31 +104,17 @@ public class GhprbRepo {
 	}
 
 	public boolean cancelBuild(int id) {
-		if(queuedBuilds.containsKey(id)){
-			try {
-				Run<?,?> build = (Run) queuedBuilds.get(id).waitForStart();
-				if(build.getExecutor() == null) return false;
-				build.getExecutor().interrupt();
-				queuedBuilds.remove(id);
-				return true;
-			} catch (Exception ex) {
-				Logger.getLogger(GhprbRepo.class.getName()).log(Level.WARNING, null, ex);
-				return false;
+		Iterator<GhprbBuild> it = builds.iterator();
+		while(it.hasNext()){
+			GhprbBuild build  = it.next();
+			if (build.getPullID() == id) {
+				if (build.cancel()) {
+					it.remove();
+					return true;
+				}
 			}
-		}else if(runningBuilds.containsKey(id)){
-			try {
-				Run<?,?> build = (Run) runningBuilds.get(id).waitForStart();
-				if(build.getExecutor() == null) return false;
-				build.getExecutor().interrupt();
-				runningBuilds.remove(id);
-				return true;
-			} catch (Exception ex) {
-				Logger.getLogger(GhprbRepo.class.getName()).log(Level.WARNING, null, ex);
-				return false;
-			}
-		}else{
-			return false;
 		}
+		return false;
 	}
 	
 	public boolean isWhitelisted(String username){
@@ -196,18 +142,26 @@ public class GhprbRepo {
 		trigger.whitelisted.add(author);
 		trigger.changed = true;
 	}
-	
+
 	public boolean isMe(String username){
 		return trigger.getDescriptor().getUsername().equals(username);
 	}
-	
+
 	public void startJob(int id, String commit){
 		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause(commit, id));
 		if(build == null){
 			System.out.println("WUUUT?!!");
 			return;
 		}
-		queuedBuilds.put(id,build);
+		builds.add(new GhprbBuild(this, id, build, false));
 	}
-	
+
+	public void startMergeJob(int id){
+		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause("**/pr/1/merge", id));
+		if(build == null){
+			System.out.println("WUUUT?!!");
+			return;
+		}
+		builds.add(new GhprbBuild(this, id, build, true));
+	}
 }

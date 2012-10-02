@@ -3,9 +3,9 @@ package org.jenkinsci.plugins.ghprb;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.NoSuchElementException;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
@@ -17,8 +17,9 @@ public class GhprbPullRequest{
 	private int id;
 	private Date updated;
 	private String head;
-	private String target;
 	private String author;
+	private boolean mergeable;
+	@Deprecated private transient String target; // TODO: remove
 	
 	private boolean shouldRun = true;
 	private boolean askedForApproval = false;
@@ -31,7 +32,6 @@ public class GhprbPullRequest{
 		head = pr.getHead().getSha();
 		author = pr.getUser().getLogin();
 		System.out.println("Created pull request #" + id + " by " + author + " udpdated at: " + updated + " sha: " + head);
-		target = pr.getBase().getRef();
 	}
 
 	@Override
@@ -63,6 +63,7 @@ public class GhprbPullRequest{
 			updated = pr.getUpdatedAt();
 		}
 		if(shouldRun){
+			mergeable = pr.getMergeable();
 			build();
 		}
 	}
@@ -81,7 +82,14 @@ public class GhprbPullRequest{
 		if(repo.cancelBuild(id)){
 			sb.append("Previous build stopped. ");
 		}
-		sb.append("Build triggered.");
+
+		if(mergeable){
+			sb.append("Merged build triggered.");
+			repo.startMergeJob(id);
+		}else{
+			sb.append("Build triggered.");
+			repo.startJob(id,head);
+		}
 
 		try {
 			repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
@@ -90,7 +98,6 @@ public class GhprbPullRequest{
 		}
 
 		System.out.println("Pull request builder: " + sb.toString());
-		repo.startJob(id,head);
 	}
 	
 	private void addComment(String comment) throws IOException{
