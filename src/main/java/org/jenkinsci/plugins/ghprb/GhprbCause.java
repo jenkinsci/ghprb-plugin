@@ -24,11 +24,15 @@ public class GhprbCause extends Cause{
 		return "Github pull request #" + pullID + " of commit " + commit + (merged? " automatically merged." : ".");
 	}
 
-	String getCommit() {
+	public String getCommit() {
 		return commit;
 	}
 	
-	boolean isMerged() {
+	public boolean isMerged() {
 		return merged;
+	}
+
+	public int getPullID(){
+		return pullID;
 	}
 }
