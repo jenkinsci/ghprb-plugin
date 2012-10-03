@@ -22,15 +22,16 @@ import org.kohsuke.github.GitHub;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbRepo {
-	private GhprbTrigger trigger;
+	private final GhprbTrigger trigger;
+	private final Pattern retestPhrasePattern;
+	private final Pattern whitelistPhrasePattern;
+	private final Pattern oktotestPhrasePattern;
+	private final String reponame;
+
+	private final HashSet<GhprbBuild> builds;
+
 	private GitHub gh;
 	private GHRepository repo;
-	private Pattern retestPhrasePattern;
-	private Pattern whitelistPhrasePattern;
-	private Pattern oktotestPhrasePattern;
-	private String reponame;
-
-	private HashSet<GhprbBuild> builds;
 
 	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
@@ -57,7 +58,7 @@ public class GhprbRepo {
 	
 	public void check(Map<Integer,GhprbPullRequest> pulls){
 		if(repo == null) try {
-				repo = gh.getRepository(reponame);
+				repo = gh.getRepository(reponame); //TODO: potential NPE
 				if(repo == null){
 					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named {0} (Do you have properly set 'GitHub project' field in job configuration?)", reponame);
 				}
@@ -166,6 +167,7 @@ public class GhprbRepo {
 	}
 
 	public void addWhitelist(String author) {
+		Logger.getLogger(GhprbRepo.class.getName()).log(Level.INFO, "Adding " + author + " to whitelist.");
 		trigger.whitelist = trigger.whitelist + " " + author;
 		trigger.whitelisted.add(author);
 		trigger.changed = true;
