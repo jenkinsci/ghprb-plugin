@@ -1,17 +1,17 @@
-This plugin builds pull requests in github and report results.
+This plugin builds pull requests from github and reports the results.
 
 https://wiki.jenkins-ci.org/display/JENKINS/Github+pull+request+builder+plugin
 
-When new pull request occures in project and author of the pull
+When a new pull request is opened in the project and the author of the pull
 request isn't whitelisted, builder will ask "Can one of the
-admins verify this patch?" and one of the admins must add the
-author to whitelist with comment "this is ok to test".
+admins verify this patch?" and one of the admins comment "this is ok to test"
+to add the author to the whitelist.
 
-If author of the pull request is whitelisted adding new pull
-request or new commit to existing pull request will start new
-rebuild.
+If an author of a pull request is whitelisted, adding a new pull
+request or new commit to an existing pull request will start a new
+build.
 
-New rebuild can be started also with comment "retest this please".
+A new build can also be started with a comment: "retest this please".
 
 Requirements:
 github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
@@ -20,31 +20,32 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
 Installation:
 
-create github 'bot' user for commenting in pull requests
-add the bot as colabolator to your repository
+Create a github 'bot' user for commenting in pull requests
+then add the bot as a collaborator for your repository.
 
-install plugin
-go to administration -> system setting -> Github pull requests builder section
-set your bot github username and password
-add github usernames of admins (will be used for all jobs)
-  you can modify phrase for adding users to whitelist (advanced)
-  you can modify phrase for retesting (advanced)
-  you can specify crontab line click (advanced)
-save  
+Install the plugin.
+Go to Manage Jenkins -> Configure System -> "Github pull requests builder" section.
+Set your bot's GitHub username and password.
+Add GitHub usernames of admins for all jobs.
+Under Advanced, you can modify:
+  The phrase for adding users to the whitelist via comment.
+  The phrase for starting a new build.
+  The crontab line.
+Save to preserve your changes.
 
 
-Creating job:
+Creating a job:
 
-create new job
-add github url to "GitHub project" field
-select Git SCM
-add your github "Repository URL"
-into (advanced) "refspec" enter "+refs/pull/*:refs/remotes/origin/pr/*"
-into "Branch Specifier" enter "${sha1}"
-check "Github pull requests builder"
-  you can edit admins for this specific job
-  you can change crontab line for this specific job (advanced)
-  you can edit whitelisted users (advanced)
-save
+Create a new job.
+Add the project's GitHub URL to the "GitHub project" field.
+Select Git SCM.
+Add your GitHub "Repository URL".
+Under Advanced, set "refspec" to "+refs/pull/*:refs/remotes/origin/pr/*".
+In "Branch Specifier", enter "${sha1}".
+Under "Build Triggers", check "Github pull requests builder".
+  Add admins for this specific job.
+  Set the crontab line for this specific job
+  Set the whitelisted users for this specific job.
+Save to preserve your changes.
 
 You are done :)
