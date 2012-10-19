@@ -48,4 +48,7 @@ Under "Build Triggers", check "Github pull requests builder".
   Set the whitelisted users for this specific job.
 Save to preserve your changes.
 
+Make sure you *DON'T* have "Prune remote branches before build" advanced option
+selected, since it will prune the branch created to test this build.
+
 You are done :)
