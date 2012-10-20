@@ -52,7 +52,12 @@ public class GhprbRepo {
 	}
 	
 	public void check(Map<Integer,GhprbPullRequest> pulls) throws IOException{
-		if(repo == null) repo = gh.getRepository(reponame);
+		if(repo == null){
+			repo = gh.getRepository(reponame);
+			if(repo == null){
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't retrieve repo named " + reponame);
+			}
+		}
 		List<GHPullRequest> prs = repo.getPullRequests(GHIssueState.OPEN);
 		Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
