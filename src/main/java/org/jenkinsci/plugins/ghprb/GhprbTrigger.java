@@ -68,7 +68,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 		Matcher m = githubUserRepoPattern.matcher(ghpp.getProjectUrl().baseUrl());
 		if(!m.matches()) {
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: " + ghpp.getProjectUrl().baseUrl());
+			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: {0}", ghpp.getProjectUrl().baseUrl());
 			return;
 		}
 		String githubServer = m.group(1);

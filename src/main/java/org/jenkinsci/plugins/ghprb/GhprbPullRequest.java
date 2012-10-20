@@ -31,7 +31,7 @@ public class GhprbPullRequest{
 		updated = new Date(0);
 		head = pr.getHead().getSha();
 		author = pr.getUser().getLogin();
-		System.out.println("Created pull request #" + id + " by " + author + " udpdated at: " + updated + " sha: " + head);
+		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} udpdated at: {2} sha: {3}", new Object[]{id, author, updated, head});
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class GhprbPullRequest{
 	public void check(GHPullRequest pr, GhprbRepo ghprbRepo) throws IOException {
 		repo = ghprbRepo;
 		if(updated.compareTo(pr.getUpdatedAt()) < 0){
-			System.out.println("Pull request builder: pr #" + id + " Updated " + pr.getUpdatedAt());
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} Updated {1}", new Object[]{id, pr.getUpdatedAt()});
 			try {
 				List<GHIssueComment> comments = pr.getComments();
 				for(GHIssueComment comment : comments){
@@ -71,7 +71,7 @@ public class GhprbPullRequest{
 	private void build() throws IOException {
 		shouldRun = false;
 		if(!repo.isWhitelisted(author)){
-			System.out.println("Author of #" + id + " " + author + " not in whitelist!");
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} not in whitelist!", new Object[]{id, author});
 			if(!askedForApproval){
 				addComment("Can one of the admins verify this patch?");
 				askedForApproval = true;
@@ -96,7 +96,7 @@ public class GhprbPullRequest{
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Could not update status of the Pull Request on Github.", ioe);
 		}
 
-		System.out.println("Pull request builder: " + sb.toString());
+		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, sb.toString());
 	}
 	
 	private void addComment(String comment) throws IOException{

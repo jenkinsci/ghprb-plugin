@@ -55,7 +55,7 @@ public class GhprbRepo {
 		if(repo == null){
 			repo = gh.getRepository(reponame);
 			if(repo == null){
-				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't retrieve repo named " + reponame);
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't retrieve repo named {0}", reponame);
 			}
 		}
 		List<GHPullRequest> prs = repo.getPullRequests(GHIssueState.OPEN);
@@ -104,7 +104,7 @@ public class GhprbRepo {
 	}
 
 	public void createCommitStatus(String sha1, GHCommitState state, String url, String message) throws IOException{
-		System.out.println("Setting status of " + sha1 + " to " + state + " with url "+ url + " and mesage: "+ message);
+		Logger.getLogger(GhprbRepo.class.getName()).log(Level.INFO, "Setting status of {0} to {1} with url {2} and mesage: {3}", new Object[]{sha1, state, url, message});
 		repo.createCommitStatus(sha1, state, url, message);
 	}
 
@@ -155,7 +155,7 @@ public class GhprbRepo {
 	public void startJob(int id, String commit, boolean merged){
 		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause(commit, id, merged));
 		if(build == null){
-			System.out.println("WUUUT?!!");
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Job didn't started");
 			return;
 		}
 		builds.add(new GhprbBuild(this, id, build, true));
