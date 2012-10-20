@@ -62,6 +62,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 		
 		GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
+		if(ghpp.getProjectUrl() == null) {
+			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "A github project url is required.");
+			return;
+		}
 		Matcher m = githubUserRepoPattern.matcher(ghpp.getProjectUrl().baseUrl());
 		if(!m.matches()) {
 			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: " + ghpp.getProjectUrl().baseUrl());
