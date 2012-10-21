@@ -23,20 +23,20 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 * Create a github 'bot' user for commenting in pull requests  
 * then add the bot as a collaborator for your repository.
 
-* Install the plugin.
-* Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.
-* Set your bot's GitHub username and password.
-* Add GitHub usernames of admins for all jobs.
-* Under Advanced, you can modify:
-  * The phrase for adding users to the whitelist via comment.
-  * The phrase for starting a new build.
-  * The crontab line.
-* Save to preserve your changes.
+* Install the plugin.  
+* Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.  
+* Set your bot's GitHub username and password.  
+* Add GitHub usernames of admins for all jobs.  
+* Under Advanced, you can modify:  
+  * The phrase for adding users to the whitelist via comment.  
+  * The phrase for starting a new build.  
+  * The crontab line.  
+* Save to preserve your changes.  
 
 ### Creating a job:
 
-* Create a new job.
-* Add the project's GitHub URL to the ``GitHub project`` field (the one you can enter into browser. eg: ``https://github.com/janinko/ghprb``)
+* Create a new job.  
+* Add the project's GitHub URL to the ``GitHub project`` field (the one you can enter into browser. eg: ``https://github.com/janinko/ghprb``)  
 * Select Git SCM.  
 * Add your GitHub ``Repository URL``.  
 * Under Advanced, set ``refspec`` to ``+refs/pull/*:refs/remotes/origin/pr/*``.  
@@ -47,5 +47,7 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
   * Set the whitelisted users for this specific job.  
 * Save to preserve your changes.  
 
-Make sure you *DON'T* have "Prune remote branches before build" advanced option
+Make sure you **DON'T** have "Prune remote branches before build" advanced option
 selected, since it will prune the branch created to test this build.
+
+When you are trying to manualy build the job, make sure you have checked ``This build is parameterized``  and you have specified ``${sha1}`` parameter there.
