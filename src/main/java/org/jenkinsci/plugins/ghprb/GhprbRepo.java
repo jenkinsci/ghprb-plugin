@@ -51,14 +51,22 @@ public class GhprbRepo {
 		builds = new HashSet<GhprbBuild>();
 	}
 	
-	public void check(Map<Integer,GhprbPullRequest> pulls) throws IOException{
-		if(repo == null){
-			repo = gh.getRepository(reponame);
-			if(repo == null){
-				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't retrieve repo named {0}", reponame);
-			}
+	public void check(Map<Integer,GhprbPullRequest> pulls){
+		if(repo == null) try {
+				repo = gh.getRepository(reponame);
+				if(repo == null){
+					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named {0} (Do you have properly set 'GitHub project' field in job configuration?)", reponame);
+				}
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
 		}
-		List<GHPullRequest> prs = repo.getPullRequests(GHIssueState.OPEN);
+		List<GHPullRequest> prs;
+		try {
+			prs = repo.getPullRequests(GHIssueState.OPEN);
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve pull requests.", ex);
+			return;
+		}
 		Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
 		for(GHPullRequest pr : prs){
@@ -70,7 +78,11 @@ public class GhprbRepo {
 				pull = new GhprbPullRequest(pr);
 				pulls.put(id, pull);
 			}
-			pull.check(pr,this);
+			try {
+				pull.check(pr,this);
+			} catch (IOException ex) {
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Couldn't check pull request #" + id, ex);
+			}
 			closedPulls.remove(id);
 		}
 		
@@ -78,16 +90,15 @@ public class GhprbRepo {
 		checkBuilds();
 	}
 	
-	private void removeClosed(Set<Integer> closedPulls, Map<Integer,GhprbPullRequest> pulls) throws IOException {
+	private void removeClosed(Set<Integer> closedPulls, Map<Integer,GhprbPullRequest> pulls) {
 		if(closedPulls.isEmpty()) return;
 		
 		for(Integer id : closedPulls){
-			GHPullRequest pr = repo.getPullRequest(id);
 			pulls.remove(id);
 		}
 	}
 	
-	private void checkBuilds() throws IOException{
+	private void checkBuilds(){
 		Iterator<GhprbBuild> it = builds.iterator();
 		while(it.hasNext()){
 			GhprbBuild build = it.next();
@@ -98,14 +109,18 @@ public class GhprbRepo {
 		}
 	}
 
-	public void createCommitStatus(AbstractBuild<?,?> build, GHCommitState state, String message) throws IOException{
+	public void createCommitStatus(AbstractBuild<?,?> build, GHCommitState state, String message){
 		String sha1 = build.getCause(GhprbCause.class).getCommit();
 		createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message);
 	}
 
-	public void createCommitStatus(String sha1, GHCommitState state, String url, String message) throws IOException{
+	public void createCommitStatus(String sha1, GHCommitState state, String url, String message) {
 		Logger.getLogger(GhprbRepo.class.getName()).log(Level.INFO, "Setting status of {0} to {1} with url {2} and mesage: {3}", new Object[]{sha1, state, url, message});
-		repo.createCommitStatus(sha1, state, url, message);
+		try {
+			repo.createCommitStatus(sha1, state, url, message);
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not update commit status of the Pull Request on Github.", ex);
+		}
 	}
 
 	public boolean cancelBuild(int id) {
@@ -138,8 +153,12 @@ public class GhprbRepo {
 		return whitelistPhrasePattern.matcher(comment).matches();
 	}
 	
-	public void addComment(int id, String comment) throws IOException{
-		repo.getPullRequest(id).comment(comment);
+	public void addComment(int id, String comment) {
+		try {
+			repo.getPullRequest(id).comment(comment);
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Couldn't add comment to pullrequest #" + id + ": '" + comment + "'", ex);
+		}
 	}
 
 	public void addWhitelist(String author) {

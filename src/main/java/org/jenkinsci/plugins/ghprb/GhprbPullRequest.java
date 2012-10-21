@@ -51,20 +51,16 @@ public class GhprbPullRequest{
 	
 	public void check(GHPullRequest pr, GhprbRepo ghprbRepo) throws IOException {
 		repo = ghprbRepo;
-		if(updated.compareTo(pr.getUpdatedAt()) < 0){
+		if(isUpdated(pr)){
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} Updated {1}", new Object[]{id, pr.getUpdatedAt()});
-			try {
-				List<GHIssueComment> comments = pr.getComments();
-				for(GHIssueComment comment : comments){
-					if(updated.compareTo(comment.getUpdatedAt()) < 0){
-						checkComment(comment);
-					}
-				}
-			} catch (NoSuchElementException e) { // TODO: WA for: https://github.com/kohsuke/github-api/issues/20
-			}
+
+			int commentsChecked = checkComments(pr.getComments());
+
 			if(!head.equals(pr.getHead().getSha())){
 				head = pr.getHead().getSha();
 				shouldRun = true;
+			}else if(commentsChecked == 0){
+				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.WARNING, "Pull request was updated, but it seems nothing changed.");
 			}
 			updated = pr.getUpdatedAt();
 		}
@@ -74,7 +70,15 @@ public class GhprbPullRequest{
 		}
 	}
 
-	private void build() throws IOException {
+	private boolean isUpdated(GHPullRequest pr){
+		boolean ret = false;
+		ret = ret || updated.compareTo(pr.getUpdatedAt()) < 0;
+		ret = ret || pr.getHead().getSha().equals(head);
+
+		return ret;
+	}
+
+	private void build() {
 		shouldRun = false;
 		if(!repo.isWhitelisted(author)){
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} not in whitelist!", new Object[]{id, author});
@@ -96,16 +100,12 @@ public class GhprbPullRequest{
 		}
 
 		repo.startJob(id,head, mergeable);
-		try {
-			repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
-		} catch(IOException ioe) {
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Could not update status of the Pull Request on Github.", ioe);
-		}
+		repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
 
 		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, sb.toString());
 	}
 	
-	private void addComment(String comment) throws IOException{
+	private void addComment(String comment) {
 		repo.addComment(id,comment);
 	}
 
@@ -122,6 +122,25 @@ public class GhprbPullRequest{
 		if (repo.isRetestPhrase(comment.getBody()) && repo.isWhitelisted(comment.getUser().getLogin())) {
 			shouldRun = true;
 		}
+	}
+
+	private int checkComments(List<GHIssueComment> comments) {
+		int count = 0;
+		try {
+			for (GHIssueComment comment : comments) {
+				if (updated.compareTo(comment.getUpdatedAt()) < 0) {
+					count++;
+					try {
+						checkComment(comment);
+					} catch (IOException ex) {
+						Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
+					}
+				}
+			}
+		} catch (NoSuchElementException e) { // TODO: WA for: https://github.com/kohsuke/github-api/issues/20
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "You probably don't have current version of github-api.", e);
+		}
+		return count;
 	}
 	
 	

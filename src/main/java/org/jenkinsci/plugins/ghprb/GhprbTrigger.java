@@ -101,11 +101,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	@Override
 	public void run() {
 		changed = false;
-		try {
-			repository.check(pulls);
-		} catch (IOException ex) {
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, null, ex);
-		}
+		repository.check(pulls);
 		if(changed){
 			try {
 				this.job.save();

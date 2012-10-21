@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
@@ -46,15 +45,11 @@ public class GhprbBuild {
 			} else {
 				state = GHCommitState.FAILURE;
 			}
-			try {
-				repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished.") );
+			repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished.") );
 
-				String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
-				if (publishedURL != null && !publishedURL.isEmpty()) {
-					repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
-				}
-			} catch (IOException ex) {
-				Logger.getLogger(GhprbBuild.class.getName()).log(Level.SEVERE, null, ex);
+			String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
+			if (publishedURL != null && !publishedURL.isEmpty()) {
+				repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
 			}
 		}
 	}
