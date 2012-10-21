@@ -50,4 +50,4 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 Make sure you **DON'T** have "Prune remote branches before build" advanced option
 selected, since it will prune the branch created to test this build.
 
-When you are trying to manualy build the job, make sure you have checked ``This build is parameterized``  and you have specified ``${sha1}`` parameter there.
+When you are trying to manualy build the job, make sure you have checked ``This build is parameterized``  and you have specified ``sha1`` parameter there.
