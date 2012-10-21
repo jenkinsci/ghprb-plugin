@@ -38,9 +38,15 @@ public class GhprbPullRequest{
 	public boolean equals(Object obj) {
 		if(!(obj instanceof GhprbPullRequest)) return false;
 		
-		
 		GhprbPullRequest o = (GhprbPullRequest) obj;
 		return o.id == id;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 7;
+		hash = 89 * hash + this.id;
+		return hash;
 	}
 	
 	public void check(GHPullRequest pr, GhprbRepo ghprbRepo) throws IOException {
