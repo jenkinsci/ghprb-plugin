@@ -52,7 +52,7 @@ public class GhprbPullRequest{
 	public void check(GHPullRequest pr, GhprbRepo ghprbRepo) throws IOException {
 		repo = ghprbRepo;
 		if(isUpdated(pr)){
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} Updated {1}", new Object[]{id, pr.getUpdatedAt()});
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} was updated {1}, is updated {2}", new Object[]{id, updated, pr.getUpdatedAt()});
 
 			int commentsChecked = checkComments(pr.getComments());
 
@@ -60,7 +60,7 @@ public class GhprbPullRequest{
 				head = pr.getHead().getSha();
 				shouldRun = true;
 			}else if(commentsChecked == 0){
-				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.WARNING, "Pull request was updated, but it seems nothing changed.");
+				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request was updated, but it seems nothing changed. (But it may mean that comit status was updated)");
 			}
 			updated = pr.getUpdatedAt();
 		}
