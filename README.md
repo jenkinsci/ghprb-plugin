@@ -48,7 +48,7 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
   * Set the whitelisted users for this specific job.  
 * Save to preserve your changes.  
 
-Make sure you **DON'T** have "Prune remote branches before build" advanced option
+Make sure you **DON'T** have ``Prune remote branches before build`` advanced option
 selected, since it will prune the branch created to test this build.
 
-When you are trying to manualy build the job, make sure you have checked ``This build is parameterized``  and you have specified ``sha1`` parameter there.
+If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
