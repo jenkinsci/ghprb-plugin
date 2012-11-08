@@ -21,7 +21,8 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 ### Installation:
 
 * Create a github 'bot' user for commenting in pull requests  
-* then add the bot as a collaborator for your repository.
+* then add the bot as a collaborator for your repository
+(if you are using organizations, set the Push & Pull rights for the bot).
 
 * Install the plugin.  
 * Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.  
