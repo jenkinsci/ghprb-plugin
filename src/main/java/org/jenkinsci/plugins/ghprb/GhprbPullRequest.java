@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,8 +18,6 @@ public class GhprbPullRequest{
 	private String head;
 	private String author;
 	private boolean mergeable;
-	@Deprecated private transient String target; // TODO: remove
-	
 
 	private boolean shouldRun = false;
 	private boolean accepted = false;
@@ -30,7 +27,7 @@ public class GhprbPullRequest{
 
 	GhprbPullRequest(GHPullRequest pr, GhprbRepo ghprbRepo) {
 		id = pr.getNumber();
-		updated = new Date(0);
+		updated = pr.getUpdatedAt();
 		head = pr.getHead().getSha();
 		author = pr.getUser().getLogin();
 
@@ -47,27 +44,12 @@ public class GhprbPullRequest{
 		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} udpdated at: {2} sha: {3}", new Object[]{id, author, updated, head});
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if(!(obj instanceof GhprbPullRequest)) return false;
-		
-		GhprbPullRequest o = (GhprbPullRequest) obj;
-		return o.id == id;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = 7;
-		hash = 89 * hash + this.id;
-		return hash;
-	}
-	
-	public void check(GHPullRequest pr, GhprbRepo ghprbRepo) throws IOException {
+	public void check(GHPullRequest pr, GhprbRepo ghprbRepo){
 		repo = ghprbRepo;
 		if(isUpdated(pr)){
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} was updated {1}, is updated {2}", new Object[]{id, updated, pr.getUpdatedAt()});
 
-			int commentsChecked = checkComments(pr.getComments());
+			int commentsChecked = checkComments(pr);
 			boolean newCommit   = checkCommit(pr.getHead().getSha());
 
 			if(!newCommit && commentsChecked == 0){
@@ -77,7 +59,7 @@ public class GhprbPullRequest{
 		}
 
 		if(shouldRun){
-			mergeable = pr.getMergeable();
+			checkMergeable(pr);
 			build();
 		}
 	}
@@ -161,10 +143,10 @@ public class GhprbPullRequest{
 		}
 	}
 
-	private int checkComments(List<GHIssueComment> comments) {
+	private int checkComments(GHPullRequest pr) {
 		int count = 0;
 		try {
-			for (GHIssueComment comment : comments) {
+			for (GHIssueComment comment : pr.getComments()) {
 				if (updated.compareTo(comment.getUpdatedAt()) < 0) {
 					count++;
 					try {
@@ -174,12 +156,33 @@ public class GhprbPullRequest{
 					}
 				}
 			}
-		} catch (NoSuchElementException e) { // TODO: WA for: https://github.com/kohsuke/github-api/issues/20
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "You probably don't have current version of github-api.", e);
+		} catch (IOException e) {
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Couldn't obtain comments.", e);
 		}
 		return count;
 	}
-	
-	
-	
+
+	private void checkMergeable(GHPullRequest pr) {
+		try {
+			mergeable = pr.getMergeable();
+		} catch (IOException e) {
+			mergeable = false;
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
+		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof GhprbPullRequest)) return false;
+
+		GhprbPullRequest o = (GhprbPullRequest) obj;
+		return o.id == id;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 7;
+		hash = 89 * hash + this.id;
+		return hash;
+	}
 }

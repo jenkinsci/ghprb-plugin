@@ -82,11 +82,7 @@ public class GhprbRepo {
 				pull = new GhprbPullRequest(pr, this);
 				pulls.put(id, pull);
 			}
-			try {
-				pull.check(pr,this);
-			} catch (IOException ex) {
-				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Couldn't check pull request #" + id, ex);
-			}
+			pull.check(pr,this);
 			closedPulls.remove(id);
 		}
 		
