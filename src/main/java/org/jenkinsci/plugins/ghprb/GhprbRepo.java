@@ -27,6 +27,7 @@ public class GhprbRepo {
 	private GHRepository repo;
 	private Pattern retestPhrasePattern;
 	private Pattern whitelistPhrasePattern;
+	private Pattern oktotestPhrasePattern;
 	private String reponame;
 
 	private HashSet<GhprbBuild> builds;
@@ -34,6 +35,7 @@ public class GhprbRepo {
 	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
 		reponame = user + "/" + repository;
+
 		String accessToken = trigger.getDescriptor().getAccessToken();
 		if(accessToken != null && !accessToken.isEmpty()) {
 			try {
@@ -46,8 +48,10 @@ public class GhprbRepo {
 			//gh = GitHub.connect(githubServer, trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
 			gh = GitHub.connect(trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
 		}
+
 		retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
+		oktotestPhrasePattern = Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
 		builds = new HashSet<GhprbBuild>();
 	}
 	
@@ -75,7 +79,7 @@ public class GhprbRepo {
 			if(pulls.containsKey(id)){
 				pull = pulls.get(id);
 			}else{
-				pull = new GhprbPullRequest(pr);
+				pull = new GhprbPullRequest(pr, this);
 				pulls.put(id, pull);
 			}
 			try {
@@ -153,6 +157,10 @@ public class GhprbRepo {
 		return whitelistPhrasePattern.matcher(comment).matches();
 	}
 	
+	public boolean isOktotestPhrase(String comment){
+		return oktotestPhrasePattern.matcher(comment).matches();
+	}
+
 	public void addComment(int id, String comment) {
 		try {
 			repo.getPullRequest(id).comment(comment);

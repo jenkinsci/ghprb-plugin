@@ -21,16 +21,29 @@ public class GhprbPullRequest{
 	private boolean mergeable;
 	@Deprecated private transient String target; // TODO: remove
 	
-	private boolean shouldRun = true;
-	private boolean askedForApproval = false;
-	
+
+	private boolean shouldRun = false;
+	private boolean accepted = false;
+	@Deprecated private boolean askedForApproval; // TODO: remove
+
 	private transient GhprbRepo repo;
 
-	GhprbPullRequest(GHPullRequest pr) {
+	GhprbPullRequest(GHPullRequest pr, GhprbRepo ghprbRepo) {
 		id = pr.getNumber();
 		updated = new Date(0);
 		head = pr.getHead().getSha();
 		author = pr.getUser().getLogin();
+
+		repo = ghprbRepo;
+
+		if(repo.isWhitelisted(author)){
+			accepted = true;
+			shouldRun = true;
+		}else{
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} not in whitelist!", new Object[]{id, author});
+			addComment("Can one of the admins verify this patch?");
+		}
+
 		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} udpdated at: {2} sha: {3}", new Object[]{id, author, updated, head});
 	}
 
@@ -55,15 +68,14 @@ public class GhprbPullRequest{
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} was updated {1}, is updated {2}", new Object[]{id, updated, pr.getUpdatedAt()});
 
 			int commentsChecked = checkComments(pr.getComments());
+			boolean newCommit   = checkCommit(pr.getHead().getSha());
 
-			if(!head.equals(pr.getHead().getSha())){
-				head = pr.getHead().getSha();
-				shouldRun = true;
-			}else if(commentsChecked == 0){
-				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request was updated, but it seems nothing changed. (But it may mean that comit status was updated)");
+			if(!newCommit && commentsChecked == 0){
+				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request was updated, but there isn't new comments nor commits. (But it may mean that commit status was updated)");
 			}
 			updated = pr.getUpdatedAt();
 		}
+
 		if(shouldRun){
 			mergeable = pr.getMergeable();
 			build();
@@ -80,14 +92,7 @@ public class GhprbPullRequest{
 
 	private void build() {
 		shouldRun = false;
-		if(!repo.isWhitelisted(author)){
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} not in whitelist!", new Object[]{id, author});
-			if(!askedForApproval){
-				addComment("Can one of the admins verify this patch?");
-				askedForApproval = true;
-			}
-			return;
-		}
+
 		StringBuilder sb = new StringBuilder();
 		if(repo.cancelBuild(id)){
 			sb.append("Previous build stopped. ");
@@ -104,23 +109,55 @@ public class GhprbPullRequest{
 
 		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, sb.toString());
 	}
-	
+
 	private void addComment(String comment) {
 		repo.addComment(id,comment);
 	}
 
+	// returns false if no new commit
+	private boolean checkCommit(String sha){
+		if(head.equals(sha)) return false;
+
+		if(Logger.getLogger(GhprbPullRequest.class.getName()).isLoggable(Level.FINE)){
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.FINE, "New commit. Sha: " + head + " => " + sha);
+		}
+
+		head = sha;
+		if(accepted){
+			shouldRun = true;
+		}
+		return true;
+	}
+
 	private void checkComment(GHIssueComment comment) throws IOException {
-		if (repo.isMe(comment.getUser().getLogin())){
+		String sender = comment.getUser().getLogin();
+		if (repo.isMe(sender)){
 			return;
 		}
-		if (   repo.isWhitelistPhrase(comment.getBody())
-		   &&  repo.isAdmin(comment.getUser().getLogin())
-		   && !repo.isWhitelisted(author)) {
-			repo.addWhitelist(author);
+		String body = comment.getBody();
+
+		// add to whitelist
+		if (repo.isWhitelistPhrase(body) && repo.isAdmin(sender)){
+			if(!repo.isWhitelisted(author)) {
+				repo.addWhitelist(author);
+			}
+			accepted = true;
 			shouldRun = true;
 		}
-		if (repo.isRetestPhrase(comment.getBody()) && repo.isWhitelisted(comment.getUser().getLogin())) {
+
+		// ok to test
+		if(repo.isOktotestPhrase(body) && repo.isAdmin(sender)){
+			accepted = true;
 			shouldRun = true;
+		}
+
+		// test this please
+		if (repo.isRetestPhrase(body)){
+			if(repo.isAdmin(sender)){
+				shouldRun = true;
+			}else if(accepted && repo.isWhitelisted(sender) ){
+				shouldRun = true;
+			}
 		}
 	}
 

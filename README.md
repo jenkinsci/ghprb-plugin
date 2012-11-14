@@ -4,8 +4,9 @@ https://wiki.jenkins-ci.org/display/JENKINS/Github+pull+request+builder+plugin
 
 When a new pull request is opened in the project and the author of the pull
 request isn't whitelisted, builder will ask ``Can one of the
-admins verify this patch?`` and one of the admins comment ``this is ok to test``
-to add the author to the whitelist.
+admins verify this patch?``. One of the admins can comment ``ok to test``
+to accept this pullrequest for testing, ``test this please`` for one time
+test run and ``add to whitelist`` to add the author to the whitelist.
 
 If an author of a pull request is whitelisted, adding a new pull
 request or new commit to an existing pull request will start a new
@@ -22,15 +23,16 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
 * Create a github 'bot' user for commenting in pull requests  
 * then add the bot as a collaborator for your repository
-(if you are using organizations, set the Push & Pull rights for the bot).
+(if you are using organizations, set the Push & Pull rights for the bot).  
 
 * Install the plugin.  
 * Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.  
 * Set your bot's GitHub username and password.  
 * Add GitHub usernames of admins for all jobs.  
 * Under Advanced, you can modify:  
-  * The phrase for adding users to the whitelist via comment.  
-  * The phrase for starting a new build.  
+  * The phrase for adding users to the whitelist via comment. (Java regexp)  
+  * The phrase for accepting a pullrequest for testing. (Java regexp)  
+  * The phrase for starting a new build. (Java regexp)  
   * The crontab line.  
 * Save to preserve your changes.  
 

@@ -126,13 +126,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String accessToken;
 		private String adminlist;
 		private String publishedURL;
-		private String whitelistPhrase;
-		private String retestPhrase;
+		private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
+		private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
+		private String retestPhrase = ".*test\\W+this\\W+please.*";
 		private String cron;
-		
+
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
-		
+
 		public DescriptorImpl(){
 			load();
 			if(jobs ==null){
@@ -149,8 +150,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		public String getDisplayName() {
 			return "Github pull requests builder";
 		}
-	
-		
+
 		@Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
 			username = formData.getString("username");
@@ -159,12 +159,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			adminlist = formData.getString("adminlist");
 			publishedURL = formData.getString("publishedURL");
 			whitelistPhrase = formData.getString("whitelistPhrase");
+			okToTestPhrase = formData.getString("okToTestPhrase");
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
             save();
             return super.configure(req,formData);
         }
-		
+
 		// Github username may only contain alphanumeric characters or dashes and cannot begin with a dash
 		private static Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
 		public FormValidation doCheckAdminlist(@QueryParameter String value)
@@ -173,9 +174,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				return FormValidation.error("Github username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespece.");
 			}
             return FormValidation.ok();
-        }
-		
-		
+		}
+
 		public FormValidation doCheckCron(@QueryParameter String value){
             return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
         }
@@ -202,6 +202,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getWhitelistPhrase() {
 			return whitelistPhrase;
+		}
+
+		public String getOkToTestPhrase() {
+			return okToTestPhrase;
 		}
 
 		public String getRetestPhrase() {
