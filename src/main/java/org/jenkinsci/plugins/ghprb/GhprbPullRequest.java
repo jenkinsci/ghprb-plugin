@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
@@ -87,7 +86,7 @@ public class GhprbPullRequest{
 		}
 
 		repo.startJob(id,head, mergeable);
-		repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString());
+		repo.createCommitStatus(head, GHCommitState.PENDING, null, sb.toString(),id);
 
 		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, sb.toString());
 	}

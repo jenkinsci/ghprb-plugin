@@ -109,17 +109,22 @@ public class GhprbRepo {
 		}
 	}
 
-	public void createCommitStatus(AbstractBuild<?,?> build, GHCommitState state, String message){
+	public void createCommitStatus(AbstractBuild<?,?> build, GHCommitState state, String message, int id){
 		String sha1 = build.getCause(GhprbCause.class).getCommit();
-		createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message);
+		createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id);
 	}
 
-	public void createCommitStatus(String sha1, GHCommitState state, String url, String message) {
+	public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
 		Logger.getLogger(GhprbRepo.class.getName()).log(Level.INFO, "Setting status of {0} to {1} with url {2} and mesage: {3}", new Object[]{sha1, state, url, message});
 		try {
 			repo.createCommitStatus(sha1, state, url, message);
 		} catch (IOException ex) {
-			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not update commit status of the Pull Request on Github.", ex);
+			if(trigger.getDescriptor().getUseComments()){
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.INFO, "Could not update commit status of the Pull Request on Github. Trying to send comment.", ex);
+				addComment(id, message);
+			}else{
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not update commit status of the Pull Request on Github.", ex);
+			}
 		}
 	}
 
@@ -156,7 +161,6 @@ public class GhprbRepo {
 	public boolean isOktotestPhrase(String comment){
 		return oktotestPhrasePattern.matcher(comment).matches();
 	}
-
 	public void addComment(int id, String comment) {
 		try {
 			repo.getPullRequest(id).comment(comment);

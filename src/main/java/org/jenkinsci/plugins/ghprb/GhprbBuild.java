@@ -32,7 +32,7 @@ public class GhprbBuild {
 		if (build == null && future.getStartCondition().isDone()) {
 			try {
 				build = (AbstractBuild<?, ?>) future.getStartCondition().get();
-				repo.createCommitStatus(build, GHCommitState.PENDING, (merge ? "Merged build started." : "Build started."));
+				repo.createCommitStatus(build, GHCommitState.PENDING, (merge ? "Merged build started." : "Build started."),pull);
 			} catch (Exception ex) {
 				Logger.getLogger(GhprbBuild.class.getName()).log(Level.SEVERE, null, ex);
 			}
@@ -45,7 +45,7 @@ public class GhprbBuild {
 			} else {
 				state = GHCommitState.FAILURE;
 			}
-			repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished.") );
+			repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished."),pull );
 
 			String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
 			if (publishedURL != null && !publishedURL.isEmpty()) {
