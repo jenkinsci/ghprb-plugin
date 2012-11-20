@@ -170,6 +170,7 @@ public class GhprbRepo {
 	}
 
 	public void addWhitelist(String author) {
+		Logger.getLogger(GhprbRepo.class.getName()).log(Level.INFO, "Adding {0} to whitelist", author);
 		trigger.whitelist = trigger.whitelist + " " + author;
 		trigger.whitelisted.add(author);
 		trigger.changed = true;

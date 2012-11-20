@@ -32,15 +32,16 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public final String adminlist;
-	public String whitelist;
+	public       String whitelist;
 	public final String cron;
-	
+
+	transient private GhprbRepo                      repository;
+	transient private Map<Integer,GhprbPullRequest>  pulls;
+	transient         boolean                        changed;
+	transient         HashSet<String>                admins;
+	transient         HashSet<String>                whitelisted;
+
 	private static Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
-	private transient GhprbRepo repository;
-	transient Map<Integer,GhprbPullRequest> pulls;
-	transient boolean changed;
-	transient HashSet<String> admins;
-	transient HashSet<String> whitelisted;
 
 	@DataBoundConstructor
     public GhprbTrigger(String adminlist, String whitelist, String cron) throws ANTLRException{
@@ -52,20 +53,16 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@Override
 	public void start(AbstractProject<?, ?> project, boolean newInstance) {
-		String pname = project.getFullName();
-		
-		if(DESCRIPTOR.jobs.containsKey(pname)){
-			pulls = DESCRIPTOR.jobs.get(pname);
-		}else{
-			pulls = new HashMap<Integer, GhprbPullRequest>();
-			DESCRIPTOR.jobs.put(pname, pulls);
-		}
+		String projectName = project.getFullName();
+
+		pulls = DESCRIPTOR.getPullRequests(projectName);
 		
 		GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
 		if(ghpp.getProjectUrl() == null) {
 			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "A github project url is required.");
 			return;
 		}
+
 		Matcher m = githubUserRepoPattern.matcher(ghpp.getProjectUrl().baseUrl());
 		if(!m.matches()) {
 			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: {0}", ghpp.getProjectUrl().baseUrl());
@@ -85,6 +82,9 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	@Override
 	public void stop() {
 		repository = null;
+		pulls = null;
+		admins = null;
+		whitelisted = null;
 		super.stop();
 	}
 	
@@ -102,12 +102,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public void run() {
 		changed = false;
 		repository.check(pulls);
-		if(changed){
-			try {
-				this.job.save();
-			} catch (IOException ex) {
-				Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, null, ex);
-			}
+		if(changed) try {
+			this.job.save();
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		DESCRIPTOR.save();
 	}
@@ -137,7 +135,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public DescriptorImpl(){
 			load();
-			if(jobs ==null){
+			if(jobs == null){
 				jobs = new HashMap<String, Map<Integer,GhprbPullRequest>>();
 			}
 		}
@@ -220,6 +218,17 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public Boolean getUseComments() {
 			return useComments;
+		}
+
+		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {
+			Map<Integer, GhprbPullRequest> ret;
+			if(jobs.containsKey(projectName)){
+				 ret = jobs.get(projectName);
+			}else{
+				ret = new HashMap<Integer, GhprbPullRequest>();
+				jobs.put(projectName, ret);
+			}
+			return ret;
 		}
 	}
 }
