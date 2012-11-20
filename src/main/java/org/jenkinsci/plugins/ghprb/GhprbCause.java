@@ -6,9 +6,9 @@ import hudson.model.Cause;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbCause extends Cause{
-	private String commit;
-	private int pullID;
-	private boolean merged;
+	private final String commit;
+	private final int pullID;
+	private final boolean merged;
 	
 	public GhprbCause(String commit, int pullID){
 		this(commit, pullID, false);

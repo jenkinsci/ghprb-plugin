@@ -35,15 +35,15 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public String whitelist;
 	public final String cron;
 	
-	private static Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
+	private static final Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
 	private transient GhprbRepo repository;
-	transient Map<Integer,GhprbPullRequest> pulls;
+	private transient Map<Integer, GhprbPullRequest> pulls;
 	transient boolean changed;
 	transient HashSet<String> admins;
 	transient HashSet<String> whitelisted;
 
 	@DataBoundConstructor
-    public GhprbTrigger(String adminlist, String whitelist, String cron) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String cron) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
@@ -84,7 +84,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@Override
 	public void stop() {
+		whitelisted = null;
+		admins = null;
 		repository = null;
+		pulls = null;
 		super.stop();
 	}
 	
@@ -136,14 +139,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public DescriptorImpl(){
 			load();
-			if(jobs ==null){
+			if(jobs == null){
 				jobs = new HashMap<String, Map<Integer,GhprbPullRequest>>();
 			}
 		}
 
 		@Override
 		public boolean isApplicable(Item item) {
-            return item instanceof AbstractProject;
+			return item instanceof AbstractProject;
 		}
 
 		@Override
@@ -152,7 +155,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 
 		@Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+		public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
 			username = formData.getString("username");
 			password = formData.getString("password");
 			accessToken = formData.getString("accessToken");
@@ -162,23 +165,23 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			okToTestPhrase = formData.getString("okToTestPhrase");
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
-            save();
-            return super.configure(req,formData);
-        }
+			save();
+			return super.configure(req,formData);
+		}
 
 		// Github username may only contain alphanumeric characters or dashes and cannot begin with a dash
-		private static Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
+		private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
 		public FormValidation doCheckAdminlist(@QueryParameter String value)
-                throws IOException, ServletException {
+				throws ServletException {
 			if(!adminlistPattern.matcher(value).matches()){
 				return FormValidation.error("Github username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespece.");
 			}
-            return FormValidation.ok();
+			return FormValidation.ok();
 		}
 
 		public FormValidation doCheckCron(@QueryParameter String value){
-            return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
-        }
+			return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
+		}
 
 		public String getUsername() {
 			return username;
