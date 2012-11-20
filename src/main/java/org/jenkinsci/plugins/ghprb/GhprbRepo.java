@@ -14,8 +14,10 @@ import java.util.regex.Pattern;
 import jenkins.model.Jenkins;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 
 /**
@@ -187,5 +189,21 @@ public class GhprbRepo {
 			return;
 		}
 		builds.add(new GhprbBuild(this, id, build, true));
+	}
+
+	public boolean isUserMemberOfOrganization(String organisation, String member){
+		try {
+			GHOrganization org = gh.getOrganization(organisation);
+			List<GHUser> members = org.getMembers();
+			for(GHUser user : members){
+				if(user.getLogin().equals(member)){
+					return true;
+				}
+			}
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, null, ex);
+			return false;
+		}
+		return false;
 	}
 }

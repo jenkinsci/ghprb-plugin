@@ -33,6 +33,7 @@ import org.kohsuke.stapler.StaplerRequest;
 public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public final String adminlist;
 	public       String whitelist;
+	public final String orgslist;
 	public final String cron;
 
 	transient private GhprbRepo                      repository;
@@ -40,14 +41,16 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	transient         boolean                        changed;
 	transient         HashSet<String>                admins;
 	transient         HashSet<String>                whitelisted;
+	transient         HashSet<String>                organisations;
 
 	private static Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
 
 	@DataBoundConstructor
-    public GhprbTrigger(String adminlist, String whitelist, String cron) throws ANTLRException{
+    public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
+		this.orgslist = orgslist;
 		this.cron = cron;
 	}
 
@@ -75,6 +78,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		
 		admins = new HashSet<String>(Arrays.asList(adminlist.split("\\s+")));
 		whitelisted = new HashSet<String>(Arrays.asList(whitelist.split("\\s+")));
+		organisations = new HashSet<String>(Arrays.asList(orgslist.split("\\s+")));
 		
 		super.start(project, newInstance);
 	}
@@ -85,6 +89,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		pulls = null;
 		admins = null;
 		whitelisted = null;
+		organisations = null;
 		super.stop();
 	}
 	
