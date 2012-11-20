@@ -48,6 +48,7 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
   * Add admins for this specific job.  
   * Set the crontab line for this specific job  
   * Set the whitelisted users for this specific job.  
+  * Set the organisations whose members are considered whitelisted for this specific job.  
 * Save to preserve your changes.  
 
 Make sure you **DON'T** have ``Prune remote branches before build`` advanced option
