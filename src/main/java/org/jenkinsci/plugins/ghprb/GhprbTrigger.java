@@ -78,7 +78,11 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		admins = new HashSet<String>(Arrays.asList(adminlist.split("\\s+")));
 		whitelisted = new HashSet<String>(Arrays.asList(whitelist.split("\\s+")));
-		organisations = new HashSet<String>(Arrays.asList(orgslist.split("\\s+")));
+		if(orgslist == null){
+			organisations = new HashSet<String>();
+		}else{
+			organisations = new HashSet<String>(Arrays.asList(orgslist.split("\\s+")));
+		}
 
 		super.start(project, newInstance);
 	}
