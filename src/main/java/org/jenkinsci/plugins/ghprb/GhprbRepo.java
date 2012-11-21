@@ -24,15 +24,16 @@ import org.kohsuke.github.GitHub;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbRepo {
-	private GhprbTrigger trigger;
+	private final GhprbTrigger trigger;
+	private final Pattern retestPhrasePattern;
+	private final Pattern whitelistPhrasePattern;
+	private final Pattern oktotestPhrasePattern;
+	private final String reponame;
+
+	private final HashSet<GhprbBuild> builds;
+
 	private GitHub gh;
 	private GHRepository repo;
-	private Pattern retestPhrasePattern;
-	private Pattern whitelistPhrasePattern;
-	private Pattern oktotestPhrasePattern;
-	private String reponame;
-
-	private HashSet<GhprbBuild> builds;
 
 	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
@@ -56,10 +57,10 @@ public class GhprbRepo {
 		oktotestPhrasePattern = Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
 		builds = new HashSet<GhprbBuild>();
 	}
-	
+
 	public void check(Map<Integer,GhprbPullRequest> pulls){
 		if(repo == null) try {
-				repo = gh.getRepository(reponame);
+				repo = gh.getRepository(reponame); //TODO: potential NPE
 				if(repo == null){
 					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named {0} (Do you have properly set 'GitHub project' field in job configuration?)", reponame);
 				}
@@ -87,19 +88,19 @@ public class GhprbRepo {
 			pull.check(pr,this);
 			closedPulls.remove(id);
 		}
-		
+
 		removeClosed(closedPulls, pulls);
 		checkBuilds();
 	}
-	
+
 	private void removeClosed(Set<Integer> closedPulls, Map<Integer,GhprbPullRequest> pulls) {
 		if(closedPulls.isEmpty()) return;
-		
+
 		for(Integer id : closedPulls){
 			pulls.remove(id);
 		}
 	}
-	
+
 	private void checkBuilds(){
 		Iterator<GhprbBuild> it = builds.iterator();
 		while(it.hasNext()){
@@ -143,23 +144,23 @@ public class GhprbRepo {
 		}
 		return false;
 	}
-	
+
 	public boolean isWhitelisted(String username){
 		return trigger.whitelisted.contains(username) || trigger.admins.contains(username) || isInẂhitelistedOrganisation(username);
 	}
-	
+
 	public boolean isAdmin(String username){
 		return trigger.admins.contains(username);
 	}
-	
+
 	public boolean isRetestPhrase(String comment){
 		return retestPhrasePattern.matcher(comment).matches();
 	}
-	
+
 	public boolean isWhitelistPhrase(String comment){
 		return whitelistPhrasePattern.matcher(comment).matches();
 	}
-	
+
 	public boolean isOktotestPhrase(String comment){
 		return oktotestPhrasePattern.matcher(comment).matches();
 	}

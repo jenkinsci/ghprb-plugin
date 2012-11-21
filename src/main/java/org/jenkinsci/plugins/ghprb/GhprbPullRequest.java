@@ -12,10 +12,10 @@ import org.kohsuke.github.GHPullRequest;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbPullRequest{
-	private int id;
+	private final int id;
+	private final String author;
 	private Date updated;
 	private String head;
-	private String author;
 	private boolean mergeable;
 
 	private boolean shouldRun = false;
@@ -76,13 +76,13 @@ public class GhprbPullRequest{
 
 		StringBuilder sb = new StringBuilder();
 		if(repo.cancelBuild(id)){
-			sb.append("Previous build stopped. ");
+			sb.append("Previous build stopped.");
 		}
 
 		if(mergeable){
-			sb.append("Merged build triggered.");
+			sb.append(" Merged build triggered.");
 		}else{
-			sb.append("Build triggered.");
+			sb.append(" Build triggered.");
 		}
 
 		repo.startJob(id,head, mergeable);

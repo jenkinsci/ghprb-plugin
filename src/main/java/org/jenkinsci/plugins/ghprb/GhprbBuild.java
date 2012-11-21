@@ -12,11 +12,11 @@ import org.kohsuke.github.GHCommitState;
  * @author jbrazdil
  */
 public class GhprbBuild {
-	private QueueTaskFuture<?> future;
+	private final QueueTaskFuture<?> future;
+	private final GhprbRepo repo;
+	private final int pull;
+	private final boolean merge;
 	private AbstractBuild<?, ?> build;
-	private GhprbRepo repo;
-	private int pull;
-	private boolean merge;
 	private boolean finished;
 
 	GhprbBuild(GhprbRepo repo, int pull, QueueTaskFuture<?> future, boolean merge) {
@@ -92,10 +92,7 @@ public class GhprbBuild {
 			return false;
 		}
 		final GhprbBuild other = (GhprbBuild) obj;
-		if (this.pull != other.pull) {
-			return false;
-		}
-		return true;
+		return this.pull == other.pull;
 	}
 
 	public int getPullID() {

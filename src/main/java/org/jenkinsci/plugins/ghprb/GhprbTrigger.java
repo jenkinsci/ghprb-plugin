@@ -43,10 +43,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	transient         HashSet<String>                whitelisted;
 	transient         HashSet<String>                organisations;
 
-	private static Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
+	private static final Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
 
 	@DataBoundConstructor
-    public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
@@ -59,7 +59,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		String projectName = project.getFullName();
 
 		pulls = DESCRIPTOR.getPullRequests(projectName);
-		
+
 		GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
 		if(ghpp.getProjectUrl() == null) {
 			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "A github project url is required.");
@@ -75,24 +75,24 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		String user = m.group(2);
 		String repo = m.group(3);
 		repository = new GhprbRepo(this, githubServer, user, repo);
-		
+
 		admins = new HashSet<String>(Arrays.asList(adminlist.split("\\s+")));
 		whitelisted = new HashSet<String>(Arrays.asList(whitelist.split("\\s+")));
 		organisations = new HashSet<String>(Arrays.asList(orgslist.split("\\s+")));
-		
+
 		super.start(project, newInstance);
 	}
 
 	@Override
 	public void stop() {
+		whitelisted = null;
+		admins = null;
+		organisations = null;
 		repository = null;
 		pulls = null;
-		admins = null;
-		whitelisted = null;
-		organisations = null;
 		super.stop();
 	}
-	
+
 	public QueueTaskFuture<?> startJob(GhprbCause cause){
 		StringParameterValue paramSha1;
 		if(cause.isMerged()){
@@ -119,10 +119,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public DescriptorImpl getDescriptor() {
 		return DESCRIPTOR;
 	}
-	
+
 	@Extension
 	public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-	
+
 	public static final class DescriptorImpl extends TriggerDescriptor{
 		private String username;
 		private String password;
@@ -147,7 +147,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		@Override
 		public boolean isApplicable(Item item) {
-            return item instanceof AbstractProject;
+			return item instanceof AbstractProject;
 		}
 
 		@Override
@@ -156,7 +156,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 
 		@Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+		public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
 			username = formData.getString("username");
 			password = formData.getString("password");
 			accessToken = formData.getString("accessToken");
@@ -167,23 +167,23 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
 			useComments = formData.getBoolean("useComments");
-            save();
-            return super.configure(req,formData);
-        }
+			save();
+			return super.configure(req,formData);
+		}
 
 		// Github username may only contain alphanumeric characters or dashes and cannot begin with a dash
-		private static Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
+		private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
 		public FormValidation doCheckAdminlist(@QueryParameter String value)
-                throws IOException, ServletException {
+				throws ServletException {
 			if(!adminlistPattern.matcher(value).matches()){
 				return FormValidation.error("Github username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespece.");
 			}
-            return FormValidation.ok();
+			return FormValidation.ok();
 		}
 
 		public FormValidation doCheckCron(@QueryParameter String value){
-            return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
-        }
+			return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
+		}
 
 		public String getUsername() {
 			return username;
