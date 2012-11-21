@@ -19,14 +19,11 @@ github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin
 github plugin (https://wiki.jenkins-ci.org/display/JENKINS/Github+Plugin)  
 git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)  
 
-### Installation:
-
+### Pre-installation:
 * Create a github 'bot' user for commenting in pull requests  
-* then add the bot as a collaborator for your repository
-(if you are using organizations, set the Push & Pull rights for the bot).  
+* then add the bot as a collaborator for your repository (if you are using organizations, set the Push & Pull rights for the bot).  
 
-
-
+### Installation:
 * Install the plugin.  
 * Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.  
 * Set your bot's GitHub username and password.  
@@ -39,7 +36,6 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 * Save to preserve your changes.  
 
 ### Creating a job:
-
 * Create a new job.  
 * Add the project's GitHub URL to the ``GitHub project`` field (the one you can enter into browser. eg: ``https://github.com/janinko/ghprb``)  
 * Select Git SCM.  
