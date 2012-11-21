@@ -25,6 +25,8 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 * then add the bot as a collaborator for your repository
 (if you are using organizations, set the Push & Pull rights for the bot).  
 
+
+
 * Install the plugin.  
 * Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.  
 * Set your bot's GitHub username and password.  
@@ -55,3 +57,9 @@ Make sure you **DON'T** have ``Prune remote branches before build`` advanced opt
 selected, since it will prune the branch created to test this build.
 
 If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
+
+
+### Updates
+
+#### -> 1.4
+When updating to versions 1.4 phrases for retesting on existing pull requsts can stop working. The solution is comment in pull request with ``ok to test`` or remove and create the job. This is caused because there was change in phrases.
