@@ -146,7 +146,7 @@ public class GhprbRepo {
 	}
 
 	public boolean isWhitelisted(String username){
-		return trigger.whitelisted.contains(username) || trigger.admins.contains(username) || isInẂhitelistedOrganisation(username);
+		return trigger.whitelisted.contains(username) || trigger.admins.contains(username) || isInWhitelistedOrganisation(username);
 	}
 
 	public boolean isAdmin(String username){
@@ -208,7 +208,7 @@ public class GhprbRepo {
 		return false;
 	}
 
-	private boolean isInẂhitelistedOrganisation(String username) {
+	private boolean isInWhitelistedOrganisation(String username) {
 		for(String organisation : trigger.organisations){
 			if(isUserMemberOfOrganization(organisation,username)){
 				return true;
