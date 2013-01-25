@@ -102,7 +102,6 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	}
 
 	public QueueTaskFuture<?> startJob(GhprbCause cause){
-		StringParameterValue paramSha1;
 		ArrayList<ParameterValue> values = getDefaultParameters();
 		if(cause.isMerged()){
 			values.add(new StringParameterValue("sha1","origin/pr/" + cause.getPullID() + "/merge"));
