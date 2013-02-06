@@ -6,6 +6,9 @@ import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersDefinitionProperty;
+import hudson.model.ParameterDefinition;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.triggers.TimerTrigger;
@@ -17,6 +20,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -98,13 +102,27 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	}
 
 	public QueueTaskFuture<?> startJob(GhprbCause cause){
-		StringParameterValue paramSha1;
+		ArrayList<ParameterValue> values = getDefaultParameters();
 		if(cause.isMerged()){
-			paramSha1 = new StringParameterValue("sha1","origin/pr/" + cause.getPullID() + "/merge");
+			values.add(new StringParameterValue("sha1","origin/pr/" + cause.getPullID() + "/merge"));
 		}else{
-			paramSha1 = new StringParameterValue("sha1",cause.getCommit());
+			values.add(new StringParameterValue("sha1",cause.getCommit()));
 		}
-		return this.job.scheduleBuild2(0,cause,new ParametersAction(paramSha1));
+
+		return this.job.scheduleBuild2(0,cause,new ParametersAction(values));
+	}
+
+	private ArrayList<ParameterValue> getDefaultParameters() {
+		ArrayList<ParameterValue> values = new ArrayList<ParameterValue>();
+		ParametersDefinitionProperty pdp = this.job.getProperty(ParametersDefinitionProperty.class);
+		if (pdp != null) {
+			for(ParameterDefinition pd :  pdp.getParameterDefinitions()) {
+				if (pd.getName().equals("sha1"))
+					continue;
+				values.add(pd.getDefaultParameterValue());
+			}
+		}
+		return values;
 	}
 
 	@Override
