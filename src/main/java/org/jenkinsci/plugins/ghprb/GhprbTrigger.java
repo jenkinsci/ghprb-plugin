@@ -108,6 +108,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}else{
 			values.add(new StringParameterValue("sha1",cause.getCommit()));
 		}
+		values.add("ghprbActualCommit",cause.getCommit());
 
 		return this.job.scheduleBuild2(0,cause,new ParametersAction(values));
 	}
