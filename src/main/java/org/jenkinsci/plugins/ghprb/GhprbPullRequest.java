@@ -37,7 +37,7 @@ public class GhprbPullRequest{
 			shouldRun = true;
 		}else{
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} not in whitelist!", new Object[]{id, author});
-			addComment("Can one of the admins verify this patch?");
+			addComment(repo.getDefaultComment());
 		}
 
 		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} udpdated at: {2} sha: {3}", new Object[]{id, author, updated, head});

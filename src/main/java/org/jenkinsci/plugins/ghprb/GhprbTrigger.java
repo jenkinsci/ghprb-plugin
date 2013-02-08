@@ -152,6 +152,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String accessToken;
 		private String adminlist;
 		private String publishedURL;
+		private String requestForTestingPhrase;
 		private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
 		private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
@@ -185,6 +186,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			accessToken = formData.getString("accessToken");
 			adminlist = formData.getString("adminlist");
 			publishedURL = formData.getString("publishedURL");
+			requestForTestingPhrase = formData.getString("requestForTestingPhrase");
 			whitelistPhrase = formData.getString("whitelistPhrase");
 			okToTestPhrase = formData.getString("okToTestPhrase");
 			retestPhrase = formData.getString("retestPhrase");
@@ -226,6 +228,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getPublishedURL() {
 			return publishedURL;
+		}
+
+		public String getRequestForTestingPhrase() {
+			return requestForTestingPhrase;
 		}
 
 		public String getWhitelistPhrase() {
