@@ -29,6 +29,7 @@ public class GhprbRepo {
 	private final Pattern whitelistPhrasePattern;
 	private final Pattern oktotestPhrasePattern;
 	private final String reponame;
+	private final String requestForTestingMessage;
 
 	private final HashSet<GhprbBuild> builds;
 
@@ -55,6 +56,8 @@ public class GhprbRepo {
 		retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
 		oktotestPhrasePattern = Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
+		requestForTestingMessage = trigger.getDescriptor().getRequestForTestingPhrase();
+
 		builds = new HashSet<GhprbBuild>();
 	}
 
@@ -164,6 +167,11 @@ public class GhprbRepo {
 	public boolean isOktotestPhrase(String comment){
 		return oktotestPhrasePattern.matcher(comment).matches();
 	}
+
+	public String getDefaultComment() {
+		return requestForTestingMessage;
+	}
+
 	public void addComment(int id, String comment) {
 		try {
 			repo.getPullRequest(id).comment(comment);
