@@ -40,7 +40,7 @@ public class GhprbPullRequest{
 			addComment("Can one of the admins verify this patch?");
 		}
 
-		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} udpdated at: {2} sha: {3}", new Object[]{id, author, updated, head});
+		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} updated at: {2} sha: {3}", new Object[]{id, author, updated, head});
 	}
 
 	public void check(GHPullRequest pr, GhprbRepo ghprbRepo){

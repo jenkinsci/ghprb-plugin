@@ -9,7 +9,7 @@
 	<f:entry title="${%White list}" field="whitelist">
 	  <f:textarea />
 	</f:entry>
-	<f:entry title="${%List of organisations. Their memebers wil be whitelisted.}" field="orgslist">
+	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
 	  <f:textarea />
 	</f:entry>
   </f:advanced>
