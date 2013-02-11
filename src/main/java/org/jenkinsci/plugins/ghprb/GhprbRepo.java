@@ -145,6 +145,10 @@ public class GhprbRepo {
 		return false;
 	}
 
+	public String getName() {
+		return reponame;
+	}
+
 	public boolean isWhitelisted(String username){
 		return trigger.whitelisted.contains(username) || trigger.admins.contains(username) || isInWhitelistedOrganisation(username);
 	}
