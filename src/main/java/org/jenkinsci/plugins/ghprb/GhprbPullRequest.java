@@ -36,23 +36,23 @@ public class GhprbPullRequest{
 			accepted = true;
 			shouldRun = true;
 		}else{
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} not in whitelist!", new Object[]{id, author});
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author, ghprbRepo.getName()});
 			addComment("Can one of the admins verify this patch?");
 		}
 
-		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} by {1} udpdated at: {2} sha: {3}", new Object[]{id, author, updated, head});
+		Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Created pull request #{0} on {1} by {2} updated at: {3} SHA: {4}", new Object[]{id, ghprbRepo.getName(), author, updated, head});
 	}
 
 	public void check(GHPullRequest pr, GhprbRepo ghprbRepo){
 		repo = ghprbRepo;
 		if(isUpdated(pr)){
-			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} was updated {1}, is updated {2}", new Object[]{id, updated, pr.getUpdatedAt()});
+			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request builder: pr #{0} was updated on {1} at {2}", new Object[]{id, ghprbRepo.getName(), updated});
 
 			int commentsChecked = checkComments(pr);
 			boolean newCommit   = checkCommit(pr.getHead().getSha());
 
 			if(!newCommit && commentsChecked == 0){
-				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request was updated, but there isn't new comments nor commits. (But it may mean that commit status was updated)");
+				Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.INFO, "Pull request was updated on repo " + ghprbRepo.getName() + " but there aren't any new comments nor commits - that may mean that commit status was updated.");
 			}
 			updated = pr.getUpdatedAt();
 		}
