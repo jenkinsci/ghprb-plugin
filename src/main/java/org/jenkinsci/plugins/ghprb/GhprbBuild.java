@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
@@ -32,25 +33,13 @@ public class GhprbBuild {
 		if (build == null && future.getStartCondition().isDone()) {
 			try {
 				build = (AbstractBuild<?, ?>) future.getStartCondition().get();
-				repo.createCommitStatus(build, GHCommitState.PENDING, (merge ? "Merged build started." : "Build started."),pull);
 			} catch (Exception ex) {
 				Logger.getLogger(GhprbBuild.class.getName()).log(Level.SEVERE, null, ex);
 			}
+			onStarted();
 		} else if (build != null && future.isDone()) {
 			finished = true;
-
-			GHCommitState state;
-			if (build.getResult() == Result.SUCCESS) {
-				state = GHCommitState.SUCCESS;
-			} else {
-				state = GHCommitState.FAILURE;
-			}
-			repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished."),pull );
-
-			String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
-			if (publishedURL != null && !publishedURL.isEmpty()) {
-				repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
-			}
+			onFinished();
 		}
 	}
 
@@ -101,5 +90,29 @@ public class GhprbBuild {
 
 	public boolean isMerge() {
 		return merge;
+	}
+
+	protected void onStarted() {
+		repo.createCommitStatus(build, GHCommitState.PENDING, (merge ? "Merged build started." : "Build started."),pull);
+		try {
+			build.setDescription("<a href=\"" + repo.getRepoUrl()+"/pull/"+pull+"\">Pull request #"+pull+"</a>");
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbBuild.class.getName()).log(Level.SEVERE, "Can't update build description", ex);
+		}
+	}
+
+	protected void onFinished() {
+		GHCommitState state;
+		if (build.getResult() == Result.SUCCESS) {
+			state = GHCommitState.SUCCESS;
+		} else {
+			state = GHCommitState.FAILURE;
+		}
+		repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished."),pull );
+
+		String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
+		if (publishedURL != null && !publishedURL.isEmpty()) {
+			repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
+		}
 	}
 }
