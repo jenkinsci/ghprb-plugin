@@ -20,7 +20,7 @@ public class GhprbPullRequest{
 
 	private boolean shouldRun = false;
 	private boolean accepted = false;
-	@Deprecated private boolean askedForApproval; // TODO: remove
+	@Deprecated private transient boolean askedForApproval; // TODO: remove
 
 	private transient GhprbRepo repo;
 
