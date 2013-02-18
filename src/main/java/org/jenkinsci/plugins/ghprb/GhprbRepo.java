@@ -63,6 +63,7 @@ public class GhprbRepo {
 				repo = gh.getRepository(reponame); //TODO: potential NPE
 				if(repo == null){
 					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named {0} (Do you have properly set 'GitHub project' field in job configuration?)", reponame);
+					return;
 				}
 		} catch (IOException ex) {
 			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
