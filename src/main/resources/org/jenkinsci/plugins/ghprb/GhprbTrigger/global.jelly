@@ -1,5 +1,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <f:section title="${descriptor.displayName}">
+    <f:entry title="${%Github server api URL}" field="serverAPIUrl">
+      <f:textbox default="api.github.com"/>
+    </f:entry>
     <f:entry title="${%Username}" field="username">
       <f:textbox />
     </f:entry>

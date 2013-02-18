@@ -147,6 +147,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 	public static final class DescriptorImpl extends TriggerDescriptor{
+		private String serverAPIUrl = "api.github.com";
 		private String username;
 		private String password;
 		private String accessToken;
@@ -181,6 +182,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		@Override
 		public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+			serverAPIUrl = formData.getString("serverAPIUrl");
 			username = formData.getString("username");
 			password = formData.getString("password");
 			accessToken = formData.getString("accessToken");
@@ -208,6 +210,12 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public FormValidation doCheckCron(@QueryParameter String value){
 			return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
+		}
+
+		public FormValidation doCheckServerAPIUrl(@QueryParameter String value){
+			if("api.github.com".equals(value)) return FormValidation.ok();
+			if(value.endsWith("/api/v3")) return FormValidation.ok();
+			return FormValidation.warning("Github api url is \"api.github.com\". Github enterprise api url ends with \"/api/v3\"");
 		}
 
 		public String getUsername() {
@@ -252,6 +260,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public Boolean getUseComments() {
 			return useComments;
+		}
+
+		public String getServerAPIUrl() {
+			return serverAPIUrl;
 		}
 
 		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {

@@ -30,6 +30,7 @@ public class GhprbRepo {
 	private final Pattern oktotestPhrasePattern;
 	private final String reponame;
 	private final String requestForTestingMessage;
+	private final String githubServer;
 
 	private final HashSet<GhprbBuild> builds;
 
@@ -38,20 +39,10 @@ public class GhprbRepo {
 
 	public GhprbRepo(GhprbTrigger trigger, String githubServer, String user, String repository){
 		this.trigger = trigger;
+		this.githubServer = githubServer;
 		reponame = user + "/" + repository;
 
-		String accessToken = trigger.getDescriptor().getAccessToken();
-		if(accessToken != null && !accessToken.isEmpty()) {
-			try {
-				gh = GitHub.connectUsingOAuth(githubServer, accessToken);
-			} catch(IOException e) {
-				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "can't connect using oauth", e);
-			}
-		} else {
-			//TODO: when (if) the github api supports sending in a server w/o a token set it here...
-			//gh = GitHub.connect(githubServer, trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
-			gh = GitHub.connect(trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
-		}
+		gh = connect();
 
 		retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
@@ -61,16 +52,44 @@ public class GhprbRepo {
 		builds = new HashSet<GhprbBuild>();
 	}
 
-	public void check(Map<Integer,GhprbPullRequest> pulls){
-		if(repo == null) try {
-				repo = gh.getRepository(reponame); //TODO: potential NPE
-				if(repo == null){
-					Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named {0} (Do you have properly set 'GitHub project' field in job configuration?)", reponame);
-					return;
-				}
-		} catch (IOException ex) {
-			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+	private GitHub connect(){
+		GitHub gitHub = null;
+		String accessToken = trigger.getDescriptor().getAccessToken();
+		String serverAPIUrl = trigger.getDescriptor().getServerAPIUrl();
+		if(accessToken != null && !accessToken.isEmpty()) {
+			try {
+				gitHub = GitHub.connectUsingOAuth(serverAPIUrl, accessToken);
+			} catch(IOException e) {
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Can't connect to "+serverAPIUrl+" using oauth", e);
+			}
+		} else {
+			gitHub = GitHub.connect(trigger.getDescriptor().getUsername(), null, trigger.getDescriptor().getPassword());
 		}
+		return gitHub;
+	}
+
+	private boolean checkState(){
+		if(gh == null){
+			gh = connect();
+		}
+		if(gh == null) return false;
+		if(repo == null){
+			try {
+				repo = gh.getRepository(reponame);
+			} catch (IOException ex) {
+				Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+			}
+		}
+		if(repo == null){
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Could not retrieve repo named {0} (Do you have properly set 'GitHub project' field in job configuration?)", reponame);
+			return false;
+		}
+		return true;
+	}
+
+	public void check(Map<Integer,GhprbPullRequest> pulls){
+		if(!checkState()) return;
+
 		List<GHPullRequest> prs;
 		try {
 			prs = repo.getPullRequests(GHIssueState.OPEN);
