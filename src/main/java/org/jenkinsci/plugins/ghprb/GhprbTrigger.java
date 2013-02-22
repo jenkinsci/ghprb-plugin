@@ -147,7 +147,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 	public static final class DescriptorImpl extends TriggerDescriptor{
-		private String serverAPIUrl = "api.github.com";
+		private String serverAPIUrl = "https://api.github.com";
 		private String username;
 		private String password;
 		private String accessToken;
@@ -213,9 +213,9 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 
 		public FormValidation doCheckServerAPIUrl(@QueryParameter String value){
-			if("api.github.com".equals(value)) return FormValidation.ok();
+			if("https://api.github.com".equals(value)) return FormValidation.ok();
 			if(value.endsWith("/api/v3")) return FormValidation.ok();
-			return FormValidation.warning("Github api url is \"api.github.com\". Github enterprise api url ends with \"/api/v3\"");
+			return FormValidation.warning("Github api url is \"https://api.github.com\". Github enterprise api url ends with \"/api/v3\"");
 		}
 
 		public String getUsername() {
