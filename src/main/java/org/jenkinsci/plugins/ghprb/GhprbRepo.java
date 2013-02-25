@@ -241,7 +241,7 @@ public class GhprbRepo {
 	}
 
 	public String getRepoUrl(){
-		return "https://"+githubServer+"/"+reponame;
+		return githubServer+"/"+reponame;
 	}
 
 	private boolean isInWhitelistedOrganisation(String username) {
