@@ -159,6 +159,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
+		private Boolean autoCloseFailedPullRequests = false;
 
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
@@ -194,6 +195,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
 			useComments = formData.getBoolean("useComments");
+			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			save();
 			return super.configure(req,formData);
 		}
@@ -260,6 +262,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public Boolean getUseComments() {
 			return useComments;
+		}
+
+		public Boolean getAutoCloseFailedPullRequests() {
+			return autoCloseFailedPullRequests;
 		}
 
 		public String getServerAPIUrl() {
