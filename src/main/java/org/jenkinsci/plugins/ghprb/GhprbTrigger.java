@@ -47,7 +47,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	transient         HashSet<String>                whitelisted;
 	transient         HashSet<String>                organisations;
 
-	private static final Pattern githubUserRepoPattern = Pattern.compile("^http[s]?://([^/]*)/([^/]*)/([^/]*).*");
+	private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
 	@DataBoundConstructor
 	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron) throws ANTLRException{
