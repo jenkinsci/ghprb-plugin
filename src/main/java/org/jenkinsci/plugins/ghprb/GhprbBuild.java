@@ -111,8 +111,15 @@ public class GhprbBuild {
 		repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished."),pull );
 
 		String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
+		String msgSuccess = GhprbTrigger.DESCRIPTOR.getMsgSuccess();
+		String msgFailure = GhprbTrigger.DESCRIPTOR.getMsgFailure();
 		if (publishedURL != null && !publishedURL.isEmpty()) {
-			repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
+			if (build.getResult() == Result.SUCCESS) {
+				repo.addComment(pull, msgSuccess + "\nRefer to this link for build results: " + publishedURL + build.getUrl());
+			} else {
+				repo.addComment(pull, msgFailure + "\nRefer to this link for build results: " + publishedURL + build.getUrl());
+			}
+			//repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
 		}
 	}
 }
