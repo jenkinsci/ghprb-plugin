@@ -112,7 +112,7 @@ public class GhprbBuild {
             message += " unstable.";
 		} else {
             state = GHCommitState.FAILURE;
-            message += " failed."
+            message += " failed.";
         }
 		repo.createCommitStatus(build, state, message,pull );
 
