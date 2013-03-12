@@ -39,6 +39,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public       String whitelist;
 	public final String orgslist;
 	public final String cron;
+	public       String msgSuccess;
+	public       String msgFailure;
 
 	transient private GhprbRepo                      repository;
 	transient private Map<Integer,GhprbPullRequest>  pulls;
@@ -50,12 +52,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String msgSuccess, String msgFailure) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
 		this.orgslist = orgslist;
 		this.cron = cron;
+		this.msgSuccess = msgSuccess;
+		this.msgFailure = msgFailure;
 	}
 
 	@Override
@@ -159,6 +163,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
+		private String msgSuccess;
+		private String msgFailure;
 
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
@@ -194,6 +200,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
 			useComments = formData.getBoolean("useComments");
+			msgSuccess = formData.getString("msgSuccess");
+			msgFailure = formData.getString("msgFailure");
 			save();
 			return super.configure(req,formData);
 		}
@@ -264,6 +272,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getServerAPIUrl() {
 			return serverAPIUrl;
+		}
+
+		public String getMsgSuccess() {
+			return msgSuccess;
+		}
+
+		public String getMsgFailure() {
+			return msgFailure;
 		}
 
 		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {

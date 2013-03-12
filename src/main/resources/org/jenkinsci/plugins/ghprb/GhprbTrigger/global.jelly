@@ -37,6 +37,12 @@
       <f:entry title="${%Access Token}" field="accessToken">
         <f:password />
       </f:entry>
+      <f:entry title="${%Default success message}" field="msgSuccess">
+        <f:textarea default="Test PASSED!"/>
+      </f:entry>
+      <f:entry title="${%Default failure message}" field="msgFailure">
+        <f:textarea default="Test failed."/>
+      </f:entry>
     </f:advanced>
   </f:section>
 </j:jelly>
