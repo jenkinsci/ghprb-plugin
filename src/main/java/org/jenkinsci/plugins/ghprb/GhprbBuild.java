@@ -103,12 +103,18 @@ public class GhprbBuild {
 
 	protected void onFinished() {
 		GHCommitState state;
+        String message = merge ? "Merge build" : "Build";
 		if (build.getResult() == Result.SUCCESS) {
 			state = GHCommitState.SUCCESS;
+            message += " success.";
+		} else if(build.getResult() == Result.UNSTABLE){
+			state = GHCommitState.ERROR;
+            message += " unstable.";
 		} else {
-			state = GHCommitState.FAILURE;
-		}
-		repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished."),pull );
+            state = GHCommitState.FAILURE;
+            message += " failed."
+        }
+		repo.createCommitStatus(build, state, message,pull );
 
 		String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
 		if (publishedURL != null && !publishedURL.isEmpty()) {
