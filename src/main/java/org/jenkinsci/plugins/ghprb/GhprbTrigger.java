@@ -161,6 +161,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
+		private Boolean autoCloseFailedPullRequests = false;
 
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
@@ -197,6 +198,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			cron = formData.getString("cron");
 			useComments = formData.getBoolean("useComments");
 			unstableAs = formData.getString("unstableAs");
+			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			save();
 			return super.configure(req,formData);
 		}
@@ -263,6 +265,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public Boolean getUseComments() {
 			return useComments;
+		}
+
+		public Boolean getAutoCloseFailedPullRequests() {
+			return autoCloseFailedPullRequests;
 		}
 
 		public String getServerAPIUrl() {

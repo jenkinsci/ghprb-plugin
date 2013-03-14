@@ -192,6 +192,10 @@ public class GhprbRepo {
 		return oktotestPhrasePattern.matcher(comment).matches();
 	}
 
+	public boolean isAutoCloseFailedPullRequests() {
+		return trigger.getDescriptor().getAutoCloseFailedPullRequests();
+	}
+
 	public String getDefaultComment() {
 		return requestForTestingMessage;
 	}
@@ -201,6 +205,14 @@ public class GhprbRepo {
 			repo.getPullRequest(id).comment(comment);
 		} catch (IOException ex) {
 			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Couldn't add comment to pullrequest #" + id + ": '" + comment + "'", ex);
+		}
+	}
+
+	public void closePullRequest(int id) {
+		try {
+			repo.getPullRequest(id).close();
+		} catch (IOException ex) {
+			Logger.getLogger(GhprbRepo.class.getName()).log(Level.SEVERE, "Couldn't close the pullrequest #" + id + ": '", ex);
 		}
 	}
 

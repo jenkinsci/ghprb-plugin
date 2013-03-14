@@ -116,5 +116,10 @@ public class GhprbBuild {
 		if (publishedURL != null && !publishedURL.isEmpty()) {
 			repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
 		}
+
+		// close failed pull request automatically
+		if (state == GHCommitState.FAILURE && repo.isAutoCloseFailedPullRequests()) {
+			repo.closePullRequest(pull);
+		}
 	}
 }
