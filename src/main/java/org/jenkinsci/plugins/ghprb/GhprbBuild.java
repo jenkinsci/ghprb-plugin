@@ -114,7 +114,13 @@ public class GhprbBuild {
 
 		String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
 		if (publishedURL != null && !publishedURL.isEmpty()) {
-			repo.addComment(pull, "Build results will soon be (or already are) available at: " + publishedURL + build.getUrl());
+			String msg;
+			if (state == GHCommitState.SUCCESS) {
+				msg = GhprbTrigger.DESCRIPTOR.getMsgSuccess();
+			} else {
+				msg = GhprbTrigger.DESCRIPTOR.getMsgFailure();
+			}
+			repo.addComment(pull, msg + "\nRefer to this link for build results: " + publishedURL + build.getUrl());
 		}
 
 		// close failed pull request automatically

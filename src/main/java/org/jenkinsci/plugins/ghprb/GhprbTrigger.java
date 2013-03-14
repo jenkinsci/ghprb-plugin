@@ -40,6 +40,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	public       String whitelist;
 	public final String orgslist;
 	public final String cron;
+	public       String msgSuccess;
+	public       String msgFailure;
 
 	transient private GhprbRepo                      repository;
 	transient private Map<Integer,GhprbPullRequest>  pulls;
@@ -51,12 +53,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String msgSuccess, String msgFailure) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
 		this.orgslist = orgslist;
 		this.cron = cron;
+		this.msgSuccess = msgSuccess;
+		this.msgFailure = msgFailure;
 	}
 
 	@Override
@@ -162,6 +166,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
 		private Boolean autoCloseFailedPullRequests = false;
+		private String msgSuccess;
+		private String msgFailure;
 
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
@@ -199,6 +205,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			useComments = formData.getBoolean("useComments");
 			unstableAs = formData.getString("unstableAs");
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
+			msgSuccess = formData.getString("msgSuccess");
+			msgFailure = formData.getString("msgFailure");
 			save();
 			return super.configure(req,formData);
 		}
@@ -277,6 +285,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getUnstableAs() {
 			return unstableAs;
+		}
+
+		public String getMsgSuccess() {
+			return msgSuccess;
+		}
+
+		public String getMsgFailure() {
+			return msgFailure;
 		}
 
 		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {
