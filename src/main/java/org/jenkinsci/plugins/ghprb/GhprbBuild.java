@@ -105,6 +105,8 @@ public class GhprbBuild {
 		GHCommitState state;
 		if (build.getResult() == Result.SUCCESS) {
 			state = GHCommitState.SUCCESS;
+		} else if (build.getResult() == Result.UNSTABLE){
+			state = GHCommitState.valueOf(GhprbTrigger.DESCRIPTOR.getUnstableAs());
 		} else {
 			state = GHCommitState.FAILURE;
 		}

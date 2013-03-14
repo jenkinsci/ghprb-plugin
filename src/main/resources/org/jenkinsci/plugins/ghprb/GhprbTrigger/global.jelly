@@ -16,6 +16,13 @@
       <f:textarea />
     </f:entry>
     <f:advanced>
+      <f:entry title="Mark Unstable build in github as" field="unstableAs">
+        <select>
+          <option value="FAILURE">Failure</option>
+          <option value="SUCCESS">Success</option>
+          <option value="ERROR">Error</option>
+        </select>
+      </f:entry>
       <f:entry title="${%Published Jenkins URL}" field="publishedURL">
         <f:textbox/>
       </f:entry>
