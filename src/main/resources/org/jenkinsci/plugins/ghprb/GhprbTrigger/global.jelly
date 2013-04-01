@@ -16,8 +16,8 @@
       <f:textarea />
     </f:entry>
     <f:advanced>
-      <f:entry title="Mark Unstable build in github as" field="unstableAs">
-        <select>
+      <f:entry name="unstableAs" title="Mark Unstable build in github as" field="unstableAs">
+        <select name="unstableAs">
           <option value="FAILURE">Failure</option>
           <option value="SUCCESS">Success</option>
           <option value="ERROR">Error</option>
