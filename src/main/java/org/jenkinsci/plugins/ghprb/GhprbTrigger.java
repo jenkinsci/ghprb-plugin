@@ -168,6 +168,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean autoCloseFailedPullRequests = false;
 		private String msgSuccess;
 		private String msgFailure;
+		private Boolean addCommentWhenBuildFinish = true;
 
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
@@ -207,6 +208,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			msgSuccess = formData.getString("msgSuccess");
 			msgFailure = formData.getString("msgFailure");
+			addCommentWhenBuildFinish = formData.getBoolean("addCommentWhenBuildFinish");
 			save();
 			return super.configure(req,formData);
 		}
@@ -289,6 +291,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getMsgSuccess() {
 			return msgSuccess;
+		}
+
+		public Boolean getAddCommentWhenBuildFinish() {
+			return addCommentWhenBuildFinish;
 		}
 
 		public String getMsgFailure() {
