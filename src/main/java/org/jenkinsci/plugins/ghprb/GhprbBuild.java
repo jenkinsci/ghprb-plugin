@@ -113,7 +113,7 @@ public class GhprbBuild {
 		repo.createCommitStatus(build, state, (merge ? "Merged build finished." : "Build finished."),pull );
 
 		String publishedURL = GhprbTrigger.DESCRIPTOR.getPublishedURL();
-		if (publishedURL != null && !publishedURL.isEmpty()) {
+		if (publishedURL != null && !publishedURL.isEmpty() && repo.isAddCommentWhenBuildFinish()) {
 			String msg;
 			if (state == GHCommitState.SUCCESS) {
 				msg = GhprbTrigger.DESCRIPTOR.getMsgSuccess();

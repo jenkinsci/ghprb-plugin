@@ -196,6 +196,10 @@ public class GhprbRepo {
 		return trigger.getDescriptor().getAutoCloseFailedPullRequests();
 	}
 
+	public boolean isAddCommentWhenBuildFinish() {
+		return trigger.getDescriptor().getAddCommentWhenBuildFinish();
+	}
+
 	public String getDefaultComment() {
 		return requestForTestingMessage;
 	}

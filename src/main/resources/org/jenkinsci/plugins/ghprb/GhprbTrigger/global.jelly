@@ -47,6 +47,9 @@
       <f:entry title="${%Access Token}" field="accessToken">
         <f:password />
       </f:entry>
+      <f:entry title="${%Add comment when build finish?}" field="addCommentWhenBuildFinish">
+        <f:checkbox />
+      </f:entry>
       <f:entry title="${%Default success message}" field="msgSuccess">
         <f:textarea default="Test PASSED!"/>
       </f:entry>
