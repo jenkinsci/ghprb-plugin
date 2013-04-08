@@ -2,6 +2,9 @@
   <f:entry title="${%Admin list}" field="adminlist">
     <f:textarea default="${descriptor.adminlist}"/>
   </f:entry>
+  <f:entry title="Use github hooks for build triggering" field="useGitHubHooks">
+    <f:checkbox />
+  </f:entry>
   <f:advanced>
 	<f:entry title="${%Crontab line}" field="cron">
 	  <f:textbox default="${descriptor.cron}"/>

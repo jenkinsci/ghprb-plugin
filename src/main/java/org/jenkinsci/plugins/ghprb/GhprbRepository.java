@@ -13,6 +13,8 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHEvent;
+import org.kohsuke.github.GHEventPayload.IssueComment;
+import org.kohsuke.github.GHEventPayload.PullRequest;
 import org.kohsuke.github.GHHook;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -162,5 +164,52 @@ public class GhprbRepository {
 			Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, "Couldn't create web hook for repository"+reponame , ex);
 			return false;
 		}
+	}
+
+	void onIssueCommentHook(IssueComment issueComment) {
+		int id = issueComment.getIssue().getNumber();
+		System.out.println("id: " + id + " body: '"+issueComment.getComment().getBody()+"'");
+		if(Logger.getLogger(GhprbRepository.class.getName()).isLoggable(Level.FINER)){
+			Logger.getLogger(GhprbRepository.class.getName()).log(
+					Level.FINER,
+					"Comment on issue #{0}: '{1}'",
+					new Object[]{id,issueComment.getComment().getBody()});
+		}
+		System.out.println("action: "+ issueComment.getAction());
+		if(!"created".equals(issueComment.getAction())) return;
+		GhprbPullRequest pull = pulls.get(id);
+		if(pull == null){
+			if(Logger.getLogger(GhprbRepository.class.getName()).isLoggable(Level.FINER)){
+				Logger.getLogger(GhprbRepository.class.getName()).log(Level.FINER, "Pull request #{0} neexistuje", id);
+			}
+			return;
+		}
+		pull.check(issueComment.getComment());
+		GhprbTrigger.getDscp().save();
+	}
+
+	void onPullRequestHook(PullRequest pr) {
+		if("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())){
+			System.out.println("(re)opened");
+			GhprbPullRequest pull = pulls.get(pr.getNumber());
+			if(pull == null){
+				pull = new GhprbPullRequest(pr.getPullRequest(), ml, this);
+				pulls.put(pr.getNumber(), pull);
+			}
+			pull.check(pr.getPullRequest());
+		}else if("synchronize".equals(pr.getAction())){
+			System.out.println("synchro");
+			GhprbPullRequest pull = pulls.get(pr.getNumber());
+			if(pull == null){
+				Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());
+				return;
+			}
+			pull.check(pr.getPullRequest());
+		}else if("closed".equals(pr.getAction())){
+			pulls.remove(pr.getNumber());
+		}else{
+			Logger.getLogger(GhprbRepository.class.getName()).log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
+		}
+		GhprbTrigger.getDscp().save();
 	}
 }

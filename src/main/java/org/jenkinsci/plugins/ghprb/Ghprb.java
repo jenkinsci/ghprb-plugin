@@ -25,6 +25,8 @@ public class Ghprb {
 	private GhprbRepository       repository;
 	private GhprbBuilds           builds;
 	private AbstractProject<?, ?> project;
+
+	private boolean checked = false;
 	
 	private final Pattern retestPhrasePattern;
 	private final Pattern whitelistPhrasePattern;
@@ -59,6 +61,10 @@ public class Ghprb {
 	}
 
 	void run() {
+		if(trigger.getUseGitHubHooks() && checked){
+			return;
+		}
+		checked = true;
 		repository.check();
 	}
 
@@ -167,6 +173,9 @@ public class Ghprb {
 			gml.gitHub = new GhprbGitHub(githubServer);
 			gml.repository = new GhprbRepository(user, repo, gml,pulls);
 			gml.repository.init();
+			if(gml.trigger.getUseGitHubHooks()){
+				gml.repository.createHook();
+			}
 			gml.builds = new GhprbBuilds(gml.trigger,gml.repository);
 			return gml;
 		}

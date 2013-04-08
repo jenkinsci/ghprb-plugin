@@ -53,6 +53,8 @@
       <f:entry title="${%Password}" field="password">
         <f:password />
       </f:entry>
+      <f:validateButton title="${%Create access token}" progress="${%Creating...}"
+        method="createApiToken" with="username,password" />
     </f:advanced>
   </f:section>
 </j:jelly>

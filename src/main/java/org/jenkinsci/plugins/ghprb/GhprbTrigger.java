@@ -16,6 +16,7 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -23,7 +24,9 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
+import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -36,17 +39,19 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private       String whitelist;
 	private final String orgslist;
 	private final String cron;
+	private final Boolean useGitHubHooks;
 	private final Boolean permitAll;
 
 	transient private Ghprb ml;
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, Boolean permitAll) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, Boolean useGitHubHooks, Boolean permitAll) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
 		this.orgslist = orgslist;
 		this.cron = cron;
+		this.useGitHubHooks = useGitHubHooks;
 		this.permitAll = permitAll;
 	}
 
@@ -142,6 +147,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	public String getCron() {
 		return cron;
+	}
+
+	public Boolean getUseGitHubHooks() {
+		return useGitHubHooks != null && useGitHubHooks;
 	}
 
 	public Boolean getPermitAll() {
@@ -327,6 +336,18 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				jobs.put(projectName, ret);
 			}
 			return ret;
+		}
+
+		public FormValidation doCreateApiToken(
+				@QueryParameter("username") final String username,
+		        @QueryParameter("password") final String password){
+			try{
+				GitHub gh = GitHub.connect(username, null, password);
+				GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, GHAuthorization.REPO), "Jenkins Git Hub Pull Request Builder", null);
+				return FormValidation.ok("Access token created: " + token.getToken());
+			}catch(IOException ex){
+				return FormValidation.error("Git Hub API token couldn't be created" + ex.getMessage());
+			}
 		}
 	}
 }
