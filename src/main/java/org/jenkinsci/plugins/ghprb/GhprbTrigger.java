@@ -1,14 +1,13 @@
 package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
-import hudson.model.ParametersAction;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersDefinitionProperty;
 import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.triggers.TimerTrigger;
@@ -16,14 +15,11 @@ import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
@@ -36,73 +32,50 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
-	public final String adminlist;
-	public       String whitelist;
-	public final String orgslist;
-	public final String cron;
-	public       String msgSuccess;
-	public       String msgFailure;
+	private final String adminlist;
+	private       String whitelist;
+	private final String orgslist;
+	private final String cron;
+	private final Boolean permitAll;
 
-	transient private GhprbRepo                      repository;
-	transient private Map<Integer,GhprbPullRequest>  pulls;
-	transient         boolean                        changed;
-	transient         HashSet<String>                admins;
-	transient         HashSet<String>                whitelisted;
-	transient         HashSet<String>                organisations;
-
-	private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
+	transient private Ghprb ml;
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String msgSuccess, String msgFailure) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, Boolean permitAll) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
 		this.orgslist = orgslist;
 		this.cron = cron;
-		this.msgSuccess = msgSuccess;
-		this.msgFailure = msgFailure;
+		this.permitAll = permitAll;
 	}
 
 	@Override
 	public void start(AbstractProject<?, ?> project, boolean newInstance) {
-		String projectName = project.getFullName();
-
-		pulls = DESCRIPTOR.getPullRequests(projectName);
-
-		GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
-		if(ghpp == null || ghpp.getProjectUrl() == null) {
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "A github project url is required.");
+		try{
+			ml = Ghprb.getBuilder()
+			     .setProject(project)
+			     .setTrigger(this)
+			     .setPulls(DESCRIPTOR.getPullRequests(project.getFullName()))
+			     .build();
+		}catch(IllegalStateException ex){
+			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, "Can't start trigger");
 			return;
-		}
-
-		Matcher m = githubUserRepoPattern.matcher(ghpp.getProjectUrl().baseUrl());
-		if(!m.matches()) {
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: {0}", ghpp.getProjectUrl().baseUrl());
-			return;
-		}
-		String githubServer = m.group(1);
-		String user = m.group(2);
-		String repo = m.group(3);
-		repository = new GhprbRepo(this, githubServer, user, repo);
-
-		admins = new HashSet<String>(Arrays.asList(adminlist.split("\\s+")));
-		whitelisted = new HashSet<String>(Arrays.asList(whitelist.split("\\s+")));
-		if(orgslist == null){
-			organisations = new HashSet<String>();
-		}else{
-			organisations = new HashSet<String>(Arrays.asList(orgslist.split("\\s+")));
 		}
 
 		super.start(project, newInstance);
 	}
 
+	public Ghprb getGhprb(){
+		return ml;
+	}
+
 	@Override
 	public void stop() {
-		whitelisted = null;
-		admins = null;
-		organisations = null;
-		repository = null;
-		pulls = null;
+		if(ml != null){
+			ml.stop();
+			ml = null;
+		}
 		super.stop();
 	}
 
@@ -133,18 +106,60 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@Override
 	public void run() {
-		changed = false;
-		repository.check(pulls);
-		if(changed) try {
+		ml.run();
+		DESCRIPTOR.save();
+	}
+
+	public void addWhitelist(String author){
+		whitelist = whitelist + " " + author;
+		try {
 			this.job.save();
 		} catch (IOException ex) {
-			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(GhprbTrigger.class.getName()).log(Level.SEVERE, "Failed to save new whitelist", ex);
 		}
-		DESCRIPTOR.save();
+	}
+
+	public String getAdminlist() {
+		if(adminlist == null){
+			return "";
+		}
+		return adminlist;
+	}
+
+	public String getWhitelist() {
+		if(whitelist == null){
+			return "";
+		}
+		return whitelist;
+	}
+
+	public String getOrgslist() {
+		if(orgslist == null){
+			return "";
+		}
+		return orgslist;
+	}
+
+	public String getCron() {
+		return cron;
+	}
+
+	public Boolean getPermitAll() {
+		return permitAll != null && permitAll;
+	}
+
+	public static GhprbTrigger getTrigger(AbstractProject p){
+		Trigger trigger = p.getTrigger(GhprbTrigger.class);
+		if(trigger == null || (!(trigger instanceof GhprbTrigger))) return null;
+		return (GhprbTrigger) trigger;
 	}
 
 	@Override
 	public DescriptorImpl getDescriptor() {
+		return DESCRIPTOR;
+	}
+
+	public static DescriptorImpl getDscp(){
 		return DESCRIPTOR;
 	}
 
@@ -293,6 +308,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getMsgFailure() {
 			return msgFailure;
+		}
+
+		public boolean isAutoCloseFailedPullRequests(){
+			return (autoCloseFailedPullRequests != null && autoCloseFailedPullRequests);
+		}
+
+		public boolean isUseComments(){
+			return (useComments != null && useComments);
 		}
 
 		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {

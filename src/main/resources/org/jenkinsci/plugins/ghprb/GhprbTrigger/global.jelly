@@ -3,10 +3,7 @@
     <f:entry title="${%Github server api URL}" field="serverAPIUrl">
       <f:textbox default="api.github.com"/>
     </f:entry>
-    <f:entry title="${%Username}" field="username">
-      <f:textbox />
-    </f:entry>
-    <f:entry title="${%Password}" field="password">
+    <f:entry title="${%Access Token}" field="accessToken">
       <f:password />
     </f:entry>
     <f:entry title="${%Use comments to report results when updating commit status fails}" field="useComments">
@@ -44,14 +41,17 @@
       <f:entry title="${%Crontab line}" field="cron">
         <f:textbox default="*/5 * * * *"/>
       </f:entry>
-      <f:entry title="${%Access Token}" field="accessToken">
-        <f:password />
-      </f:entry>
       <f:entry title="${%Default success message}" field="msgSuccess">
         <f:textarea default="Test PASSED!"/>
       </f:entry>
       <f:entry title="${%Default failure message}" field="msgFailure">
         <f:textarea default="Test failed."/>
+      </f:entry>
+      <f:entry title="${%Username}" field="username">
+        <f:textbox />
+      </f:entry>
+      <f:entry title="${%Password}" field="password">
+        <f:password />
       </f:entry>
     </f:advanced>
   </f:section>
