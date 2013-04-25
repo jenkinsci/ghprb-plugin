@@ -92,7 +92,7 @@ public class GhprbBuilds {
 		}
 
 		// close failed pull request automatically
-		if (state == GHCommitState.FAILURE && GhprbTrigger.getDscp().isAutoCloseFailedPullRequests()) {
+		if (state == GHCommitState.FAILURE && trigger.getDescriptor().getAutoCloseFailedPullRequests()) {
 			repo.closePullRequest(c.getPullID());
 		}
 	}
