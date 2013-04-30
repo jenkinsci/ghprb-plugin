@@ -6,6 +6,9 @@
     <f:checkbox />
   </f:entry>
   <f:advanced>
+	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
+		<f:checkbox />
+	</f:entry>
 	<f:entry title="${%Crontab line}" field="cron">
 	  <f:textbox default="${descriptor.cron}"/>
 	</f:entry>
