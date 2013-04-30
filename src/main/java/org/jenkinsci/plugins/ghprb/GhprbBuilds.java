@@ -33,15 +33,13 @@ public class GhprbBuilds {
 			sb.append(" Build triggered.");
 		}
 
-		startJob(pr.getId(),pr.getHead(), pr.isMergeable());
-		return sb.toString();
-	}
+		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget());
 
-	private void startJob(int id, String commit, boolean merged) {
-		QueueTaskFuture<?> build = trigger.startJob(new GhprbCause(commit, id, merged));
+		QueueTaskFuture<?> build = trigger.startJob(cause);
 		if(build == null){
 			Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, "Job didn't started");
 		}
+		return sb.toString();
 	}
 
 	private boolean cancelBuild(int id) {
@@ -57,7 +55,7 @@ public class GhprbBuilds {
 	public void onStarted(AbstractBuild build) {
 		GhprbCause c = getCause(build);
 		if(c == null) return;
-		
+
 		repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."),c.getPullID());
 		try {
 			build.setDescription("<a href=\"" + repo.getRepoUrl()+"/pull/"+c.getPullID()+"\">Pull request #"+c.getPullID()+"</a>");
