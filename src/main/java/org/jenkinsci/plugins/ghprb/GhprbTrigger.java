@@ -159,8 +159,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		return permitAll != null && permitAll;
 	}
 
-	public Boolean getAutoCloseFailedPullRequests() {
-		return autoCloseFailedPullRequests != null && autoCloseFailedPullRequests;
+	public Boolean isAutoCloseFailedPullRequests() {
+		if(autoCloseFailedPullRequests == null){
+			Boolean autoClose = getDescriptor().getAutoCloseFailedPullRequests();
+			return (autoClose != null && autoClose);
+		}else{
+			return autoCloseFailedPullRequests;
+		}
 	}
 
 	public static GhprbTrigger getTrigger(AbstractProject p){
@@ -323,10 +328,6 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getMsgFailure() {
 			return msgFailure;
-		}
-
-		public boolean isAutoCloseFailedPullRequests(){
-			return (autoCloseFailedPullRequests != null && autoCloseFailedPullRequests);
 		}
 
 		public boolean isUseComments(){
