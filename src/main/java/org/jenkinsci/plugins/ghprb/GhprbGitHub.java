@@ -13,11 +13,6 @@ import org.kohsuke.github.GitHub;
  */
 public class GhprbGitHub {
 	private GitHub gh;
-	private String gitHubServer;
-
-	public GhprbGitHub(String gitHubServer){
-		this.gitHubServer = gitHubServer;
-	}
 
 	private void connect() throws IOException{
 		String accessToken = GhprbTrigger.getDscp().getAccessToken();
@@ -39,10 +34,6 @@ public class GhprbGitHub {
 			connect();
 		}
 		return gh;
-	}
-
-	public String getGitHubServer(){
-		return gitHubServer;
 	}
 
 	public boolean isUserMemberOfOrganization(String organisation, String member){

@@ -20,11 +20,11 @@ public class Ghprb {
 	private HashSet<String>       admins;
 	private HashSet<String>       whitelisted;
 	private HashSet<String>       organisations;
-	private GhprbGitHub           gitHub;
 	private GhprbTrigger          trigger;
 	private GhprbRepository       repository;
 	private GhprbBuilds           builds;
 	private AbstractProject<?, ?> project;
+	private String                githubServer;
 
 	private boolean checked = false;
 	
@@ -57,7 +57,7 @@ public class Ghprb {
 	}
 
 	public GhprbGitHub getGitHub() {
-		return gitHub;
+		return trigger.getDescriptor().getGitHub();
 	}
 
 	void run() {
@@ -105,20 +105,22 @@ public class Ghprb {
 
 	private boolean isInWhitelistedOrganisation(String username) {
 		for(String organisation : organisations){
-			if(gitHub.isUserMemberOfOrganization(organisation,username)){
+			if(getGitHub().isUserMemberOfOrganization(organisation,username)){
 				return true;
 			}
 		}
 		return false;
 	}
 
+	String getGitHubServer() {
+		return githubServer;
+	}
 
 
 	/*               BUILDER                */
 
 	public static class Builder{
 		private Ghprb gml = new Ghprb();
-		private String githubServer;
 		private String user;
 		private String repo;
 		private Map<Integer, GhprbPullRequest> pulls;
@@ -160,7 +162,7 @@ public class Ghprb {
 				gml = null;
 				return this;
 			}
-			githubServer = m.group(1);
+			gml.githubServer = m.group(1);
 			user = m.group(2);
 			repo = m.group(3);
 			return this;
@@ -170,7 +172,6 @@ public class Ghprb {
 			if(gml == null || pulls == null || gml.trigger == null || gml.project == null){
 				throw new IllegalStateException();
 			}
-			gml.gitHub = new GhprbGitHub(githubServer);
 			gml.repository = new GhprbRepository(user, repo, gml,pulls);
 			gml.repository.init();
 			if(gml.trigger.getUseGitHubHooks()){

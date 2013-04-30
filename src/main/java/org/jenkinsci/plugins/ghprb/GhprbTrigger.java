@@ -204,6 +204,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String msgSuccess = "Test PASSed.";
 		private String msgFailure = "Test FAILed.";
 
+		private transient GhprbGitHub gh;
+
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
 
@@ -243,6 +245,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			msgSuccess = formData.getString("msgSuccess");
 			msgFailure = formData.getString("msgFailure");
 			save();
+			gh = new GhprbGitHub();
 			return super.configure(req,formData);
 		}
 
@@ -338,6 +341,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public boolean isUseComments(){
 			return (useComments != null && useComments);
+		}
+
+		public GhprbGitHub getGitHub(){
+			if(gh == null){
+				gh = new GhprbGitHub();
+			}
+			return gh;
 		}
 
 		private Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {

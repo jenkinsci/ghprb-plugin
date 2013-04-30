@@ -139,7 +139,7 @@ public class GhprbRepository {
 	}
 
 	public String getRepoUrl(){
-		return ml.getGitHub().getGitHubServer()+"/"+reponame;
+		return ml.getGitHubServer()+"/"+reponame;
 	}
 
 
