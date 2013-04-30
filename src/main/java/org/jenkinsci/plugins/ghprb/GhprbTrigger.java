@@ -201,8 +201,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
 		private Boolean autoCloseFailedPullRequests = false;
-		private String msgSuccess;
-		private String msgFailure;
+		private String msgSuccess = "Test PASSed.";
+		private String msgFailure = "Test FAILed.";
 
 		// map of jobs (by their fullName) abd their map of pull requests
 		private Map<String, Map<Integer,GhprbPullRequest>> jobs;
@@ -323,10 +323,16 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 
 		public String getMsgSuccess() {
+			if(msgSuccess == null){
+				return "Test PASSed.";
+			}
 			return msgSuccess;
 		}
 
 		public String getMsgFailure() {
+			if(msgFailure == null){
+				return "Test FAILed.";
+			}
 			return msgFailure;
 		}
 

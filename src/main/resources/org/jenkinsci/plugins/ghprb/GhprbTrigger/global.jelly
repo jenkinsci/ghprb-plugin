@@ -42,10 +42,10 @@
         <f:textbox default="*/5 * * * *"/>
       </f:entry>
       <f:entry title="${%Default success message}" field="msgSuccess">
-        <f:textarea default="Test PASSED!"/>
+        <f:textarea default="Test PASSed."/>
       </f:entry>
       <f:entry title="${%Default failure message}" field="msgFailure">
-        <f:textarea default="Test failed."/>
+        <f:textarea default="Test FAILed."/>
       </f:entry>
       <f:entry title="${%Username}" field="username">
         <f:textbox />
