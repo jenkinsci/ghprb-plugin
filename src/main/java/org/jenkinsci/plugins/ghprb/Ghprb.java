@@ -77,7 +77,7 @@ public class Ghprb {
 	/*          INFO METHODS                */
 
 	public String getHookUrl(){
-		return Jenkins.getInstance().getRootUrl() + project.getUrl() + GhprbProjectAction.URL + "/";
+		return Jenkins.getInstance().getRootUrl() + GhprbRootAction.URL + "/";
 	}
 
 	public boolean isRetestPhrase(String comment){

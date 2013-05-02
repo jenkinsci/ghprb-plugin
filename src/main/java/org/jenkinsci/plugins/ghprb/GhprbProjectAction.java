@@ -1,9 +1,7 @@
-
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.ProminentProjectAction;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,6 +11,7 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  * @author janinko
  */
+@Deprecated
 public class GhprbProjectAction implements ProminentProjectAction{
 	static final String URL = "ghprbhook";
 	private GhprbGitHub gh;

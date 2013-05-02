@@ -12,6 +12,7 @@ import java.util.Collections;
  * @author janinko
  */
 @Extension
+@Deprecated
 public class GhprbTransientProjectActionFactory extends TransientProjectActionFactory{
 
 	@Override

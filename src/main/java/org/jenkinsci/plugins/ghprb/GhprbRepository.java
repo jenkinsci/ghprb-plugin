@@ -143,7 +143,7 @@ public class GhprbRepository {
 	}
 
 
-	private static final EnumSet EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
+	private static final EnumSet<GHEvent> EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 	private boolean hookExist() throws IOException{
 		for(GHHook h : repo.getHooks()){
 			if(!"web".equals(h.getName())) continue;
