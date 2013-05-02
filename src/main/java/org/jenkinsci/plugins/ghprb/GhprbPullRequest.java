@@ -171,7 +171,16 @@ public class GhprbPullRequest{
 
 	private void checkMergeable(GHPullRequest pr) {
 		try {
-			mergeable = pr.getMergeable();
+			int r=5;
+			while(pr.getMergeable() == null && r-->0){
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ex) {
+					break;
+				}
+				pr = repo.getPullRequest(id);
+			}
+			mergeable = pr.getMergeable() != null && pr.getMergeable();
 		} catch (IOException e) {
 			mergeable = false;
 			Logger.getLogger(GhprbPullRequest.class.getName()).log(Level.SEVERE, "Couldn't obtain mergeable status.", e);

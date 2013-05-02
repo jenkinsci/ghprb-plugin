@@ -166,6 +166,10 @@ public class GhprbRepository {
 		}
 	}
 
+	public GHPullRequest getPullRequest(int id) throws IOException{
+		return repo.getPullRequest(id);
+	}
+
 	void onIssueCommentHook(IssueComment issueComment) {
 		int id = issueComment.getIssue().getNumber();
 		System.out.println("id: " + id + " body: '"+issueComment.getComment().getBody()+"'");
