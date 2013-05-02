@@ -52,6 +52,7 @@ public class GhprbPullRequest{
 	public void init(Ghprb helper, GhprbRepository repo) {
 		this.ml = helper;
 		this.repo = repo;
+		if(reponame == null) reponame = repo.getName(); // If this instance was created before v1.8, it can be null.
 	}
 
 	public void check(GHPullRequest pr){
