@@ -12,6 +12,7 @@ import org.kohsuke.github.GitHub;
  * @author janinko
  */
 public class GhprbGitHub {
+	private static final Logger logger = Logger.getLogger(GhprbGitHub.class.getName());
 	private GitHub gh;
 
 	private void connect() throws IOException{
@@ -21,7 +22,7 @@ public class GhprbGitHub {
 			try {
 				gh = GitHub.connectUsingOAuth(serverAPIUrl, accessToken);
 			} catch(IOException e) {
-				Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, "Can''t connect to {0} using oauth", serverAPIUrl);
+				logger.log(Level.SEVERE, "Can''t connect to {0} using oauth", serverAPIUrl);
 				throw e;
 			}
 		} else {
@@ -46,7 +47,7 @@ public class GhprbGitHub {
 				}
 			}
 		} catch (IOException ex) {
-			Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, null, ex);
+			logger.log(Level.SEVERE, null, ex);
 			return false;
 		}
 		return false;

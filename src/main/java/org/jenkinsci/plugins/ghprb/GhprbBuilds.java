@@ -13,6 +13,7 @@ import org.kohsuke.github.GHCommitState;
  * @author janinko
  */
 public class GhprbBuilds {
+	private static final Logger logger = Logger.getLogger(GhprbBuilds.class.getName());
 	private GhprbTrigger trigger;
 	private GhprbRepository repo;
 
@@ -37,7 +38,7 @@ public class GhprbBuilds {
 
 		QueueTaskFuture<?> build = trigger.startJob(cause);
 		if(build == null){
-			Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, "Job didn't started");
+			logger.log(Level.SEVERE, "Job didn't started");
 		}
 		return sb.toString();
 	}
@@ -60,7 +61,7 @@ public class GhprbBuilds {
 		try {
 			build.setDescription("<a href=\"" + repo.getRepoUrl()+"/pull/"+c.getPullID()+"\">Pull request #"+c.getPullID()+"</a>");
 		} catch (IOException ex) {
-			Logger.getLogger(GhprbBuilds.class.getName()).log(Level.SEVERE, "Can't update build description", ex);
+			logger.log(Level.SEVERE, "Can't update build description", ex);
 		}
 	}
 

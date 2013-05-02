@@ -23,6 +23,7 @@ import org.kohsuke.stapler.StaplerResponse;
  */
 @Extension
 public class GhprbRootAction implements UnprotectedRootAction {
+	private static final Logger logger = Logger.getLogger(GhprbRootAction.class.getName());
 	static final String URL = "ghprbhook";
 	
 	public String getIconFileName() {
@@ -41,13 +42,13 @@ public class GhprbRootAction implements UnprotectedRootAction {
 		String event = req.getHeader("X-Github-Event");
 		String payload = req.getParameter("payload");
 		if(payload == null){
-			Logger.getLogger(GhprbRootAction.class.getName()).log(Level.SEVERE, "Request doesn't contain payload.");
+			logger.log(Level.SEVERE, "Request doesn't contain payload.");
 			return;
 		}
 
 		GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
 
-		Logger.getLogger(GhprbRootAction.class.getName()).log(Level.WARNING, "Got payload event: {0}", event);
+		logger.log(Level.INFO, "Got payload event: {0}", event);
 		try{
 			if("issue_comment".equals(event)){
 				GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
@@ -61,10 +62,10 @@ public class GhprbRootAction implements UnprotectedRootAction {
 					repo.onPullRequestHook(pr);
 				}
 			}else{
-				Logger.getLogger(GhprbRootAction.class.getName()).log(Level.WARNING, "Request not known");
+				logger.log(Level.WARNING, "Request not known");
 			}
 		}catch(IOException ex){
-			Logger.getLogger(GhprbRootAction.class.getName()).log(Level.SEVERE, "Failed to parse github hook payload.", ex);
+			logger.log(Level.SEVERE, "Failed to parse github hook payload.", ex);
 		}
 	}
 

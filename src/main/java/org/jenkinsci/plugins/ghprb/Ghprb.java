@@ -15,6 +15,7 @@ import jenkins.model.Jenkins;
  * @author janinko
  */
 public class Ghprb {
+	private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
 	private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
 	private HashSet<String>       admins;
@@ -43,7 +44,7 @@ public class Ghprb {
 	}
 
 	public void addWhitelist(String author){
-		Logger.getLogger(GhprbRepository.class.getName()).log(Level.INFO, "Adding {0} to whitelist", author);
+		logger.log(Level.INFO, "Adding {0} to whitelist", author);
 		whitelisted.add(author);
 		trigger.addWhitelist(author);
 	}
@@ -151,14 +152,14 @@ public class Ghprb {
 			gml.project = project;
 			GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
 			if(ghpp == null || ghpp.getProjectUrl() == null) {
-				Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "A github project url is required.");
+				logger.log(Level.WARNING, "A github project url is required.");
 				gml = null;
 				return this;
 			}
 			String baseUrl = ghpp.getProjectUrl().baseUrl();
 			Matcher m = githubUserRepoPattern.matcher(baseUrl);
 			if(!m.matches()) {
-				Logger.getLogger(GhprbTrigger.class.getName()).log(Level.WARNING, "Invalid github project url: {0}", baseUrl);
+				logger.log(Level.WARNING, "Invalid github project url: {0}", baseUrl);
 				gml = null;
 				return this;
 			}
