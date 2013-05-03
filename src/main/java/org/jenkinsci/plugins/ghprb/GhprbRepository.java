@@ -73,6 +73,12 @@ public class GhprbRepository {
 		Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
 		for(GHPullRequest pr : prs){
+			try {
+				pr = repo.getPullRequest(pr.getNumber());
+			} catch (IOException ex) {
+				Logger.getLogger(GhprbRepository.class.getName()).log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+				return;
+			}
 			check(pr);
 			closedPulls.remove(pr.getNumber());
 		}
