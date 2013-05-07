@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHPullRequest;
 
 /**
  * @author janinko
@@ -92,7 +94,16 @@ public class GhprbBuilds {
 
 		// close failed pull request automatically
 		if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
-			repo.closePullRequest(c.getPullID());
+
+			try {
+				GHPullRequest pr = repo.getPullRequest(c.getPullID());
+
+				if (pr.getState().equals(GHIssueState.OPEN)) {
+					repo.closePullRequest(c.getPullID());
+				}
+			} catch (IOException ex) {
+				logger.log(Level.SEVERE, "Can't close pull request", ex);
+			}
 		}
 	}
 }
