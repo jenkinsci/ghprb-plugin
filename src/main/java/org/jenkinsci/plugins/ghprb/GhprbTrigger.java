@@ -41,6 +41,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private       String whitelist;
 	private final String orgslist;
 	private final String cron;
+	private final String triggerPhrase;
+	private final Boolean onlyTriggerPhrase;
 	private final Boolean useGitHubHooks;
 	private final Boolean permitAll;
 	private Boolean autoCloseFailedPullRequests;
@@ -48,12 +50,15 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	transient private Ghprb ml;
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests) throws ANTLRException{
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String triggerPhrase,
+			Boolean onlyTriggerPhrase, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
 		this.orgslist = orgslist;
 		this.cron = cron;
+		this.triggerPhrase = triggerPhrase;
+		this.onlyTriggerPhrase = onlyTriggerPhrase;
 		this.useGitHubHooks = useGitHubHooks;
 		this.permitAll = permitAll;
 		this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
@@ -158,6 +163,17 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	public String getCron() {
 		return cron;
+	}
+	
+	public String getTriggerPhrase() {
+		if(triggerPhrase == null){
+			return "";
+		}
+		return triggerPhrase;
+	}
+	
+	public Boolean getOnlyTriggerPhrase() {
+		return onlyTriggerPhrase != null && onlyTriggerPhrase;
 	}
 
 	public Boolean getUseGitHubHooks() {

@@ -41,7 +41,9 @@ public class GhprbPullRequest{
 
 		if(helper.isWhitelisted(author)){
 			accepted = true;
-			shouldRun = true;
+			if(!helper.ifOnlyTriggerPhrase()) {
+				shouldRun = true;
+			}
 		}else{
 			logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author, reponame});
 			repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
@@ -116,7 +118,7 @@ public class GhprbPullRequest{
 		}
 
 		head = sha;
-		if(accepted){
+		if(!ml.ifOnlyTriggerPhrase() && accepted){
 			shouldRun = true;
 		}
 		return true;
@@ -132,22 +134,31 @@ public class GhprbPullRequest{
 				ml.addWhitelist(author);
 			}
 			accepted = true;
-			shouldRun = true;
+			if (!ml.ifOnlyTriggerPhrase()) {
+				shouldRun = true;
+			}
 		}
 
 		// ok to test
-		if(ml.isOktotestPhrase(body) && ml.isAdmin(sender)){
+		if (ml.isOktotestPhrase(body) && ml.isAdmin(sender)){
 			accepted = true;
-			shouldRun = true;
+			if (!ml.ifOnlyTriggerPhrase()) {
+				shouldRun = true;
+			}
 		}
 
 		// test this please
-		if (ml.isRetestPhrase(body)){
+		if (ml.isRetestPhrase(body) && !ml.ifOnlyTriggerPhrase()){
 			if(ml.isAdmin(sender)){
 				shouldRun = true;
 			}else if(accepted && ml.isWhitelisted(sender) ){
 				shouldRun = true;
 			}
+		}
+		
+		// trigger phrase
+		if (ml.isTriggerPhrase(body) && ml.isWhitelisted(sender)){
+			shouldRun = true;
 		}
 	}
 
