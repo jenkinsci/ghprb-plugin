@@ -368,7 +368,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				@QueryParameter("username") final String username,
 		        @QueryParameter("password") final String password){
 			try{
-				GitHub gh = GitHub.connect(username, null, password);
+				GitHub gh = GitHub.connectToEnterprise(this.serverAPIUrl, username, password);
 				GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, GHAuthorization.REPO), "Jenkins Git Hub Pull Request Builder", null);
 				return FormValidation.ok("Access token created: " + token.getToken());
 			}catch(IOException ex){
