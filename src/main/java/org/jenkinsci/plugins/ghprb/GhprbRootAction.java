@@ -57,8 +57,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 				}
 			}else if("pull_request".equals(event)) {
 				GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
-				//for(GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())){ // not working with github-api v1.40
-				for(GhprbRepository repo : getRepos(pr.getPullRequest().getBase().getRepository())){ // WA until ^^ fixed
+				for(GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())){
 					repo.onPullRequestHook(pr);
 				}
 			}else{
@@ -76,7 +75,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 	private Set<GhprbRepository> getRepos(String repo){
 		HashSet<GhprbRepository> ret = new HashSet<GhprbRepository>();
 
-		// We need this to get acces to list of repositories
+		// We need this to get access to list of repositories
 		Authentication old = SecurityContextHolder.getContext().getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
 
