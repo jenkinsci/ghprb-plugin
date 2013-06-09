@@ -1,6 +1,6 @@
 This plugin builds pull requests from github and reports the results.
 
-https://wiki.jenkins-ci.org/display/JENKINS/Github+pull+request+builder+plugin
+https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
 
 When a new pull request is opened in the project and the author of the pull
 request isn't whitelisted, builder will ask ``Can one of the
