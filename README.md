@@ -16,7 +16,7 @@ A new build can also be started with a comment: ``retest this please``.
 
 ### Requirements:
 github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)  
-github plugin (https://wiki.jenkins-ci.org/display/JENKINS/Github+Plugin)  
+github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
 git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)  
 
 ### Pre-installation:
@@ -26,8 +26,8 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
 ### Installation:
 * Install the plugin.  
-* Go to ``Manage Jenkins`` -> ``Configure System`` -> ``Github pull requests builder`` section.  
-* If you are using Enterprise GitHub set the server api URL in ``Github server api URL``. Otherwise leave there ``https://api.github.com``.  
+* Go to ``Manage Jenkins`` -> ``Configure System`` -> ``GitHub pull requests builder`` section.
+* If you are using Enterprise GitHub set the server api URL in ``GitHub server api URL``. Otherwise leave there ``https://api.github.com``.
 * Set your 'bot' user's Access Token.  
   * If you don't have generated your access token you can generate one in ``Advanced...``.  
     * Set your 'bot' user's GitHub username and password.  
@@ -50,7 +50,7 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 * Add your GitHub ``Repository URL``.  
 * Under Advanced, set ``refspec`` to ``+refs/pull/*:refs/remotes/origin/pr/*``.  
 * In ``Branch Specifier``, enter ``${sha1}``.  
-* Under ``Build Triggers``, check ``Github pull requests builder``.  
+* Under ``Build Triggers``, check ``GitHub pull requests builder``.
   * Add admins for this specific job.  
   * If you want to use GitHub hooks for automatic testing, read the help for ``Use github hooks for build triggering`` in job configuration. Then you can check the checkbox.
   * In Advanced, you can modify:  

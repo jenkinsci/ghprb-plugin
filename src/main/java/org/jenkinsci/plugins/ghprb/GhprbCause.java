@@ -20,7 +20,7 @@ public class GhprbCause extends Cause{
 
 	@Override
 	public String getShortDescription() {
-		return "Github pull request #" + pullID + " of commit " + commit + (merged? " automatically merged." : ".");
+		return "GitHub pull request #" + pullID + " of commit " + commit + (merged? " automatically merged." : ".");
 	}
 
 	public String getCommit() {

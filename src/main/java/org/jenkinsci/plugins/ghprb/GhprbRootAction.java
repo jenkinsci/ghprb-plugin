@@ -39,7 +39,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 	}
 
 	public void doIndex(StaplerRequest req, StaplerResponse resp) {
-		String event = req.getHeader("X-Github-Event");
+		String event = req.getHeader("X-GitHub-Event");
 		String payload = req.getParameter("payload");
 		if(payload == null){
 			logger.log(Level.SEVERE, "Request doesn't contain payload.");
