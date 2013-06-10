@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>ghprb</artifactId>
-    <name>Github Pull Request Builder</name>
+    <name>GitHub Pull Request Builder</name>
     <version>1.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
@@ -30,7 +30,7 @@
     </scm>
 
     <issueManagement>
-        <system>Github</system>
+        <system>GitHub</system>
         <url>https://github.com/janinko/ghprb/issues</url>
     </issueManagement>
 

@@ -117,10 +117,10 @@ public class GhprbRepository {
 			repo.createCommitStatus(sha1, state, url, message);
 		} catch (IOException ex) {
 			if(GhprbTrigger.getDscp().getUseComments()){
-				logger.log(Level.INFO, "Could not update commit status of the Pull Request on Github. Trying to send comment.", ex);
+				logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
 				addComment(id, message);
 			}else{
-				logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on Github.", ex);
+				logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.", ex);
 			}
 		}
 	}
@@ -133,7 +133,7 @@ public class GhprbRepository {
 		try {
 			repo.getPullRequest(id).comment(comment);
 		} catch (IOException ex) {
-			logger.log(Level.SEVERE, "Couldn't add comment to pullrequest #" + id + ": '" + comment + "'", ex);
+			logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
 		}
 	}
 
@@ -141,7 +141,7 @@ public class GhprbRepository {
 		try {
 			repo.getPullRequest(id).close();
 		} catch (IOException ex) {
-			logger.log(Level.SEVERE, "Couldn't close the pullrequest #" + id + ": '", ex);
+			logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
 		}
 	}
 

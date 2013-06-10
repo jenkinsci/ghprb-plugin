@@ -226,7 +226,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		@Override
 		public String getDisplayName() {
-			return "Github pull requests builder";
+			return "GitHub pull requests builder";
 		}
 
 		@Override
@@ -252,12 +252,12 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			return super.configure(req,formData);
 		}
 
-		// Github username may only contain alphanumeric characters or dashes and cannot begin with a dash
+		// GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
 		private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
 		public FormValidation doCheckAdminlist(@QueryParameter String value)
 				throws ServletException {
 			if(!adminlistPattern.matcher(value).matches()){
-				return FormValidation.error("Github username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespece.");
+				return FormValidation.error("GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespece.");
 			}
 			return FormValidation.ok();
 		}
@@ -269,7 +269,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		public FormValidation doCheckServerAPIUrl(@QueryParameter String value){
 			if("https://api.github.com".equals(value)) return FormValidation.ok();
 			if(value.endsWith("/api/v3")) return FormValidation.ok();
-			return FormValidation.warning("Github api url is \"https://api.github.com\". Github enterprise api url ends with \"/api/v3\"");
+			return FormValidation.warning("GitHub api url is \"https://api.github.com\". GitHub enterprise api url ends with \"/api/v3\"");
 		}
 
 		public String getUsername() {
@@ -369,10 +369,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		        @QueryParameter("password") final String password){
 			try{
 				GitHub gh = GitHub.connectToEnterprise(this.serverAPIUrl, username, password);
-				GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, GHAuthorization.REPO), "Jenkins Git Hub Pull Request Builder", null);
+				GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, GHAuthorization.REPO), "Jenkins GitHub Pull Request Builder", null);
 				return FormValidation.ok("Access token created: " + token.getToken());
 			}catch(IOException ex){
-				return FormValidation.error("Git Hub API token couldn't be created" + ex.getMessage());
+				return FormValidation.error("GitHub API token couldn't be created" + ex.getMessage());
 			}
 		}
 	}
