@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
@@ -60,6 +61,10 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@Override
 	public void start(AbstractProject<?, ?> project, boolean newInstance) {
+		if (project.getProperty(GithubProjectProperty.class) == null) {
+			logger.log(Level.INFO, "GitHub project not set up, cannot start trigger for job " + project.getName());
+			return;
+		}
 		try{
 			ml = Ghprb.getBuilder()
 			     .setProject(project)
@@ -116,6 +121,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@Override
 	public void run() {
+		if (ml == null) return;
 		ml.run();
 		DESCRIPTOR.save();
 	}
