@@ -23,6 +23,7 @@ public class GhprbPullRequest{
 
 	private boolean shouldRun = false;
 	private boolean accepted = false;
+	private boolean triggered = false;
 	@Deprecated private transient boolean askedForApproval; // TODO: remove
 
 	private transient Ghprb ml;
@@ -84,6 +85,9 @@ public class GhprbPullRequest{
 		} catch (IOException ex) {
 			logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
 			return;
+		}
+		if(ml.ifOnlyTriggerPhrase() && !triggered){
+			shouldRun = false;
 		}
 		if (shouldRun) {
 			build();
@@ -148,6 +152,11 @@ public class GhprbPullRequest{
 			}else if(accepted && ml.isWhitelisted(sender) ){
 				shouldRun = true;
 			}
+		}
+
+		// trigger phrase
+		if (ml.isTriggerPhrase(body) && ml.isWhitelisted(sender)){
+			triggered = true;
 		}
 	}
 

@@ -32,11 +32,13 @@ public class Ghprb {
 	private final Pattern retestPhrasePattern;
 	private final Pattern whitelistPhrasePattern;
 	private final Pattern oktotestPhrasePattern;
+	private final Pattern triggerPhrasePattern;
 
 	private Ghprb(){
 		retestPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getWhitelistPhrase());
 		oktotestPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getOkToTestPhrase());
+		triggerPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getTriggerPhrase());
 	}
 	
 	public static Builder getBuilder(){
@@ -91,6 +93,14 @@ public class Ghprb {
 
 	public boolean isOktotestPhrase(String comment){
 		return oktotestPhrasePattern.matcher(comment).matches();
+	}
+
+	public boolean isTriggerPhrase(String comment){
+		return triggerPhrasePattern.matcher(comment).matches();
+	}
+
+	public boolean ifOnlyTriggerPhrase() {
+		return trigger.getOnlyTriggerPhrase();
 	}
 
 	public boolean isWhitelisted(String username){
