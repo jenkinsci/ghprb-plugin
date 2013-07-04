@@ -18,8 +18,8 @@ public class GhprbTransientProjectActionFactory extends TransientProjectActionFa
 	@Override
 	public Collection<? extends Action> createFor(AbstractProject project) {
 		GhprbTrigger trigger = GhprbTrigger.getTrigger(project);
-		if(trigger == null){
-			return Collections.EMPTY_LIST;
+		if (trigger == null || trigger.getGhprb() == null) {
+			return Collections.emptyList();
 		}
 
 		return Collections.singleton(new GhprbProjectAction(trigger));

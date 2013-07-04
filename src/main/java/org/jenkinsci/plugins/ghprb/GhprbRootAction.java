@@ -82,7 +82,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 		try{
 			for(AbstractProject<?,?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)){
 				GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
-				if(trigger == null) continue;
+				if (trigger == null || trigger.getGhprb() == null) continue;
 				GhprbRepository r = trigger.getGhprb().getRepository();
 				if(repo.equals(r.getName())){
 					ret.add(r);
