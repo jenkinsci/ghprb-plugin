@@ -213,7 +213,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
 		private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
-		private String triggerPhrase = ".*trigger\\W+this.*;
+		private String triggerPhrase = ".*trigger\\W+this.*";
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
