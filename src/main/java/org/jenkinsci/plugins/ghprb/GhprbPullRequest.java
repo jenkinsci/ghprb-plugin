@@ -23,6 +23,7 @@ public class GhprbPullRequest{
 
 	private boolean shouldRun = false;
 	private boolean accepted = false;
+	private boolean triggered = false;
 	@Deprecated private transient boolean askedForApproval; // TODO: remove
 
 	private transient Ghprb ml;
@@ -41,9 +42,7 @@ public class GhprbPullRequest{
 
 		if(helper.isWhitelisted(author)){
 			accepted = true;
-			if(!helper.ifOnlyTriggerPhrase()) {
-				shouldRun = true;
-			}
+			shouldRun = true;
 		}else{
 			logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author, reponame});
 			repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
@@ -87,6 +86,9 @@ public class GhprbPullRequest{
 			logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
 			return;
 		}
+		if(ml.ifOnlyTriggerPhrase() && !triggered){
+			shouldRun = false;
+		}
 		if (shouldRun) {
 			build();
 		}
@@ -118,7 +120,7 @@ public class GhprbPullRequest{
 		}
 
 		head = sha;
-		if(!ml.ifOnlyTriggerPhrase() && accepted){
+		if(accepted){
 			shouldRun = true;
 		}
 		return true;
@@ -134,31 +136,27 @@ public class GhprbPullRequest{
 				ml.addWhitelist(author);
 			}
 			accepted = true;
-			if (!ml.ifOnlyTriggerPhrase()) {
-				shouldRun = true;
-			}
+			shouldRun = true;
 		}
 
 		// ok to test
-		if (ml.isOktotestPhrase(body) && ml.isAdmin(sender)){
+		if(ml.isOktotestPhrase(body) && ml.isAdmin(sender)){
 			accepted = true;
-			if (!ml.ifOnlyTriggerPhrase()) {
-				shouldRun = true;
-			}
+			shouldRun = true;
 		}
 
 		// test this please
-		if (ml.isRetestPhrase(body) && !ml.ifOnlyTriggerPhrase()){
+		if (ml.isRetestPhrase(body)){
 			if(ml.isAdmin(sender)){
 				shouldRun = true;
 			}else if(accepted && ml.isWhitelisted(sender) ){
 				shouldRun = true;
 			}
 		}
-		
+
 		// trigger phrase
 		if (ml.isTriggerPhrase(body) && ml.isWhitelisted(sender)){
-			shouldRun = true;
+			triggered = true;
 		}
 	}
 

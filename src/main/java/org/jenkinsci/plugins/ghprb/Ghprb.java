@@ -21,7 +21,6 @@ public class Ghprb {
 	private HashSet<String>       admins;
 	private HashSet<String>       whitelisted;
 	private HashSet<String>       organisations;
-	private String                triggerPhrase;
 	private GhprbTrigger          trigger;
 	private GhprbRepository       repository;
 	private GhprbBuilds           builds;
@@ -32,12 +31,14 @@ public class Ghprb {
 	
 	private final Pattern retestPhrasePattern;
 	private final Pattern whitelistPhrasePattern;
-	private final Pattern oktotestPhrasePattern;	
+	private final Pattern oktotestPhrasePattern;
+	private final Pattern triggerPhrasePattern;
 
 	private Ghprb(){
 		retestPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getRetestPhrase());
 		whitelistPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getWhitelistPhrase());
 		oktotestPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getOkToTestPhrase());
+		triggerPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getTriggerPhrase());
 	}
 	
 	public static Builder getBuilder(){
@@ -93,11 +94,11 @@ public class Ghprb {
 	public boolean isOktotestPhrase(String comment){
 		return oktotestPhrasePattern.matcher(comment).matches();
 	}
-	
+
 	public boolean isTriggerPhrase(String comment){
-		return !triggerPhrase.equals("") && comment.contains(triggerPhrase);
+		return triggerPhrasePattern.matcher(comment).matches();
 	}
-	
+
 	public boolean ifOnlyTriggerPhrase() {
 		return trigger.getOnlyTriggerPhrase();
 	}
@@ -145,8 +146,7 @@ public class Ghprb {
 			gml.whitelisted.remove("");
 			gml.organisations = new HashSet<String>(Arrays.asList(trigger.getOrgslist().split("\\s+")));
 			gml.organisations.remove("");
-			gml.triggerPhrase = trigger.getTriggerPhrase();
-			
+
 			return this;
 		}
 
