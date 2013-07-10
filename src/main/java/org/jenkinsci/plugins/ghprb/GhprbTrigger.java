@@ -41,6 +41,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private       String whitelist;
 	private final String orgslist;
 	private final String cron;
+	private final String triggerPhrase;
 	private final Boolean onlyTriggerPhrase;
 	private final Boolean useGitHubHooks;
 	private final Boolean permitAll;
@@ -49,13 +50,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	transient private Ghprb ml;
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron,
+	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String triggerPhrase,
 			Boolean onlyTriggerPhrase, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
 		this.orgslist = orgslist;
 		this.cron = cron;
+		this.triggerPhrase = triggerPhrase;
 		this.onlyTriggerPhrase = onlyTriggerPhrase;
 		this.useGitHubHooks = useGitHubHooks;
 		this.permitAll = permitAll;
@@ -163,6 +165,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		return cron;
 	}
 
+	public String getTriggerPhrase() {
+		if(triggerPhrase == null){
+			return "";
+		}
+		return triggerPhrase;
+	}
+
 	public Boolean getOnlyTriggerPhrase() {
 		return onlyTriggerPhrase != null && onlyTriggerPhrase;
 	}
@@ -213,7 +222,6 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
 		private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
-		private String triggerPhrase = ".*trigger\\W+this.*";
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
@@ -320,10 +328,6 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public String getRetestPhrase() {
 			return retestPhrase;
-		}
-
-		public String getTriggerPhrase() {
-			return triggerPhrase;
 		}
 
 		public String getCron() {

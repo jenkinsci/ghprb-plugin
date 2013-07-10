@@ -38,9 +38,6 @@
       <f:entry title="${%Test phrase}" field="retestPhrase">
         <f:textbox default=".*test\W+this\W+please.*"/>
       </f:entry>
-      <f:entry title="${%Trigger phrase}" field="triggerPhrase">
-        <f:textbox default=".*trigger\W+this.*"/>
-      </f:entry>
       <f:entry title="${%Crontab line}" field="cron">
         <f:textbox default="*/5 * * * *"/>
       </f:entry>
