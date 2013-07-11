@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
+import org.apache.commons.lang.StringUtils;
+
 import hudson.model.Cause;
 
 /**
@@ -10,12 +12,16 @@ public class GhprbCause extends Cause{
 	private final int pullID;
 	private final boolean merged;
 	private final String targetBranch;
+	private final String authorEmail;
+	private final String title;
 
-	public GhprbCause(String commit, int pullID, boolean merged, String targetBranch){
+	public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String authorEmail, String title){
 		this.commit = commit;
 		this.pullID = pullID;
 		this.merged = merged;
 		this.targetBranch = targetBranch;
+		this.authorEmail = authorEmail;
+		this.title = title;
 	}
 
 	@Override
@@ -38,4 +44,26 @@ public class GhprbCause extends Cause{
 	public String getTargetBranch() {
 		return targetBranch;
 	}
+
+	public String getAuthorEmail() {
+		return authorEmail;
+	}
+
+	/**
+	 * Returns the title of the cause, not null.
+	 * @return
+	 */
+	public String getTitle() {
+		return title != null ? title : "";
+	}
+
+	/**
+	 * Returns at most the first 30 characters of the title, or 
+	 * @return
+	 */
+	public String getAbbreviatedTitle() {
+		return StringUtils.abbreviate(getTitle(), 30);
+	}
+	
+	
 }
