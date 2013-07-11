@@ -15,11 +15,13 @@ public class GhprbPullRequest{
 	private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
 	private final int id;
 	private final String author;
+	private String title;
 	private Date updated;
 	private String head;
 	private boolean mergeable;
 	private String reponame;
 	private String target;
+	private String authorEmail;
 
 	private boolean shouldRun = false;
 	private boolean accepted = false;
@@ -34,8 +36,10 @@ public class GhprbPullRequest{
 		updated = pr.getUpdatedAt();
 		head = pr.getHead().getSha();
 		author = pr.getUser().getLogin();
+		title = pr.getTitle();
 		reponame = repo.getName();
 		target = pr.getBase().getRef();
+		obtainAuthorEmail(pr);
 
 		this.ml = helper;
 		this.repo = repo;
@@ -48,7 +52,7 @@ public class GhprbPullRequest{
 			repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
 		}
 
-		logger.log(Level.INFO, "Created pull request #{0} on {1} by {2} updated at: {3} SHA: {4}", new Object[]{id, reponame, author, updated, head});
+		logger.log(Level.INFO, "Created pull request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", new Object[]{id, reponame, author, authorEmail, updated, head});
 	}
 
 	public void init(Ghprb helper, GhprbRepository repo) {
@@ -59,15 +63,21 @@ public class GhprbPullRequest{
 
 	public void check(GHPullRequest pr){
 		if(target == null) target = pr.getBase().getRef(); // If this instance was created before target was introduced (before v1.8), it can be null.
+		if(authorEmail == null) {
+			// If this instance was create before authorEmail was introduced (before v1.10), it can be null.
+			obtainAuthorEmail(pr); 
+		}
 
 		if(isUpdated(pr)){
-			logger.log(Level.INFO, "Pull request builder: pr #{0} was updated on {1} at {2}", new Object[]{id, reponame, updated});
+			logger.log(Level.INFO, "Pull request builder: pr #{0} was updated on {1} at {2} by {3} ({4})", new Object[]{id, reponame, updated, author, authorEmail});
 
+			// the title could have been updated since the original PR was opened
+			title = pr.getTitle();
 			int commentsChecked = checkComments(pr);
-			boolean newCommit   = checkCommit(pr.getHead().getSha());
+			boolean newCommit = checkCommit(pr.getHead().getSha());
 
 			if(!newCommit && commentsChecked == 0){
-				logger.log(Level.INFO, "Pull request was updated on repo {0} but there aren''t any new comments nor commits - that may mean that commit status was updated.", reponame);
+				logger.log(Level.INFO, "Pull request was updated on repo {0} but there aren't any new comments nor commits - that may mean that commit status was updated.", reponame);
 			}
 			updated = pr.getUpdatedAt();
 		}
@@ -196,6 +206,14 @@ public class GhprbPullRequest{
 			logger.log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
 		}
 	}
+	
+	private void obtainAuthorEmail(GHPullRequest pr) {
+		try {
+			authorEmail = pr.getUser().getEmail();
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Couldn't obtain author email.", e);
+		}
+	}
 
 	@Override
 	public boolean equals(Object obj) {
@@ -226,5 +244,13 @@ public class GhprbPullRequest{
 
 	public String getTarget(){
 		return target;
+	}
+	
+	public String getAuthorEmail() {
+		return authorEmail;
+	}
+	
+	public String getTitle() {
+		return title;
 	}
 }
