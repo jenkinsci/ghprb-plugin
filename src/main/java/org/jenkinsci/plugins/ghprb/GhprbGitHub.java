@@ -37,19 +37,21 @@ public class GhprbGitHub {
 		return gh;
 	}
 
-	public boolean isUserMemberOfOrganization(String organisation, String member){
+	public boolean isUserMemberOfOrganization(String organisation, GHUser member){
+		boolean orgHasMember = false;
 		try {
 			GHOrganization org = get().getOrganization(organisation);
-			List<GHUser> members = org.getMembers();
-			for(GHUser user : members){
-				if(user.getLogin().equals(member)){
-					return true;
-				}
+			orgHasMember = org.hasMember(member);
+			String yesNo = "no";
+			if (orgHasMember){
+				yesNo = "yes";
 			}
+			logger.log(Level.INFO, "org.hasMember(member)? user:" + member.getLogin() + " org: " + organisation + " == " + yesNo);
+
 		} catch (IOException ex) {
 			logger.log(Level.SEVERE, null, ex);
 			return false;
 		}
-		return false;
+		return orgHasMember;
 	}
 }
