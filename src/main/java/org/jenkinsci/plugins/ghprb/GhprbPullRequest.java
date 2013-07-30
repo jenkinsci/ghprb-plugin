@@ -82,10 +82,8 @@ public class GhprbPullRequest{
 			updated = pr.getUpdatedAt();
 		}
 
-		if(shouldRun){
-			checkMergeable(pr);
-			build();
-		}
+		checkMergeable(pr);
+		tryBuild();
 	}
 
 	public void check(GHIssueComment comment) {
@@ -96,12 +94,7 @@ public class GhprbPullRequest{
 			logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
 			return;
 		}
-		if(ml.ifOnlyTriggerPhrase() && !triggered){
-			shouldRun = false;
-		}
-		if (shouldRun) {
-			build();
-		}
+		tryBuild();
 	}
 
 	private boolean isUpdated(GHPullRequest pr){
@@ -112,8 +105,18 @@ public class GhprbPullRequest{
 		return ret;
 	}
 
+	private void tryBuild() {
+		if(ml.ifOnlyTriggerPhrase() && !triggered){
+			shouldRun = false;
+		}
+		if (shouldRun) {
+			build();
+			shouldRun = false;
+			triggered = false;
+		}
+	}
+
 	private void build(){
-		shouldRun = false;
 		String message = ml.getBuilds().build(this);
 
 		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
@@ -165,8 +168,14 @@ public class GhprbPullRequest{
 		}
 
 		// trigger phrase
-		if (ml.isTriggerPhrase(body) && ml.isWhitelisted(sender)){
-			triggered = true;
+		if (ml.isTriggerPhrase(body)){
+			if(ml.isAdmin(sender)){
+				shouldRun = true;
+				triggered = true;
+			}else if(accepted && ml.isWhitelisted(sender) ){
+				shouldRun = true;
+				triggered = true;
+			}
 		}
 	}
 
