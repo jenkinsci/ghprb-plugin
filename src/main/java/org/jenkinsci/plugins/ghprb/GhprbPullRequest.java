@@ -94,6 +94,17 @@ public class GhprbPullRequest{
 			logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
 			return;
 		}
+
+                GHPullRequest pr = null;
+                try{
+                        pr = repo.getPullRequest(id);
+                } catch (IOException e){
+                        logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
+                }
+                if (pr != null){
+                        checkMergeable(pr);
+                }
+
 		tryBuild();
 	}
 
