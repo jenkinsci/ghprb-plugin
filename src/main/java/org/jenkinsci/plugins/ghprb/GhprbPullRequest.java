@@ -219,7 +219,7 @@ public class GhprbPullRequest{
 	private void obtainAuthorEmail(GHPullRequest pr) {
 		try {
 			authorEmail = pr.getUser().getEmail();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.log(Level.WARNING, "Couldn't obtain author email.", e);
 		}
 	}
