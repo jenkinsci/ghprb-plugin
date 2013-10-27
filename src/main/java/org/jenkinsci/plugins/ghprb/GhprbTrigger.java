@@ -281,7 +281,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		public FormValidation doCheckAdminlist(@QueryParameter String value)
 				throws ServletException {
 			if(!adminlistPattern.matcher(value).matches()){
-				return FormValidation.error("GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespece.");
+				return FormValidation.error("GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespaces.");
 			}
 			return FormValidation.ok();
 		}
