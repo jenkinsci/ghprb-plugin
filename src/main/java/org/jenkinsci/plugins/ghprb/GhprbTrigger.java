@@ -97,7 +97,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		super.stop();
 	}
 
-	public QueueTaskFuture<?> startJob(GhprbCause cause){
+	public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo){
 		ArrayList<ParameterValue> values = getDefaultParameters();
 		if(cause.isMerged()){
 			values.add(new StringParameterValue("sha1","origin/pr/" + cause.getPullID() + "/merge"));
@@ -107,9 +107,12 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		values.add(new StringParameterValue("ghprbActualCommit",cause.getCommit()));
 		values.add(new StringParameterValue("ghprbPullId",String.valueOf(cause.getPullID())));
 		values.add(new StringParameterValue("ghprbTargetBranch",String.valueOf(cause.getTargetBranch())));
+		values.add(new StringParameterValue("ghprbSourceBranch",String.valueOf(cause.getSourceBranch())));
 		// it's possible the GHUser doesn't have an associated email address
 		values.add(new StringParameterValue("ghprbPullAuthorEmail",cause.getAuthorEmail() != null ? cause.getAuthorEmail() : ""));
-
+		
+		values.add(new StringParameterValue("ghprbPullLink",String.valueOf(repo.getRepoUrl()+"/pull/"+cause.getPullID())));
+		
 		return this.job.scheduleBuild2(0,cause,new ParametersAction(values));
 	}
 
