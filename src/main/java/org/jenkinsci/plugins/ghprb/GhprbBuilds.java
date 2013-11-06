@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
+import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
@@ -27,13 +28,13 @@ public class GhprbBuilds {
 	public String build(GhprbPullRequest pr) {
 		StringBuilder sb = new StringBuilder();
 		if(cancelBuild(pr.getId())){
-			sb.append("Previous build stopped.");
+			sb.append("Previous build stopped. ");
 		}
 
 		if(pr.isMergeable()){
-			sb.append(" Merged build triggered.");
+			sb.append("Merged build triggered. ");
 		}else{
-			sb.append(" Build triggered.");
+			sb.append("Build triggered. ");
 		}
 
 		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle());
@@ -46,7 +47,26 @@ public class GhprbBuilds {
 	}
 
 	private boolean cancelBuild(int id) {
-		return false;
+		Boolean cancelled = false;
+		Queue q = Queue.getInstance();
+		for (Queue.Item build : q.getItems()) {
+			if (!build.isBlocked()) {
+				continue;
+			}
+			for (Cause cause : build.getCauses()) {
+				if (cause instanceof GhprbCause) {
+					GhprbCause ghprbcause = (GhprbCause) cause;
+					if (ghprbcause.getPullID() == id) {
+						if (q.cancel(build)) {
+							cancelled = true;
+						} else {
+							logger.log(Level.WARNING, String.format("Failed to cancel task %s#%d", build.task.getName(), build.id));
+						}
+					}
+				}
+			}
+		}
+		return cancelled;
 	}
 
 	private GhprbCause getCause(AbstractBuild build){
