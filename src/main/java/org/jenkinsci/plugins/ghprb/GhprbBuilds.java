@@ -52,6 +52,7 @@ public class GhprbBuilds {
 		Queue q = Queue.getInstance();
 		for (Queue.Item build : q.getItems()) {
 			if (!build.isBlocked()) {
+				logger.log(Level.INFO, String.format("Build %s#%d is in progress, not stopping", build.task.getName(), build.id));
 				continue;
 			}
 			List<Cause> causes = build.getCauses();
