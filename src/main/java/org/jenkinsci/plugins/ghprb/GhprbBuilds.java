@@ -37,7 +37,7 @@ public class GhprbBuilds {
 			sb.append("Build triggered. ");
 		}
 
-		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle());
+		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle(), this.repo.getName());
 
 		QueueTaskFuture<?> build = trigger.startJob(cause);
 		if(build == null){
@@ -56,7 +56,8 @@ public class GhprbBuilds {
 			for (Cause cause : build.getCauses()) {
 				if (cause instanceof GhprbCause) {
 					GhprbCause ghprbcause = (GhprbCause) cause;
-					if (ghprbcause.getPullID() == id) {
+					if (ghprbcause.getPullID() == id &&
+						ghprbcause.getRepoName().equals(this.repo.getName())) {
 						if (q.cancel(build)) {
 							cancelled = true;
 						} else {

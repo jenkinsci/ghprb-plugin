@@ -14,14 +14,16 @@ public class GhprbCause extends Cause{
 	private final String targetBranch;
 	private final String authorEmail;
 	private final String title;
+	private final String repoName;
 
-	public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String authorEmail, String title){
+	public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String authorEmail, String title, String repoName){
 		this.commit = commit;
 		this.pullID = pullID;
 		this.merged = merged;
 		this.targetBranch = targetBranch;
 		this.authorEmail = authorEmail;
 		this.title = title;
+		this.repoName = repoName;
 	}
 
 	@Override
@@ -47,6 +49,10 @@ public class GhprbCause extends Cause{
 
 	public String getAuthorEmail() {
 		return authorEmail;
+	}
+
+	public String getRepoName() {
+		return repoName;
 	}
 
 	/**
