@@ -6,6 +6,7 @@ import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
@@ -53,16 +54,19 @@ public class GhprbBuilds {
 			if (!build.isBlocked()) {
 				continue;
 			}
-			for (Cause cause : build.getCauses()) {
-				if (cause instanceof GhprbCause) {
-					GhprbCause ghprbcause = (GhprbCause) cause;
-					if (ghprbcause.getPullID() == id &&
-						ghprbcause.getRepoName().equals(this.repo.getName())) {
-						if (q.cancel(build)) {
-							cancelled = true;
-						} else {
-							logger.log(Level.WARNING, String.format("Failed to cancel task %s#%d", build.task.getName(), build.id));
-						}
+			List<Cause> causes = build.getCauses();
+			if (causes.size() > 1) {
+				logger.log(Level.INFO, String.format("Build %s#%d has multiple causes, not stopping", build.task.getName(), build.id));
+				continue;
+			}
+			if (causes.get(0) instanceof GhprbCause) {
+				GhprbCause cause = (GhprbCause) causes.get(0);
+				if (cause.getPullID() == id
+				  && cause.getRepoName().equals(this.repo.getName())) {
+					if (q.cancel(build)) {
+						cancelled = true;
+					} else {
+						logger.log(Level.WARNING, String.format("Failed to cancel task %s#%d", build.task.getName(), build.id));
 					}
 				}
 			}
