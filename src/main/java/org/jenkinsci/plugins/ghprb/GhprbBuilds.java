@@ -48,13 +48,12 @@ public class GhprbBuilds {
 	}
 
 	private boolean cancelBuild(int id) {
+		if (!trigger.cancelAny()) {
+			return false;
+		}
 		Boolean cancelled = false;
 		Queue q = Queue.getInstance();
 		for (Queue.Item build : q.getItems()) {
-			if (!build.isBlocked()) {
-				logger.log(Level.INFO, String.format("Build %s#%d is in progress, not stopping", build.task.getName(), build.id));
-				continue;
-			}
 			List<Cause> causes = build.getCauses();
 			if (causes.size() > 1) {
 				logger.log(Level.INFO, String.format("Build %s#%d has multiple causes, not stopping", build.task.getName(), build.id));

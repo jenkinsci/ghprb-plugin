@@ -1,4 +1,4 @@
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" >
   <f:entry title="${%Admin list}" field="adminlist">
     <f:textarea default="${descriptor.adminlist}"/>
   </f:entry>
@@ -27,5 +27,15 @@
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
       <f:checkbox />
     </f:entry>
+        <f:entry title="Cancel existing pull request build tasks" field="cancelTasks">
+          <f:radio name="cancelTasks" value="none" checked="${instance.cancelTasks =='none'}" />
+          <st:nbsp />
+          <label class="attach-previous">Do not cancel any tasks</label>
+          <br />
+          <f:radio name="cancelTasks" value="pending" checked="${instance.cancelTasks =='pending'}" />
+          <st:nbsp />
+          <label class="attach-previous">Cancel pending tasks for this pull request</label>
+          <br />
+        </f:entry>
   </f:advanced>
 </j:jelly>
