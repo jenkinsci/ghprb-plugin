@@ -199,7 +199,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	}
 
 	public Boolean cancelAny() {
-		return !cancelTasks.equals("none");
+		return !"none".equals(cancelTasks);
 	}
 
 	public String getCancelTasks() {

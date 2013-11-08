@@ -28,7 +28,8 @@ public class GhprbBuilds {
 
 	public String build(GhprbPullRequest pr) {
 		StringBuilder sb = new StringBuilder();
-		if(cancelBuild(pr.getId())){
+		String cancelReason = String.format("Cancelled by %s in preference to %s",trigger.getDescriptor().getDisplayName(), pr.getHead().substring(0, 7));
+		if(cancelBuild(pr.getId(), cancelReason)){
 			sb.append("Previous build stopped. ");
 		}
 
@@ -47,7 +48,7 @@ public class GhprbBuilds {
 		return sb.toString();
 	}
 
-	private boolean cancelBuild(int id) {
+	private boolean cancelBuild(int id, String why) {
 		if (!trigger.cancelAny()) {
 			return false;
 		}
@@ -62,9 +63,10 @@ public class GhprbBuilds {
 			if (causes.get(0) instanceof GhprbCause) {
 				GhprbCause cause = (GhprbCause) causes.get(0);
 				if (cause.getPullID() == id
-				  && cause.getRepoName().equals(this.repo.getName())) {
+				  && cause.getRepoName().equals(repo.getName())) {
 					if (q.cancel(build)) {
 						cancelled = true;
+						repo.createCommitStatus(cause.getCommit(), GHCommitState.ERROR, null, why,id);
 					} else {
 						logger.log(Level.WARNING, String.format("Failed to cancel task %s#%d", build.task.getName(), build.id));
 					}
