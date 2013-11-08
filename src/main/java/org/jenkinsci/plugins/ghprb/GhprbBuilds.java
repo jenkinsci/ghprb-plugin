@@ -2,9 +2,11 @@ package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
+import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
@@ -26,17 +28,18 @@ public class GhprbBuilds {
 
 	public String build(GhprbPullRequest pr) {
 		StringBuilder sb = new StringBuilder();
-		if(cancelBuild(pr.getId())){
-			sb.append("Previous build stopped.");
+		String cancelReason = String.format("Cancelled by %s in preference to %s",trigger.getDescriptor().getDisplayName(), pr.getHead().substring(0, 7));
+		if(cancelBuild(pr.getId(), cancelReason)){
+			sb.append("Previous build stopped. ");
 		}
 
 		if(pr.isMergeable()){
-			sb.append(" Merged build triggered.");
+			sb.append("Merged build triggered. ");
 		}else{
-			sb.append(" Build triggered.");
+			sb.append("Build triggered. ");
 		}
 
-		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle());
+		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle(), this.repo.getName());
 
 		QueueTaskFuture<?> build = trigger.startJob(cause);
 		if(build == null){
@@ -45,8 +48,32 @@ public class GhprbBuilds {
 		return sb.toString();
 	}
 
-	private boolean cancelBuild(int id) {
-		return false;
+	private boolean cancelBuild(int id, String why) {
+		if (!trigger.cancelAny()) {
+			return false;
+		}
+		Boolean cancelled = false;
+		Queue q = Queue.getInstance();
+		for (Queue.Item build : q.getItems()) {
+			List<Cause> causes = build.getCauses();
+			if (causes.size() > 1) {
+				logger.log(Level.INFO, String.format("Build %s#%d has multiple causes, not stopping", build.task.getName(), build.id));
+				continue;
+			}
+			if (causes.get(0) instanceof GhprbCause) {
+				GhprbCause cause = (GhprbCause) causes.get(0);
+				if (cause.getPullID() == id
+				  && cause.getRepoName().equals(repo.getName())) {
+					if (q.cancel(build)) {
+						cancelled = true;
+						repo.createCommitStatus(cause.getCommit(), GHCommitState.ERROR, null, why,id);
+					} else {
+						logger.log(Level.WARNING, String.format("Failed to cancel task %s#%d", build.task.getName(), build.id));
+					}
+				}
+			}
+		}
+		return cancelled;
 	}
 
 	private GhprbCause getCause(AbstractBuild build){

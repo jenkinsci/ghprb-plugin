@@ -46,12 +46,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private final Boolean useGitHubHooks;
 	private final Boolean permitAll;
 	private Boolean autoCloseFailedPullRequests;
+	private final String cancelTasks;
 
 	transient private Ghprb ml;
 
 	@DataBoundConstructor
 	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String triggerPhrase,
-			Boolean onlyTriggerPhrase, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests) throws ANTLRException{
+			Boolean onlyTriggerPhrase, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests, 
+			String cancelTasks) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
@@ -62,6 +64,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		this.useGitHubHooks = useGitHubHooks;
 		this.permitAll = permitAll;
 		this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
+		this.cancelTasks = cancelTasks;
 	}
 
 	@Override
@@ -195,6 +198,18 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 	}
 
+	public Boolean cancelAny() {
+		return !"none".equals(cancelTasks);
+	}
+
+	public String getCancelTasks() {
+		if(cancelTasks == null){
+			return "none";
+		}
+		return cancelTasks;
+	}
+
+
 	public static GhprbTrigger getTrigger(AbstractProject p){
 		Trigger trigger = p.getTrigger(GhprbTrigger.class);
 		if(trigger == null || (!(trigger instanceof GhprbTrigger))) return null;
@@ -230,6 +245,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean autoCloseFailedPullRequests = false;
 		private String msgSuccess = "Test PASSed.";
 		private String msgFailure = "Test FAILed.";
+		private String cancelTasks = "none";
 
 		private transient GhprbGitHub gh;
 
@@ -271,6 +287,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			msgSuccess = formData.getString("msgSuccess");
 			msgFailure = formData.getString("msgFailure");
+			cancelTasks = formData.getString("cancelTasks");
 			save();
 			gh = new GhprbGitHub();
 			return super.configure(req,formData);
@@ -364,6 +381,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				return "Test FAILed.";
 			}
 			return msgFailure;
+		}
+
+		public String getCancelTasks() {
+			if(cancelTasks == null){
+				return "none";
+			}
+			return cancelTasks;
 		}
 
 		public boolean isUseComments(){
