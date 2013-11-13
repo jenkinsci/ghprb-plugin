@@ -75,16 +75,16 @@ public class GhprbBuilds {
 		} else {
 			state = GHCommitState.FAILURE;
 		}
-		repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."),c.getPullID() );
+		String msg;
+		if (state == GHCommitState.SUCCESS) {
+			msg = GhprbTrigger.getDscp().getMsgSuccess();
+		} else {
+			msg = GhprbTrigger.getDscp().getMsgFailure();
+		}
+		repo.createCommitStatus(build, state, msg, c.getPullID());
 
 		String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
 		if (publishedURL != null && !publishedURL.isEmpty()) {
-			String msg;
-			if (state == GHCommitState.SUCCESS) {
-				msg = GhprbTrigger.getDscp().getMsgSuccess();
-			} else {
-				msg = GhprbTrigger.getDscp().getMsgFailure();
-			}
 			repo.addComment(c.getPullID(), msg + "\nRefer to this link for build results: " + publishedURL + build.getUrl());
 		}
 
