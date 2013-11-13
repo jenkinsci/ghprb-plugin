@@ -230,6 +230,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean autoCloseFailedPullRequests = false;
 		private String msgSuccess = "Test PASSed.";
 		private String msgFailure = "Test FAILed.";
+		private String msgStarted = "Build started.";
 
 		private transient GhprbGitHub gh;
 
@@ -271,6 +272,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			msgSuccess = formData.getString("msgSuccess");
 			msgFailure = formData.getString("msgFailure");
+			msgStarted = formData.getString("msgStarted");
 			save();
 			gh = new GhprbGitHub();
 			return super.configure(req,formData);
@@ -364,6 +366,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				return "Test FAILed.";
 			}
 			return msgFailure;
+		}
+
+		public String getMsgStarted() {
+			if(msgStarted == null){
+				return "Build started.";
+			}
+			return msgStarted;
 		}
 
 		public boolean isUseComments(){

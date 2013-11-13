@@ -27,14 +27,10 @@ public class GhprbBuilds {
 	public String build(GhprbPullRequest pr) {
 		StringBuilder sb = new StringBuilder();
 		if(cancelBuild(pr.getId())){
-			sb.append("Previous build stopped.");
+			sb.append("Previous build stopped. ");
 		}
 
-		if(pr.isMergeable()){
-			sb.append(" Merged build triggered.");
-		}else{
-			sb.append(" Build triggered.");
-		}
+		sb.append(GhprbTrigger.getDscp().getMsgStarted());
 
 		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle());
 
@@ -59,7 +55,7 @@ public class GhprbBuilds {
 		GhprbCause c = getCause(build);
 		if(c == null) return;
 
-		repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."),c.getPullID());
+		repo.createCommitStatus(build, GHCommitState.PENDING, GhprbTrigger.getDscp().getMsgStarted(), c.getPullID());
 		try {
 			build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + repo.getRepoUrl()+"/pull/"+c.getPullID()+"\">PR #"+c.getPullID()+"</a>: " + c.getAbbreviatedTitle());
 		} catch (IOException ex) {

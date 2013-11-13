@@ -41,6 +41,9 @@
       <f:entry title="${%Crontab line}" field="cron">
         <f:textbox default="*/5 * * * *"/>
       </f:entry>
+      <f:entry title="${%Default pending message}" field="msgStarted">
+        <f:textarea default="Build started."/>
+      </f:entry>
       <f:entry title="${%Default success message}" field="msgSuccess">
         <f:textarea default="Test PASSed."/>
       </f:entry>
