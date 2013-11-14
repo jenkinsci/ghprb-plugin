@@ -30,7 +30,7 @@ public class GhprbBuilds {
 			sb.append("Previous build stopped. ");
 		}
 
-		sb.append(GhprbTrigger.getDscp().getMsgStarted());
+		sb.append(trigger.getMsgStarted());
 
 		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle());
 
@@ -55,7 +55,7 @@ public class GhprbBuilds {
 		GhprbCause c = getCause(build);
 		if(c == null) return;
 
-		repo.createCommitStatus(build, GHCommitState.PENDING, GhprbTrigger.getDscp().getMsgStarted(), c.getPullID());
+		repo.createCommitStatus(build, GHCommitState.PENDING, trigger.getMsgStarted(), c.getPullID());
 		try {
 			build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + repo.getRepoUrl()+"/pull/"+c.getPullID()+"\">PR #"+c.getPullID()+"</a>: " + c.getAbbreviatedTitle());
 		} catch (IOException ex) {
@@ -77,9 +77,9 @@ public class GhprbBuilds {
 		}
 		String msg;
 		if (state == GHCommitState.SUCCESS) {
-			msg = GhprbTrigger.getDscp().getMsgSuccess();
+			msg = trigger.getMsgSuccess();
 		} else {
-			msg = GhprbTrigger.getDscp().getMsgFailure();
+			msg = trigger.getMsgFailure();
 		}
 		repo.createCommitStatus(build, state, msg, c.getPullID());
 
