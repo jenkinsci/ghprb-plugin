@@ -42,6 +42,9 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private final String orgslist;
 	private final String cron;
 	private final String triggerPhrase;
+	private final String msgStarted;
+	private final String msgSuccess;
+	private final String msgFailure;
 	private final Boolean onlyTriggerPhrase;
 	private final Boolean useGitHubHooks;
 	private final Boolean permitAll;
@@ -51,6 +54,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@DataBoundConstructor
 	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String triggerPhrase,
+			String msgStarted, String msgSuccess, String msgFailure,
 			Boolean onlyTriggerPhrase, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
@@ -58,6 +62,9 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		this.orgslist = orgslist;
 		this.cron = cron;
 		this.triggerPhrase = triggerPhrase;
+		this.msgStarted = msgStarted;
+		this.msgSuccess = msgSuccess;
+		this.msgFailure = msgFailure;
 		this.onlyTriggerPhrase = onlyTriggerPhrase;
 		this.useGitHubHooks = useGitHubHooks;
 		this.permitAll = permitAll;
@@ -195,6 +202,27 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		}
 	}
 
+	public String getMsgStarted() {
+		if(msgStarted == null) {
+			return DESCRIPTOR.getMsgStarted();
+		}
+		return msgStarted;
+	}
+
+	public String getMsgSuccess() {
+		if(msgSuccess == null) {
+			return DESCRIPTOR.getMsgSuccess();
+		}
+		return msgSuccess;
+	}
+
+	public String getMsgFailure() {
+		if(msgFailure == null) {
+			return DESCRIPTOR.getMsgFailure();
+		}
+		return msgFailure;
+	}
+
 	public static GhprbTrigger getTrigger(AbstractProject p){
 		Trigger trigger = p.getTrigger(GhprbTrigger.class);
 		if(trigger == null || (!(trigger instanceof GhprbTrigger))) return null;
@@ -228,8 +256,9 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean useComments = false;
 		private String unstableAs = GHCommitState.FAILURE.name();
 		private Boolean autoCloseFailedPullRequests = false;
-		private String msgSuccess = "Test PASSed.";
-		private String msgFailure = "Test FAILed.";
+		private String msgSuccess;
+		private String msgFailure;
+		private String msgStarted;
 
 		private transient GhprbGitHub gh;
 
@@ -271,6 +300,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			msgSuccess = formData.getString("msgSuccess");
 			msgFailure = formData.getString("msgFailure");
+			msgStarted = formData.getString("msgStarted");
 			save();
 			gh = new GhprbGitHub();
 			return super.configure(req,formData);
@@ -364,6 +394,13 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 				return "Test FAILed.";
 			}
 			return msgFailure;
+		}
+
+		public String getMsgStarted() {
+			if(msgStarted == null){
+				return "Build started.";
+			}
+			return msgStarted;
 		}
 
 		public boolean isUseComments(){

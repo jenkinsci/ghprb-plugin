@@ -27,14 +27,10 @@ public class GhprbBuilds {
 	public String build(GhprbPullRequest pr) {
 		StringBuilder sb = new StringBuilder();
 		if(cancelBuild(pr.getId())){
-			sb.append("Previous build stopped.");
+			sb.append("Previous build stopped. ");
 		}
 
-		if(pr.isMergeable()){
-			sb.append(" Merged build triggered.");
-		}else{
-			sb.append(" Build triggered.");
-		}
+		sb.append(trigger.getMsgStarted());
 
 		GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getAuthorEmail(), pr.getTitle());
 
@@ -59,7 +55,7 @@ public class GhprbBuilds {
 		GhprbCause c = getCause(build);
 		if(c == null) return;
 
-		repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."),c.getPullID());
+		repo.createCommitStatus(build, GHCommitState.PENDING, trigger.getMsgStarted(), c.getPullID());
 		try {
 			build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + repo.getRepoUrl()+"/pull/"+c.getPullID()+"\">PR #"+c.getPullID()+"</a>: " + c.getAbbreviatedTitle());
 		} catch (IOException ex) {
@@ -79,16 +75,16 @@ public class GhprbBuilds {
 		} else {
 			state = GHCommitState.FAILURE;
 		}
-		repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."),c.getPullID() );
+		String msg;
+		if (state == GHCommitState.SUCCESS) {
+			msg = trigger.getMsgSuccess();
+		} else {
+			msg = trigger.getMsgFailure();
+		}
+		repo.createCommitStatus(build, state, msg, c.getPullID());
 
 		String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
 		if (publishedURL != null && !publishedURL.isEmpty()) {
-			String msg;
-			if (state == GHCommitState.SUCCESS) {
-				msg = GhprbTrigger.getDscp().getMsgSuccess();
-			} else {
-				msg = GhprbTrigger.getDscp().getMsgFailure();
-			}
 			repo.addComment(c.getPullID(), msg + "\nRefer to this link for build results: " + publishedURL + build.getUrl());
 		}
 

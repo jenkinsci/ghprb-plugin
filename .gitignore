@@ -12,3 +12,8 @@ work/
 # Eclipse and Maven build results
 #
 bin/
+
+#
+# vim swap files
+#
+*.swp
