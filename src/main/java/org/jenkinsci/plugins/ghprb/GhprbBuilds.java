@@ -4,12 +4,14 @@ import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author janinko
@@ -84,12 +86,33 @@ public class GhprbBuilds {
 		String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
 		if (publishedURL != null && !publishedURL.isEmpty()) {
 			String msg;
+			StringBuilder logExcerpt = new StringBuilder();
+
 			if (state == GHCommitState.SUCCESS) {
 				msg = GhprbTrigger.getDscp().getMsgSuccess();
 			} else {
 				msg = GhprbTrigger.getDscp().getMsgFailure();
+
+				int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
+				if (numLines > 0) {
+					// on failure, append an excerpt of the build log
+					try {
+						// wrap log in "code" markdown
+						logExcerpt.append("\n\n**Build Log**\n*last " + numLines + " lines*\n");
+						logExcerpt.append("\n ```\n");
+						List<String> log = build.getLog(numLines);
+						for (String line : log) {
+							logExcerpt.append(line + "\n");
+						}
+						logExcerpt.append("```\n");
+					} catch (IOException ex) {
+						logger.log(Level.WARNING, "Can't add log excerpt to commit comments", ex);
+					}
+				}
 			}
-			repo.addComment(c.getPullID(), msg + "\nRefer to this link for build results: " + publishedURL + build.getUrl());
+
+			repo.addComment(c.getPullID(), msg + "\nRefer to this link for build results: "
+					+ publishedURL + build.getUrl() + logExcerpt);
 		}
 
 		// close failed pull request automatically

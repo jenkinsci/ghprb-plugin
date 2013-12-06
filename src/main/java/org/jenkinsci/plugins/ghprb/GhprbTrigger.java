@@ -3,18 +3,21 @@ package org.jenkinsci.plugins.ghprb;
 import antlr.ANTLRException;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.model.Item;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersAction;
-import hudson.model.ParametersDefinitionProperty;
-import hudson.model.StringParameterValue;
+import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.triggers.TimerTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
+import net.sf.json.JSONObject;
+import org.kohsuke.github.GHAuthorization;
+import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+
+import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,14 +26,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import javax.servlet.ServletException;
-import net.sf.json.JSONObject;
-import org.kohsuke.github.GHAuthorization;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -226,6 +221,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
+		private int logExcerptLines = 100;
 		private String unstableAs = GHCommitState.FAILURE.name();
 		private Boolean autoCloseFailedPullRequests = false;
 		private String msgSuccess = "Test PASSed.";
@@ -267,6 +263,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			retestPhrase = formData.getString("retestPhrase");
 			cron = formData.getString("cron");
 			useComments = formData.getBoolean("useComments");
+			logExcerptLines = formData.getInt("logExcerptLines");
 			unstableAs = formData.getString("unstableAs");
 			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
 			msgSuccess = formData.getString("msgSuccess");
@@ -339,6 +336,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		public Boolean getUseComments() {
 			return useComments;
 		}
+
+		public int getlogExcerptLines() { return logExcerptLines; }
 
 		public Boolean getAutoCloseFailedPullRequests() {
 			return autoCloseFailedPullRequests;
