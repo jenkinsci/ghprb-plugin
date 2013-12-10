@@ -221,7 +221,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private String retestPhrase = ".*test\\W+this\\W+please.*";
 		private String cron = "*/5 * * * *";
 		private Boolean useComments = false;
-		private int logExcerptLines = 100;
+		private int logExcerptLines = 0;
 		private String unstableAs = GHCommitState.FAILURE.name();
 		private Boolean autoCloseFailedPullRequests = false;
 		private String msgSuccess = "Test PASSed.";
