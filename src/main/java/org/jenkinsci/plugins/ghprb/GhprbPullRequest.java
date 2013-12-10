@@ -174,7 +174,7 @@ public class GhprbPullRequest{
 			if(ml.isAdmin(sender)){
 				shouldRun = true;
 				triggered = true;
-			}else if(accepted && ml.isWhitelisted(sender) ){
+			}else if(accepted && ml.isWhitelisted(senderUser) ){
 				shouldRun = true;
 				triggered = true;
 			}
