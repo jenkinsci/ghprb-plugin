@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHUser;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -14,8 +15,8 @@ import org.kohsuke.github.GHPullRequest;
 public class GhprbPullRequest{
 	private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
 	private final int id;
-	private final String author;
 	private String title;
+	private final GHUser author;
 	private Date updated;
 	private String head;
 	private boolean mergeable;
@@ -35,8 +36,8 @@ public class GhprbPullRequest{
 		id = pr.getNumber();
 		updated = pr.getUpdatedAt();
 		head = pr.getHead().getSha();
-		author = pr.getUser().getLogin();
 		title = pr.getTitle();
+		author = pr.getUser();
 		reponame = repo.getName();
 		target = pr.getBase().getRef();
 		obtainAuthorEmail(pr);
@@ -48,11 +49,11 @@ public class GhprbPullRequest{
 			accepted = true;
 			shouldRun = true;
 		}else{
-			logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author, reponame});
+			logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author.getLogin(), reponame});
 			repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
 		}
 
-		logger.log(Level.INFO, "Created pull request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", new Object[]{id, reponame, author, authorEmail, updated, head});
+		logger.log(Level.INFO, "Created pull request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", new Object[]{id, reponame, author.getLogin(), authorEmail, updated, head});
 	}
 
 	public void init(Ghprb helper, GhprbRepository repo) {
@@ -141,12 +142,13 @@ public class GhprbPullRequest{
 
 	private void checkComment(GHIssueComment comment) throws IOException {
 		String sender = comment.getUser().getLogin();
+		GHUser senderUser = comment.getUser();
 		String body = comment.getBody();
 
 		// add to whitelist
 		if (ml.isWhitelistPhrase(body) && ml.isAdmin(sender)){
 			if(!ml.isWhitelisted(author)) {
-				ml.addWhitelist(author);
+				ml.addWhitelist(author.getLogin());
 			}
 			accepted = true;
 			shouldRun = true;
@@ -162,7 +164,7 @@ public class GhprbPullRequest{
 		if (ml.isRetestPhrase(body)){
 			if(ml.isAdmin(sender)){
 				shouldRun = true;
-			}else if(accepted && ml.isWhitelisted(sender) ){
+			}else if(accepted && ml.isWhitelisted(senderUser) ){
 				shouldRun = true;
 			}
 		}
