@@ -4,6 +4,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.plugins.git.util.BuildData;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -73,6 +74,20 @@ public class GhprbBuilds {
 		GhprbCause c = getCause(build);
 		if(c == null) return;
 
+		// remove the BuildData action that we may have added earlier to avoid
+		// having two of them, and because the one we added isn't correct
+		// @see GhprbTrigger
+		BuildData fakeOne = null;
+		for (BuildData data :build.getActions(BuildData.class)) {
+			if (!data.getLastBuiltRevision().getSha1String().equals(c.getCommit())) {
+				fakeOne = data;
+				break;
+			}
+		}
+		if (fakeOne != null) {
+			build.getActions().remove(fakeOne);
+		}
+		
 		GHCommitState state;
 		if (build.getResult() == Result.SUCCESS) {
 			state = GHCommitState.SUCCESS;
