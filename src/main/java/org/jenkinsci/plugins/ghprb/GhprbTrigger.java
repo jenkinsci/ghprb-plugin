@@ -5,6 +5,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.plugins.git.RevisionParameterAction;
 import hudson.triggers.TimerTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -105,7 +106,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		// it's possible the GHUser doesn't have an associated email address
 		values.add(new StringParameterValue("ghprbPullAuthorEmail",cause.getAuthorEmail() != null ? cause.getAuthorEmail() : ""));
 
-		return this.job.scheduleBuild2(0,cause,new ParametersAction(values));
+		return this.job.scheduleBuild2(0,cause, new ParametersAction(values),
+                                                new RevisionParameterAction(cause.getCommit()));
 	}
 
 	private ArrayList<ParameterValue> getDefaultParameters() {
