@@ -70,7 +70,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	@Override
 	public void start(AbstractProject<?, ?> project, boolean newInstance) {
 		if (project.getProperty(GithubProjectProperty.class) == null) {
-			logger.log(Level.INFO, "GitHub project not set up, cannot start trigger for job " + project.getName());
+			logger.log(Level.INFO, "GitHub project not set up, cannot start trigger for job {0}", project.getName());
 			return;
 		}
 		try{

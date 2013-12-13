@@ -82,7 +82,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 				repoUrl = repoUrl.substring(0, repoUrl.length()-2);
 			int slashIndex = repoUrl.lastIndexOf('/');
 			String owner = repoUrl.substring(slashIndex+1);
-			logger.log(Level.INFO, "Parsed " + owner + " from " + repoUrl);
+			logger.log(Level.INFO, "Parsed {0} from {1}", new Object[]{owner, repoUrl});
 			return getRepos(owner + "/" + repo.getName());
 		}
 	}

@@ -167,8 +167,8 @@ public class GhprbRepository {
 
 	public boolean createHook(){
 		if (repo == null) {
-			logger.log(Level.INFO, "Repository not available, cannot set pull request hook for repository " +
-					reponame);
+			logger.log(Level.INFO, "Repository not available, cannot set pull request hook "
+			           + "for repository {0}", reponame);
 			return false;
 		}
 		try {
@@ -179,11 +179,8 @@ public class GhprbRepository {
 			repo.createHook("web", config, EVENTS, true);
 			return true;
 		}catch(IOException ex){
-			logger.log(
-					Level.SEVERE,
-					"Couldn't create web hook for repository "+
-					reponame+
-					". Does the user (from global configuration) have admin rights to the repository?");
+			logger.log(Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user "
+			           + "(from global configuration) have admin rights to the repository?", reponame);
 			return false;
 		}
 	}
