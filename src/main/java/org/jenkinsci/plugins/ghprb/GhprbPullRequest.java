@@ -69,7 +69,7 @@ public class GhprbPullRequest{
         }
 
         if (isUpdated(pr)) {
-            logger.log(Level.INFO, "Pull request builder: pr #{0} was updated on {1} at {2} by {3} ({4})", new Object[]{id, reponame, updated, author});
+            logger.log(Level.INFO, "Pull request builder: pr #{0} was updated on {1} at {2} by {3}", new Object[]{id, reponame, updated, author});
 
             // the title could have been updated since the original PR was opened
             title = pr.getTitle();
