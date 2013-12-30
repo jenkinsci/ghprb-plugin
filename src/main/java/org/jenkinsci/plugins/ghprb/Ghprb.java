@@ -2,6 +2,9 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.model.AbstractProject;
+import jenkins.model.Jenkins;
+import org.kohsuke.github.GHUser;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,8 +12,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jenkins.model.Jenkins;
-import org.kohsuke.github.GHUser;
 
 /**
  * @author janinko
@@ -55,7 +56,11 @@ public class Ghprb {
 		return builds;
 	}
 
-	public GhprbRepository getRepository() {
+    public AbstractProject<?, ?> getProject() {
+        return project;
+    }
+
+    public GhprbRepository getRepository() {
 		return repository;
 	}
 
