@@ -116,7 +116,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		return this.job.scheduleBuild2(0, cause,
                 new ParametersAction(values),
                 findPreviousBuildForPullId(pullIdPv, job),
-                new GhprbRetriggerAction(ml.getProject(), values, cause));
+                new GhprbRetriggerAction(ml.getProject().getName(), values, cause));
 	}
 	
 	/**

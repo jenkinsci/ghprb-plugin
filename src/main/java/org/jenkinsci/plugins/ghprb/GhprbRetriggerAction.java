@@ -1,20 +1,21 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.*;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class GhprbRetriggerAction implements Action {
 
-    private AbstractProject<?, ?> project;
-    private ArrayList<ParameterValue> values;
+    private String projectName;
+    private List<ParameterValue> values;
     private GhprbCause cause;
 
-    public GhprbRetriggerAction(AbstractProject<?, ?> project, ArrayList<ParameterValue> values, GhprbCause cause) {
-        this.project = project;
+    public GhprbRetriggerAction(String projectName, List<ParameterValue> values, GhprbCause cause) {
+        this.projectName = projectName;
         this.values = values;
         this.cause = cause;
     }
@@ -45,10 +46,12 @@ public class GhprbRetriggerAction implements Action {
             throw new IllegalStateException();
         }
 
+        AbstractProject<?, ?> project = (AbstractProject<?, ?>) Jenkins.getInstance().getItem(projectName);;
+
         project.scheduleBuild2(0, cause,
                 new ParametersAction(values),
                 GhprbTrigger.findPreviousBuildForPullId(pullId, project),
-                new GhprbRetriggerAction(project, values, cause));
+                new GhprbRetriggerAction(projectName, values, cause));
 
         response.sendRedirect2(project.getAbsoluteUrl());
     }
