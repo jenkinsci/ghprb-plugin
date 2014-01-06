@@ -21,6 +21,7 @@ public class GhprbPullRequest{
 	private String head;
 	private boolean mergeable;
 	private String reponame;
+	private String branch;
 	private String target;
 	private String authorEmail;
 
@@ -39,6 +40,7 @@ public class GhprbPullRequest{
 		title = pr.getTitle();
 		author = pr.getUser();
 		reponame = repo.getName();
+		branch = pr.getHead().getRef();
 		target = pr.getBase().getRef();
 		obtainAuthorEmail(pr);
 
@@ -262,6 +264,10 @@ public class GhprbPullRequest{
 
 	public boolean isMergeable() {
 		return mergeable;
+	}
+
+	public String getBranch() {
+		return branch;
 	}
 
 	public String getTarget(){

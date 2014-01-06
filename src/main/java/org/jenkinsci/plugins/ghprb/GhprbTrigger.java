@@ -106,6 +106,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		values.add(new StringParameterValue("ghprbActualCommit",cause.getCommit()));
 		final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId",String.valueOf(cause.getPullID()));
 		values.add(pullIdPv);
+		values.add(new StringParameterValue("ghprbSourceBranch", String.valueOf(cause.getSourceBranch())));
 		values.add(new StringParameterValue("ghprbTargetBranch",String.valueOf(cause.getTargetBranch())));
 		// it's possible the GHUser doesn't have an associated email address
 		values.add(new StringParameterValue("ghprbPullAuthorEmail",cause.getAuthorEmail() != null ? cause.getAuthorEmail() : ""));
