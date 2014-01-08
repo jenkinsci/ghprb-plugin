@@ -13,9 +13,11 @@ import java.util.logging.Logger;
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public class GhprbPullRequest{
-	private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
-	private final int id;
+public class GhprbPullRequest {
+
+    private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
+
+    private final int id;
 	private String title;
 	private final GHUser author;
 	private Date updated;
@@ -28,7 +30,6 @@ public class GhprbPullRequest{
 	private boolean shouldRun = false;
 	private boolean accepted = false;
 	private boolean triggered = false;
-	@Deprecated private transient boolean askedForApproval; // TODO: remove
 
 	private transient Ghprb ml;
 	private transient GhprbRepository repo;
@@ -105,8 +106,7 @@ public class GhprbPullRequest{
     }
 
 	private boolean isUpdated(GHPullRequest pr){
-		boolean ret = false;
-		ret = ret || updated.compareTo(pr.getUpdatedAt()) < 0;
+        boolean ret = updated.compareTo(pr.getUpdatedAt()) < 0;
 		ret = ret || !pr.getHead().getSha().equals(head);
 
 		return ret;
@@ -162,41 +162,31 @@ public class GhprbPullRequest{
 		GHUser senderUser = comment.getUser();
 		String body = comment.getBody();
 
-		// add to whitelist
-		if (ml.isWhitelistPhrase(body) && ml.isAdmin(sender)){
-			if(!ml.isWhitelisted(author)) {
-				ml.addWhitelist(author.getLogin());
-			}
-			accepted = true;
-			shouldRun = true;
-		}
-
-		// ok to test
-		if(ml.isOktotestPhrase(body) && ml.isAdmin(sender)){
-			accepted = true;
-			shouldRun = true;
-		}
-
-		// test this please
-		if (ml.isRetestPhrase(body)){
-			if(ml.isAdmin(sender)){
-				shouldRun = true;
-			}else if(accepted && ml.isWhitelisted(senderUser) ){
-				shouldRun = true;
-			}
-		}
-
-		// trigger phrase
-		if (ml.isTriggerPhrase(body)){
-			if(ml.isAdmin(sender)){
-				shouldRun = true;
-				triggered = true;
-			}else if(accepted && ml.isWhitelisted(senderUser) ){
-				shouldRun = true;
-				triggered = true;
-			}
-		}
-	}
+        if (ml.isWhitelistPhrase(body) && ml.isAdmin(sender)) {       // add to whitelist
+            if (!ml.isWhitelisted(author)) {
+                ml.addWhitelist(author.getLogin());
+            }
+            accepted = true;
+            shouldRun = true;
+        } else if (ml.isOktotestPhrase(body) && ml.isAdmin(sender)) {       // ok to test
+            accepted = true;
+            shouldRun = true;
+        } else if (ml.isRetestPhrase(body)) {        // test this please
+            if (ml.isAdmin(sender)) {
+                shouldRun = true;
+            } else if (accepted && ml.isWhitelisted(senderUser)) {
+                shouldRun = true;
+            }
+        } else if (ml.isTriggerPhrase(body)) {      // trigger phrase
+            if (ml.isAdmin(sender)) {
+                shouldRun = true;
+                triggered = true;
+            } else if (accepted && ml.isWhitelisted(senderUser)) {
+                shouldRun = true;
+                triggered = true;
+            }
+        }
+    }
 
 	private int checkComments(GHPullRequest pr) {
 		int count = 0;

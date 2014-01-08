@@ -10,6 +10,7 @@ import org.kohsuke.github.GHHook;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
 
 import java.io.IOException;
 import java.net.URL;
@@ -50,9 +51,11 @@ public class GhprbRepository {
 		}
 	}
 
-	private boolean checkState(){
+    private boolean checkState() {
+        GitHub gitHub;
         try {
-            if(ml.getGitHub().get().getRateLimit().remaining == 0) {
+            gitHub = ml.getGitHub().get();
+            if (gitHub.getRateLimit().remaining == 0) {
                 return false;
             }
         } catch (IOException ex) {
@@ -60,16 +63,16 @@ public class GhprbRepository {
             return false;
         }
 
-        if(repo == null){
-			try {
-				repo = ml.getGitHub().get().getRepository(reponame);
-			} catch (IOException ex) {
-				logger.log(Level.SEVERE, "Could not retrieve repo named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
-				return false;
-			}
-		}
-		return true;
-	}
+        if (repo == null) {
+            try {
+                repo = gitHub.getRepository(reponame);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not retrieve repo named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+                return false;
+            }
+        }
+        return true;
+    }
 
     public void check() {
         if (!checkState()) return;
@@ -99,17 +102,19 @@ public class GhprbRepository {
         removeClosed(closedPulls, pulls);
     }
 
-    private void check(GHPullRequest pr){
-			Integer id = pr.getNumber();
-			GhprbPullRequest pull;
-			if(pulls.containsKey(id)){
-				pull = pulls.get(id);
-			}else{
-				pull = new GhprbPullRequest(pr, ml, this);
-				pulls.put(id, pull);
-			}
-			pull.check(pr);
-	}
+    private void check(GHPullRequest pr) {
+        Integer id = pr.getNumber();
+        GhprbPullRequest pull;
+
+        if (pulls.containsKey(id)) {
+            pull = pulls.get(id);
+        } else {
+            pull = new GhprbPullRequest(pr, ml, this);
+            pulls.put(id, pull);
+        }
+
+        pull.check(pr);
+    }
 
 	private void removeClosed(Set<Integer> closedPulls, Map<Integer,GhprbPullRequest> pulls) {
 		if(closedPulls.isEmpty()) return;
