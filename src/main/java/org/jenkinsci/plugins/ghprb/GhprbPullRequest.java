@@ -6,6 +6,7 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,6 +28,7 @@ public class GhprbPullRequest {
 	private String target;
 	private String source;
 	private String authorEmail;
+    private URL url;
 
 	private boolean shouldRun = false;
 	private boolean accepted = false;
@@ -44,6 +46,7 @@ public class GhprbPullRequest {
 		reponame = repo.getName();
 		target = pr.getBase().getRef();
 		source = pr.getHead().getRef();
+        url = pr.getUrl();
 		obtainAuthorEmail(pr);
 
 		this.ml = helper;
@@ -278,4 +281,12 @@ public class GhprbPullRequest {
 	public String getTitle() {
 		return title;
 	}
+
+    /**
+     * Returns the URL to the Github Pull Request.
+     * @return      the Github Pull Request URL
+     */
+    public URL getUrl() {
+        return url;
+    }
 }

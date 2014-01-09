@@ -4,6 +4,8 @@ import org.apache.commons.lang.StringUtils;
 
 import hudson.model.Cause;
 
+import java.net.URL;
+
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
@@ -15,8 +17,9 @@ public class GhprbCause extends Cause{
 	private final String sourceBranch;
 	private final String authorEmail;
 	private final String title;
+    private final URL url;
 
-	public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String sourceBranch, String authorEmail, String title){
+    public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String sourceBranch, String authorEmail, String title, URL url){
 		this.commit = commit;
 		this.pullID = pullID;
 		this.merged = merged;
@@ -24,6 +27,7 @@ public class GhprbCause extends Cause{
 		this.sourceBranch = sourceBranch;
 		this.authorEmail = authorEmail;
 		this.title = title;
+        this.url = url;
 	}
 
 	@Override
@@ -54,6 +58,10 @@ public class GhprbCause extends Cause{
 	public String getAuthorEmail() {
 		return authorEmail;
 	}
+
+    public URL getUrl() {
+        return url;
+    }
 
 	/**
 	 * Returns the title of the cause, not null.
