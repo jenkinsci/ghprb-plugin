@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -111,7 +112,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         /** GH PR verifications */
-        verify(ghPullRequest, times(2)).getHead();
+        verify(ghPullRequest, times(3)).getHead();
         verify(ghPullRequest, times(1)).getBase();
         verify(ghPullRequest, times(2)).getNumber();
         verify(ghPullRequest, times(1)).getUpdatedAt();
@@ -125,7 +126,7 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void tetCheckMethodWithNewPR() throws IOException {
+    public void testCheckMethodWithNewPR() throws IOException {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         ghPullRequests.add(ghPullRequest);
@@ -165,7 +166,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getTitle();
         verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(5)).getHead();
+        verify(ghPullRequest, times(8)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
@@ -204,6 +205,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
         given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
 
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
@@ -229,9 +231,10 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getTitle();
         verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(5)).getHead();
+        verify(ghPullRequest, times(8)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
+        verify(ghPullRequest, times(1)).getUrl();
         verify(ghPullRequest, times(4)).getUpdatedAt();
 
         verify(ghPullRequest, times(1)).getComments();
@@ -273,6 +276,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
         given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
 
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
@@ -299,10 +303,11 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getTitle();
         verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(5)).getHead();
+        verify(ghPullRequest, times(8)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(4)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getUrl();
 
         verify(ghPullRequest, times(1)).getComments();
         verifyNoMoreInteractions(ghPullRequest);
