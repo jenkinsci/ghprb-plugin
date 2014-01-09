@@ -12,3 +12,9 @@ work/
 # Eclipse and Maven build results
 #
 bin/
+
+# IntelliJ metadata.
+*.iml
+*.ipr
+*.iws
+.idea/
