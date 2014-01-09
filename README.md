@@ -1,11 +1,12 @@
-This plugin builds pull requests from github and reports the results.
+# GitHub Pull Request Builder Plugin
 
-https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
+This Jenkins plugin builds pull requests from GitHub and will report the results directly to the pull request via
+the [GitHub Commit Status API](http://developer.github.com/v3/repos/statuses/)
 
 When a new pull request is opened in the project and the author of the pull
 request isn't whitelisted, builder will ask ``Can one of the
 admins verify this patch?``. One of the admins can comment ``ok to test``
-to accept this pullrequest for testing, ``test this please`` for one time
+to accept this pull request for testing, ``test this please`` for one time
 test run and ``add to whitelist`` to add the author to the whitelist.
 
 If an author of a pull request is whitelisted, adding a new pull
@@ -14,13 +15,22 @@ build.
 
 A new build can also be started with a comment: ``retest this please``.
 
-### Requirements:
-github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)  
-github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
-git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)  
+Jobs can be configured to only build if a matching comment is added to a pull request.  For instance, if you have two job you want to run against a pull request,
+a smoke test job and a full test job, you can configure the full test job to only run if someone adds the comment ``full test please`` on the pull request.
+
+For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
+
+### Master status:
+
+[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/ghprb-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/ghprb-plugin/)
+
+### Required Jenkins Plugins:
+* github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
+* github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
+* git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 
 ### Pre-installation:
-* I recomend to create GitHub 'bot' user that will be used for communication with GitHub (however you can use your own account if you want).  
+* I recommend to create GitHub 'bot' user that will be used for communication with GitHub (however you can use your own account if you want).
 * The user needs to have push rights for your repository (must be collaborator (user repo) or must have Push & Pull rights (organization repo)).  
 * If you want to use GitHub hooks have them set automatically the user needs to have administrator rights for your repository (must be owner (user repo) or must have Push, Pull & Administrative rights (organization repo))  
 
@@ -38,7 +48,7 @@ git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
 * Add GitHub usernames of admins (these usernames will be used as defaults in new jobs).  
 * Under Advanced, you can modify:  
   * The phrase for adding users to the whitelist via comment. (Java regexp)  
-  * The phrase for accepting a pullrequest for testing. (Java regexp)  
+  * The phrase for accepting a pull request for testing. (Java regexp)
   * The phrase for starting a new build. (Java regexp)  
   * The crontab line. This specify default setting for new jobs.  
 * Save to preserve your changes.  
@@ -67,7 +77,7 @@ If you want to manually build the job, in the job setting check ``This build is 
 ### Updates
 
 #### -> 1.8
-In version 1.8 the GitHub hook url changed from ``http://yourserver.com/jenkins/job/JOBNAME/ghprbhook`` to ``http://yourserver.com/jenkins/ghprbhook``. This shouldn't be noticable in most cases but you can have two webhooks configured in you repository.
+In version 1.8 the GitHub hook url changed from ``http://yourserver.com/jenkins/job/JOBNAME/ghprbhook`` to ``http://yourserver.com/jenkins/ghprbhook``. This shouldn't be noticeable in most cases but you can have two webhooks configured in you repository.
 
 #### -> 1.4
 When updating to versions 1.4 phrases for retesting on existing pull requsts can stop working. The solution is comment in pull request with ``ok to test`` or remove and create the job. This is caused because there was change in phrases.
