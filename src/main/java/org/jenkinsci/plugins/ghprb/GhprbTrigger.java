@@ -70,10 +70,15 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 	@Override
 	public void start(AbstractProject<?, ?> project, boolean newInstance) {
-		if (project.getProperty(GithubProjectProperty.class) == null) {
-			logger.log(Level.INFO, "GitHub project not set up, cannot start trigger for job {0}", project.getName());
-			return;
-		}
+        GithubProjectProperty gpp = project.getProperty(GithubProjectProperty.class);
+	    if (gpp == null) {
+		    logger.log(Level.SEVERE, "GitHub plugin not set up; cannot start trigger for job {0}", project.getName());
+		    return;
+        }
+        if (gpp.getProjectUrl() == null || gpp.getProjectUrl().baseUrl() == null) {
+            logger.log(Level.SEVERE, "GitHub URL not configured; cannot start trigger for job {0}", project.getName());
+            return;
+        }
 		try{
 			ml = Ghprb.getBuilder()
 			     .setProject(project)
@@ -122,7 +127,7 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		// one isn't there
 		return this.job.scheduleBuild2(job.getQuietPeriod(),cause,new ParametersAction(values),findPreviousBuildForPullId(pullIdPv),new RevisionParameterAction(commitSha));
 	}
-	
+
 	/**
 	 * Find the previous BuildData for the given pull request number; this may return null
 	 */
