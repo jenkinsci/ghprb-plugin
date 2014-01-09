@@ -15,4 +15,6 @@ bin/
 
 # IntelliJ metadata.
 *.iml
+*.ipr
+*.iws
 .idea/
