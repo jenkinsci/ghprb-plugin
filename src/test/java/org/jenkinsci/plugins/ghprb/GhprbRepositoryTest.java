@@ -142,6 +142,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
         given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
 
         given(ghUser.getEmail()).willReturn("email");
 
@@ -170,6 +171,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getUrl();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
