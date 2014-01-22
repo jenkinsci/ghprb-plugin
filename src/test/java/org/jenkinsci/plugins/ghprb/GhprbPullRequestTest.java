@@ -40,6 +40,8 @@ public class GhprbPullRequestTest {
         GHUser ghUser = mock(GHUser.class);
         GHCommitPointer head = mock(GHCommitPointer.class);
         GHCommitPointer base = mock(GHCommitPointer.class);
+        given(head.getSha()).willReturn("some sha");
+        given(base.getRef()).willReturn("some ref");
 
         // Mocks for GHPullRequest
         given(pr.getNumber()).willReturn(10);
@@ -47,8 +49,6 @@ public class GhprbPullRequestTest {
         given(pr.getTitle()).willReturn("title");
         given(pr.getHead()).willReturn(head);
         given(pr.getBase()).willReturn(base);
-        given(head.getSha()).willReturn("some sha");
-        given(base.getRef()).willReturn("some ref");
         given(pr.getUser()).willReturn(ghUser);
         given(ghUser.getEmail()).willReturn("email");
 

@@ -45,7 +45,6 @@ public class GhprbRepository {
 	}
 
 	public void init(){
-		checkState();
 		for(GhprbPullRequest pull : pulls.values()){
 			pull.init(ml,this);
 		}
@@ -248,4 +247,8 @@ public class GhprbRepository {
 		}
 		GhprbTrigger.getDscp().save();
 	}
+
+    protected void setMl(Ghprb ml) {
+        this.ml = ml;
+    }
 }
