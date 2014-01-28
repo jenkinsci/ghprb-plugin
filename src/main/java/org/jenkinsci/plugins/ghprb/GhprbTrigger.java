@@ -39,8 +39,10 @@ import java.util.regex.Pattern;
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
-	private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
+public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
+
+    private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
+
 	private final String adminlist;
 	private       String whitelist;
 	private final String orgslist;
@@ -51,11 +53,18 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private final Boolean permitAll;
 	private Boolean autoCloseFailedPullRequests;
 
-	transient private Ghprb ml;
+    transient private Ghprb ml;
 
 	@DataBoundConstructor
-	public GhprbTrigger(String adminlist, String whitelist, String orgslist, String cron, String triggerPhrase,
-			Boolean onlyTriggerPhrase, Boolean useGitHubHooks, Boolean permitAll, Boolean autoCloseFailedPullRequests) throws ANTLRException{
+	public GhprbTrigger(String adminlist,
+                        String whitelist,
+                        String orgslist,
+                        String cron,
+                        String triggerPhrase,
+			            Boolean onlyTriggerPhrase,
+                        Boolean useGitHubHooks,
+                        Boolean permitAll,
+                        Boolean autoCloseFailedPullRequests) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
@@ -68,39 +77,39 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
 	}
 
-	@Override
-	public void start(AbstractProject<?, ?> project, boolean newInstance) {
-        GithubProjectProperty gpp = project.getProperty(GithubProjectProperty.class);
-	    if (gpp == null) {
-		    logger.log(Level.SEVERE, "GitHub plugin not set up; cannot start trigger for job {0}", project.getName());
-		    return;
-        }
-        if (gpp.getProjectUrl() == null || gpp.getProjectUrl().baseUrl() == null) {
-            logger.log(Level.SEVERE, "GitHub URL not configured; cannot start trigger for job {0}", project.getName());
+    @Override
+    public void start(AbstractProject<?, ?> project, boolean newInstance) {
+        if (project.getProperty(GithubProjectProperty.class) == null) {
+            logger.log(Level.INFO, "GitHub project not set up, cannot start trigger for job {0}", project.getName());
             return;
         }
-		try{
-			ml = Ghprb.getBuilder()
-			     .setProject(project)
-			     .setTrigger(this)
-			     .setPulls(DESCRIPTOR.getPullRequests(project.getFullName()))
-			     .build();
-		}catch(IllegalStateException ex){
-			logger.log(Level.SEVERE, "Can't start trigger", ex);
-			return;
-		}
+        try {
+            ml = createGhprb(project);
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "Can't start trigger", ex);
+            return;
+        }
 
-		super.start(project, newInstance);
-	}
+        logger.log(Level.INFO, "Starting trigger");
+        super.start(project, newInstance);
+    }
 
-	public Ghprb getGhprb(){
+    public Ghprb createGhprb(AbstractProject<?, ?> project) {
+        return Ghprb.getBuilder()
+                .setProject(project)
+                .setTrigger(this)
+                .setPulls(DESCRIPTOR.getPullRequests(project.getFullName()))
+                .build();
+    }
+
+    public Ghprb getGhprb(){
 		return ml;
 	}
 
 	@Override
 	public void stop() {
-		if(ml != null){
-			ml.stop();
+		if(getGhprb() != null){
+            getGhprb().stop();
 			ml = null;
 		}
 		super.stop();
@@ -161,14 +170,14 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		return values;
 	}
 
-	@Override
-	public void run() {
-		if (ml == null) return;
-		ml.run();
-		DESCRIPTOR.save();
-	}
+    @Override
+    public void run() {
+        if (ml == null) return;
+        ml.run();
+        DESCRIPTOR.save();
+    }
 
-	public void addWhitelist(String author){
+    public void addWhitelist(String author){
 		whitelist = whitelist + " " + author;
 		try {
 			this.job.save();
@@ -441,4 +450,8 @@ public final class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			}
 		}
 	}
+
+    public void setMl(Ghprb ml) {
+        this.ml = ml;
+    }
 }

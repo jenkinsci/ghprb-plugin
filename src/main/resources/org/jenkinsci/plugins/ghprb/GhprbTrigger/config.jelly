@@ -9,6 +9,9 @@
 	<f:entry title="${%Trigger phrase}" field="triggerPhrase">
 	  <f:textbox />
 	</f:entry>
+		<f:entry title="${testMode}" field="testMode">
+    	  <f:textbox />
+    	</f:entry>
 	<f:entry title="Only use trigger phrase for build triggering" field="onlyTriggerPhrase">
 	  <f:checkbox />
 	</f:entry>
