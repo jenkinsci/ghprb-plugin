@@ -78,8 +78,8 @@ public class GhprbBuilds {
 		// having two of them, and because the one we added isn't correct
 		// @see GhprbTrigger
 		BuildData fakeOne = null;
-		for (BuildData data :build.getActions(BuildData.class)) {
-			if (!data.getLastBuiltRevision().getSha1String().equals(c.getCommit())) {
+		for (BuildData data : build.getActions(BuildData.class)) {
+			if (data.getLastBuiltRevision() != null && !data.getLastBuiltRevision().getSha1String().equals(c.getCommit())) {
 				fakeOne = data;
 				break;
 			}
