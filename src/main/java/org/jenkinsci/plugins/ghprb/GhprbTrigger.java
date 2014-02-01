@@ -312,7 +312,23 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		@Override
 		public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-			req.bindJSON(this, formData);
+			serverAPIUrl = formData.getString("serverAPIUrl");
+			username = formData.getString("username");
+			password = formData.getString("password");
+			accessToken = formData.getString("accessToken");
+			adminlist = formData.getString("adminlist");
+			publishedURL = formData.getString("publishedURL");
+			requestForTestingPhrase = formData.getString("requestForTestingPhrase");
+			whitelistPhrase = formData.getString("whitelistPhrase");
+			okToTestPhrase = formData.getString("okToTestPhrase");
+			retestPhrase = formData.getString("retestPhrase");
+			cron = formData.getString("cron");
+			useComments = formData.getBoolean("useComments");
+			logExcerptLines = formData.getInt("logExcerptLines");
+			unstableAs = formData.getString("unstableAs");
+			autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
+			msgSuccess = formData.getString("msgSuccess");
+			msgFailure = formData.getString("msgFailure");
 			save();
 			gh = new GhprbGitHub();
 			return super.configure(req,formData);
