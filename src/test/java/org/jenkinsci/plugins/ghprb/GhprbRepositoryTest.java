@@ -119,6 +119,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper).ifOnlyTriggerPhrase();
+        verify(helper).getWhiteListTargetBranches();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -177,6 +178,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
+        verify(helper, times(2)).getWhiteListTargetBranches();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail();   // Call to Github API
@@ -245,6 +247,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
+        verify(helper, times(2)).getWhiteListTargetBranches();
 
         verify(helper).isWhitelistPhrase(eq("comment body"));
         verify(helper).isOktotestPhrase(eq("comment body"));
@@ -317,6 +320,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).isWhitelisted(eq(ghUser));  // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(2)).getBuilds();
+        verify(helper, times(2)).getWhiteListTargetBranches();
 
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +53,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 	private final Boolean useGitHubHooks;
 	private final Boolean permitAll;
 	private Boolean autoCloseFailedPullRequests;
+	private List<GhprbBranch> whiteListTargetBranches;
 
     transient private Ghprb ml;
 
@@ -64,7 +66,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			            Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
-                        Boolean autoCloseFailedPullRequests) throws ANTLRException{
+                        Boolean autoCloseFailedPullRequests,
+                        List<GhprbBranch> whiteListTargetBranches) throws ANTLRException{
 		super(cron);
 		this.adminlist = adminlist;
 		this.whitelist = whitelist;
@@ -75,6 +78,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		this.useGitHubHooks = useGitHubHooks;
 		this.permitAll = permitAll;
 		this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
+		this.whiteListTargetBranches = whiteListTargetBranches;
 	}
 
     @Override
@@ -238,6 +242,13 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			return autoCloseFailedPullRequests;
 		}
 	}
+	
+	public List<GhprbBranch> getWhiteListTargetBranches(){
+		if (whiteListTargetBranches == null) {
+			return new ArrayList<GhprbBranch>();
+		}
+		return whiteListTargetBranches;
+	}
 
 	public static GhprbTrigger getTrigger(AbstractProject p){
 		Trigger trigger = p.getTrigger(GhprbTrigger.class);
@@ -275,6 +286,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 		private Boolean autoCloseFailedPullRequests = false;
 		private String msgSuccess = "Test PASSed.";
 		private String msgFailure = "Test FAILed.";
+		private List<GhprbBranch> whiteListTargetBranches;
 
 		private transient GhprbGitHub gh;
 
@@ -448,6 +460,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			}catch(IOException ex){
 				return FormValidation.error("GitHub API token couldn't be created" + ex.getMessage());
 			}
+		}
+
+		public List<GhprbBranch> getWhiteListTargetBranches() {
+			return whiteListTargetBranches;
 		}
 	}
 
