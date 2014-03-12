@@ -8,6 +8,7 @@ import org.kohsuke.github.GHUser;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,6 +109,24 @@ public class GhprbPullRequest {
 
         tryBuild(pr);
     }
+    
+	public boolean isWhiteListedTargetBranch() {
+		List<GhprbBranch> branches = ml.getWhiteListTargetBranches();
+		if (branches.isEmpty() || (branches.size() == 1 && branches.get(0).equals(""))){
+			// no branches in white list means we should test all
+			return true;
+		}
+		String branchesString = "";
+		for (GhprbBranch b:branches) {
+			if (b.equals(target)) {
+				// the target branch is in the whitelist!
+				return true;
+			}
+			branchesString += b.getBranch() + " ";
+		}
+		logger.log(Level.FINEST, "PR #{0} target branch: {1} isn't in our whitelist of target branches: " + branchesString, new Object[]{id, target});
+		return false;
+	}
 
 	private boolean isUpdated(GHPullRequest pr){
         boolean ret = updated.compareTo(pr.getUpdatedAt()) < 0;
@@ -119,6 +138,9 @@ public class GhprbPullRequest {
 	private void tryBuild(GHPullRequest pr) {
 		if(ml.ifOnlyTriggerPhrase() && !triggered){
 			shouldRun = false;
+		}
+		if(!isWhiteListedTargetBranch()) {
+			return;
 		}
 		if (shouldRun) {
 

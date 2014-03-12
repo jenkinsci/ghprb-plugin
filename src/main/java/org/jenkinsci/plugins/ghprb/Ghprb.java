@@ -4,6 +4,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.model.AbstractProject;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -125,6 +126,10 @@ public class Ghprb {
 
 	String getGitHubServer() {
 		return githubServer;
+	}
+	
+	List<GhprbBranch> getWhiteListTargetBranches() {
+		return trigger.getWhiteListTargetBranches();
 	}
 
 
