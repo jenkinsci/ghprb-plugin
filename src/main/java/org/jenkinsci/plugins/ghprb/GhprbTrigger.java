@@ -243,7 +243,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 			return autoCloseFailedPullRequests;
 		}
 	}
-	
+
 	public List<GhprbBranch> getWhiteListTargetBranches(){
 		if (whiteListTargetBranches == null) {
 			return new ArrayList<GhprbBranch>();
@@ -351,7 +351,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
 		public FormValidation doCheckServerAPIUrl(@QueryParameter String value){
 			if("https://api.github.com".equals(value)) return FormValidation.ok();
-			if(value.endsWith("/api/v3")) return FormValidation.ok();
+			if(value.endsWith("/api/v3") || value.endsWith("/api/v3/")) return FormValidation.ok();
 			return FormValidation.warning("GitHub api url is \"https://api.github.com\". GitHub enterprise api url ends with \"/api/v3\"");
 		}
 
