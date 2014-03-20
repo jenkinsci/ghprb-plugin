@@ -12,6 +12,7 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.EnumSet;
@@ -51,12 +52,14 @@ public class GhprbRepository {
 	}
 
     private boolean checkState() {
-        GitHub gitHub;
+        GitHub gitHub = null;
         try {
             gitHub = ml.getGitHub().get();
             if (gitHub.getRateLimit().remaining == 0) {
                 return false;
             }
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.INFO, "Rate limit API not found.");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error while accessing rate limit API", ex);
             return false;

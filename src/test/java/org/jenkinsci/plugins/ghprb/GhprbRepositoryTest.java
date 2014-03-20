@@ -17,6 +17,7 @@ import org.kohsuke.github.GitHub;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -84,6 +85,29 @@ public class GhprbRepositoryTest {
         // Mock rate limit
         given(gt.getRateLimit()).willReturn(ghRateLimit);
         increaseRateLimitToDefaults();
+    }
+
+    @Test
+    public void testCheckMethodWhenUsingGitHubEnterprise() throws IOException {
+        // GIVEN
+        given(gt.getRateLimit()).willThrow(new FileNotFoundException());
+        List<GHPullRequest> ghPullRequests = createListWithMockPR();
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
+        mockHeadAndBase();
+
+        given(helper.ifOnlyTriggerPhrase()).willReturn(true);
+
+        pulls.put(1, ghprbPullRequest);
+
+        given(ghPullRequest.getUpdatedAt()).willReturn(UPDATE_DATE);
+        given(ghPullRequest.getNumber()).willReturn(1);
+
+        // WHEN
+        ghprbRepository.check();
+
+        // THEN
+        verifyGetGithub(1);
     }
 
     @Test
