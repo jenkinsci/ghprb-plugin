@@ -1,202 +1,147 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import com.google.common.base.Preconditions;
 import hudson.model.AbstractProject;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import jenkins.model.Jenkins;
+import org.kohsuke.github.GHUser;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jenkins.model.Jenkins;
-import org.kohsuke.github.GHUser;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * @author janinko
  */
 public class Ghprb {
-	private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
-	private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
+    private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
+    private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
-	private HashSet<String>       admins;
-	private HashSet<String>       whitelisted;
-	private HashSet<String>       organisations;
-	private String                triggerPhrase;
-	private GhprbTrigger          trigger;
-	private GhprbRepository       repository;
-	private GhprbBuilds           builds;
-	private AbstractProject<?, ?> project;
-	private String                githubServer;
+    private final Set<String> admins;
+    private final Set<String> whitelisted;
+    private final Set<String> organisations;
+    private final String triggerPhrase;
+    private final GhprbTrigger trigger;
+    private final AbstractProject<?, ?> project;
+    private final Pattern retestPhrasePattern;
+    private final Pattern whitelistPhrasePattern;
+    private final Pattern oktotestPhrasePattern;
+    private GhprbRepository repository;
+    private GhprbBuilds builds;
 
-	private boolean checked = false;
-	
-	private final Pattern retestPhrasePattern;
-	private final Pattern whitelistPhrasePattern;
-	private final Pattern oktotestPhrasePattern;
+    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
+        this.project = project;
 
-	private Ghprb(){
-		retestPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getRetestPhrase());
-		whitelistPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getWhitelistPhrase());
-		oktotestPhrasePattern = Pattern.compile(GhprbTrigger.getDscp().getOkToTestPhrase());
-	}
-	
-	public static Builder getBuilder(){
-		return new Builder();
-	}
+        final GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
+        if (ghpp == null || ghpp.getProjectUrl() == null) {
+            throw new IllegalStateException("A GitHub project url is required.");
+        }
+        String baseUrl = ghpp.getProjectUrl().baseUrl();
+        Matcher m = githubUserRepoPattern.matcher(baseUrl);
+        if (!m.matches()) {
+            throw new IllegalStateException(String.format("Invalid GitHub project url: %s", baseUrl));
+        }
+        final String user = m.group(2);
+        final String repo = m.group(3);
 
-	public void addWhitelist(String author){
-		logger.log(Level.INFO, "Adding {0} to whitelist", author);
-		whitelisted.add(author);
-		trigger.addWhitelist(author);
-	}
+        this.trigger = trigger;
+        this.admins = new HashSet<String>(Arrays.asList(trigger.getAdminlist().split("\\s+")));
+        this.admins.remove("");
+        this.whitelisted = new HashSet<String>(Arrays.asList(trigger.getWhitelist().split("\\s+")));
+        this.whitelisted.remove("");
+        this.organisations = new HashSet<String>(Arrays.asList(trigger.getOrgslist().split("\\s+")));
+        this.organisations.remove("");
+        this.triggerPhrase = trigger.getTriggerPhrase();
 
-	public GhprbBuilds getBuilds() {
-		return builds;
-	}
+        retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
+        whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
+        oktotestPhrasePattern = Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
 
-	public GhprbRepository getRepository() {
-		return repository;
-	}
+        this.repository = new GhprbRepository(user, repo, this, pulls);
+        this.builds = new GhprbBuilds(trigger, repository);
+    }
 
-	public GhprbGitHub getGitHub() {
-		return trigger.getDescriptor().getGitHub();
-	}
+    public void init() {
+        this.repository.init();
+        if (trigger.getUseGitHubHooks()) {
+            this.repository.createHook();
+        }
+    }
 
-	void run() {
-		if(trigger.getUseGitHubHooks() && checked){
-			return;
-		}
-		checked = true;
-		repository.check();
-	}
+    public void addWhitelist(String author) {
+        logger.log(Level.INFO, "Adding {0} to whitelist", author);
+        whitelisted.add(author);
+        trigger.addWhitelist(author);
+    }
 
-	void stop() {
-		repository = null;
-		builds = null;
-	}
+    public GhprbBuilds getBuilds() {
+        return builds;
+    }
 
+    public GhprbRepository getRepository() {
+        return repository;
+    }
 
-	/*          INFO METHODS                */
+    public GhprbGitHub getGitHub() {
+        return trigger.getDescriptor().getGitHub();
+    }
 
-	public String getHookUrl(){
-		return Jenkins.getInstance().getRootUrl() + GhprbRootAction.URL + "/";
-	}
+    void run() {
+        repository.check();
+    }
 
-	public boolean isRetestPhrase(String comment){
-		return retestPhrasePattern.matcher(comment).matches();
-	}
+    void stop() {
+        repository = null;
+        builds = null;
+    }
 
-	public boolean isWhitelistPhrase(String comment){
-		return whitelistPhrasePattern.matcher(comment).matches();
-	}
+    public boolean isRetestPhrase(String comment) {
+        return retestPhrasePattern.matcher(comment).matches();
+    }
 
-	public boolean isOktotestPhrase(String comment){
-		return oktotestPhrasePattern.matcher(comment).matches();
-	}
+    public boolean isWhitelistPhrase(String comment) {
+        return whitelistPhrasePattern.matcher(comment).matches();
+    }
 
-	public boolean isTriggerPhrase(String comment){
-		return !triggerPhrase.equals("") && comment.contains(triggerPhrase);
-	}
+    public boolean isOktotestPhrase(String comment) {
+        return oktotestPhrasePattern.matcher(comment).matches();
+    }
 
-	public boolean ifOnlyTriggerPhrase() {
-		return trigger.getOnlyTriggerPhrase();
-	}
+    public boolean isTriggerPhrase(String comment) {
+        return !triggerPhrase.equals("") && comment.contains(triggerPhrase);
+    }
 
-	public boolean isWhitelisted(GHUser user){
-		return trigger.getPermitAll()
-			|| whitelisted.contains(user.getLogin())
-		    || admins.contains(user.getLogin())
-		    || isInWhitelistedOrganisation(user);
-	}
+    public boolean ifOnlyTriggerPhrase() {
+        return trigger.getOnlyTriggerPhrase();
+    }
 
-	public boolean isAdmin(String username){
-		return admins.contains(username);
-	}
+    public boolean isWhitelisted(GHUser user) {
+        return trigger.getPermitAll()
+                || whitelisted.contains(user.getLogin())
+                || admins.contains(user.getLogin())
+                || isInWhitelistedOrganisation(user);
+    }
 
-	private boolean isInWhitelistedOrganisation(GHUser user) {
-		for(String organisation : organisations){
-			if(getGitHub().isUserMemberOfOrganization(organisation,user)){
-				return true;
-			}
-		}
-		return false;
-	}
+    public boolean isAdmin(String username) {
+        return admins.contains(username);
+    }
 
-	String getGitHubServer() {
-		return githubServer;
-	}
-	
-	List<GhprbBranch> getWhiteListTargetBranches() {
-		return trigger.getWhiteListTargetBranches();
-	}
+    private boolean isInWhitelistedOrganisation(GHUser user) {
+        for (String organisation : organisations) {
+            if (getGitHub().isUserMemberOfOrganization(organisation, user)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-
-	/*               BUILDER                */
-
-	public static class Builder{
-		private Ghprb gml = new Ghprb();
-		private String user;
-		private String repo;
-		private Map<Integer, GhprbPullRequest> pulls;
-
-		public Builder setTrigger(GhprbTrigger trigger) {
-			if(gml == null) return this;
-
-			gml.trigger = trigger;
-			gml.admins = new HashSet<String>(Arrays.asList(trigger.getAdminlist().split("\\s+")));
-			gml.admins.remove("");
-			gml.whitelisted = new HashSet<String>(Arrays.asList(trigger.getWhitelist().split("\\s+")));
-			gml.whitelisted.remove("");
-			gml.organisations = new HashSet<String>(Arrays.asList(trigger.getOrgslist().split("\\s+")));
-			gml.organisations.remove("");
-			gml.triggerPhrase = trigger.getTriggerPhrase();
-
-			return this;
-		}
-
-		public Builder setPulls(Map<Integer, GhprbPullRequest> pulls) {
-			if(gml == null) return this;
-			this.pulls = pulls;
-			return this;
-		}
-
-		public Builder setProject(AbstractProject<?, ?> project) {
-			if(gml == null) return this;
-
-			gml.project = project;
-			GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
-			if(ghpp == null || ghpp.getProjectUrl() == null) {
-				logger.log(Level.WARNING, "A github project url is required.");
-				gml = null;
-				return this;
-			}
-			String baseUrl = ghpp.getProjectUrl().baseUrl();
-			Matcher m = githubUserRepoPattern.matcher(baseUrl);
-			if(!m.matches()) {
-				logger.log(Level.WARNING, "Invalid github project url: {0}", baseUrl);
-				gml = null;
-				return this;
-			}
-			gml.githubServer = m.group(1);
-			user = m.group(2);
-			repo = m.group(3);
-			return this;
-		}
-
-		public Ghprb build(){
-			if(gml == null || pulls == null || gml.trigger == null || gml.project == null){
-				throw new IllegalStateException();
-			}
-			gml.repository = new GhprbRepository(user, repo, gml,pulls);
-			gml.repository.init();
-			if(gml.trigger.getUseGitHubHooks()){
-				gml.repository.createHook();
-			}
-			gml.builds = new GhprbBuilds(gml.trigger,gml.repository);
-			return gml;
-		}
-	}
+    List<GhprbBranch> getWhiteListTargetBranches() {
+        return trigger.getWhiteListTargetBranches();
+    }
 
 }
