@@ -224,6 +224,12 @@ public class GhprbRepository {
 		if(!"created".equals(issueComment.getAction())) return;
 		GhprbPullRequest pull = pulls.get(id);
 		if(pull == null){
+			pull = new GhprbPullRequest(repo.getPullRequest(id), ml, this);
+			if (pull != null){
+				pulls.put(id, pull);
+			}
+		}
+		if(pull == null){
 			if(logger.isLoggable(Level.FINER)){
 				logger.log(Level.FINER, "Pull request #{0} desn't exist", id);
 			}
