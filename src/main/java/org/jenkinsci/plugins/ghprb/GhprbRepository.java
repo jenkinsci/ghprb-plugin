@@ -203,16 +203,14 @@ public class GhprbRepository {
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
         int id = issueComment.getIssue().getNumber();
-        if (logger.isLoggable(Level.FINER)) {
-            logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[]{id, issueComment.getComment().getUser(), issueComment.getComment().getBody()});
-        }
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[]{id, issueComment.getComment().getUser(), issueComment.getComment().getBody()});
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
-            logger.log(Level.FINER, "Pull request #{0} doesn't exist", id);
-            return;
+            pull = new GhprbPullRequest(ghRepository.getPullRequest(id), helper, this);
+            pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
         GhprbTrigger.getDscp().save();
