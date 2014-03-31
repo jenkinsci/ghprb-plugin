@@ -117,7 +117,7 @@ public class GhprbIT {
         // Creating spy on ghprb, configuring repo
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
-        ghprb.getRepository().setMl(ghprb);
+        ghprb.getRepository().setHelper(ghprb);
 
         // Configuring and adding Ghprb trigger
         project.addTrigger(trigger);
@@ -128,7 +128,7 @@ public class GhprbIT {
         project.setScm(scm);
 
         trigger.start(project, true);
-        trigger.setMl(ghprb);
+        trigger.setHelper(ghprb);
 
         // THEN
         Thread.sleep(65000);
@@ -151,8 +151,8 @@ public class GhprbIT {
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
-        trigger.setMl(ghprb);
-        ghprb.getRepository().setMl(ghprb);
+        trigger.setHelper(ghprb);
+        ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = provideGitSCM();
@@ -186,8 +186,8 @@ public class GhprbIT {
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
-        trigger.setMl(ghprb);
-        ghprb.getRepository().setMl(ghprb);
+        trigger.setHelper(ghprb);
+        ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = provideGitSCM();

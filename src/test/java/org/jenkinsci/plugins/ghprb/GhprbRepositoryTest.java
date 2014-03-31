@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.kohsuke.github.GHCommitState.PENDING;
 import static org.kohsuke.github.GHIssueState.OPEN;
@@ -70,7 +72,7 @@ public class GhprbRepositoryTest {
     private GHUser ghUser;
 
     private GhprbRepository ghprbRepository;
-    private Map<Integer,GhprbPullRequest> pulls;
+    private ConcurrentMap<Integer,GhprbPullRequest> pulls;
     private GhprbPullRequest ghprbPullRequest;
 
     @Before
@@ -427,7 +429,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getHead()).willReturn(head);
         given(head.getSha()).willReturn("head sha");
 
-        pulls = new Hash<Integer, GhprbPullRequest>();
+        pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         ghprbRepository = new GhprbRepository(TEST_USER_NAME, TEST_REPO_NAME, helper, pulls);
         ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository);
 
