@@ -77,7 +77,7 @@ If you want to manually build the job, in the job setting check ``This build is 
 ### Updates
 
 #### -> 1.8
-In version 1.8 the GitHub hook url changed from ``http://yourserver.com/jenkins/job/JOBNAME/ghprbhook`` to ``http://yourserver.com/jenkins/ghprbhook``. This shouldn't be noticeable in most cases but you can have two webhooks configured in you repository.
+In version 1.8 the GitHub hook url changed from ``http://yourserver.com/jenkins/job/JOBNAME/ghprbhook`` to ``http://yourserver.com/jenkins/ghprbhook/``. This shouldn't be noticeable in most cases but you can have two webhooks configured in you repository.
 
 #### -> 1.4
 When updating to versions 1.4 phrases for retesting on existing pull requsts can stop working. The solution is comment in pull request with ``ok to test`` or remove and create the job. This is caused because there was change in phrases.
