@@ -41,8 +41,8 @@
       <f:entry title="${%Test phrase}" field="retestPhrase">
         <f:textbox default=".*test\W+this\W+please.*"/>
       </f:entry>
-      <f:entry title="${%Crontab line}" field="cron">
-        <f:textbox default="*/5 * * * *"/>
+      <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
+        <f:textbox default="H/5 * * * *" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
       </f:entry>
       <f:entry title="${%Default success message}" field="msgSuccess">
         <f:textarea default="Test PASSed."/>
