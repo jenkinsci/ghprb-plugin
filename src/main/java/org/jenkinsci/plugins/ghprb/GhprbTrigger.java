@@ -8,7 +8,6 @@ import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.RevisionParameterAction;
 import hudson.plugins.git.util.BuildData;
-import hudson.triggers.TimerTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
@@ -281,7 +280,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
-        private String cron = "*/5 * * * *";
+        // TODO what is this for? seems to be unused (compared to instance field of actual Trigger)
+        private String cron = "H/5 * * * *";
         private Boolean useComments = false;
         private int logExcerptLines = 0;
         private String unstableAs = GHCommitState.FAILURE.name();
@@ -339,10 +339,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                 return FormValidation.error("GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash. Separate them with whitespaces.");
             }
             return FormValidation.ok();
-        }
-
-        public FormValidation doCheckCron(@QueryParameter String value) {
-            return (new TimerTrigger.DescriptorImpl().doCheckSpec(value));
         }
 
         public FormValidation doCheckServerAPIUrl(@QueryParameter String value) {
