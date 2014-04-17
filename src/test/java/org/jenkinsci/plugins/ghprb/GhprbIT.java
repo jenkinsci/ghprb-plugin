@@ -244,6 +244,7 @@ public class GhprbIT {
         jsonObject.put("whitelistPhrase", "");
         jsonObject.put("okToTestPhrase", "ok to test");
         jsonObject.put("retestPhrase", "retest this please");
+        jsonObject.put("skipBuildPhrase", "skip build");
         jsonObject.put("cron", "*/1 * * * *");
         jsonObject.put("useComments", "true");
         jsonObject.put("logExcerptLines", "0");
