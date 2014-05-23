@@ -227,6 +227,10 @@ public class GhprbRepository {
         } else if ("synchronize".equals(pr.getAction())) {
             GhprbPullRequest pull = pulls.get(pr.getNumber());
             if (pull == null) {
+                pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
+                pull = pulls.get(pr.getNumber());
+            }
+            if (pull == null) {
                 logger.log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());
                 return;
             }
