@@ -45,6 +45,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean permitAll;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
+    private Boolean skipCommentMessage;
     private List<GhprbBranch> whiteListTargetBranches;
     private transient Ghprb helper;
 
@@ -58,6 +59,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean useGitHubHooks,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
+						Boolean skipCommentMessage,
                         List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -70,6 +72,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
+		this.skipCommentMessage = skipCommentMessage;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject p) {
@@ -239,6 +242,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         } else {
             return autoCloseFailedPullRequests;
         }
+    }
+
+    public Boolean getSkipCommentMessage() {
+        return skipCommentMessage != null && skipCommentMessage;
     }
 
     public List<GhprbBranch> getWhiteListTargetBranches() {

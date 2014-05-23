@@ -106,7 +106,7 @@ public class GhprbIT {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null
         );
         given(commitPointer.getSha()).willReturn("sha");
         JSONObject jsonObject = provideConfiguration();
@@ -133,6 +133,7 @@ public class GhprbIT {
         // THEN
         Thread.sleep(65000);
         assertThat(project.getBuilds().size()).isEqualTo(1);
+        assertThat(project.getBuilds().size()).isEqualTo(1);
     }
 
     @Test
@@ -140,7 +141,7 @@ public class GhprbIT {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null
         );
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
@@ -168,7 +169,7 @@ public class GhprbIT {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null
         );
 
         given(commitPointer.getSha()).willReturn("sha");
