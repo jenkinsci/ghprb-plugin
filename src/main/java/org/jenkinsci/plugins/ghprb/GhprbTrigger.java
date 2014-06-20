@@ -289,6 +289,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String msgSuccess = "Test PASSed.";
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
+        private String commitStatusContext = "";
         private transient GhprbGitHub gh;
         // map of jobs (by their fullName) abd their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
@@ -329,6 +330,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
+            commitStatusContext = formData.getString("commitStatusContext");
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
@@ -427,6 +429,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public boolean isUseComments() {
             return (useComments != null && useComments);
+        }
+
+        public String getCommitStatusContext() {
+            return commitStatusContext;
         }
 
         public GhprbGitHub getGitHub() {
