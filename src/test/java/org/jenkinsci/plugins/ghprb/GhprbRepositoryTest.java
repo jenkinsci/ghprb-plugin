@@ -188,7 +188,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verify(ghRepository, times(1))
-                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
+                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg"), isNull(String.class)); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
@@ -216,7 +216,7 @@ public class GhprbRepositoryTest {
         GhprbBuilds builds = mock(GhprbBuilds.class);
         given(helper.getBuilds()).willReturn(builds);
         given(builds.build(any(GhprbPullRequest.class))).willReturn("msg");
-        given(ghRepository.createCommitStatus(anyString(), any(GHCommitState.class), anyString(), anyString())).willReturn(null);
+        given(ghRepository.createCommitStatus(anyString(), any(GHCommitState.class), anyString(), anyString(), isNull(String.class))).willReturn(null);
         return builds;
     }
 
@@ -255,7 +255,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(1))
-                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
+                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg"), isNull(String.class)); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
@@ -328,7 +328,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(2)).build(any(GhprbPullRequest.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2))
-                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
+                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg"), isNull(String.class)); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
