@@ -53,7 +53,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.42</version>
+            <version>1.55-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
