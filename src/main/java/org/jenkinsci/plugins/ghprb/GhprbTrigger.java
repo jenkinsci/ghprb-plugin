@@ -432,7 +432,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
 
         public String getCommitStatusContext() {
-            return commitStatusContext;
+            if (commitStatusContext.equals(""))
+              return null;
+            else
+              return commitStatusContext;
         }
 
         public GhprbGitHub getGitHub() {
