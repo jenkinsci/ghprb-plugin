@@ -122,7 +122,7 @@ public class GhprbRepository {
     public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
         logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
         try {
-            ghRepository.createCommitStatus(sha1, state, url, message);
+            ghRepository.createCommitStatus(sha1, state, url, message, GhprbTrigger.getDscp().getCommitStatusContext());
         } catch (IOException ex) {
             if (GhprbTrigger.getDscp().getUseComments()) {
                 logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
