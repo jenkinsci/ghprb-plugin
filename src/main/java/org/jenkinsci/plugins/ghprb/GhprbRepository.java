@@ -114,15 +114,15 @@ public class GhprbRepository {
         pull.check(pr);
     }
 
-    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id) {
+    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id, String context) {
         String sha1 = build.getCause(GhprbCause.class).getCommit();
-        createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id);
+        createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context);
     }
 
-    public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
+    public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id, String context) {
         logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
         try {
-            ghRepository.createCommitStatus(sha1, state, url, message, GhprbTrigger.getDscp().getCommitStatusContext());
+            ghRepository.createCommitStatus(sha1, state, url, message, context);
         } catch (IOException ex) {
             if (GhprbTrigger.getDscp().getUseComments()) {
                 logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
