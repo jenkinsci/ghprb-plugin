@@ -83,6 +83,10 @@ public class Ghprb {
         return builds;
     }
 
+    public GhprbTrigger getTrigger() {
+        return trigger;
+    }
+
     public GhprbRepository getRepository() {
         return repository;
     }
