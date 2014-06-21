@@ -42,7 +42,7 @@
         <f:textbox default=".*test\W+this\W+please.*"/>
       </f:entry>
       <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
-      	<f:textarea default=".*skip\\W+build.*"/>
+      	<f:textarea default=".*\[skip\W+ci\].*"/>
       </f:entry>
       <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
         <f:textbox default="H/5 * * * *" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
