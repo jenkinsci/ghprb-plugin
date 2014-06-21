@@ -54,11 +54,13 @@ public class GhprbRootAction implements UnprotectedRootAction {
             if ("issue_comment".equals(event)) {
                 GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
                 for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
+                    logger.log(Level.INFO, "Checking issue comment '{0}' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
                     repo.onIssueCommentHook(issueComment);
                 }
             } else if ("pull_request".equals(event)) {
                 GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
                 for (GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())) {
+                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber()});
                     repo.onPullRequestHook(pr);
                 }
             } else {
@@ -73,7 +75,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
         try {
             return getRepos(repo.getOwner().getLogin() + "/" + repo.getName());
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Can't get a valid owner for repo");
+            logger.log(Level.WARNING, "Can't get a valid owner for repo " + repo.getName());
             // this normally happens due to missing "login" field in the owner of the repo
             // when the repo is inside of an organisation account. The only field which doesn't
             // rely on the owner.login (which would throw a null pointer exception) is the "html_url"
