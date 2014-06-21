@@ -46,6 +46,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
+    private String commitStatusContext;
     private transient Ghprb helper;
 
     @DataBoundConstructor
@@ -58,7 +59,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean useGitHubHooks,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
-                        List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
+                        List<GhprbBranch> whiteListTargetBranches,
+                        String commitStatusContext) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -70,6 +72,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
+        this.commitStatusContext = commitStatusContext;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject p) {
@@ -246,6 +249,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return new ArrayList<GhprbBranch>();
         }
         return whiteListTargetBranches;
+    }
+
+    public String getCommitStatusContext() {
+        return commitStatusContext;
     }
 
     @Override
@@ -432,10 +439,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
 
         public String getCommitStatusContext() {
-            if (commitStatusContext.equals(""))
-              return null;
-            else
-              return commitStatusContext;
+            return commitStatusContext;
         }
 
         public GhprbGitHub getGitHub() {
