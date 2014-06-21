@@ -280,7 +280,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
-        private String skipBuildPhrase = ".*skip\\W+build.*";
+        private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
         // TODO what is this for? seems to be unused (compared to instance field of actual Trigger)
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
