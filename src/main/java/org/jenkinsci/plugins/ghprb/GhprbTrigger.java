@@ -390,8 +390,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         
         public String getSkipBuildPhrase() {
-			return skipBuildPhrase;
-		}
+            return skipBuildPhrase;
+        }
 
         public String getCron() {
             return cron;
