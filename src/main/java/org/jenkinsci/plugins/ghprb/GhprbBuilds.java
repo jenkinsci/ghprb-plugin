@@ -7,6 +7,7 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
 import org.apache.commons.io.FileUtils;
+
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -138,8 +139,10 @@ public class GhprbBuilds {
             } else {
                 msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
             }
+
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
-            msg.append(publishedURL).append(build.getUrl());
+
+            msg.append(calculateBuildUrl(build));
 
             int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
             if (state != GHCommitState.SUCCESS && numLines > 0) {
@@ -176,5 +179,11 @@ public class GhprbBuilds {
                 ex.printStackTrace(logger);
             }
         }
+    }
+
+    private String calculateBuildUrl(AbstractBuild build) {
+        String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
+
+        return publishedURL + "/" + build.getUrl();
     }
 }
