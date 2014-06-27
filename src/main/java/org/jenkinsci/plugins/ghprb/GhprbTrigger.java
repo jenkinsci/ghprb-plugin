@@ -44,6 +44,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
     private String whitelist;
+    private final Boolean autoMergeSuccessfulPullRequests;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
     private transient Ghprb helper;
@@ -58,6 +59,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
+                        Boolean autoMergeSuccessfulPullRequests,
                         Boolean autoCloseFailedPullRequests,
                         List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
         super(cron);
@@ -69,6 +71,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
+        this.autoMergeSuccessfulPullRequests = autoMergeSuccessfulPullRequests;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
     }
@@ -277,6 +280,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return helper.getRepository();
     }
+    
+	public Boolean getAutoMergeSuccessfulPullRequests() {
+		return this.autoMergeSuccessfulPullRequests != null && autoMergeSuccessfulPullRequests;
+	}
 
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash

@@ -134,6 +134,19 @@ public class GhprbBuilds {
             repo.addComment(c.getPullID(), msg.toString());
         }
 
+		if (state == GHCommitState.SUCCESS
+				&& trigger.getAutoMergeSuccessfulPullRequests()) {
+			try {
+				GHPullRequest pr = repo.getPullRequest(c.getPullID());
+				if (pr.getState().equals(GHIssueState.OPEN)) {
+					String mergeMsg = "[Auto merged on build success]: " + pr.getTitle() + "-" + pr.getBody();
+					pr.merge(mergeMsg);
+				}
+			} catch (IOException ex) {
+				logger.log(Level.SEVERE, "Can't auto merge pull request", ex);
+			}
+		}
+        
         // close failed pull request automatically
         if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
 
