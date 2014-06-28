@@ -21,6 +21,9 @@
 	<f:entry title="Auto merge pull request on build success" field="autoMergeSuccessfulPullRequests">
           <f:checkbox default="${descriptor.autoMergeSuccessfulPullRequests}"/>
 	</f:entry>
+        <f:entry title="Auto merge pull request message suffix" field="autoMergeText">
+          <f:textbox default="${descriptor.autoMergeText}"/>
+        </f:entry>
 	<f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
 	  <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
 	</f:entry>

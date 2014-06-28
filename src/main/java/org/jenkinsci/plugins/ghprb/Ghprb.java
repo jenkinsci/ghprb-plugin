@@ -29,6 +29,7 @@ public class Ghprb {
     private final GhprbTrigger trigger;
     private final AbstractProject<?, ?> project;
     private final Pattern retestPhrasePattern;
+    private final Pattern autoMergePhrasePattern;
     private final Pattern whitelistPhrasePattern;
     private final Pattern oktotestPhrasePattern;
     private GhprbRepository repository;
@@ -59,6 +60,7 @@ public class Ghprb {
         this.triggerPhrase = trigger.getTriggerPhrase();
 
         retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
+        autoMergePhrasePattern = Pattern.compile(trigger.getDescriptor().getAutoMergePhrase());
         whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
         oktotestPhrasePattern = Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
 
@@ -102,6 +104,10 @@ public class Ghprb {
 
     public boolean isRetestPhrase(String comment) {
         return retestPhrasePattern.matcher(comment).matches();
+    }
+
+    public boolean isAutoMergePhrase(String comment) {
+        return autoMergePhrasePattern.matcher(comment).matches();
     }
 
     public boolean isWhitelistPhrase(String comment) {

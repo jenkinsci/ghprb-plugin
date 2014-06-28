@@ -14,6 +14,7 @@ import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -45,6 +46,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean permitAll;
     private String whitelist;
     private final Boolean autoMergeSuccessfulPullRequests;
+    private final String autoMergeText;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
     private transient Ghprb helper;
@@ -56,6 +58,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         String orgslist,
                         String cron,
                         String triggerPhrase,
+                        String autoMergeText,
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
@@ -72,6 +75,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
         this.autoMergeSuccessfulPullRequests = autoMergeSuccessfulPullRequests;
+        this.autoMergeText = autoMergeText;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
     }
@@ -247,6 +251,17 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
     }
 
+    public Boolean isAutoMergeSignedOff(List<GHIssueComment> commentList)
+            throws IOException {
+        for (GHIssueComment comment : commentList) {
+            if (helper.isAutoMergePhrase(comment.getBody())
+                    && helper.isAdmin(comment.getUser().getLogin())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<GhprbBranch> getWhiteListTargetBranches() {
         if (whiteListTargetBranches == null) {
             return new ArrayList<GhprbBranch>();
@@ -280,10 +295,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return helper.getRepository();
     }
-    
-	public Boolean getAutoMergeSuccessfulPullRequests() {
-		return this.autoMergeSuccessfulPullRequests != null && autoMergeSuccessfulPullRequests;
-	}
+
+    public String getAutoMergeText() {
+        return this.autoMergeText;
+    }
+
+    public Boolean getAutoMergeSuccessfulPullRequests() {
+        return this.autoMergeSuccessfulPullRequests != null && autoMergeSuccessfulPullRequests;
+    }
 
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
@@ -298,6 +317,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
+        private String autoMergePhrase = ".*auto\\W+merge\\W+on\\W+success.*";
         // TODO what is this for? seems to be unused (compared to instance field of actual Trigger)
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
@@ -340,6 +360,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             whitelistPhrase = formData.getString("whitelistPhrase");
             okToTestPhrase = formData.getString("okToTestPhrase");
             retestPhrase = formData.getString("retestPhrase");
+            autoMergePhrase = formData.getString("autoMergePhrase");
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
             logExcerptLines = formData.getInt("logExcerptLines");
@@ -403,6 +424,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public String getRetestPhrase() {
             return retestPhrase;
+        }
+
+        public String getAutoMergePhrase() {
+            return autoMergePhrase;
         }
 
         public String getCron() {
