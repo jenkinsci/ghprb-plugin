@@ -8,7 +8,6 @@ import hudson.plugins.git.util.BuildData;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 
