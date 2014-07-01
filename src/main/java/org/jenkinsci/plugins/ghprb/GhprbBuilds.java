@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Scanner;
+import java.io.File;
 
 /**
  * @author janinko
@@ -106,12 +108,23 @@ public class GhprbBuilds {
         if (publishedURL != null && !publishedURL.isEmpty()) {
             StringBuilder msg = new StringBuilder();
 
+            msg.append("Build guidelines: \n--------------\n");
+            String commentinfo = "";
+            String commentinfopath = build.getModuleRoot().toString() + "/commentinfo.md";
+            try {
+            	commentinfo = new Scanner(new File(commentinfopath), "UTF-8" ).useDelimiter("\\A").next();
+            }
+            catch (Exception e){
+            	commentinfo = "File: " + commentinfopath + " not found";
+            }            
+            msg.append(commentinfo);
+            msg.append("\n--------------\n");
             if (state == GHCommitState.SUCCESS) {
                 msg.append(GhprbTrigger.getDscp().getMsgSuccess());
             } else {
                 msg.append(GhprbTrigger.getDscp().getMsgFailure());
             }
-            msg.append("\nRefer to this link for build results: ");
+            msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(publishedURL).append(build.getUrl());
 
             int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
@@ -139,7 +152,6 @@ public class GhprbBuilds {
 
             try {
                 GHPullRequest pr = repo.getPullRequest(c.getPullID());
-
                 if (pr.getState().equals(GHIssueState.OPEN)) {
                     repo.closePullRequest(c.getPullID());
                 }
