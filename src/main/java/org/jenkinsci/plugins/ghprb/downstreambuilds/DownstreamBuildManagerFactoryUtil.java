@@ -12,8 +12,12 @@ import hudson.model.AbstractBuild;
 public class DownstreamBuildManagerFactoryUtil {
 
 	public static IDownstreamBuildManager getBuildManager(AbstractBuild build) {
-		if (build instanceof FlowRun) {
-			return new DownstreamBuildFlowManager(build);
+		try {
+			if (build instanceof FlowRun) {
+				return new DownstreamBuildFlowManager(build);
+			}
+		}
+		catch (NoClassDefFoundError ncdfe) {
 		}
 
 		return new GhprbDefaultBuildManager(build);
