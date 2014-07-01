@@ -8,8 +8,6 @@ import hudson.plugins.git.util.BuildData;
 
 import org.apache.commons.io.FileUtils;
 
-import org.jenkinsci.plugins.ghprb.downstreambuilds.DownstreamBuildManagerFactoryUtil;
-import org.jenkinsci.plugins.ghprb.downstreambuilds.IDownstreamBuildManager;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -186,8 +184,8 @@ public class GhprbBuilds {
     }
 
     private String calculateBuildUrl(AbstractBuild build) {
-        IDownstreamBuildManager buildManager =
-            DownstreamBuildManagerFactoryUtil.getBuildManager(build);
+        GhprbBuildUrlManager buildManager =
+            GhprbBuildUrlManagerFactoryUtil.getBuildManager(build);
 
         return buildManager.calculateBuildUrl();
     }

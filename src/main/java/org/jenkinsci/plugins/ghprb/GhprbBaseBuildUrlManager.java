@@ -1,16 +1,15 @@
-package org.jenkinsci.plugins.ghprb.downstreambuilds;
+package org.jenkinsci.plugins.ghprb;
 
-import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 
 import hudson.model.AbstractBuild;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
  */
-public abstract class BaseDownstreamBuildManager
-	implements IDownstreamBuildManager {
+public abstract class GhprbBaseBuildUrlManager
+	implements GhprbBuildUrlManager {
 
-	public BaseDownstreamBuildManager(AbstractBuild build) {
+	public GhprbBaseBuildUrlManager(AbstractBuild build) {
 		this.build = build;
 	}
 

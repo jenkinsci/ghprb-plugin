@@ -1,9 +1,9 @@
-package org.jenkinsci.plugins.ghprb.downstreambuilds;
+package org.jenkinsci.plugins.ghprb;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
  */
-public interface IDownstreamBuildManager {
+public interface GhprbBuildUrlManager {
 
 	/**
 	 * Calculate the build URL of a build
