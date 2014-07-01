@@ -19,6 +19,12 @@ public class DownstreamBuildFlowManager extends BaseDownstreamBuildManager {
 		super(build);
 	}
 
+	/**
+	 * Calculate the build URL of a build of BuildFlow type, traversing its
+	 * downstream builds graph
+	 * 
+	 * @return the build URL of a BuildFlow build, with all its downstream builds
+	 */
 	@Override
 	public String calculateBuildUrl() {
 		FlowRun flowRun = (FlowRun) build;
