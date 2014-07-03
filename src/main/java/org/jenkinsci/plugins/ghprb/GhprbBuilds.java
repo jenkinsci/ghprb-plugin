@@ -5,6 +5,8 @@ import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
+
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -132,6 +134,26 @@ public class GhprbBuilds {
             }
 
             repo.addComment(c.getPullID(), msg.toString());
+        }
+
+        if (state == GHCommitState.SUCCESS) {
+            try {
+                GHPullRequest pr = repo.getPullRequest(c.getPullID());
+                if ((trigger.getAutoMergeSuccessfulPullRequests()
+                        || trigger.isAutoMergeSignedOff(pr.getComments()))
+                        && pr.getState().equals(GHIssueState.OPEN)) {
+                    String mergeMsg = null;
+                    if (StringUtils.isNotBlank(trigger.getAutoMergeText())) {
+                        mergeMsg = trigger.getAutoMergeText()
+                                .replaceAll("\\$\\{pr.title\\}", pr.getTitle())
+                                .replaceAll("\\$\\{pr.body\\}", pr.getBody());
+                    }
+                    pr.merge(mergeMsg);
+                }
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
+                        "Error while auto merging pull request", ex);
+            }
         }
 
         // close failed pull request automatically
