@@ -44,5 +44,8 @@
         </table>
       </f:repeatable>
     </f:entry>
+    <f:entry title="Only add a comment on failed builds" field="commentOnlyOnFailure">
+        <f:checkbox/>
+    </f:entry>
   </f:advanced>
 </j:jelly>

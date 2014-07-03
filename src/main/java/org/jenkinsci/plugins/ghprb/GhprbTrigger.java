@@ -46,6 +46,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
+    private final Boolean commentOnlyOnFailure;
     private transient Ghprb helper;
     private String project;
 
@@ -59,7 +60,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean useGitHubHooks,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
-                        List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
+                        List<GhprbBranch> whiteListTargetBranches,
+                        Boolean commentOnlyOnFailure) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -71,6 +73,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
+        this.commentOnlyOnFailure = commentOnlyOnFailure;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject p) {
@@ -300,6 +303,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String msgSuccess = "Test PASSed.";
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
+        private Boolean commentOnlyOnFailure;
         private transient GhprbGitHub gh;
         // map of jobs (by their fullName) abd their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
@@ -340,6 +344,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
+            commentOnlyOnFailure = formData.getBoolean("commentOnlyOnFailure");
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
@@ -438,6 +443,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public boolean isUseComments() {
             return (useComments != null && useComments);
+        }
+
+        public boolean isCommentOnlyOnFailure() {
+            return commentOnlyOnFailure != null && commentOnlyOnFailure;
         }
 
         public GhprbGitHub getGitHub() {
