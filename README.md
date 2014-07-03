@@ -58,7 +58,9 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * Add the project's GitHub URL to the ``GitHub project`` field (the one you can enter into browser. eg: ``https://github.com/janinko/ghprb``)  
 * Select Git SCM.  
 * Add your GitHub ``Repository URL``.  
-* Under Advanced, set ``refspec`` to ``+refs/pull/*:refs/remotes/origin/pr/*``.  
+* Under Advanced, set ``Name`` to ``origin`` and:
+  * If you **just** want to build PRs, set ``refspec`` to ``+refs/pull/*:refs/remotes/origin/pr/*``
+  * If you want to build PRs **and** branches, set ``refspec`` to ``+refs/heads/*:refs/remotes/origin/* +refs/pull/*:refs/remotes/origin/pr/*`` (see note below about [parameterized builds](#parameterized-builds))
 * In ``Branch Specifier``, enter ``${sha1}``.  
 * Under ``Build Triggers``, check ``GitHub pull requests builder``.
   * Add admins for this specific job.  
@@ -69,9 +71,10 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
     * The organisation names whose members are considered whitelisted for this specific job.  
 * Save to preserve your changes.  
 
-Make sure you **DON'T** have ``Prune remote branches before build`` advanced option selected, since it will prune the branch created to test this build.
+Make sure you **DON'T** have ``Prune remote branches before build`` advanced option selected, since it will prune the branch created to test this build.  
 
-If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
+#### Parameterized Builds
+If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1`` with a default value of ``master``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
 
 
 ### Updates
