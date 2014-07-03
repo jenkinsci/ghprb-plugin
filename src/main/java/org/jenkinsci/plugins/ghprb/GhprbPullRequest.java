@@ -149,22 +149,27 @@ public class GhprbPullRequest {
 
     private void tryBuild(GHPullRequest pr) {
         if (helper.ifOnlyTriggerPhrase() && !triggered) {
+            logger.log(Level.FINEST, "Trigger only phrase but we are not triggered");
             shouldRun = false;
         }
         if (!isWhiteListedTargetBranch()) {
             return;
         }
         if (shouldRun) {
+            logger.log(Level.FINEST, "Running the build");
 
             if (authorEmail == null) {
                 // If this instance was create before authorEmail was introduced (before v1.10), it can be null.
                 obtainAuthorEmail(pr);
+                logger.log(Level.FINEST, "Author email was not set, trying to set it to {0}", authorEmail);
             }
 
             if (pr != null) {
+                logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
             }
 
+            logger.log(Level.FINEST, "Running build...");
             build();
 
             shouldRun = false;
@@ -198,24 +203,33 @@ public class GhprbPullRequest {
 
         if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) {       // add to whitelist
             if (!helper.isWhitelisted(author)) {
+                logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
                 helper.addWhitelist(author.getLogin());
             }
             accepted = true;
             shouldRun = true;
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) {       // ok to test
+            logger.log(Level.FINEST, "Admin {0} gave OK to test", sender);
             accepted = true;
             shouldRun = true;
         } else if (helper.isRetestPhrase(body)) {        // test this please
+            logger.log(Level.FINEST, "Retest phrase");
             if (helper.isAdmin(sender)) {
+                logger.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
                 shouldRun = true;
             } else if (accepted && helper.isWhitelisted(senderUser)) {
+                logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", senderUser);
                 shouldRun = true;
+                triggered = true;
             }
         } else if (helper.isTriggerPhrase(body)) {      // trigger phrase
+            logger.log(Level.FINEST, "Trigger phrase");
             if (helper.isAdmin(sender)) {
+                logger.log(Level.FINEST, "Admin {0} ran trigger phrase", sender);
                 shouldRun = true;
                 triggered = true;
             } else if (accepted && helper.isWhitelisted(senderUser)) {
+                logger.log(Level.FINEST, "Trigger accepted and user {0} is whitelisted", senderUser);
                 shouldRun = true;
                 triggered = true;
             }
