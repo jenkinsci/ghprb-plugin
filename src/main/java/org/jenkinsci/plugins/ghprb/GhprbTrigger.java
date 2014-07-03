@@ -291,6 +291,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
+        private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
         // TODO what is this for? seems to be unused (compared to instance field of actual Trigger)
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
@@ -333,6 +334,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             whitelistPhrase = formData.getString("whitelistPhrase");
             okToTestPhrase = formData.getString("okToTestPhrase");
             retestPhrase = formData.getString("retestPhrase");
+            skipBuildPhrase = formData.getString("skipBuildPhrase");
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
             logExcerptLines = formData.getInt("logExcerptLines");
@@ -396,6 +398,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public String getRetestPhrase() {
             return retestPhrase;
+        }
+        
+        public String getSkipBuildPhrase() {
+            return skipBuildPhrase;
         }
 
         public String getCron() {
