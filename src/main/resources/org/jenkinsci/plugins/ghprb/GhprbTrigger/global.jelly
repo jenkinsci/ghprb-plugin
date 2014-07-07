@@ -3,6 +3,9 @@
     <f:entry title="${%GitHub server api URL}" field="serverAPIUrl">
       <f:textbox default="api.github.com"/>
     </f:entry>
+    <f:entry title="${%TESTFIELD}" field="testText">
+      <f:textbox default="TESTDEFAULTTEXT"/>
+    </f:entry>
     <f:entry title="${%Access Token}" field="accessToken">
       <f:password />
     </f:entry>
