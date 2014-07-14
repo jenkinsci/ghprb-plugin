@@ -25,8 +25,6 @@ import java.util.logging.Logger;
 /**
  * @author janinko
  */
-//Editied by Quin Rogers
-
 public class GhprbBuilds {
     private static final Logger logger = Logger.getLogger(GhprbBuilds.class.getName());
     private final GhprbTrigger trigger;
