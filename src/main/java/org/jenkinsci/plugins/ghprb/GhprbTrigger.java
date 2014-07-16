@@ -288,6 +288,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String adminlist;
         private String publishedURL;
         private String requestForTestingPhrase;
+        private String buildDescTemplate = "<a title=\"$title\" href=\"$url\">PR #$pullId</a>: $abbrTitle";
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
@@ -330,6 +331,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             adminlist = formData.getString("adminlist");
             publishedURL = formData.getString("publishedURL");
             requestForTestingPhrase = formData.getString("requestForTestingPhrase");
+            buildDescTemplate = formData.getString("buildDescTemplate");
             whitelistPhrase = formData.getString("whitelistPhrase");
             okToTestPhrase = formData.getString("okToTestPhrase");
             retestPhrase = formData.getString("retestPhrase");
@@ -384,6 +386,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public String getRequestForTestingPhrase() {
             return requestForTestingPhrase;
+        }
+
+        public String getBuildDescTemplate() {
+            return buildDescTemplate;
         }
 
         public String getWhitelistPhrase() {

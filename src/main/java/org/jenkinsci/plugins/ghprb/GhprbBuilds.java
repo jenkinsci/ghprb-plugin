@@ -1,16 +1,21 @@
 package org.jenkinsci.plugins.ghprb;
 
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
+import hudson.util.VariableResolver.ByMap;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
+import hudson.util.VariableResolver;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,12 +71,23 @@ public class GhprbBuilds {
 
         repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID());
         try {
-            build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
+            String template = GhprbTrigger.getDscp(). getBuildDescTemplate();
+            Map<String, String> vars = getVariables(c);
+            build.setDescription(Util.replaceMacro(template, vars));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Can't update build description", ex);
         }
     }
 
+    public Map<String, String> getVariables(GhprbCause c) {
+      Map<String, String> vars = new HashMap<String, String>();
+      vars.put("title", c.getTitle());
+      vars.put("url", c.getUrl().toString());
+      vars.put("pullId", Integer.toString(c.getPullID()));
+      vars.put("abbrTitle", c.getAbbreviatedTitle());
+      return vars;
+    }
+    
     public void onCompleted(AbstractBuild build) {
         GhprbCause c = getCause(build);
         if (c == null) {
