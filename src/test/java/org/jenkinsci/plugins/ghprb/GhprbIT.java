@@ -241,6 +241,7 @@ public class GhprbIT {
         jsonObject.put("adminlist", "user");
         jsonObject.put("publishedURL", "");
         jsonObject.put("requestForTestingPhrase", "test this");
+        jsonObject.put("buildDescTemplate", "");
         jsonObject.put("whitelistPhrase", "");
         jsonObject.put("okToTestPhrase", "ok to test");
         jsonObject.put("retestPhrase", "retest this please");
