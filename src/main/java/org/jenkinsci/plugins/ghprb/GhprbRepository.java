@@ -11,7 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -188,7 +187,7 @@ public class GhprbRepository {
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
             return true;
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
+            logger.log(Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
             return false;
         }
     }
@@ -231,7 +230,7 @@ public class GhprbRepository {
                 pull = pulls.get(pr.getNumber());
             }
             if (pull == null) {
-                logger.log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());
+                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
                 return;
             }
             pull.check(pr.getPullRequest());

@@ -264,7 +264,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public GhprbBuilds getBuilds() {
         if(helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn't properly started - helper is null", this.project);
+            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
             return null;
         }
         return helper.getBuilds();
@@ -272,7 +272,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public GhprbRepository getRepository() {
         if(helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn't properly started - helper is null", this.project);
+            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
             return null;
         }
         return helper.getRepository();

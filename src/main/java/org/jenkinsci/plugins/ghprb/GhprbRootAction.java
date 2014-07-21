@@ -54,7 +54,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
             if ("issue_comment".equals(event)) {
                 GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
                 for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
-                    logger.log(Level.INFO, "Checking issue comment '{0}' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
+                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
                     repo.onIssueCommentHook(issueComment);
                 }
             } else if ("pull_request".equals(event)) {
