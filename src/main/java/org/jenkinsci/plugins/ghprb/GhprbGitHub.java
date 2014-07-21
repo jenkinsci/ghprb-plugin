@@ -25,7 +25,7 @@ public class GhprbGitHub {
 				throw e;
 			}
 		} else {
-			gh = GitHub.connect(GhprbTrigger.getDscp().getUsername(), null, GhprbTrigger.getDscp().getPassword());
+			gh = GitHub.connectUsingPassword(GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
 		}
 	}
 
