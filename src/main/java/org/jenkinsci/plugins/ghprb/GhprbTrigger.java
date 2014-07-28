@@ -43,6 +43,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
+    private Boolean disallowOwnCode;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
@@ -58,6 +59,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
+                        Boolean disallowOwnCode,
                         Boolean autoCloseFailedPullRequests,
                         List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
         super(cron);
@@ -69,6 +71,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
+        this.disallowOwnCode = disallowOwnCode;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
     }
@@ -233,6 +236,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public Boolean getPermitAll() {
         return permitAll != null && permitAll;
+    }
+    
+    public Boolean getDisallowOwnCode() {
+    	return disallowOwnCode != null && disallowOwnCode;
+    }
+    
+    public void setDisallowOwnCode(boolean disallowOwnCode) {
+    	this.disallowOwnCode = disallowOwnCode;
     }
 
     public Boolean isAutoCloseFailedPullRequests() {

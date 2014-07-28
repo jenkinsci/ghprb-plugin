@@ -18,7 +18,10 @@
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
-	<f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
+	<f:entry title="${%Disallow merging your own code?}" field="disallowOwnCode">
+	  <f:checkbox default="${descriptor.disallowOwnCode}"/>
+	</f:entry>  
+    <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
 	  <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
 	</f:entry>
 	<f:entry title="${%White list}" field="whitelist">

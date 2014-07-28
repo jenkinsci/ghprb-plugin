@@ -106,7 +106,7 @@ public class GhprbIT {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null
         );
         given(commitPointer.getSha()).willReturn("sha");
         JSONObject jsonObject = provideConfiguration();
@@ -140,7 +140,7 @@ public class GhprbIT {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null
         );
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
@@ -168,7 +168,7 @@ public class GhprbIT {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null
         );
 
         given(commitPointer.getSha()).willReturn("sha");
@@ -246,6 +246,7 @@ public class GhprbIT {
         jsonObject.put("retestPhrase", "retest this please");
         jsonObject.put("cron", "*/1 * * * *");
         jsonObject.put("useComments", "true");
+        jsonObject.put("disallowOwnMerge", "false");
         jsonObject.put("logExcerptLines", "0");
         jsonObject.put("unstableAs", "");
         jsonObject.put("testMode", "true");
