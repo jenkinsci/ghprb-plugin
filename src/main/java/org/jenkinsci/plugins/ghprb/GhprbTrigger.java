@@ -40,6 +40,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final String orgslist;
     private final String cron;
     private final String triggerPhrase;
+    private final Boolean mentionAuthor;
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
@@ -55,6 +56,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         String orgslist,
                         String cron,
                         String triggerPhrase,
+                        Boolean mentionAuthor,
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
@@ -66,6 +68,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.orgslist = orgslist;
         this.cron = cron;
         this.triggerPhrase = triggerPhrase;
+        this.mentionAuthor = mentionAuthor;
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
@@ -221,6 +224,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return "";
         }
         return triggerPhrase;
+    }
+
+    public Boolean getMentionAuthor() {
+        return mentionAuthor;
     }
 
     public Boolean getOnlyTriggerPhrase() {
