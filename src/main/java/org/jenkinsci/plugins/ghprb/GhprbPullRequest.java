@@ -1,10 +1,15 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
+
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitUser;
 
 import java.io.IOException;
 import java.net.URL;
@@ -121,7 +126,6 @@ public class GhprbPullRequest {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
         }
-
         tryBuild(pr);
     }
 
@@ -139,7 +143,7 @@ public class GhprbPullRequest {
         }
         logger.log(Level.FINEST, "PR #{0} target branch: {1} isn't in our whitelist of target branches: {2}", new Object[]{id, target, Joiner.on(',').skipNulls().join(branches)});
         return false;
-    }
+    }	
 
     private boolean isUpdated(GHPullRequest pr) {
         boolean ret = updated.compareTo(pr.getUpdatedAt()) < 0;
@@ -148,6 +152,11 @@ public class GhprbPullRequest {
     }
 
     private void tryBuild(GHPullRequest pr) {
+    	
+    	if (pr != null) {
+    		checkIsOwnCode(pr);
+    	}
+    	
         if (helper.ifOnlyTriggerPhrase() && !triggered) {
             logger.log(Level.FINEST, "Trigger only phrase but we are not triggered");
             shouldRun = false;
@@ -177,7 +186,32 @@ public class GhprbPullRequest {
         }
     }
 
-    private void build() {
+    private void checkIsOwnCode(GHPullRequest pr) {
+    	if (!helper.isDisallowOwnCode() || !shouldRun){
+    		return;
+    	}
+		for (GHPullRequestCommitDetail commitDetail : pr.listCommits()){
+			Commit commit = commitDetail.getCommit();
+			
+			GitUser user = commit.getAuthor();
+			try {
+				String authorEmail = author.getName();
+				String commitEmail = user.getName();
+				boolean authorIsCommiter = authorEmail.equalsIgnoreCase(commitEmail);
+				if (authorIsCommiter) {
+					shouldRun = false;
+					String message = String.format("Author: '%s' is also in the commit list, and cannot merge their own code", author.getLogin());
+					repo.addComment(id, message);
+					break;
+				}
+			} catch (IOException e) {
+				logger.log(Level.WARNING, e.toString());
+			}
+		}
+		
+	}
+
+	private void build() {
         String message = helper.getBuilds().build(this);
 		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
         logger.log(Level.INFO, message);
@@ -200,6 +234,7 @@ public class GhprbPullRequest {
         String sender = comment.getUser().getLogin();
         GHUser senderUser = comment.getUser();
         String body = comment.getBody();
+        
 
         if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) {       // add to whitelist
             if (!helper.isWhitelisted(author)) {
