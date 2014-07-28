@@ -39,7 +39,8 @@ public class GhprbBuilds {
             sb.append(" Build triggered.");
         }
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getSource(), pr.getAuthorEmail(), pr.getTitle(), pr.getUrl());
+        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getSource(),
+                pr.getAuthorEmail(), pr.getAuthorUsername(), pr.getTitle(), pr.getUrl());
 
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
@@ -106,11 +107,18 @@ public class GhprbBuilds {
         if (publishedURL != null && !publishedURL.isEmpty()) {
             StringBuilder msg = new StringBuilder();
 
+            if (trigger.getMentionAuthor()) {
+                msg.append("@");
+                msg.append(c.getAuthorUsername());
+                msg.append(" ");
+            }
+
             if (state == GHCommitState.SUCCESS) {
                 msg.append(GhprbTrigger.getDscp().getMsgSuccess());
             } else {
                 msg.append(GhprbTrigger.getDscp().getMsgFailure());
             }
+
             msg.append("\nRefer to this link for build results: ");
             msg.append(publishedURL).append(build.getUrl());
 

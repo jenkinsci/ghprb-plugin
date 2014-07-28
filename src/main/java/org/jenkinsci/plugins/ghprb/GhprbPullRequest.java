@@ -33,6 +33,7 @@ public class GhprbPullRequest {
     private String target;
     private String source;
     private String authorEmail;
+    private String authorUsername;
     private URL url;
 
     private boolean shouldRun = false;
@@ -53,6 +54,7 @@ public class GhprbPullRequest {
         source = pr.getHead().getRef();
         url = pr.getUrl();
         obtainAuthorEmail(pr);
+        obtainAuthorUsername(pr);
 
         this.helper = helper;
         this.repo = repo;
@@ -283,6 +285,14 @@ public class GhprbPullRequest {
         }
     }
 
+    private void obtainAuthorUsername(GHPullRequest pr) {
+        try {
+            authorUsername = pr.getUser().getLogin();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Couldn't obtain author username.", e);
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof GhprbPullRequest)) {
@@ -321,6 +331,10 @@ public class GhprbPullRequest {
 
     public String getAuthorEmail() {
         return authorEmail;
+    }
+
+    public String getAuthorUsername() {
+        return authorUsername;
     }
 
     public String getTitle() {

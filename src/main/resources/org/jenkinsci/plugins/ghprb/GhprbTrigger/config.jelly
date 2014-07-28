@@ -15,6 +15,9 @@
 	<f:entry title="Only use trigger phrase for build triggering" field="onlyTriggerPhrase">
 	  <f:checkbox />
 	</f:entry>
+	<f:entry title="Mention pull request author in result comment" field="mentionAuthor">
+	  <f:checkbox />
+	</f:entry>
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>

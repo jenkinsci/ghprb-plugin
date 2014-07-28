@@ -125,6 +125,7 @@ public class GhprbPullRequestTest {
         given(base.getRef()).willReturn("some ref");
         given(pr.getUser()).willReturn(ghUser);
         given(ghUser.getEmail()).willReturn("email");
+        given(ghUser.getLogin()).willReturn("login-name");
 
         // Mocks for GhprbRepository
         given(repo.getName()).willReturn("name");
@@ -135,6 +136,8 @@ public class GhprbPullRequestTest {
 
 
         GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        assertThat(ghprbPullRequest.getAuthorUsername()).isEqualTo("login-name");
+
         GhprbRepository ghprbRepository = mock(GhprbRepository.class);
         given(ghprbRepository.getName()).willReturn("name");
 
