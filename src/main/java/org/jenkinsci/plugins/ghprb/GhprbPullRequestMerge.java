@@ -124,6 +124,7 @@ public class GhprbPullRequestMerge extends Recorder {
 	    	commentOnRequest(
 	    			String.format("Please comment with '%s' to automerge this request", 
 	    					trigger.getTriggerPhrase()));
+	    	return true;
 		}
 		
 	    if (isDisallowOwnCode() && isOwnCode(pr, commentor)) {
