@@ -144,7 +144,7 @@ public class GhprbBuilds {
 
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
 
-            msg.append(calculateBuildUrl(build));
+            msg.append(generateCustomizedMessage(build));
 
             int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
             if (state != GHCommitState.SUCCESS && numLines > 0) {
@@ -183,7 +183,7 @@ public class GhprbBuilds {
         }
     }
 
-    private String calculateBuildUrl(AbstractBuild build) {
+    private String generateCustomizedMessage(AbstractBuild build) {
         GhprbBuildUrlManager buildManager =
             GhprbBuildUrlManagerFactoryUtil.getBuildManager(build);
 
