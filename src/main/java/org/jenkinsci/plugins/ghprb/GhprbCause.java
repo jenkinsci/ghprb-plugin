@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.github.GHUser;
 
 import hudson.model.Cause;
 
@@ -18,8 +19,13 @@ public class GhprbCause extends Cause{
 	private final String authorEmail;
 	private final String title;
     private final URL url;
+    private final GHUser triggerSender;
+    private final String commentBody;
 
-    public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String sourceBranch, String authorEmail, String title, URL url){
+    public GhprbCause(String commit, int pullID, boolean merged, 
+    		String targetBranch, String sourceBranch, String authorEmail, 
+    		String title, URL url, GHUser triggerSender, String commentBody){
+    	
 		this.commit = commit;
 		this.pullID = pullID;
 		this.merged = merged;
@@ -28,6 +34,9 @@ public class GhprbCause extends Cause{
 		this.authorEmail = authorEmail;
 		this.title = title;
         this.url = url;
+        
+        this.triggerSender = triggerSender;
+        this.commentBody = commentBody;
 	}
 
 	@Override
@@ -61,6 +70,14 @@ public class GhprbCause extends Cause{
 
     public URL getUrl() {
         return url;
+    }
+    
+    public GHUser getTriggerSender() {
+    	return triggerSender;
+    }
+    
+    public String getCommentBody() {
+    	return commentBody;
     }
 
 	/**

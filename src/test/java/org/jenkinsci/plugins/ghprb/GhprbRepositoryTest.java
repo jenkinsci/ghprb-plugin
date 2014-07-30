@@ -185,7 +185,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(gt);
 
         /** GH PR verifications */
-        verify(builds, times(1)).build(any(GhprbPullRequest.class));
+        verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verify(ghRepository, times(1))
                 .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
@@ -215,7 +215,7 @@ public class GhprbRepositoryTest {
     private GhprbBuilds mockBuilds() throws IOException {
         GhprbBuilds builds = mock(GhprbBuilds.class);
         given(helper.getBuilds()).willReturn(builds);
-        given(builds.build(any(GhprbPullRequest.class))).willReturn("msg");
+        given(builds.build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class))).willReturn("msg");
         given(ghRepository.createCommitStatus(anyString(), any(GHCommitState.class), anyString(), anyString())).willReturn(null);
         return builds;
     }
@@ -252,7 +252,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(gt);
 
         /** GH PR verifications */
-        verify(builds, times(1)).build(any(GhprbPullRequest.class));
+        verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(1))
                 .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
@@ -325,7 +325,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(gt);
 
         /** GH PR verifications */
-        verify(builds, times(2)).build(any(GhprbPullRequest.class));
+        verify(builds, times(2)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2))
                 .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
@@ -358,7 +358,7 @@ public class GhprbRepositoryTest {
         verify(ghUser, times(2)).getLogin();
         verifyNoMoreInteractions(ghUser);
 
-        verify(builds, times(2)).build(any(GhprbPullRequest.class));
+        verify(builds, times(2)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verifyNoMoreInteractions(builds);
     }
 

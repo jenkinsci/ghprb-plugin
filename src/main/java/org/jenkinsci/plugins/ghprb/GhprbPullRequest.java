@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
+
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
@@ -34,6 +35,8 @@ public class GhprbPullRequest {
     private String source;
     private String authorEmail;
     private URL url;
+    
+    private GHUser triggerSender;
 
     private boolean shouldRun = false;
     private boolean accepted = false;
@@ -41,6 +44,8 @@ public class GhprbPullRequest {
 
     private transient Ghprb helper;
     private transient GhprbRepository repo;
+
+	private String commentBody;
 
     GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
@@ -178,7 +183,7 @@ public class GhprbPullRequest {
     }
 
     private void build() {
-        String message = helper.getBuilds().build(this);
+        String message = helper.getBuilds().build(this, triggerSender, commentBody);
 		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
         logger.log(Level.INFO, message);
     }
@@ -233,6 +238,11 @@ public class GhprbPullRequest {
                 shouldRun = true;
                 triggered = true;
             }
+        }
+        
+        if (shouldRun) {
+        	triggerSender = senderUser;
+        	commentBody = body;
         }
     }
 
