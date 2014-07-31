@@ -72,7 +72,11 @@
             <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.jenkinsci.plugins.tokenmacro</groupId>
+            <artifactId>tokenmacro</artifactId>
+            <version>1.10</version>
+        </dependency>
     </dependencies>
 
     <build>
