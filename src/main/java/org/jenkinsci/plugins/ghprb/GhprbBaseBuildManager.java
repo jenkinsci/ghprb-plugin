@@ -1,6 +1,10 @@
 package org.jenkinsci.plugins.ghprb;
 
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import hudson.model.AbstractBuild;
 
 /**
@@ -22,6 +26,20 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
 
 		return publishedURL + "/" + build.getUrl();
+	}
+
+	/**
+	 * Return a downstream iterator of a build of default type. This will be overriden
+	 * by specific build types.
+	 * 
+	 * @return the downstream builds as an iterator
+	 */
+	public Iterator downstreamIterator() {
+		List downstreamList = new ArrayList();
+
+		downstreamList.add(build);
+
+		return downstreamList.iterator();
 	}
 
 	protected AbstractBuild build;

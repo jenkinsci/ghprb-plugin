@@ -28,13 +28,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 */
 	@Override
 	public String calculateBuildUrl() {
-		FlowRun flowRun = (FlowRun) build;
-
-		DirectedGraph directedGraph = flowRun.getJobsGraph();
-
-		Set<JobEdge> edgeSet = directedGraph.edgeSet();
-
-		Iterator<JobEdge> iterator = edgeSet.iterator();
+		Iterator<JobEdge> iterator = downstreamIterator();
 
 		StringBuilder sb = new StringBuilder();
 
@@ -47,6 +41,23 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Return a downstream iterator of a build of default type. This will be overriden
+	 * by specific build types.
+	 * 
+	 * @return the downstream builds as an iterator
+	 */
+	@Override
+	public Iterator downstreamIterator() {
+		FlowRun flowRun = (FlowRun) build;
+
+		DirectedGraph directedGraph = flowRun.getJobsGraph();
+
+		Set<JobEdge> edgeSet = directedGraph.edgeSet();
+
+		return edgeSet.iterator();
 	}
 
 }

@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.ghprb;
 
-
 import hudson.model.AbstractBuild;
 
 /**
