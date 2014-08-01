@@ -6,10 +6,9 @@ import hudson.model.AbstractBuild;
 /**
  * @author mdelapenya (Manuel de la Peña)
  */
-public abstract class GhprbBaseBuildUrlManager
-	implements GhprbBuildUrlManager {
+public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
-	public GhprbBaseBuildUrlManager(AbstractBuild build) {
+	public GhprbBaseBuildManager(AbstractBuild build) {
 		this.build = build;
 	}
 

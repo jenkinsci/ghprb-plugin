@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.ghprb;
 
-import org.jenkinsci.plugins.ghprb.downstreambuilds.BuildFlowBuildUrlManager;
+import org.jenkinsci.plugins.ghprb.downstreambuilds.BuildFlowBuildManager;
 
 import com.cloudbees.plugins.flow.FlowRun;
 
@@ -9,7 +9,7 @@ import hudson.model.AbstractBuild;
 /**
  * @author mdelapenya (Manuel de la Peña)
  */
-public class GhprbBuildUrlManagerFactoryUtil {
+public class GhprbBuildManagerFactoryUtil {
 
 	/**
 	 * Gets an instance of a library that is able to calculate build urls
@@ -21,10 +21,10 @@ public class GhprbBuildUrlManagerFactoryUtil {
 	 * @param build
 	 * @return
 	 */
-	public static GhprbBuildUrlManager getBuildManager(AbstractBuild build) {
+	public static GhprbBuildManager getBuildManager(AbstractBuild build) {
 		try {
 			if (build instanceof FlowRun) {
-				return new BuildFlowBuildUrlManager(build);
+				return new BuildFlowBuildManager(build);
 			}
 		}
 		catch (NoClassDefFoundError ncdfe) {
