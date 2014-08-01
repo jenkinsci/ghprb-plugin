@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import hudson.model.AbstractBuild;
+import hudson.tasks.junit.CaseResult;
+import hudson.tasks.test.AggregatedTestResultAction;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -40,6 +42,45 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		downstreamList.add(build);
 
 		return downstreamList.iterator();
+	}
+
+	/**
+	 * Return the tests results of a build of default type. This will be overriden
+	 * by specific build types.
+	 * 
+	 * @return the tests result of a build of default type
+	 */
+	public String getTestResults() {
+		return getAggregatedTestResults(build);
+	}
+
+	protected String getAggregatedTestResults(AbstractBuild build) {
+		AggregatedTestResultAction aggregatedTestResultAction =
+			build.getAggregatedTestResultAction();
+
+		List<CaseResult> failedTests =
+			aggregatedTestResultAction.getFailedTests();
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("<h2>Failed Tests:</h2>");
+		sb.append("<ul>");
+
+		for (CaseResult failedTest : failedTests) {
+			sb.append("<li>");
+			sb.append("<a href='");
+			sb.append(failedTest.getUrl());
+			sb.append("'>");
+			sb.append("<strong>");
+			sb.append(failedTest.getFullDisplayName());
+			sb.append("</strong>");
+			sb.append("</a>");
+			sb.append("</li>");
+		}
+
+		sb.append("</ul>");
+
+		return sb.toString();
 	}
 
 	protected AbstractBuild build;

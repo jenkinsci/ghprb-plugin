@@ -21,4 +21,11 @@ public interface GhprbBuildManager {
 	 */
 	Iterator downstreamIterator();
 
+	/**
+	 * Print tests result of a build
+	 * 
+	 * @return the tests result
+	 */
+	String getTestResults();
+
 }

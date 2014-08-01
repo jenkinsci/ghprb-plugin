@@ -186,14 +186,14 @@ public class GhprbBuilds {
     }
 
     private String generateCustomizedMessage(AbstractBuild build) {
-        if (build.getResult() == Result.SUCCESS) {
-            GhprbBuildManager buildManager =
-                GhprbBuildManagerFactoryUtil.getBuildManager(build);
+        GhprbBuildManager buildManager =
+            GhprbBuildManagerFactoryUtil.getBuildManager(build);
 
+        if (build.getResult() == Result.SUCCESS) {
             return buildManager.calculateBuildUrl();
         }
         else {
-            return "There are errors on the build";
+            return buildManager.getTestResults();
         }
     }
 }

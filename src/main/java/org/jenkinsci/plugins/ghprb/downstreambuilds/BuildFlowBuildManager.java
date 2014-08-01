@@ -1,15 +1,22 @@
 package org.jenkinsci.plugins.ghprb.downstreambuilds;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.jenkinsci.plugins.ghprb.GhprbBaseBuildManager;
+import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jgrapht.DirectedGraph;
 
 import com.cloudbees.plugins.flow.FlowRun;
+import com.cloudbees.plugins.flow.JobInvocation;
 import com.cloudbees.plugins.flow.FlowRun.JobEdge;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
+import hudson.tasks.junit.CaseResult;
+import hudson.tasks.test.AggregatedTestResultAction;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -58,6 +65,42 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 		Set<JobEdge> edgeSet = directedGraph.edgeSet();
 
 		return edgeSet.iterator();
+	}
+
+	/**
+	 * Return the tests results of a build of default type. This will be overriden
+	 * by specific build types.
+	 * 
+	 * @return the tests result of a build of default type
+	 */
+	@Override
+	public String getTestResults() {
+		Iterator<JobEdge> iterator = downstreamIterator();
+
+		StringBuilder sb = new StringBuilder();
+
+		while (iterator.hasNext()) {
+			JobEdge jobEdge = iterator.next();
+
+			JobInvocation jobInvocation = jobEdge.getTarget();
+
+			try {
+				AbstractBuild build = (AbstractBuild)jobInvocation.getBuild();
+
+				if (build.getAggregatedTestResultAction() != null) {
+					sb.append("\n");
+					sb.append(jobInvocation.getBuildUrl());
+					sb.append("\n");
+					sb.append(getAggregatedTestResults(build));
+				}
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return sb.toString();
 	}
 
 }
