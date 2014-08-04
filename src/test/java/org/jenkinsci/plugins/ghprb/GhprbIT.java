@@ -1,14 +1,17 @@
 package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
+
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.collect.Lists;
+
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
 import hudson.plugins.git.util.DefaultBuildChooser;
 import net.sf.json.JSONObject;
+
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;

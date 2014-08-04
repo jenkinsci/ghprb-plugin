@@ -5,7 +5,9 @@ import com.google.common.base.Joiner;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitUser;
 
 import java.io.IOException;
 import java.net.URL;
@@ -37,6 +39,7 @@ public class GhprbPullRequest {
     private URL url;
     
     private GHUser triggerSender;
+    private GitUser commitAuthor;
 
     private boolean shouldRun = false;
     private boolean accepted = false;
@@ -172,6 +175,12 @@ public class GhprbPullRequest {
             if (pr != null) {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
+                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+    	    		if (commitDetails.equals(getHead())) {
+    	    			commitAuthor = commitDetails.getCommit().getCommitter();
+    	    			break;
+    	    		}
+    	    	}
             }
 
             logger.log(Level.FINEST, "Running build...");
@@ -345,4 +354,8 @@ public class GhprbPullRequest {
     public URL getUrl() {
         return url;
     }
+
+	public GitUser getCommitAuthor() {
+		return commitAuthor;
+	}
 }

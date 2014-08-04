@@ -1,7 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.github.GHPerson;
 import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitUser;
 
 import hudson.model.Cause;
 
@@ -21,10 +23,12 @@ public class GhprbCause extends Cause{
     private final URL url;
     private final GHUser triggerSender;
     private final String commentBody;
+    private final GitUser commitAuthor;
 
     public GhprbCause(String commit, int pullID, boolean merged, 
     		String targetBranch, String sourceBranch, String authorEmail, 
-    		String title, URL url, GHUser triggerSender, String commentBody){
+    		String title, URL url, GHUser triggerSender, String commentBody,
+    		GitUser commitAuthor){
     	
 		this.commit = commit;
 		this.pullID = pullID;
@@ -37,6 +41,7 @@ public class GhprbCause extends Cause{
         
         this.triggerSender = triggerSender;
         this.commentBody = commentBody;
+        this.commitAuthor = commitAuthor;
 	}
 
 	@Override
@@ -94,6 +99,10 @@ public class GhprbCause extends Cause{
 	 */
 	public String getAbbreviatedTitle() {
 		return StringUtils.abbreviate(getTitle(), 30);
+	}
+
+	public GitUser getCommitAuthor() {
+		return commitAuthor;
 	}
 	
 	

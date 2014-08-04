@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.util.CopyOnWriteMap.Hash;
+
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,11 +11,15 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
+import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.FileNotFoundException;
@@ -22,6 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +36,7 @@ import java.util.concurrent.ConcurrentMap;
 import static org.kohsuke.github.GHCommitState.PENDING;
 import static org.kohsuke.github.GHIssueState.OPEN;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.doReturn;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -97,6 +104,7 @@ public class GhprbRepositoryTest {
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
 
         mockHeadAndBase();
+        mockCommitList();
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(true);
 
@@ -119,6 +127,7 @@ public class GhprbRepositoryTest {
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
 
         mockHeadAndBase();
+        mockCommitList();
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(true);
 
@@ -161,6 +170,7 @@ public class GhprbRepositoryTest {
         GhprbBuilds builds = mockBuilds();
 
         mockHeadAndBase();
+        mockCommitList();
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
 
@@ -199,6 +209,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUrl();
+        verify(ghPullRequest, times(1)).listCommits();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
@@ -227,6 +238,7 @@ public class GhprbRepositoryTest {
 
         mockComments("comment body");
         mockHeadAndBase();
+        mockCommitList();
         GhprbBuilds builds = mockBuilds();
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
@@ -268,6 +280,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(4)).getUpdatedAt();
 
         verify(ghPullRequest, times(1)).getComments();
+        verify(ghPullRequest, times(1)).listCommits();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
@@ -299,6 +312,7 @@ public class GhprbRepositoryTest {
 
         mockComments("test this please");
         mockHeadAndBase();
+        mockCommitList();
         GhprbBuilds builds = mockBuilds();
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
@@ -341,6 +355,8 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getUrl();
 
         verify(ghPullRequest, times(1)).getComments();
+        verify(ghPullRequest, times(2)).listCommits();
+        
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(2)).isWhitelisted(eq(ghUser));  // Call to Github API
@@ -371,6 +387,7 @@ public class GhprbRepositoryTest {
         comments.add(comment);
         given(ghPullRequest.getComments()).willReturn(comments);
     }
+    
 
     private void mockHeadAndBase() {
         /** Mock head\base */
@@ -379,6 +396,14 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getBase()).willReturn(base);
         given(head.getSha()).willReturn("head sha");
     }
+    
+    private void mockCommitList() {
+    	PagedIterator itr = Mockito.mock(PagedIterator.class);
+    	PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
+    	Mockito.when(ghPullRequest.listCommits()).thenReturn(pagedItr);
+    	Mockito.when(pagedItr.iterator()).thenReturn(itr);
+    	Mockito.when(itr.hasNext()).thenReturn(false);
+	}
 
     @Test
     public void testCheckMethodWithNoPR() throws IOException {
