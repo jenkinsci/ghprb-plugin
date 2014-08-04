@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.532</version>
+        <version>1.561</version>
     </parent>
 
     <artifactId>ghprb</artifactId>
