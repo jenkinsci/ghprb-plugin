@@ -9,7 +9,6 @@ import hudson.model.FreeStyleProject;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
-import hudson.plugins.git.util.DefaultBuildChooser;
 import net.sf.json.JSONObject;
 
 import org.joda.time.DateTime;
@@ -135,7 +134,7 @@ public class GhprbIT {
 
         // THEN
         Thread.sleep(65000);
-        assertThat(project.getBuilds().size()).isEqualTo(1);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
 
     @Test
@@ -163,7 +162,7 @@ public class GhprbIT {
 
         // THEN
         Thread.sleep(130000);
-        assertThat(project.getBuilds().size()).isEqualTo(2);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
     @Test
@@ -198,39 +197,20 @@ public class GhprbIT {
 
         // THEN
         Thread.sleep(130000);
-        assertThat(project.getBuilds().size()).isEqualTo(2);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
     // Utility
 
     private GitSCM provideGitSCM() {
         return new GitSCM(
-                "",
-                newArrayList(new UserRemoteConfig("https://github.com/user/dropwizard", "", "+refs/pull/*:refs/remotes/origin/pr/*")),
+                newArrayList(new UserRemoteConfig("https://github.com/user/dropwizard", "", "+refs/pull/*:refs/remotes/origin/pr/*", "")),
                 newArrayList(new BranchSpec("${sha1}")),
-                null,
                 false,
                 null,
-                false,
-                false,
-                new DefaultBuildChooser(),
                 null,
                 "",
-                false,
-                "",
-                "",
-                "",
-                "",
-                "",
-                false,
-                false,
-                false,
-                false,
-                "",
-                "",
-                false,
-                "",
-                false
+                null
         );
     }
 
