@@ -141,8 +141,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         String triggerAuthor = "";
         String triggerAuthorEmail = "";
         
-        try {triggerAuthor = cause.getTriggerSender().getName();} catch (IOException e) {}
-        try {triggerAuthorEmail = cause.getTriggerSender().getEmail();} catch (IOException e) {}
+        try {triggerAuthor = cause.getTriggerSender().getName();} catch (Exception e) {}
+        try {triggerAuthorEmail = cause.getTriggerSender().getEmail();} catch (Exception e) {}
         
         setCommitAuthor(cause, values);
         

@@ -24,7 +24,10 @@ import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
+import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -66,6 +69,14 @@ public class GhprbIT {
 
     // Stubs
     private GHRateLimit ghRateLimit = new GHRateLimit();
+    
+    private void mockCommitList() {
+    	PagedIterator itr = Mockito.mock(PagedIterator.class);
+    	PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
+    	Mockito.when(ghPullRequest.listCommits()).thenReturn(pagedItr);
+    	Mockito.when(pagedItr.iterator()).thenReturn(itr);
+    	Mockito.when(itr.hasNext()).thenReturn(false);
+	}
 
     @Before
     public void beforeTest() throws IOException, ANTLRException {
@@ -84,6 +95,8 @@ public class GhprbIT {
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");
         ghRateLimit.remaining = INITIAL_RATE_LIMIT;
+                
+        mockCommitList();
     }
 
     private void mockPR(GHPullRequest prToMock,

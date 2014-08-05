@@ -97,6 +97,11 @@ public class GhprbPullRequestMerge extends Recorder {
 		}
 		pr = helper.getRepository().getPullRequest(cause.getPullID());
 		
+		if (pr == null) {
+			logger.log(Level.INFO, "Pull request is null for ID: " + cause.getPullID());
+			return false;
+		}
+		
 		if (!pr.getMergeable()) {
 			logger.log(Level.INFO, "Pull request cannot be automerged, moving on.");
 	    	commentOnRequest("Pull request is not mergeable.");
