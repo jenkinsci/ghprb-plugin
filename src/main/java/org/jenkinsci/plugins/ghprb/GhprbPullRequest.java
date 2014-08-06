@@ -1,10 +1,13 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
+
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitUser;
 
 import java.io.IOException;
 import java.net.URL;
@@ -34,6 +37,9 @@ public class GhprbPullRequest {
     private String source;
     private String authorEmail;
     private URL url;
+    
+    private GHUser triggerSender;
+    private GitUser commitAuthor;
 
     private boolean shouldRun = false;
     private boolean accepted = false;
@@ -41,6 +47,8 @@ public class GhprbPullRequest {
 
     private transient Ghprb helper;
     private transient GhprbRepository repo;
+
+	private String commentBody;
 
     GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
@@ -167,6 +175,12 @@ public class GhprbPullRequest {
             if (pr != null) {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
+                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+    	    		if (commitDetails.equals(getHead())) {
+    	    			commitAuthor = commitDetails.getCommit().getCommitter();
+    	    			break;
+    	    		}
+    	    	}
             }
 
             logger.log(Level.FINEST, "Running build...");
@@ -178,7 +192,7 @@ public class GhprbPullRequest {
     }
 
     private void build() {
-        String message = helper.getBuilds().build(this);
+        String message = helper.getBuilds().build(this, triggerSender, commentBody);
 		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
         logger.log(Level.INFO, message);
     }
@@ -233,6 +247,11 @@ public class GhprbPullRequest {
                 shouldRun = true;
                 triggered = true;
             }
+        }
+        
+        if (shouldRun) {
+        	triggerSender = senderUser;
+        	commentBody = body;
         }
     }
 
@@ -335,4 +354,8 @@ public class GhprbPullRequest {
     public URL getUrl() {
         return url;
     }
+
+	public GitUser getCommitAuthor() {
+		return commitAuthor;
+	}
 }

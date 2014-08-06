@@ -1,14 +1,16 @@
 package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
+
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.collect.Lists;
+
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
-import hudson.plugins.git.util.DefaultBuildChooser;
 import net.sf.json.JSONObject;
+
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
@@ -22,7 +24,10 @@ import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
+import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -64,6 +69,14 @@ public class GhprbIT {
 
     // Stubs
     private GHRateLimit ghRateLimit = new GHRateLimit();
+    
+    private void mockCommitList() {
+    	PagedIterator itr = Mockito.mock(PagedIterator.class);
+    	PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
+    	Mockito.when(ghPullRequest.listCommits()).thenReturn(pagedItr);
+    	Mockito.when(pagedItr.iterator()).thenReturn(itr);
+    	Mockito.when(itr.hasNext()).thenReturn(false);
+	}
 
     @Before
     public void beforeTest() throws IOException, ANTLRException {
@@ -82,6 +95,8 @@ public class GhprbIT {
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");
         ghRateLimit.remaining = INITIAL_RATE_LIMIT;
+                
+        mockCommitList();
     }
 
     private void mockPR(GHPullRequest prToMock,
@@ -132,7 +147,7 @@ public class GhprbIT {
 
         // THEN
         Thread.sleep(65000);
-        assertThat(project.getBuilds().size()).isEqualTo(1);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
 
     @Test
@@ -160,7 +175,7 @@ public class GhprbIT {
 
         // THEN
         Thread.sleep(130000);
-        assertThat(project.getBuilds().size()).isEqualTo(2);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
     @Test
@@ -195,39 +210,20 @@ public class GhprbIT {
 
         // THEN
         Thread.sleep(130000);
-        assertThat(project.getBuilds().size()).isEqualTo(2);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
     // Utility
 
     private GitSCM provideGitSCM() {
         return new GitSCM(
-                "",
-                newArrayList(new UserRemoteConfig("https://github.com/user/dropwizard", "", "+refs/pull/*:refs/remotes/origin/pr/*")),
+                newArrayList(new UserRemoteConfig("https://github.com/user/dropwizard", "", "+refs/pull/*:refs/remotes/origin/pr/*", "")),
                 newArrayList(new BranchSpec("${sha1}")),
-                null,
                 false,
                 null,
-                false,
-                false,
-                new DefaultBuildChooser(),
                 null,
                 "",
-                false,
-                "",
-                "",
-                "",
-                "",
-                "",
-                false,
-                false,
-                false,
-                false,
-                "",
-                "",
-                false,
-                "",
-                false
+                null
         );
     }
 

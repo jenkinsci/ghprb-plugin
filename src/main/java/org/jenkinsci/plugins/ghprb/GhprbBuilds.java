@@ -5,9 +5,11 @@ import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
+
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.util.List;
@@ -27,7 +29,7 @@ public class GhprbBuilds {
         this.repo = repo;
     }
 
-    public String build(GhprbPullRequest pr) {
+    public String build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
         StringBuilder sb = new StringBuilder();
         if (cancelBuild(pr.getId())) {
             sb.append("Previous build stopped.");
@@ -39,7 +41,10 @@ public class GhprbBuilds {
             sb.append(" Build triggered.");
         }
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getSource(), pr.getAuthorEmail(), pr.getTitle(), pr.getUrl());
+        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), 
+        		pr.isMergeable(), pr.getTarget(), pr.getSource(), 
+        		pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(),
+        		triggerSender, commentBody, pr.getCommitAuthor());
 
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
