@@ -141,8 +141,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         String triggerAuthor = "";
         String triggerAuthorEmail = "";
         
-        try {triggerAuthor = cause.getTriggerSender().getName();} catch (Exception e) {}
-        try {triggerAuthorEmail = cause.getTriggerSender().getEmail();} catch (Exception e) {}
+        try {triggerAuthor = getString(cause.getTriggerSender().getName(), "");} catch (Exception e) {}
+        try {triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");} catch (Exception e) {}
         
         setCommitAuthor(cause, values);
         
@@ -153,7 +153,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         values.add(new StringParameterValue("ghprbTargetBranch", String.valueOf(cause.getTargetBranch())));
         values.add(new StringParameterValue("ghprbSourceBranch", String.valueOf(cause.getSourceBranch())));
         // it's possible the GHUser doesn't have an associated email address
-        values.add(new StringParameterValue("ghprbPullAuthorEmail", cause.getAuthorEmail() != null ? cause.getAuthorEmail() : ""));
+        values.add(new StringParameterValue("ghprbPullAuthorEmail", getString(cause.getAuthorEmail(), "")));
         values.add(new StringParameterValue("ghprbPullDescription", String.valueOf(cause.getShortDescription())));
         values.add(new StringParameterValue("ghprbPullTitle", String.valueOf(cause.getTitle())));
         values.add(new StringParameterValue("ghprbPullLink", String.valueOf(cause.getUrl())));
@@ -168,12 +168,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     	String authorName = "";
     	String authorEmail = "";
     	if (cause.getCommitAuthor() != null) {
-    		authorName = cause.getCommitAuthor().getName();
-    		authorEmail = cause.getCommitAuthor().getEmail();
+    		authorName = getString(cause.getCommitAuthor().getName(), "");
+    		authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
     	}
     	
         values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
         values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
+    }
+    
+    private String getString(String actual, String d) {
+    	return actual == null ? d : actual;
     }
 
     /**
