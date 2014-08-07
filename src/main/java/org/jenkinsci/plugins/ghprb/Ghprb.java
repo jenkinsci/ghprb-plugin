@@ -142,6 +142,6 @@ public class Ghprb {
 
     List<GhprbBranch> getWhiteListTargetBranches() {
         return trigger.getWhiteListTargetBranches();
-    }
+    } 
 
 }
