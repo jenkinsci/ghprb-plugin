@@ -142,7 +142,7 @@ public class GhprbPullRequestMerge extends Recorder {
 	    
 	    if (merge) {
 	    	pr.merge(getMergeComment());
-	    	deleteBranch();
+//	    	deleteBranch(); //TODO: Update so it also deletes the branch being pulled from.  probably make it an option.
 	    }
 		
 		return merge;
