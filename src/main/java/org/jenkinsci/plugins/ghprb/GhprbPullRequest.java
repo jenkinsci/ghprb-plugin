@@ -176,7 +176,7 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
                 for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-    	    		if (commitDetails.equals(getHead())) {
+    	    		if (commitDetails.getSha().equals(getHead())) {
     	    			commitAuthor = commitDetails.getCommit().getCommitter();
     	    			break;
     	    		}

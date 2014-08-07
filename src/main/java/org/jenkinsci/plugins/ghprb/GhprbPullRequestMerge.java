@@ -1,11 +1,13 @@
 package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+import org.kohsuke.github.GHBranch;
+//import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
@@ -22,8 +24,6 @@ import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.plugins.git.GitSCM;
-import hudson.scm.SCM;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -142,9 +142,21 @@ public class GhprbPullRequestMerge extends Recorder {
 	    
 	    if (merge) {
 	    	pr.merge(getMergeComment());
+	    	deleteBranch();
 	    }
 		
 		return merge;
+	}
+	
+	private void deleteBranch() {
+		String branchName = pr.getHead().getRef();
+		try {
+			GHBranch branch = pr.getRepository().getBranches().get(branchName);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void commentOnRequest(String comment) {
