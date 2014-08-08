@@ -43,6 +43,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
+    private final Boolean mentionTestResults;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
@@ -59,6 +60,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean useGitHubHooks,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
+                        Boolean mentionTestResults,
                         List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -71,6 +73,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
+        this.mentionTestResults = mentionTestResults;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject p) {
@@ -234,6 +237,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public Boolean getPermitAll() {
         return permitAll != null && permitAll;
     }
+    
+
+	public boolean getMentionTestResults() {
+		return mentionTestResults != null && mentionTestResults;
+	}
 
     public Boolean isAutoCloseFailedPullRequests() {
         if (autoCloseFailedPullRequests == null) {
@@ -477,4 +485,5 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return whiteListTargetBranches;
         }
     }
+
 }
