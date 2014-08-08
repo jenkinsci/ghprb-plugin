@@ -2,7 +2,9 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
 
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
@@ -11,10 +13,14 @@ import org.kohsuke.github.GitUser;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * Maintains state about a Pull Request for a particular Jenkins job.  This is what understands the current state
@@ -83,6 +89,38 @@ public class GhprbPullRequest {
             reponame = repo.getName(); // If this instance was created before v1.8, it can be null.
         }
     }
+    
+    /**
+     * Returns skip build phrases from Jenkins global configuration 
+     * @return
+     */
+    public Set<String> getSkipBuildPhrases() {
+		return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
+	}
+	
+    /**
+     * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
+     * @param issue
+     */
+	private void checkSkipBuild(GHIssue issue) {
+		// check for skip build phrase.
+		String pullRequestBody = issue.getBody();
+		if(StringUtils.isNotBlank(pullRequestBody)) {
+			pullRequestBody = pullRequestBody.trim();
+			Set<String> skipBuildPhrases = getSkipBuildPhrases();
+			skipBuildPhrases.remove("");
+			
+			for (String skipBuildPhrase : skipBuildPhrases) {
+				skipBuildPhrase = skipBuildPhrase.trim();
+				Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
+				if(skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+					logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
+					shouldRun = false;
+					break;
+				}
+			}
+		}
+	}
 
     /**
      * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers
@@ -111,6 +149,7 @@ public class GhprbPullRequest {
             }
             updated = pr.getUpdatedAt();
         }
+        checkSkipBuild(pr);
         tryBuild(pr);
     }
 
@@ -129,7 +168,7 @@ public class GhprbPullRequest {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
         }
-
+        checkSkipBuild(comment.getParent());
         tryBuild(pr);
     }
 
