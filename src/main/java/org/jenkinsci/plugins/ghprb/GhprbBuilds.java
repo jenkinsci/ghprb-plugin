@@ -132,7 +132,7 @@ public class GhprbBuilds {
                 msg.append("Master");
             }
 
-            AbstractTestResultAction testResults = build.getTestResultAction();
+            AbstractTestResultAction<?> testResults = build.getTestResultAction();
             Boolean testResultsFound = (testResults != null);
             Iterator iterator;
 
@@ -150,13 +150,13 @@ public class GhprbBuilds {
                 msg.append("No changes in this build");
             }
 
-            if(state != GHCommitState.SUCCESS){
+            if(state != GHCommitState.SUCCESS && trigger.getMentionTestResults()){
                 //if the tests fail and there are test restults, display them
                 if(testResultsFound){
                     msg.append("\n\n=====Failed Test Information=====\n");
                     msg.append("\n ```\n");
 
-                    List<TestResult> failedTests = testResults.getFailedTests();
+                    List<CaseResult> failedTests = testResults.getFailedTests();
                     iterator = failedTests.iterator();
 
                     msg.append("\nNumber of failed tests: ").append(testResults.getFailCount());
