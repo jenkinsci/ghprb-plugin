@@ -48,6 +48,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
+	private final String commentFilePath;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private List<GhprbBranch> whiteListTargetBranches;
@@ -64,6 +65,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean useGitHubHooks,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
+                        String commentFilePath,
                         List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -76,9 +78,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
+        this.commentFilePath = commentFilePath;
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject p) {
+    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
         Trigger trigger = p.getTrigger(GhprbTrigger.class);
         if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
             return null;
@@ -235,6 +238,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return whitelist;
     }
+    
+
+    public String getCommentFilePath() {
+    	return commentFilePath;
+    }
 
     public String getOrgslist() {
         if (orgslist == null) {
@@ -371,6 +379,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
+           
+            
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
