@@ -145,7 +145,7 @@ public class GhprbPullRequest {
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
             if (!newCommit && commentsChecked == 0) {
-                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren't any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
+                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
             }
             updated = pr.getUpdatedAt();
         }
@@ -184,7 +184,7 @@ public class GhprbPullRequest {
                 return true;
             }
         }
-        logger.log(Level.FINEST, "PR #{0} target branch: {1} isn't in our whitelist of target branches: {2}", new Object[]{id, target, Joiner.on(',').skipNulls().join(branches)});
+        logger.log(Level.FINEST, "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}", new Object[]{id, target, Joiner.on(',').skipNulls().join(branches)});
         return false;
     }
 
