@@ -84,8 +84,9 @@ public class GhprbRootAction implements UnprotectedRootAction {
             if (repoUrl.endsWith("/")) {// strip off trailing slash if any
                 repoUrl = repoUrl.substring(0, repoUrl.length() - 2);
             }
-            int slashIndex = repoUrl.lastIndexOf('/');
-            String owner = repoUrl.substring(slashIndex + 1);
+            int slash2Index = repoUrl.lastIndexOf('/');
+            int slash1Index = repoUrl.lastIndexOf('/', slash2Index-1);
+            String owner = repoUrl.substring(slash1Index + 1, slash2Index);
             logger.log(Level.INFO, "Parsed {0} from {1}", new Object[]{owner, repoUrl});
             return getRepos(owner + "/" + repo.getName());
         }
