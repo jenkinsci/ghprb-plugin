@@ -15,6 +15,12 @@ build.
 
 A new build can also be started with a comment: ``retest this please``.
 
+You can extend the standard build comment message on github 
+creating a comment file from shell console or any other 
+jenkins plugin. Contents of that file will be added to the comment on GitHub. 
+This is usefull for posting some build dependent urls for users without 
+access to the jenkins UI console.
+
 Jobs can be configured to only build if a matching comment is added to a pull request.  For instance, if you have two job you want to run against a pull request,
 a smoke test job and a full test job, you can configure the full test job to only run if someone adds the comment ``full test please`` on the pull request.
 
