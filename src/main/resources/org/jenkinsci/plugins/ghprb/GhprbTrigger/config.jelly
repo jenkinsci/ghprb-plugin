@@ -15,6 +15,9 @@
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
+    <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
+  	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
+    </f:entry>
 	<f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
 	  <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
 	</f:entry>
