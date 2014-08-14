@@ -102,7 +102,22 @@ public class GhprbPullRequestMerge extends Recorder {
 			return false;
 		}
 		
-		if (!pr.getMergeable()) {
+		Boolean isMergeable = pr.getMergeable();
+		int counter = 0;
+		while (counter < 15) {
+			if (isMergeable != null) {
+				break;
+			}
+			try {
+				logger.log(Level.INFO, "Waiting for github to settle so we can check if the PR is mergeable.");
+				Thread.sleep(1000);
+			} catch (Exception e) {
+				
+			}
+			isMergeable = pr.getMergeable();
+		}
+		
+		if (isMergeable == null || isMergeable) {
 			logger.log(Level.INFO, "Pull request cannot be automerged, moving on.");
 	    	commentOnRequest("Pull request is not mergeable.");
 			return true;
@@ -141,6 +156,7 @@ public class GhprbPullRequestMerge extends Recorder {
 	    }
 	    
 	    if (merge) {
+	    	logger.log(Level.INFO, "Merging the pull request");
 	    	pr.merge(getMergeComment());
 //	    	deleteBranch(); //TODO: Update so it also deletes the branch being pulled from.  probably make it an option.
 	    }
