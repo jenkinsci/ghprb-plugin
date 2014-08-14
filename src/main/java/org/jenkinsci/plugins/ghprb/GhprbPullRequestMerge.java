@@ -104,7 +104,7 @@ public class GhprbPullRequestMerge extends Recorder {
 		
 		Boolean isMergeable = pr.getMergeable();
 		int counter = 0;
-		while (counter < 15) {
+		while (counter++ < 15) {
 			if (isMergeable != null) {
 				break;
 			}
