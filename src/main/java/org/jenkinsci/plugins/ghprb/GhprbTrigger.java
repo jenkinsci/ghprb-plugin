@@ -13,7 +13,9 @@ import hudson.plugins.git.RevisionParameterAction;
 import hudson.plugins.git.util.BuildData;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import hudson.Util;
 import hudson.util.FormValidation;
+import hudson.util.LogTaskListener;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.github.GHAuthorization;
@@ -143,12 +145,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
         String triggerAuthorEmail = "";
-        
+
         try {triggerAuthor = getString(cause.getTriggerSender().getName(), "");} catch (Exception e) {}
         try {triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");} catch (Exception e) {}
-        
+
         setCommitAuthor(cause, values);
-        
+
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
@@ -166,7 +168,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv), new RevisionParameterAction(commitSha));
     }
-    
+
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
     	String authorName = "";
     	String authorEmail = "";
@@ -174,11 +176,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     		authorName = getString(cause.getCommitAuthor().getName(), "");
     		authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
     	}
-    	
+
         values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
         values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
     }
-    
+
     private String getString(String actual, String d) {
     	return actual == null ? d : actual;
     }
@@ -238,7 +240,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return whitelist;
     }
-    
+
 
     public String getCommentFilePath() {
     	return commentFilePath;
@@ -381,8 +383,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
-           
-            
+
+
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
@@ -440,7 +442,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         public String getRetestPhrase() {
             return retestPhrase;
         }
-        
+
         public String getSkipBuildPhrase() {
             return skipBuildPhrase;
         }
@@ -469,18 +471,34 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return unstableAs;
         }
 
-        public String getMsgSuccess() {
+        public String getMsgSuccess(AbstractBuild<?,?> build) {
             if (msgSuccess == null) {
                 return "Test PASSed.";
             }
+            msgSuccess = replaceMacroInMsg(build, msgSuccess);
             return msgSuccess;
         }
 
-        public String getMsgFailure() {
+        public String getMsgFailure(AbstractBuild<?,?> build) {
             if (msgFailure == null) {
                 return "Test FAILed.";
             }
+            msgFailure = replaceMacroInMsg(build, msgFailure);
             return msgFailure;
+        }
+
+        private String replaceMacroInMsg(AbstractBuild<?,?> build, String message) {
+            if (build != null) {
+                Map<String, String> messageEnvVars = new HashMap<String, String>();
+
+                messageEnvVars.putAll(build.getCharacteristicEnvVars());
+                messageEnvVars.putAll(build.getBuildVariables());
+                messageEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
+
+                message = Util.replaceMacro(message, messageEnvVars);
+            }
+
+            return message;
         }
 
         public boolean isUseComments() {
