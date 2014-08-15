@@ -489,13 +489,18 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         private String replaceMacroInMsg(AbstractBuild<?,?> build, String message) {
             if (build != null) {
-                Map<String, String> messageEnvVars = new HashMap<String, String>();
+                try {
+                    Map<String, String> messageEnvVars = new HashMap<String, String>();
 
-                messageEnvVars.putAll(build.getCharacteristicEnvVars());
-                messageEnvVars.putAll(build.getBuildVariables());
-                messageEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
+                    messageEnvVars.putAll(build.getCharacteristicEnvVars());
+                    messageEnvVars.putAll(build.getBuildVariables());
+                    messageEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
 
-                message = Util.replaceMacro(message, messageEnvVars);
+                    message = Util.replaceMacro(message, messageEnvVars);
+
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Couldn't replace macros in message: ", e);
+                }
             }
 
             return message;
