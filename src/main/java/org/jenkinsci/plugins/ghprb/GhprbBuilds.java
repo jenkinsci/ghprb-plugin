@@ -119,7 +119,7 @@ public class GhprbBuilds {
             
             String commentFilePath = trigger.getCommentFilePath();
             
-            if (commentFilePath != null && commentFilePath != "") {
+            if (commentFilePath != null && !commentFilePath.isEmpty()) {
             	Map<String, String> scriptPathExecutionEnvVars = new HashMap<String, String>();
                 try {
                 	
@@ -134,7 +134,7 @@ public class GhprbBuilds {
                     msg.append(content);
                     msg.append("\n--------------\n");
                 } catch (Exception e) {
-                	msg.append("\n!!! Couldn't read commit file !!!\n");
+                	msg.append("\n!!! Couldn't read comment file !!!\n");
                     logger.log(Level.SEVERE, "Couldn't read comment file: ", e);
                 }
             }
