@@ -34,6 +34,7 @@ public class GhprbPullRequest {
 
     private final int id;
     private final GHUser author;
+    private final GHPullRequest pr;
     private String title;
     private Date updated;
     private String head;
@@ -66,6 +67,7 @@ public class GhprbPullRequest {
         target = pr.getBase().getRef();
         source = pr.getHead().getRef();
         url = pr.getUrl();
+        this.pr = pr;
         obtainAuthorEmail(pr);
 
         this.helper = helper;
@@ -396,5 +398,9 @@ public class GhprbPullRequest {
 
 	public GitUser getCommitAuthor() {
 		return commitAuthor;
+	}
+	
+	public GHPullRequest getPullRequest() {
+		return pr;
 	}
 }
