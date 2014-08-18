@@ -11,10 +11,11 @@ import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitUser;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -75,6 +76,11 @@ public class GhprbPullRequestMerge extends Recorder {
 	private GhprbCause cause;
 	private GHPullRequest pr;
 	
+	@VisibleForTesting
+	void setHelper(Ghprb helper) {
+		this.helper = helper;
+	}
+	
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
 		AbstractProject<?, ?> project = build.getProject();
@@ -102,9 +108,11 @@ public class GhprbPullRequestMerge extends Recorder {
 		}
 		
 		Boolean isMergeable = cause.isMerged();
-
-		helper = new Ghprb(project, trigger, pulls);
-		helper.init();
+		
+		if (helper == null) {
+			helper = new Ghprb(project, trigger, pulls);
+			helper.init();
+		}
 		
 		if (isMergeable == null || !isMergeable) {
 			logger.log(Level.INFO, "Pull request cannot be automerged, moving on.");
