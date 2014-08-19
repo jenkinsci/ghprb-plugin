@@ -47,8 +47,8 @@ public class GhprbBuilds {
             sb.append(" Build triggered.");
         }
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), 
-        		pr.isMergeable(), pr.getTarget(), pr.getSource(), 
+        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(),
+        		pr.isMergeable(), pr.getTarget(), pr.getSource(),
         		pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(),
         		triggerSender, commentBody, pr.getCommitAuthor());
 
@@ -116,19 +116,19 @@ public class GhprbBuilds {
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
             StringBuilder msg = new StringBuilder();
-            
+
             String commentFilePath = trigger.getCommentFilePath();
-            
+
             if (commentFilePath != null && commentFilePath != "") {
             	Map<String, String> scriptPathExecutionEnvVars = new HashMap<String, String>();
                 try {
-                	
+
                     scriptPathExecutionEnvVars.putAll(build.getCharacteristicEnvVars());
                     scriptPathExecutionEnvVars.putAll(build.getBuildVariables());
                     scriptPathExecutionEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
-                    
+
                     String scriptFilePathResolved = Util.replaceMacro(commentFilePath, scriptPathExecutionEnvVars);
-                    
+
                     String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
                 	msg.append("Build comment file: \n--------------\n");
                     msg.append(content);
@@ -138,12 +138,12 @@ public class GhprbBuilds {
                     logger.log(Level.SEVERE, "Couldn't read comment file: ", e);
                 }
             }
-            
-            
+
+
             if (state == GHCommitState.SUCCESS) {
-                msg.append(GhprbTrigger.getDscp().getMsgSuccess());
+                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
             } else {
-                msg.append(GhprbTrigger.getDscp().getMsgFailure());
+                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
             }
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(publishedURL).append(build.getUrl());
