@@ -1,9 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
-import com.google.common.base.Preconditions;
 import hudson.model.AbstractProject;
-import jenkins.model.Jenkins;
 import org.kohsuke.github.GHUser;
 
 import java.util.*;
@@ -13,7 +11,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.*;
 
 /**
  * @author janinko

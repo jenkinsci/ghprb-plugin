@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.ghprb;
 
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.github.GHPerson;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 

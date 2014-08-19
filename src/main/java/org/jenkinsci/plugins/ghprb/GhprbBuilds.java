@@ -16,6 +16,7 @@ import org.kohsuke.github.GHUser;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class GhprbBuilds {
         return (GhprbCause) cause;
     }
 
-    public void onStarted(AbstractBuild<?,?> build) {
+    public void onStarted(AbstractBuild<?,?> build, PrintStream logger) {
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
@@ -79,11 +80,12 @@ public class GhprbBuilds {
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Can't update build description", ex);
+            logger.println("Can't update build description");
+            ex.printStackTrace(logger);
         }
     }
 
-    public void onCompleted(AbstractBuild<?,?> build) {
+    public void onCompleted(AbstractBuild<?,?> build, PrintStream logger) {
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
@@ -125,7 +127,7 @@ public class GhprbBuilds {
                 	
                     scriptPathExecutionEnvVars.putAll(build.getCharacteristicEnvVars());
                     scriptPathExecutionEnvVars.putAll(build.getBuildVariables());
-                    scriptPathExecutionEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
+                    scriptPathExecutionEnvVars.putAll(build.getEnvironment(new LogTaskListener(GhprbBuilds.logger, Level.INFO)));
                     
                     String scriptFilePathResolved = Util.replaceMacro(commentFilePath, scriptPathExecutionEnvVars);
                     
@@ -135,7 +137,8 @@ public class GhprbBuilds {
                     msg.append("\n--------------\n");
                 } catch (Exception e) {
                 	msg.append("\n!!! Couldn't read commit file !!!\n");
-                    logger.log(Level.SEVERE, "Couldn't read comment file: ", e);
+                    logger.println("Couldn't read comment file");
+                    e.printStackTrace(logger);
                 }
             }
             
@@ -161,7 +164,8 @@ public class GhprbBuilds {
                     }
                     msg.append("```\n");
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Can't add log excerpt to commit comments", ex);
+                    logger.println("Can't add log excerpt to commit comments");
+                    ex.printStackTrace(logger);
                 }
             }
 
@@ -178,7 +182,8 @@ public class GhprbBuilds {
                     repo.closePullRequest(c.getPullID());
                 }
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Can't close pull request", ex);
+            	logger.println("Can't close pull request");
+                ex.printStackTrace(logger);
             }
         }
     }

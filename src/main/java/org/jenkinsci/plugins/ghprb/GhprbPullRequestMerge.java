@@ -1,9 +1,8 @@
 package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.kohsuke.github.GHBranch;
 //import org.kohsuke.github.GHBranch;
@@ -33,7 +32,7 @@ import hudson.util.FormValidation;
 
 public class GhprbPullRequestMerge extends Recorder {
 	
-    private static final Logger logger = Logger.getLogger(GhprbPullRequestMerge.class.getName());
+    private PrintStream logger;
     
 	
 	private final boolean onlyAdminsMerge;
@@ -83,9 +82,10 @@ public class GhprbPullRequestMerge extends Recorder {
 	
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
+		logger = listener.getLogger();
 		AbstractProject<?, ?> project = build.getProject();
 		if (build.getResult().isWorseThan(Result.SUCCESS)) {
-			logger.log(Level.INFO, "Build did not succeed, merge will not be run");
+			logger.println("Build did not succeed, merge will not be run");
 			return true;
 		}
 		
@@ -103,7 +103,8 @@ public class GhprbPullRequestMerge extends Recorder {
 		pr = pulls.get(cause.getPullID()).getPullRequest();
 		
 		if (pr == null) {
-			logger.log(Level.INFO, "Pull request is null for ID: " + cause.getPullID());
+			logger.println("Pull request is null for ID: " + cause.getPullID());
+			logger.println("" + pulls.toString());
 			return false;
 		}
 		
@@ -115,9 +116,9 @@ public class GhprbPullRequestMerge extends Recorder {
 		}
 		
 		if (isMergeable == null || !isMergeable) {
-			logger.log(Level.INFO, "Pull request cannot be automerged, moving on.");
+			logger.println("Pull request cannot be automerged.");
 	    	commentOnRequest("Pull request is not mergeable.");
-			return true;
+			return false;
 		}
 		
 		
@@ -128,35 +129,34 @@ public class GhprbPullRequestMerge extends Recorder {
 
 		if (isOnlyAdminsMerge() && !helper.isAdmin(triggerSender.getLogin())){
 			merge = false;
-			logger.log(Level.INFO, "Only admins can merge this pull request, {0} is not an admin.", 
-					new Object[]{triggerSender.getLogin()});
+			logger.println("Only admins can merge this pull request, " + triggerSender.getLogin() + " is not an admin.");
 	    	commentOnRequest(
 	    			String.format("Code not merged because %s is not in the Admin list.", 
-	    					triggerSender.getName()));
+	    							triggerSender.getName()));
 		}
 		
 		if (isOnlyTriggerPhrase() && !helper.isTriggerPhrase(cause.getCommentBody())) {
 			merge = false;
-			logger.log(Level.INFO, "The comment does not contain the required trigger phrase.");
+			logger.println("The comment does not contain the required trigger phrase.");
 
 	    	commentOnRequest(
 	    			String.format("Please comment with '%s' to automerge this request", 
-	    					trigger.getTriggerPhrase()));
+	    						trigger.getTriggerPhrase()));
 		}
 		
 	    if (isDisallowOwnCode() && isOwnCode(pr, triggerSender)) {
 			merge = false;
-			logger.log(Level.INFO, "The commentor is also one of the contributors.");
+			logger.println("The commentor is also one of the contributors.");
 	    	commentOnRequest(
 	    			String.format("Code not merged because %s has committed code in the request.", 
-	    					triggerSender.getName()));
+	    						triggerSender.getName()));
 	    }
 	    
 	    if (merge) {
-	    	logger.log(Level.INFO, "Merging the pull request");
+	    	logger.println("Merging the pull request");
 
 			pr.merge(getMergeComment());
-	    	logger.log(Level.INFO, "Pull request successfully merged");
+			logger.println("Pull request successfully merged");
 //	    	deleteBranch(); //TODO: Update so it also deletes the branch being pulled from.  probably make it an option.
 	    }
 		
@@ -178,7 +178,8 @@ public class GhprbPullRequestMerge extends Recorder {
 		try {
 			helper.getRepository().addComment(pr.getNumber(), comment);
 		} catch (Exception e) {
-			logger.log(Level.INFO, "Failed to add comment", e);
+			logger.println("Failed to add comment");
+			e.printStackTrace(logger);
 		}
 	}
 	
@@ -195,7 +196,8 @@ public class GhprbPullRequestMerge extends Recorder {
 				}
 			}
 		} catch (IOException e) {
-			logger.log(Level.INFO, "Unable to get committer name");
+			logger.println("Unable to get committer name");
+			e.printStackTrace(logger);
 		}
 		return false;
 	}
