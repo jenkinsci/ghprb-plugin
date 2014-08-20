@@ -75,6 +75,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 			sb.append(failedTest.getFullDisplayName());
 			sb.append("</strong>");
 			sb.append("</a>");
+			sb.append(failedTest.getErrorStackTrace());
 			sb.append("</li>");
 		}
 
