@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.ghprb.downstreambuilds;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -35,16 +36,16 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 */
 	@Override
 	public String calculateBuildUrl() {
-		Iterator<JobEdge> iterator = downstreamIterator();
+		Iterator<JobInvocation> iterator = downstreamIterator();
 
 		StringBuilder sb = new StringBuilder();
 
 		while (iterator.hasNext()) {
-			JobEdge jobEdge = iterator.next();
+			JobInvocation jobInvocation = iterator.next();
 
 			sb.append("\n");
 			sb.append("\t");
-			sb.append(jobEdge.getTarget().getBuildUrl());
+			sb.append(jobInvocation.getBuildUrl());
 		}
 
 		return sb.toString();
@@ -64,7 +65,19 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
 		Set<JobEdge> edgeSet = directedGraph.edgeSet();
 
-		return edgeSet.iterator();
+		Iterator<JobEdge> iterator = edgeSet.iterator();
+
+		Set nodes = new HashSet();
+
+		while (iterator.hasNext()) {
+			JobEdge jobEdge = iterator.next();
+
+			JobInvocation target = jobEdge.getTarget();
+
+			nodes.add(target);
+		}
+
+		return nodes.iterator();
 	}
 
 	/**
@@ -75,14 +88,12 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 */
 	@Override
 	public String getTestResults() {
-		Iterator<JobEdge> iterator = downstreamIterator();
+		Iterator<JobInvocation> iterator = downstreamIterator();
 
 		StringBuilder sb = new StringBuilder();
 
 		while (iterator.hasNext()) {
-			JobEdge jobEdge = iterator.next();
-
-			JobInvocation jobInvocation = jobEdge.getTarget();
+			JobInvocation jobInvocation = iterator.next();
 
 			try {
 				AbstractBuild build = (AbstractBuild)jobInvocation.getBuild();
