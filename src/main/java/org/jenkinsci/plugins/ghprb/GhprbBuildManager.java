@@ -24,8 +24,9 @@ public interface GhprbBuildManager {
 	/**
 	 * Print tests result of a build
 	 * 
+	 * @param printStackTraces wether to print or not the stacktraces associated to each test
 	 * @return the tests result
 	 */
-	String getTestResults();
+	String getTestResults(boolean printStackTraces);
 
 }

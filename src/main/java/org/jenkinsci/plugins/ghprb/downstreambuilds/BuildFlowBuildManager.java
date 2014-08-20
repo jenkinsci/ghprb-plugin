@@ -84,10 +84,11 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 * Return the tests results of a build of default type. This will be overriden
 	 * by specific build types.
 	 * 
+	 * @param printStackTraces wether to print or not the stacktraces associated to each test
 	 * @return the tests result of a build of default type
 	 */
 	@Override
-	public String getTestResults() {
+	public String getTestResults(boolean printStackTraces) {
 		Iterator<JobInvocation> iterator = downstreamIterator();
 
 		StringBuilder sb = new StringBuilder();
@@ -102,7 +103,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 					sb.append("\n");
 					sb.append(jobInvocation.getBuildUrl());
 					sb.append("\n");
-					sb.append(getAggregatedTestResults(build));
+					sb.append(getAggregatedTestResults(build, printStackTraces));
 				}
 			} catch (ExecutionException e) {
 				e.printStackTrace();

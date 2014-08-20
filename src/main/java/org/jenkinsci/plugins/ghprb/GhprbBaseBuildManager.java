@@ -48,13 +48,16 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	 * Return the tests results of a build of default type. This will be overriden
 	 * by specific build types.
 	 * 
+	 * @param printStackTraces wether to print or not the stacktraces associated to each test
 	 * @return the tests result of a build of default type
 	 */
-	public String getTestResults() {
-		return getAggregatedTestResults(build);
+	public String getTestResults(boolean printStackTraces) {
+		return getAggregatedTestResults(build, printStackTraces);
 	}
 
-	protected String getAggregatedTestResults(AbstractBuild build) {
+	protected String getAggregatedTestResults(
+		AbstractBuild build, boolean printStackTraces) {
+
 		AggregatedTestResultAction aggregatedTestResultAction =
 			build.getAggregatedTestResultAction();
 
@@ -75,9 +78,13 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 			sb.append(failedTest.getFullDisplayName());
 			sb.append("</strong>");
 			sb.append("</a>");
-			sb.append("\n```\n");
-			sb.append(failedTest.getErrorStackTrace());
-			sb.append("\n```\n");
+
+			if (printStackTraces) {
+				sb.append("\n```\n");
+				sb.append(failedTest.getErrorStackTrace());
+				sb.append("\n```\n");
+			}
+
 			sb.append("</li>");
 		}
 
