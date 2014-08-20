@@ -147,6 +147,9 @@ public class GhprbBuilds {
             if (build.getResult() == Result.SUCCESS || trigger.isDisplayBuildErrorsOnDownstreamBuilds()) {
                 msg.append(generateCustomizedMessage(build));
             }
+            else {
+                msg.append(publishedURL).append(build.getUrl());
+            }
 
             int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
             if (state != GHCommitState.SUCCESS && numLines > 0) {
