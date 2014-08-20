@@ -143,13 +143,7 @@ public class GhprbBuilds {
             }
 
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
-
-            if (build.getResult() == Result.SUCCESS || trigger.isDisplayBuildErrorsOnDownstreamBuilds()) {
-                msg.append(generateCustomizedMessage(build));
-            }
-            else {
-                msg.append(publishedURL).append(build.getUrl());
-            }
+            msg.append(generateCustomizedMessage(build));
 
             int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
             if (state != GHCommitState.SUCCESS && numLines > 0) {
@@ -195,8 +189,7 @@ public class GhprbBuilds {
         if (build.getResult() == Result.SUCCESS) {
             return buildManager.calculateBuildUrl();
         }
-        else {
-            return buildManager.getTestResults();
-        }
+
+        return buildManager.getTestResults();
     }
 }
