@@ -216,12 +216,16 @@ public class GhprbPullRequest {
             if (pr != null) {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
-                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-    	    		if (commitDetails.getSha().equals(getHead())) {
-    	    			commitAuthor = commitDetails.getCommit().getCommitter();
-    	    			break;
-    	    		}
-    	    	}
+                try {
+	                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+	    	    		if (commitDetails.getSha().equals(getHead())) {
+	    	    			commitAuthor = commitDetails.getCommit().getCommitter();
+	    	    			break;
+	    	    		}
+	    	    	}
+                } catch (Exception ex) {
+                	logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+                }
             }
 
             logger.log(Level.FINEST, "Running build...");
