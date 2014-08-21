@@ -67,6 +67,11 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("<h2>Failed Tests:</h2>");
+		sb.append("<p>");
+		sb.append("Displaying ");
+		sb.append(failedTest.size());
+		sb.append(" failures.");
+		sb.append("</p>");
 		sb.append("<ul>");
 
 		for (CaseResult failedTest : failedTests) {
