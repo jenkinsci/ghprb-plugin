@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import jenkins.model.Jenkins;
+
 import hudson.model.AbstractBuild;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AggregatedTestResultAction;
@@ -75,6 +77,9 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		for (CaseResult failedTest : failedTests) {
 			sb.append("<li>");
 			sb.append("<a href='");
+			sb.append(Jenkins.getInstance().getRootUrl());
+			sb.append(build.getUrl());
+			sb.append("org.jenkins-ci.plugins$ghprb/testReport");
 			sb.append(failedTest.getUrl());
 			sb.append("'>");
 			sb.append("<strong>");
