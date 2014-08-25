@@ -116,10 +116,10 @@ public class GhprbBuilds {
         }
         repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID());
 
+        StringBuilder msg = new StringBuilder();
+
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
-            StringBuilder msg = new StringBuilder();
-            
             String commentFilePath = trigger.getCommentFilePath();
             
             if (commentFilePath != null && !commentFilePath.isEmpty()) {
@@ -131,12 +131,11 @@ public class GhprbBuilds {
                     msg.append(content);
                     msg.append("\n--------------\n");
                 } catch (IOException e) {
-					msg.append("\n!!! Couldn't read comment file !!!\n");
+                    msg.append("\n!!! Couldn't read commit file !!!\n");
                     logger.println("Couldn't read comment file");
                     e.printStackTrace(logger);
                 }
             }
-            
             
             if (state == GHCommitState.SUCCESS) {
                 msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
@@ -164,6 +163,23 @@ public class GhprbBuilds {
                     ex.printStackTrace(logger);
                 }
             }
+        }
+
+        if (state == GHCommitState.SUCCESS) {
+            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
+                msg.append(trigger.getMsgSuccess());
+            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
+            }
+        } else if (state == GHCommitState.FAILURE) {
+            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
+                msg.append(trigger.getMsgFailure());
+            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
+            }
+        }
+
+        if (msg.length() > 0) {
             logger.println(msg);
             repo.addComment(c.getPullID(), msg.toString());
         }

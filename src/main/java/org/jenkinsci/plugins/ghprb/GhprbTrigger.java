@@ -51,11 +51,13 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
-	private final String commentFilePath;
+    private final String commentFilePath;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
+    private String msgSuccess;
+    private String msgFailure;
     private transient Ghprb helper;
     private String project;
 
@@ -72,7 +74,9 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean displayBuildErrorsOnDownstreamBuilds,
                         String commentFilePath,
                         List<GhprbBranch> whiteListTargetBranches,
-                        Boolean allowMembersOfWhitelistedOrgsAsAdmin) throws ANTLRException {
+                        Boolean allowMembersOfWhitelistedOrgsAsAdmin,
+                        String msgSuccess,
+                        String msgFailure) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -87,6 +91,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
+        this.msgSuccess = msgSuccess;
+        this.msgFailure = msgFailure;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -266,6 +272,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public String getCron() {
         return cron;
+    }
+
+    public String getMsgSuccess() {
+        return msgSuccess;
+    }
+
+    public String getMsgFailure() {
+        return msgFailure;
     }
 
     public String getTriggerPhrase() {
