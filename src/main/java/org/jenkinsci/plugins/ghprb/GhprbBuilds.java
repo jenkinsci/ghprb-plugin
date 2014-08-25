@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
+import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
@@ -86,7 +87,7 @@ public class GhprbBuilds {
         }
     }
 
-    public void onCompleted(AbstractBuild<?,?> build, PrintStream logger) {
+    public void onCompleted(AbstractBuild<?,?> build, TaskListener listener) {
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
@@ -132,8 +133,8 @@ public class GhprbBuilds {
                     msg.append("\n--------------\n");
                 } catch (IOException e) {
                     msg.append("\n!!! Couldn't read commit file !!!\n");
-                    logger.println("Couldn't read comment file");
-                    e.printStackTrace(logger);
+                    listener.getLogger().println("Couldn't read comment file");
+                    e.printStackTrace(listener.getLogger());
                 }
             }
             
@@ -159,8 +160,8 @@ public class GhprbBuilds {
                     }
                     msg.append("```\n");
                 } catch (IOException ex) {
-                    logger.println("Can't add log excerpt to commit comments");
-                    ex.printStackTrace(logger);
+                    listener.getLogger().println("Can't add log excerpt to commit comments");
+                    ex.printStackTrace(listener.getLogger());
                 }
             }
         }
@@ -180,8 +181,8 @@ public class GhprbBuilds {
         }
 
         if (msg.length() > 0) {
-            logger.println(msg);
-            repo.addComment(c.getPullID(), msg.toString());
+            listener.getLogger().println(msg);
+            repo.addComment(c.getPullID(), msg.toString(), build, listener);
         }
 
         // close failed pull request automatically
@@ -194,8 +195,8 @@ public class GhprbBuilds {
                     repo.closePullRequest(c.getPullID());
                 }
             } catch (IOException ex) {
-            	logger.println("Can't close pull request");
-                ex.printStackTrace(logger);
+                listener.getLogger().println("Can't close pull request");
+                ex.printStackTrace(listener.getLogger());
             }
         }
     }
