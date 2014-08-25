@@ -128,13 +128,16 @@ public class GhprbRepository {
             ghRepository.createCommitStatus(sha1, state, url, message);
         } catch (IOException ex) {
             if (GhprbTrigger.getDscp().getUseComments()) {
-                logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
+                logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub.", ex);
                 if (state == GHCommitState.SUCCESS) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
-                } else {
+                } else if (state == GHCommitState.FAILURE) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
                 }
-                addComment(id, message);
+                if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
+                  logger.log(Level.INFO, "Trying to send comment.", ex);
+                  addComment(id, message);
+                }
             } else {
                 logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.", ex);
             }

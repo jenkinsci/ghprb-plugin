@@ -356,6 +356,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
+        private Boolean useDetailedComments = false;
         private int logExcerptLines = 0;
         private String unstableAs = GHCommitState.FAILURE.name();
         private String msgSuccess = "Test PASSed.";
@@ -408,6 +409,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             skipBuildPhrase = formData.getString("skipBuildPhrase");
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
+            useDetailedComments = formData.getBoolean("useDetailedComments");
             logExcerptLines = formData.getInt("logExcerptLines");
             unstableAs = formData.getString("unstableAs");
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
@@ -486,6 +488,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return useComments;
         }
 
+        public Boolean getUseDetailedComments() {
+            return useDetailedComments;
+        }
+
         public int getlogExcerptLines() {
             return logExcerptLines;
         }
@@ -529,6 +535,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public boolean isUseComments() {
             return (useComments != null && useComments);
+        }
+
+        public boolean isUseDetailedComments() {
+            return (useDetailedComments != null && useDetailedComments);
         }
 
         public GhprbGitHub getGitHub() {
