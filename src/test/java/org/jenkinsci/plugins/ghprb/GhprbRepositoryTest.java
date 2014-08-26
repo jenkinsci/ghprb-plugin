@@ -181,6 +181,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getTitle()).willReturn("title");
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghPullRequest.getUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
 
         given(ghUser.getEmail()).willReturn("email");
 
@@ -210,6 +211,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUrl();
+        verify(ghPullRequest, times(1)).getApiURL();
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(2)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
@@ -250,6 +252,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getTitle()).willReturn("title");
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghPullRequest.getUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
 
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
@@ -279,6 +282,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getUrl();
+        verify(ghPullRequest, times(1)).getApiURL();
         verify(ghPullRequest, times(4)).getUpdatedAt();
 
         verify(ghPullRequest, times(1)).getComments();
@@ -325,6 +329,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getTitle()).willReturn("title");
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghPullRequest.getUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
 
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
@@ -356,6 +361,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(4)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUrl();
+        verify(ghPullRequest, times(2)).getApiURL();
 
         verify(ghPullRequest, times(1)).getComments();
         verify(ghPullRequest, times(2)).listCommits();
