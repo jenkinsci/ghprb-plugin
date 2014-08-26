@@ -322,26 +322,25 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
-        private String serverAPIUrl = "https://api.github.com";
+        private String serverAPIUrl;    // "https://api.github.com";
         private String username;
         private String password;
         private String accessToken;
         private String adminlist;
         private String publishedURL;
         private String requestForTestingPhrase;
-        private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
-        private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
-        private String retestPhrase = ".*test\\W+this\\W+please.*";
-        private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
-        // TODO what is this for? seems to be unused (compared to instance field of actual Trigger)
-        private String cron = "H/5 * * * *";
-        private Boolean useComments = false;
-        private int logExcerptLines = 0;
-        private String unstableAs = GHCommitState.FAILURE.name();
-        private Boolean autoCloseFailedPullRequests = false;
-        private String msgSuccess = "Test PASSed.";
-        private String msgFailure = "Test FAILed.";
+        private String whitelistPhrase; // ".*add\\W+to\\W+whitelist.*";
+        private String okToTestPhrase;  // ".*ok\\W+to\\W+test.*";
+        private String retestPhrase;    // ".*test\\W+this\\W+please.*";
+        private String skipBuildPhrase; // ".*\\[skip\\W+ci\\].*";
+        private String cron;            // "H/5 * * * *";
+        private Boolean useComments;    // false;
+        private int logExcerptLines;    // 0;
+        private String unstableAs;      // GHCommitState.FAILURE;
+        private String msgSuccess;      // "Test PASSed.";
+        private String msgFailure;      // "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
+        private Boolean autoCloseFailedPullRequests; // false;
         private transient GhprbGitHub gh;
         // map of jobs (by their fullName) abd their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
