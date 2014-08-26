@@ -6,6 +6,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.*;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
@@ -14,6 +15,7 @@ import hudson.plugins.git.util.BuildData;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
+import hudson.util.LogTaskListener;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.github.GHAuthorization;
@@ -469,18 +471,25 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return unstableAs;
         }
 
-        public String getMsgSuccess() {
-            if (msgSuccess == null) {
-                return "Test PASSed.";
+        public String getMsgSuccess(AbstractBuild<?, ?> build) {
+        	String msg = msgSuccess;
+            if (msg == null) {
+                msg = "Test PASSed.";
             }
-            return msgSuccess;
+            
+        	msg = Ghprb.replaceMacros(build, msg);
+            return msg;
         }
 
-        public String getMsgFailure() {
-            if (msgFailure == null) {
-                return "Test FAILed.";
+        public String getMsgFailure(AbstractBuild<?, ?> build) {
+        	String msg = msgFailure;
+            if (msg == null) {
+                msg = "Test FAILed.";
             }
-            return msgFailure;
+            
+        	msg = Ghprb.replaceMacros(build, msg);
+            
+            return msg;
         }
 
         public boolean isUseComments() {
@@ -493,7 +502,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             }
             return gh;
         }
-
+        
         public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
             ConcurrentMap<Integer, GhprbPullRequest> ret;
             if (jobs.containsKey(projectName)) {

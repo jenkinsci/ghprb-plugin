@@ -115,10 +115,14 @@ public class GhprbRepository {
 
     public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id) {
         String sha1 = build.getCause(GhprbCause.class).getCommit();
-        createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id);
+        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id);
     }
 
     public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
+    	createCommitStatus(null, sha1, state, url, message, id);
+    }
+    
+    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id) {
         logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
         try {
             ghRepository.createCommitStatus(sha1, state, url, message);
@@ -126,9 +130,9 @@ public class GhprbRepository {
             if (GhprbTrigger.getDscp().getUseComments()) {
                 logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
                 if (state == GHCommitState.SUCCESS) {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgSuccess();
+                    message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
                 } else {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgFailure();
+                    message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
                 }
                 addComment(id, message);
             } else {

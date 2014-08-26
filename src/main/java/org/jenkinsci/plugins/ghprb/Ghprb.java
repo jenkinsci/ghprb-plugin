@@ -1,7 +1,12 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
+
+import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.util.LogTaskListener;
+
 import org.kohsuke.github.GHUser;
 
 import java.util.*;
@@ -139,6 +144,26 @@ public class Ghprb {
 
     List<GhprbBranch> getWhiteListTargetBranches() {
         return trigger.getWhiteListTargetBranches();
+    }
+    
+    public static String replaceMacros(AbstractBuild<?, ?> build, String inputString) {
+    	String returnString = inputString;
+        if (build != null && inputString != null) {
+            try {
+                Map<String, String> messageEnvVars = new HashMap<String, String>();
+
+                messageEnvVars.putAll(build.getCharacteristicEnvVars());
+                messageEnvVars.putAll(build.getBuildVariables());
+                messageEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
+
+                returnString = Util.replaceMacro(inputString, messageEnvVars);
+
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Couldn't replace macros in message: ", e);
+            }
+        }
+        return returnString;
+
     }
 
 }

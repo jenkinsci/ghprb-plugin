@@ -1,12 +1,10 @@
 package org.jenkinsci.plugins.ghprb;
 
-import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
-import hudson.util.LogTaskListener;
 
 import org.apache.commons.io.FileUtils;
 import org.kohsuke.github.GHCommitState;
@@ -17,9 +15,7 @@ import org.kohsuke.github.GHUser;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -122,20 +118,14 @@ public class GhprbBuilds {
             String commentFilePath = trigger.getCommentFilePath();
             
             if (commentFilePath != null && !commentFilePath.isEmpty()) {
-            	Map<String, String> scriptPathExecutionEnvVars = new HashMap<String, String>();
                 try {
-                	
-                    scriptPathExecutionEnvVars.putAll(build.getCharacteristicEnvVars());
-                    scriptPathExecutionEnvVars.putAll(build.getBuildVariables());
-                    scriptPathExecutionEnvVars.putAll(build.getEnvironment(new LogTaskListener(GhprbBuilds.logger, Level.INFO)));
-                    
-                    String scriptFilePathResolved = Util.replaceMacro(commentFilePath, scriptPathExecutionEnvVars);
+                    String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
                     
                     String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
                 	msg.append("Build comment file: \n--------------\n");
                     msg.append(content);
                     msg.append("\n--------------\n");
-                } catch (Exception e) {
+                } catch (IOException e) {
 					msg.append("\n!!! Couldn't read comment file !!!\n");
                     logger.println("Couldn't read comment file");
                     e.printStackTrace(logger);
@@ -144,9 +134,9 @@ public class GhprbBuilds {
             
             
             if (state == GHCommitState.SUCCESS) {
-                msg.append(GhprbTrigger.getDscp().getMsgSuccess());
+                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
             } else {
-                msg.append(GhprbTrigger.getDscp().getMsgFailure());
+                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
             }
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(publishedURL).append(build.getUrl());
