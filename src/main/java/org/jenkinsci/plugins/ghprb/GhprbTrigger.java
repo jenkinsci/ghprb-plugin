@@ -78,7 +78,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
-        this.commentFilePath = commentFilePath;
+        this.commentFilePath = commentFilePath.trim();
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
