@@ -105,6 +105,7 @@ public class GhprbIT {
         given(prToMock.getHead()).willReturn(commitPointer);
         given(prToMock.getBase()).willReturn(commitPointer);
         given(prToMock.getUrl()).willReturn(new URL("http://127.0.0.1"));
+        given(prToMock.getApiURL()).willReturn(new URL("http://127.0.0.1"));
         if (updatedDate.length > 1) {
             given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate())
                     .willReturn(updatedDate[0].toDate())

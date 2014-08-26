@@ -25,7 +25,11 @@ public class GhprbGitHub {
 				throw e;
 			}
 		} else {
-			gh = GitHub.connectUsingPassword(GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
+			if (serverAPIUrl.contains("api/v3")) {
+				gh = GitHub.connectToEnterprise(serverAPIUrl, GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
+			} else {
+				gh = GitHub.connectUsingPassword(GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
+			}
 		}
 	}
 

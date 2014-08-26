@@ -80,7 +80,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
-        this.commentFilePath = commentFilePath.trim();
+        this.commentFilePath = commentFilePath;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -322,25 +322,37 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
-        private String serverAPIUrl;    // "https://api.github.com";
+        
+        
+        /**
+         * These settings only really affect testing.  When Jenkins calls configure() then 
+         * the formdata will be used to replace all of these fields.
+         * Leaving them here is useful for testing, but must not be confused with a 
+         * default.  They also should not be used as the default value in the global.jelly
+         * file as this value is dynamic and will not be retained once configure() is called.
+         */
+        private String serverAPIUrl = "https://api.github.com";
+        private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
+        private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
+        private String retestPhrase = ".*test\\W+this\\W+please.*";
+        private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
+        private String cron = "H/5 * * * *";
+        private Boolean useComments = false;
+        private int logExcerptLines = 0;
+        private String unstableAs = GHCommitState.FAILURE.name();
+        private String msgSuccess = "Test PASSed.";
+        private String msgFailure = "Test FAILed.";
+        private List<GhprbBranch> whiteListTargetBranches;
+        private Boolean autoCloseFailedPullRequests = false;
+        
+        
+        
         private String username;
         private String password;
         private String accessToken;
         private String adminlist;
         private String publishedURL;
         private String requestForTestingPhrase;
-        private String whitelistPhrase; // ".*add\\W+to\\W+whitelist.*";
-        private String okToTestPhrase;  // ".*ok\\W+to\\W+test.*";
-        private String retestPhrase;    // ".*test\\W+this\\W+please.*";
-        private String skipBuildPhrase; // ".*\\[skip\\W+ci\\].*";
-        private String cron;            // "H/5 * * * *";
-        private Boolean useComments;    // false;
-        private int logExcerptLines;    // 0;
-        private String unstableAs;      // GHCommitState.FAILURE;
-        private String msgSuccess;      // "Test PASSed.";
-        private String msgFailure;      // "Test FAILed.";
-        private List<GhprbBranch> whiteListTargetBranches;
-        private Boolean autoCloseFailedPullRequests; // false;
         private transient GhprbGitHub gh;
         // map of jobs (by their fullName) abd their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
