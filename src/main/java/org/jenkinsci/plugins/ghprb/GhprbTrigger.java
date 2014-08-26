@@ -44,6 +44,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
     private final String adminlist;
+    private final Boolean allowMembersOfWhitelistedOrgsAsAdmin;
     private final String orgslist;
     private final String cron;
     private final String triggerPhrase;
@@ -68,7 +69,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
                         String commentFilePath,
-                        List<GhprbBranch> whiteListTargetBranches) throws ANTLRException {
+                        List<GhprbBranch> whiteListTargetBranches,
+                        Boolean allowMembersOfWhitelistedOrgsAsAdmin) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -81,6 +83,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commentFilePath = commentFilePath;
+        this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -232,6 +235,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return "";
         }
         return adminlist;
+    }
+
+    public Boolean getAllowMembersOfWhitelistedOrgsAsAdmin() {
+        return allowMembersOfWhitelistedOrgsAsAdmin != null && allowMembersOfWhitelistedOrgsAsAdmin;
     }
 
     public String getWhitelist() {

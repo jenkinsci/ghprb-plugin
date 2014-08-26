@@ -124,10 +124,18 @@ public class GhprbPullRequestMerge extends Recorder {
 		
 		GHUser triggerSender = cause.getTriggerSender();
 		
+		// ignore comments from bot user, this fixes an issue where the bot would auto-merge
+		// a PR when the 'request for testing' phrase contains the PR merge trigger phrase and
+		// the bot is a member of a whitelisted organisation
+		if (helper.isBotUser(triggerSender)) {
+			logger.println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
+			return false;
+		}
+	
 		boolean merge = true;
 		
 
-		if (isOnlyAdminsMerge() && !helper.isAdmin(triggerSender.getLogin())){
+		if (isOnlyAdminsMerge() && !helper.isAdmin(triggerSender)){
 			merge = false;
 			logger.println("Only admins can merge this pull request, " + triggerSender.getLogin() + " is not an admin.");
 	    	commentOnRequest(

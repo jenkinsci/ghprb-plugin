@@ -30,6 +30,9 @@
 	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
 	  <f:textarea />
 	</f:entry>
+	<f:entry title="Allow members of whitelisted organisations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
+	  <f:checkbox />
+	</f:entry>
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
       <f:checkbox />
     </f:entry>

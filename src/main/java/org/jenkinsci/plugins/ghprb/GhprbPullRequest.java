@@ -264,9 +264,16 @@ public class GhprbPullRequest {
     }
 
     private void checkComment(GHIssueComment comment) throws IOException {
-        String sender = comment.getUser().getLogin();
-        GHUser senderUser = comment.getUser();
+        GHUser sender = comment.getUser();
         String body = comment.getBody();
+
+        // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
+        // a user or trigger a build when the 'request for testing' phrase contains the
+        // whitelist/trigger phrase and the bot is a member of a whitelisted organisation
+        if (helper.isBotUser(sender)) {
+            logger.log(Level.FINEST, "Comment from bot user {0} ignored.", sender);
+            return;
+        }
 
         if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) {       // add to whitelist
             if (!helper.isWhitelisted(author)) {
@@ -284,8 +291,8 @@ public class GhprbPullRequest {
             if (helper.isAdmin(sender)) {
                 logger.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
                 shouldRun = true;
-            } else if (accepted && helper.isWhitelisted(senderUser)) {
-                logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", senderUser);
+            } else if (accepted && helper.isWhitelisted(sender)) {
+                logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
                 triggered = true;
             }
@@ -295,15 +302,15 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "Admin {0} ran trigger phrase", sender);
                 shouldRun = true;
                 triggered = true;
-            } else if (accepted && helper.isWhitelisted(senderUser)) {
-                logger.log(Level.FINEST, "Trigger accepted and user {0} is whitelisted", senderUser);
+            } else if (accepted && helper.isWhitelisted(sender)) {
+                logger.log(Level.FINEST, "Trigger accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
                 triggered = true;
             }
         }
         
         if (shouldRun) {
-        	triggerSender = senderUser;
+        	triggerSender = sender;
         	commentBody = body;
         }
     }

@@ -129,8 +129,14 @@ public class Ghprb {
                 || isInWhitelistedOrganisation(user);
     }
 
-    public boolean isAdmin(String username) {
-        return admins.contains(username);
+    public boolean isAdmin(GHUser user) {
+        return admins.contains(user.getLogin())
+                || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
+                    && isInWhitelistedOrganisation(user));
+    }
+
+    public boolean isBotUser(GHUser user) {
+        return user != null && user.getLogin().equals(getGitHub().getBotUserLogin());
     }
 
     private boolean isInWhitelistedOrganisation(GHUser user) {

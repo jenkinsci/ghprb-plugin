@@ -54,4 +54,13 @@ public class GhprbGitHub {
 		}
 		return orgHasMember;
 	}
+
+	public String getBotUserLogin() {
+		try {
+			return get().getMyself().getLogin();
+		} catch (IOException ex) {
+			logger.log(Level.SEVERE, null, ex);
+			return null;
+		}
+	}
 }
