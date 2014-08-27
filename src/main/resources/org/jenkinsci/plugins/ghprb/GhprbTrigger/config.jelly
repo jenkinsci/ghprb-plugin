@@ -15,6 +15,9 @@
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
+        <f:entry title="${%Never use merge commit}" field="neverUseMergeCommit">
+          <f:checkbox />
+        </f:entry>
     <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
   	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
     </f:entry>
