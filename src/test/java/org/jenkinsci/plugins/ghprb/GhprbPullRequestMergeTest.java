@@ -37,6 +37,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -91,7 +92,7 @@ public class GhprbPullRequestMergeTest {
 	
 	@Before 
 	public void beforeTest() throws Exception {
-		GhprbTrigger trigger = spy(new GhprbTrigger(adminList, "user", "", "*/1 * * * *", triggerPhrase, false, false, false, false, null, null));
+		GhprbTrigger trigger = spy(new GhprbTrigger(adminList, "user", "", "*/1 * * * *", triggerPhrase, false, false, false, false, null, null, false));
 
 		ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
 		pulls.put(pullId, pullRequest);
@@ -142,6 +143,7 @@ public class GhprbPullRequestMergeTest {
         helper = spy(new Ghprb(project, trigger, pulls));
 		trigger.setHelper(helper);
         given(helper.getRepository()).willReturn(repo);
+		given(helper.isBotUser(any(GHUser.class))).willReturn(false);
 	}
 	
 	@After
