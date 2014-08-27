@@ -186,11 +186,16 @@ public class GhprbBuilds {
         GhprbBuildManager buildManager =
             GhprbBuildManagerFactoryUtil.getBuildManager(build);
 
-        if (build.getResult() == Result.SUCCESS) {
-            return buildManager.calculateBuildUrl();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(buildManager.calculateBuildUrl());
+
+        if (build.getResult() != Result.SUCCESS) {
+            sb.append(
+                buildManager.getTestResults(
+                    trigger.isDisplayBuildErrorsOnDownstreamBuilds()));
         }
 
-        return buildManager.getTestResults(
-            trigger.isDisplayBuildErrorsOnDownstreamBuilds());
+        return sb.toString();
     }
 }
