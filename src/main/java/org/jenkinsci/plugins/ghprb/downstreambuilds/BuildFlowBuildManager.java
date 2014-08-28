@@ -1,8 +1,6 @@
 package org.jenkinsci.plugins.ghprb.downstreambuilds;
 
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,7 +9,6 @@ import org.jgrapht.DirectedGraph;
 
 import com.cloudbees.plugins.flow.FlowRun;
 import com.cloudbees.plugins.flow.JobInvocation;
-import com.cloudbees.plugins.flow.FlowRun.JobEdge;
 
 import hudson.model.AbstractBuild;
 
@@ -61,21 +58,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
 		DirectedGraph directedGraph = flowRun.getJobsGraph();
 
-		Set<JobEdge> edgeSet = directedGraph.edgeSet();
-
-		Iterator<JobEdge> iterator = edgeSet.iterator();
-
-		Set nodes = new HashSet();
-
-		while (iterator.hasNext()) {
-			JobEdge jobEdge = iterator.next();
-
-			JobInvocation target = jobEdge.getTarget();
-
-			nodes.add(target);
-		}
-
-		return nodes.iterator();
+		return directedGraph.vertexSet().iterator();
 	}
 
 	/**
