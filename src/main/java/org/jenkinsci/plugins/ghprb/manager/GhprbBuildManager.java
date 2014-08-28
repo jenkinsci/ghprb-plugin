@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.ghprb;
+package org.jenkinsci.plugins.ghprb.manager;
 
 import java.util.Iterator;
 
@@ -23,10 +23,9 @@ public interface GhprbBuildManager {
 
 	/**
 	 * Print tests result of a build
-	 * 
-	 * @param printStackTraces wether to print or not the stacktraces associated to each test
+	 *
 	 * @return the tests result
 	 */
-	String getTestResults(boolean printStackTraces);
+	String getTestResults();
 
 }

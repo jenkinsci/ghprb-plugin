@@ -8,6 +8,10 @@ import hudson.plugins.git.util.BuildData;
 
 import org.apache.commons.io.FileUtils;
 
+import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
+import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
+import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
+
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -16,9 +20,7 @@ import org.kohsuke.github.GHUser;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -183,8 +185,13 @@ public class GhprbBuilds {
     }
 
     private String generateCustomizedMessage(AbstractBuild build) {
+        JobConfiguration jobConfiguration =
+            JobConfiguration.builder()
+                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
+                .build();
+
         GhprbBuildManager buildManager =
-            GhprbBuildManagerFactoryUtil.getBuildManager(build);
+            GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
 
         StringBuilder sb = new StringBuilder();
 
@@ -192,8 +199,7 @@ public class GhprbBuilds {
 
         if (build.getResult() != Result.SUCCESS) {
             sb.append(
-                buildManager.getTestResults(
-                    trigger.isDisplayBuildErrorsOnDownstreamBuilds()));
+                buildManager.getTestResults());
         }
 
         return sb.toString();

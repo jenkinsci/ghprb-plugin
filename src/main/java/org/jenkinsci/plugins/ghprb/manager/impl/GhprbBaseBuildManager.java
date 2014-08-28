@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.ghprb;
+package org.jenkinsci.plugins.ghprb.manager.impl;
 
 
 import java.util.ArrayList;
@@ -11,6 +11,10 @@ import hudson.model.AbstractBuild;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AggregatedTestResultAction;
 
+import org.jenkinsci.plugins.ghprb.GhprbTrigger;
+import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
+import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
+
 /**
  * @author mdelapenya (Manuel de la Peña)
  */
@@ -18,6 +22,18 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
 	public GhprbBaseBuildManager(AbstractBuild build) {
 		this.build = build;
+		this.jobConfiguration = buildDefaultConfiguration();
+	}
+
+	public GhprbBaseBuildManager(AbstractBuild build, JobConfiguration jobConfiguration) {
+		this.build = build;
+		this.jobConfiguration = jobConfiguration;
+	}
+
+	private JobConfiguration buildDefaultConfiguration() {
+		return JobConfiguration.builder()
+				.printStackTrace(false)
+				.build();
 	}
 
 	/**
@@ -49,19 +65,21 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		return downstreamList.iterator();
 	}
 
+	public JobConfiguration getJobConfiguration() {
+		return this.jobConfiguration;
+	}
+
 	/**
 	 * Return the tests results of a build of default type. This will be overriden
 	 * by specific build types.
-	 * 
-	 * @param printStackTraces wether to print or not the stacktraces associated to each test
+	 *
 	 * @return the tests result of a build of default type
 	 */
-	public String getTestResults(boolean printStackTraces) {
-		return getAggregatedTestResults(build, printStackTraces);
+	public String getTestResults() {
+		return getAggregatedTestResults(build);
 	}
 
-	protected String getAggregatedTestResults(
-		AbstractBuild build, boolean printStackTraces) {
+	protected String getAggregatedTestResults(AbstractBuild build) {
 
 		AggregatedTestResultAction aggregatedTestResultAction =
 			build.getAggregatedTestResultAction();
@@ -90,7 +108,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 			sb.append("</strong>");
 			sb.append("</a>");
 
-			if (printStackTraces) {
+			if (getJobConfiguration().printStackTrace()) {
 				sb.append("\n```\n");
 				sb.append(failedTest.getErrorStackTrace());
 				sb.append("\n```\n");
@@ -105,5 +123,6 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	}
 
 	protected AbstractBuild build;
+	private JobConfiguration jobConfiguration;
 
 }

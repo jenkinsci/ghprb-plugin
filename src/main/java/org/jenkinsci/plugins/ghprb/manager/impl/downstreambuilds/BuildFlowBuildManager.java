@@ -1,10 +1,12 @@
-package org.jenkinsci.plugins.ghprb.downstreambuilds;
+package org.jenkinsci.plugins.ghprb.manager.impl.downstreambuilds;
 
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.jenkinsci.plugins.ghprb.GhprbBaseBuildManager;
+import org.jenkinsci.plugins.ghprb.manager.impl.GhprbBaseBuildManager;
+import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
+
 import org.jgrapht.DirectedGraph;
 
 import com.cloudbees.plugins.flow.FlowRun;
@@ -21,6 +23,10 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
 	public BuildFlowBuildManager(AbstractBuild build) {
 		super(build);
+	}
+
+	public BuildFlowBuildManager(AbstractBuild build, JobConfiguration jobConfiguration) {
+		super(build, jobConfiguration);
 	}
 
 	/**
@@ -64,12 +70,11 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	/**
 	 * Return the tests results of a build of default type. This will be overriden
 	 * by specific build types.
-	 * 
-	 * @param printStackTraces wether to print or not the stacktraces associated to each test
+	 *
 	 * @return the tests result of a build of default type
 	 */
 	@Override
-	public String getTestResults(boolean printStackTraces) {
+	public String getTestResults() {
 		Iterator<JobInvocation> iterator = downstreamProjects();
 
 		StringBuilder sb = new StringBuilder();
@@ -84,7 +89,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 					sb.append("\n");
 					sb.append(jobInvocation.getBuildUrl());
 					sb.append("\n");
-					sb.append(getAggregatedTestResults(build, printStackTraces));
+					sb.append(getAggregatedTestResults(build));
 				}
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Job execution has failed", e);
