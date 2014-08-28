@@ -35,10 +35,13 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	/**
 	 * Return a downstream iterator of a build of default type. This will be overriden
 	 * by specific build types.
-	 * 
+	 *
+	 * If the receiver of the call has no child projects, it will return an
+	 * iterator over itself
+	 *
 	 * @return the downstream builds as an iterator
 	 */
-	public Iterator downstreamIterator() {
+	public Iterator downstreamProjects() {
 		List downstreamList = new ArrayList();
 
 		downstreamList.add(build);

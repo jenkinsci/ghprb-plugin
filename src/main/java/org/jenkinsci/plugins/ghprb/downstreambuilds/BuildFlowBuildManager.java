@@ -2,12 +2,10 @@ package org.jenkinsci.plugins.ghprb.downstreambuilds;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.jenkinsci.plugins.ghprb.GhprbBaseBuildManager;
-import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jgrapht.DirectedGraph;
 
 import com.cloudbees.plugins.flow.FlowRun;
@@ -15,9 +13,6 @@ import com.cloudbees.plugins.flow.JobInvocation;
 import com.cloudbees.plugins.flow.FlowRun.JobEdge;
 
 import hudson.model.AbstractBuild;
-import hudson.model.Run;
-import hudson.tasks.junit.CaseResult;
-import hudson.tasks.test.AggregatedTestResultAction;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -36,7 +31,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 */
 	@Override
 	public String calculateBuildUrl() {
-		Iterator<JobInvocation> iterator = downstreamIterator();
+		Iterator<JobInvocation> iterator = downstreamProjects();
 
 		StringBuilder sb = new StringBuilder();
 
@@ -58,7 +53,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 * @return the downstream builds as an iterator
 	 */
 	@Override
-	public Iterator downstreamIterator() {
+	public Iterator downstreamProjects() {
 		FlowRun flowRun = (FlowRun) build;
 
 		DirectedGraph directedGraph = flowRun.getJobsGraph();
@@ -89,7 +84,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 	 */
 	@Override
 	public String getTestResults(boolean printStackTraces) {
-		Iterator<JobInvocation> iterator = downstreamIterator();
+		Iterator<JobInvocation> iterator = downstreamProjects();
 
 		StringBuilder sb = new StringBuilder();
 

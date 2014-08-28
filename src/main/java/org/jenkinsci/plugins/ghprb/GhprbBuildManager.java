@@ -19,7 +19,7 @@ public interface GhprbBuildManager {
 	 * 
 	 * @return the iterator
 	 */
-	Iterator downstreamIterator();
+	Iterator downstreamProjects();
 
 	/**
 	 * Print tests result of a build
