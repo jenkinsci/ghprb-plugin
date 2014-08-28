@@ -3,7 +3,8 @@ package org.jenkinsci.plugins.ghprb.downstreambuilds;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.ghprb.GhprbBaseBuildManager;
 import org.jgrapht.DirectedGraph;
@@ -18,6 +19,8 @@ import hudson.model.AbstractBuild;
  * @author mdelapenya (Manuel de la Peña)
  */
 public class BuildFlowBuildManager extends GhprbBaseBuildManager {
+
+	private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
 
 	public BuildFlowBuildManager(AbstractBuild build) {
 		super(build);
@@ -100,10 +103,8 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 					sb.append("\n");
 					sb.append(getAggregatedTestResults(build, printStackTraces));
 				}
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Job execution has failed", e);
 			}
 		}
 
