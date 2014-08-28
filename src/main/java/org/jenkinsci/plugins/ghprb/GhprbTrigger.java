@@ -290,18 +290,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         if (autoCloseFailedPullRequests == null) {
             Boolean autoClose = getDescriptor().getAutoCloseFailedPullRequests();
             return (autoClose != null && autoClose);
-        } else {
-            return autoCloseFailedPullRequests;
         }
+        return autoCloseFailedPullRequests;
     }
 
     public Boolean isDisplayBuildErrorsOnDownstreamBuilds() {
         if (displayBuildErrorsOnDownstreamBuilds == null) {
             Boolean displayErrors = getDescriptor().getDisplayBuildErrorsOnDownstreamBuilds();
             return (displayErrors != null && displayErrors);
-        } else {
-            return displayBuildErrorsOnDownstreamBuilds;
         }
+        return displayBuildErrorsOnDownstreamBuilds;
     }
 
     public List<GhprbBranch> getWhiteListTargetBranches() {
