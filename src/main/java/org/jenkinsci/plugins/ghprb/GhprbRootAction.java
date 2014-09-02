@@ -71,7 +71,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
         }
     }
 
-    private Set<GhprbRepository> getRepos(GHRepository repo) throws IOException {
+    private Set<GhprbRepository> getRepos(GHRepository repo) {
         return getRepos(repo.getFullName());
     }
 
