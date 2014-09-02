@@ -211,7 +211,6 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUrl();
-        verify(ghPullRequest, times(1)).getApiURL();
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(2)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
@@ -282,7 +281,6 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getUrl();
-        verify(ghPullRequest, times(1)).getApiURL();
         verify(ghPullRequest, times(4)).getUpdatedAt();
 
         verify(ghPullRequest, times(1)).getComments();
@@ -362,7 +360,6 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(4)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUrl();
-        verify(ghPullRequest, times(2)).getApiURL();
 
         verify(ghPullRequest, times(1)).getComments();
         verify(ghPullRequest, times(2)).listCommits();

@@ -217,14 +217,12 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
                 try {
-                	if (!isEnterpriseGithub(pr)){
-		                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-		    	    		if (commitDetails.getSha().equals(getHead())) {
-		    	    			commitAuthor = commitDetails.getCommit().getCommitter();
-		    	    			break;
-		    	    		}
-		    	    	}
-                	}
+	                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+	    	    		if (commitDetails.getSha().equals(getHead())) {
+	    	    			commitAuthor = commitDetails.getCommit().getCommitter();
+	    	    			break;
+	    	    		}
+	    	    	}
                 } catch (Exception ex) {
                 	logger.log(Level.INFO, "Unable to get PR commits: ", ex);
                 }
@@ -238,11 +236,6 @@ public class GhprbPullRequest {
             triggered = false;
         }
     }
-
-    private boolean isEnterpriseGithub(GHPullRequest pr) {
-		boolean isEnterprise = pr.getApiURL().getPath().contains("api/v3");
-		return isEnterprise;
-	}
 
 	private void build() {
         String message = helper.getBuilds().build(this, triggerSender, commentBody);
