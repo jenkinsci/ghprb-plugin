@@ -8,8 +8,11 @@ import java.util.List;
 import jenkins.model.Jenkins;
 
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AggregatedTestResultAction;
+import hudson.tasks.test.AggregatedTestResultAction.ChildReport;
 
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
@@ -83,40 +86,65 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		AggregatedTestResultAction testResultAction =
 			build.getAction(AggregatedTestResultAction.class);
 
-		List<CaseResult> failedTests =
-			testResultAction.getFailedTests();
-
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("<h2>Failed Tests: ");
 		sb.append("<span class='status-failure'>");
-		sb.append(failedTests.size());
+		sb.append(testResultAction.getFailedTests().size());
 		sb.append("</span></h2>");
-		sb.append("<ul>");
 
-		for (CaseResult failedTest : failedTests) {
-			sb.append("<li>");
+		List<ChildReport> childReports = testResultAction.getChildReports();
+
+		for (ChildReport report : childReports) {
+			AbstractProject project =
+				(AbstractProject)report.child.getProject();
+
+			String baseUrl = Jenkins.getInstance().getRootUrl() + build.getUrl() +
+				project.getShortUrl() + "testReport";
+
+			TestResult result = (TestResult)report.result;
+
+			sb.append("<h3>");
+			sb.append("<a name='");
+			sb.append(project.getName());
+			sb.append("' />");
 			sb.append("<a href='");
-			sb.append(Jenkins.getInstance().getRootUrl());
-			sb.append(build.getUrl());
-			sb.append("org.jenkins-ci.plugins$ghprb/testReport");
-			sb.append(failedTest.getUrl());
+			sb.append(baseUrl);
 			sb.append("'>");
-			sb.append("<strong>");
-			sb.append(failedTest.getFullDisplayName());
-			sb.append("</strong>");
+			sb.append(project.getName());
 			sb.append("</a>");
+			sb.append(": ");
+			sb.append("<span class='status-failure'>");
+			sb.append(result.getFailCount());
+			sb.append("</span></h3>");
 
-			if (getJobConfiguration().printStackTrace()) {
-				sb.append("\n```\n");
-				sb.append(failedTest.getErrorStackTrace());
-				sb.append("\n```\n");
+			sb.append("<ul>");
+
+			List<CaseResult> failedTests = result.getFailedTests();
+
+			for (CaseResult failedTest : failedTests) {
+				sb.append("<li>");
+				sb.append("<a href='");
+				sb.append(baseUrl);
+				sb.append("/");
+				sb.append(failedTest.getRelativePathFrom(result));
+				sb.append("'>");
+				sb.append("<strong>");
+				sb.append(failedTest.getFullDisplayName());
+				sb.append("</strong>");
+				sb.append("</a>");
+
+				if (getJobConfiguration().printStackTrace()) {
+					sb.append("\n```\n");
+					sb.append(failedTest.getErrorStackTrace());
+					sb.append("\n```\n");
+				}
+
+				sb.append("</li>");
 			}
 
-			sb.append("</li>");
+			sb.append("</ul>");
 		}
-
-		sb.append("</ul>");
 
 		return sb.toString();
 	}
