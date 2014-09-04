@@ -80,12 +80,11 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	}
 
 	protected String getAggregatedTestResults(AbstractBuild build) {
-
-		AggregatedTestResultAction aggregatedTestResultAction =
-			build.getAggregatedTestResultAction();
+		AggregatedTestResultAction testResultAction =
+			build.getAction(AggregatedTestResultAction.class);
 
 		List<CaseResult> failedTests =
-			aggregatedTestResultAction.getFailedTests();
+			testResultAction.getFailedTests();
 
 		StringBuilder sb = new StringBuilder();
 

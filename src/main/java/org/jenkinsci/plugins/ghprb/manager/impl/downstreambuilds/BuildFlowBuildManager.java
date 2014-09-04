@@ -13,6 +13,7 @@ import com.cloudbees.plugins.flow.FlowRun;
 import com.cloudbees.plugins.flow.JobInvocation;
 
 import hudson.model.AbstractBuild;
+import hudson.tasks.test.AggregatedTestResultAction;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -85,7 +86,10 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 			try {
 				AbstractBuild build = (AbstractBuild)jobInvocation.getBuild();
 
-				if (build.getAggregatedTestResultAction() != null) {
+				AggregatedTestResultAction testResultAction =
+					build.getAction(AggregatedTestResultAction.class);
+
+				if (testResultAction != null) {
 					sb.append("\n");
 					sb.append(jobInvocation.getBuildUrl());
 					sb.append("\n");
