@@ -86,23 +86,31 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		AggregatedTestResultAction testResultAction =
 			build.getAction(AggregatedTestResultAction.class);
 
+		if (testResultAction.getFailCount() < 1) {
+			return "";
+		}
+
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("<h2>Failed Tests: ");
 		sb.append("<span class='status-failure'>");
-		sb.append(testResultAction.getFailedTests().size());
+		sb.append(testResultAction.getFailCount());
 		sb.append("</span></h2>");
 
 		List<ChildReport> childReports = testResultAction.getChildReports();
 
 		for (ChildReport report : childReports) {
+			TestResult result = (TestResult)report.result;
+
+			if (result.getFailCount() < 1) {
+				continue;
+			}
+
 			AbstractProject project =
 				(AbstractProject)report.child.getProject();
 
 			String baseUrl = Jenkins.getInstance().getRootUrl() + build.getUrl() +
 				project.getShortUrl() + "testReport";
-
-			TestResult result = (TestResult)report.result;
 
 			sb.append("<h3>");
 			sb.append("<a name='");
