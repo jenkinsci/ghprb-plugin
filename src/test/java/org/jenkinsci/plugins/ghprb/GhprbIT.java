@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.ghprb;
 
-import antlr.ANTLRException;
-
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.collect.Lists;
 
@@ -15,70 +13,26 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.io.IOException;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.Assertions.assertThat;
-import static org.kohsuke.github.GHIssueState.OPEN;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 @RunWith(MockitoJUnitRunner.class)
-public class GhprbIT {
+public class GhprbIT extends GhprbITBaseTestCase {
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
-    @Mock
-    private GhprbGitHub ghprbGitHub;
-    @Mock
-    private GitHub gitHub;
-    @Mock
-    private GHRepository ghRepository;
-    @Mock
-    private GHPullRequest ghPullRequest;
-    @Mock
-    private GHUser ghUser;
-    @Mock
-    private GHCommitPointer commitPointer;
-
-    // Stubs
-    private GHRateLimit ghRateLimit = new GHRateLimit();
-
-    @Before
-    public void beforeTest() throws IOException, ANTLRException {
-
-        given(ghprbGitHub.get()).willReturn(gitHub);
-        given(gitHub.getRateLimit()).willReturn(ghRateLimit);
-        given(gitHub.getRepository(anyString())).willReturn(ghRepository);
-        given(commitPointer.getRef()).willReturn("ref");
-        given(ghRepository.getName()).willReturn("dropwizard");
-        GhprbTestUtil.mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
-        given(ghRepository.getPullRequests(eq(OPEN)))
-                .willReturn(newArrayList(ghPullRequest))
-                .willReturn(newArrayList(ghPullRequest));
-
-        given(ghPullRequest.getUser()).willReturn(ghUser);
-        given(ghUser.getEmail()).willReturn("email@email.com");
-        given(ghUser.getLogin()).willReturn("user");
-        ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
-                
-        GhprbTestUtil.mockCommitList(ghPullRequest);
-    }
+	@Before
+	public void setUp() throws Exception {
+		super.beforeTest();
+	}
 
     @Test
     public void shouldBuildTriggersOnNewPR() throws Exception {
