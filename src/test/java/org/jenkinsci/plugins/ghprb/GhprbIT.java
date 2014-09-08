@@ -6,9 +6,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.collect.Lists;
 
 import hudson.model.FreeStyleProject;
-import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
-import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
 
 import org.joda.time.DateTime;
@@ -24,15 +22,10 @@ import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.Assertions.assertThat;
@@ -46,10 +39,6 @@ import static org.mockito.Mockito.spy;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbIT {
-
-    private static final int INITIAL_RATE_LIMIT = 5000;
-
-    private static final String GHPRB_PLUGIN_NAME = "ghprb";
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
@@ -69,14 +58,6 @@ public class GhprbIT {
 
     // Stubs
     private GHRateLimit ghRateLimit = new GHRateLimit();
-    
-    private void mockCommitList() {
-    	PagedIterator itr = Mockito.mock(PagedIterator.class);
-    	PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
-    	Mockito.when(ghPullRequest.listCommits()).thenReturn(pagedItr);
-    	Mockito.when(pagedItr.iterator()).thenReturn(itr);
-    	Mockito.when(itr.hasNext()).thenReturn(false);
-	}
 
     @Before
     public void beforeTest() throws IOException, ANTLRException {
@@ -86,7 +67,7 @@ public class GhprbIT {
         given(gitHub.getRepository(anyString())).willReturn(ghRepository);
         given(commitPointer.getRef()).willReturn("ref");
         given(ghRepository.getName()).willReturn("dropwizard");
-        mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
+        GhprbTestUtil.mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
         given(ghRepository.getPullRequests(eq(OPEN)))
                 .willReturn(newArrayList(ghPullRequest))
                 .willReturn(newArrayList(ghPullRequest));
@@ -94,27 +75,9 @@ public class GhprbIT {
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");
-        ghRateLimit.remaining = INITIAL_RATE_LIMIT;
+        ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
                 
-        mockCommitList();
-    }
-
-    private void mockPR(GHPullRequest prToMock,
-                        GHCommitPointer commitPointer,
-                        DateTime... updatedDate) throws MalformedURLException {
-        given(prToMock.getHead()).willReturn(commitPointer);
-        given(prToMock.getBase()).willReturn(commitPointer);
-        given(prToMock.getUrl()).willReturn(new URL("http://127.0.0.1"));
-        given(prToMock.getApiURL()).willReturn(new URL("http://127.0.0.1"));
-        if (updatedDate.length > 1) {
-            given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate())
-                    .willReturn(updatedDate[0].toDate())
-                    .willReturn(updatedDate[1].toDate())
-                    .willReturn(updatedDate[1].toDate())
-                    .willReturn(updatedDate[1].toDate());
-        } else {
-            given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate());
-        }
+        GhprbTestUtil.mockCommitList(ghPullRequest);
     }
 
     @Test
@@ -125,8 +88,8 @@ public class GhprbIT {
                 "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false
         );
         given(commitPointer.getSha()).willReturn("sha");
-        JSONObject jsonObject = provideConfiguration();
-        jenkinsRule.getPluginManager().getPlugin(GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
+        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
+        jenkinsRule.getPluginManager().getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
          given(ghPullRequest.getNumber()).willReturn(1);
 
@@ -140,7 +103,7 @@ public class GhprbIT {
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
 
         // Configuring Git SCM
-        GitSCM scm = provideGitSCM();
+        GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
         trigger.start(project, true);
@@ -160,8 +123,8 @@ public class GhprbIT {
         );
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
-        JSONObject jsonObject = provideConfiguration();
-        jenkinsRule.getPluginManager().getPlugin(GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
+        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
+        jenkinsRule.getPluginManager().getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -171,7 +134,7 @@ public class GhprbIT {
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
-        GitSCM scm = provideGitSCM();
+        GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
         // THEN
@@ -195,8 +158,8 @@ public class GhprbIT {
         given(comment.getUser()).willReturn(ghUser);
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5).willReturn(5).willReturn(6).willReturn(6);
-        JSONObject jsonObject = provideConfiguration();
-        jenkinsRule.getPluginManager().getPlugin(GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
+        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
+        jenkinsRule.getPluginManager().getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -206,7 +169,7 @@ public class GhprbIT {
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
-        GitSCM scm = provideGitSCM();
+        GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
         // THEN
@@ -214,45 +177,4 @@ public class GhprbIT {
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
-    // Utility
-
-    private GitSCM provideGitSCM() {
-        return new GitSCM(
-                newArrayList(new UserRemoteConfig("https://github.com/user/dropwizard", "", "+refs/pull/*:refs/remotes/origin/pr/*", "")),
-                newArrayList(new BranchSpec("${sha1}")),
-                false,
-                null,
-                null,
-                "",
-                null
-        );
-    }
-
-    private JSONObject provideConfiguration() {
-        JSONObject jsonObject = new JSONObject();
-
-        jsonObject.put("serverAPIUrl", "https://api.github.com");
-        jsonObject.put("username", "user");
-        jsonObject.put("password", "1111");
-        jsonObject.put("accessToken", "accessToken");
-        jsonObject.put("adminlist", "user");
-        jsonObject.put("allowMembersOfWhitelistedOrgsAsAdmin", "false");
-        jsonObject.put("publishedURL", "");
-        jsonObject.put("requestForTestingPhrase", "test this");
-        jsonObject.put("whitelistPhrase", "");
-        jsonObject.put("okToTestPhrase", "ok to test");
-        jsonObject.put("retestPhrase", "retest this please");
-        jsonObject.put("skipBuildPhrase", "[skip ci]");
-        jsonObject.put("cron", "*/1 * * * *");
-        jsonObject.put("useComments", "true");
-        jsonObject.put("logExcerptLines", "0");
-        jsonObject.put("unstableAs", "");
-        jsonObject.put("testMode", "true");
-        jsonObject.put("autoCloseFailedPullRequests", "false");
-        jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
-        jsonObject.put("msgSuccess", "Success");
-        jsonObject.put("msgFailure", "Failure");
-
-        return jsonObject;
-    }
 }
