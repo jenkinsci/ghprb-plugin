@@ -86,7 +86,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		AggregatedTestResultAction testResultAction =
 			build.getAction(AggregatedTestResultAction.class);
 
-		if (testResultAction.getFailCount() < 1) {
+		if (testResultAction == null || testResultAction.getFailCount() < 1) {
 			return "";
 		}
 
