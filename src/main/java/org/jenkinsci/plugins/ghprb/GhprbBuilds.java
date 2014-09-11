@@ -132,7 +132,7 @@ public class GhprbBuilds {
                 msg.append("Master");
             }
 
-            AbstractTestResultAction<?> testResults = build.getTestResultAction();
+            AbstractTestResultAction<?> testResults = build.getAction(AbstractTestResultAction.class);
             Boolean testResultsFound = (testResults != null);
             Iterator iterator;
 
