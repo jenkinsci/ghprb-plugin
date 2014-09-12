@@ -1,14 +1,18 @@
 package org.jenkinsci.plugins.ghprb.manager.impl;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Result;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AggregatedTestResultAction;
@@ -86,11 +90,30 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		AggregatedTestResultAction testResultAction =
 			build.getAction(AggregatedTestResultAction.class);
 
-		if (testResultAction == null || testResultAction.getFailCount() < 1) {
+		if (testResultAction == null) {
 			return "";
 		}
 
 		StringBuilder sb = new StringBuilder();
+
+		if (build.getResult() != Result.UNSTABLE) {
+			sb.append("<h2>Build result: ");
+			sb.append(build.getResult().toString());
+			sb.append("</span></h2>");
+
+			try {
+				List<String> buildLog = build.getLog(_MAX_LINES_COUNT);
+
+				for (String buildLogLine : buildLog) {
+					sb.append(buildLogLine);
+				}
+			}
+			catch(IOException ioe) {
+				LOGGER.log(Level.WARNING, ioe.getMessage());
+			}
+
+			return sb.toString();
+		}
 
 		sb.append("<h2>Failed Tests: ");
 		sb.append("<span class='status-failure'>");
@@ -157,7 +180,13 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 		return sb.toString();
 	}
 
+	protected static final Logger LOGGER = Logger.getLogger(
+		GhprbBaseBuildManager.class.getName());
+
 	protected AbstractBuild build;
+
+	private static final int _MAX_LINES_COUNT = 25;
+
 	private JobConfiguration jobConfiguration;
 
 }
