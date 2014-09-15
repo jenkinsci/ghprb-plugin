@@ -16,8 +16,8 @@ public class GhprbBranch extends AbstractDescribableImpl<GhprbBranch> {
         return branch;
     }
     
-    public boolean equals(String s){
-            return branch.equals(s.trim());
+    public boolean matches(String s){
+        return s.matches(branch);
     }
 
     @DataBoundConstructor
