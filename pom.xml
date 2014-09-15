@@ -87,7 +87,12 @@
             <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>token-macro</artifactId>
+            <version>1.10</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>
