@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.ghprb;
 
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitUser;
 
 import hudson.model.Cause;
 
@@ -18,8 +20,15 @@ public class GhprbCause extends Cause{
 	private final String authorEmail;
 	private final String title;
     private final URL url;
+    private final GHUser triggerSender;
+    private final String commentBody;
+    private final GitUser commitAuthor;
 
-    public GhprbCause(String commit, int pullID, boolean merged, String targetBranch, String sourceBranch, String authorEmail, String title, URL url){
+    public GhprbCause(String commit, int pullID, boolean merged, 
+    		String targetBranch, String sourceBranch, String authorEmail, 
+    		String title, URL url, GHUser triggerSender, String commentBody,
+    		GitUser commitAuthor){
+    	
 		this.commit = commit;
 		this.pullID = pullID;
 		this.merged = merged;
@@ -28,6 +37,10 @@ public class GhprbCause extends Cause{
 		this.authorEmail = authorEmail;
 		this.title = title;
         this.url = url;
+        
+        this.triggerSender = triggerSender;
+        this.commentBody = commentBody;
+        this.commitAuthor = commitAuthor;
 	}
 
 	@Override
@@ -62,6 +75,14 @@ public class GhprbCause extends Cause{
     public URL getUrl() {
         return url;
     }
+    
+    public GHUser getTriggerSender() {
+    	return triggerSender;
+    }
+    
+    public String getCommentBody() {
+    	return commentBody;
+    }
 
 	/**
 	 * Returns the title of the cause, not null.
@@ -77,6 +98,10 @@ public class GhprbCause extends Cause{
 	 */
 	public String getAbbreviatedTitle() {
 		return StringUtils.abbreviate(getTitle(), 30);
+	}
+
+	public GitUser getCommitAuthor() {
+		return commitAuthor;
 	}
 	
 	

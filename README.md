@@ -15,6 +15,12 @@ build.
 
 A new build can also be started with a comment: ``retest this please``.
 
+You can extend the standard build comment message on github 
+creating a comment file from shell console or any other 
+jenkins plugin. Contents of that file will be added to the comment on GitHub. 
+This is usefull for posting some build dependent urls for users without 
+access to the jenkins UI console.
+
 Jobs can be configured to only build if a matching comment is added to a pull request.  For instance, if you have two job you want to run against a pull request,
 a smoke test job and a full test job, you can configure the full test job to only run if someone adds the comment ``full test please`` on the pull request.
 
@@ -78,6 +84,17 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 
 ### Updates
+
+#### -> 1.14
+* A comment file can be created during the build and added to any comment made to the pull request.  podarok#33
+* Added a ``[skip ci]`` setting, that can be changed.  Adding the skip statement to the pull request body will cause the job not to run. sathiya-mit#29
+* Escaping single quotes in log statements tIGO#38
+* Fixed owner name deduction from url on github hook handling nikicat#40
+* Removed unused Test field from the config
+
+#### -> 1.13-1
+* Replacing deprecated Github.connect method. tIGO#39
+* Added a merge plugin for post build.  If the build is successful, the job can specify conditions under which the pull request "button" will be pressed.  
 
 #### -> 1.8
 In version 1.8 the GitHub hook url changed from ``http://yourserver.com/jenkins/job/JOBNAME/ghprbhook`` to ``http://yourserver.com/jenkins/ghprbhook/``. This shouldn't be noticeable in most cases but you can have two webhooks configured in you repository.

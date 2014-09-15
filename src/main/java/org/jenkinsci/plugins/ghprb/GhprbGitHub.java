@@ -25,7 +25,11 @@ public class GhprbGitHub {
 				throw e;
 			}
 		} else {
-			gh = GitHub.connect(GhprbTrigger.getDscp().getUsername(), null, GhprbTrigger.getDscp().getPassword());
+			if (serverAPIUrl.contains("api/v3")) {
+				gh = GitHub.connectToEnterprise(serverAPIUrl, GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
+			} else {
+				gh = GitHub.connectUsingPassword(GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
+			}
 		}
 	}
 
@@ -49,5 +53,14 @@ public class GhprbGitHub {
 			return false;
 		}
 		return orgHasMember;
+	}
+
+	public String getBotUserLogin() {
+		try {
+			return get().getMyself().getLogin();
+		} catch (IOException ex) {
+			logger.log(Level.SEVERE, null, ex);
+			return null;
+		}
 	}
 }
