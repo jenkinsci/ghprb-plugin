@@ -176,12 +176,12 @@ public class GhprbPullRequest {
 
     public boolean isWhiteListedTargetBranch() {
         List<GhprbBranch> branches = helper.getWhiteListTargetBranches();
-        if (branches.isEmpty() || (branches.size() == 1 && branches.get(0).equals(""))) {
+        if (branches.isEmpty() || (branches.size() == 1 && branches.get(0).getBranch().equals(""))) {
             // no branches in white list means we should test all
             return true;
         }
         for (GhprbBranch b : branches) {
-            if (b.equals(target)) {
+            if (b.matches(target)) {
                 // the target branch is in the whitelist!
                 return true;
             }
