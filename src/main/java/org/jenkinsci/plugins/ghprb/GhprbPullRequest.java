@@ -264,7 +264,7 @@ public class GhprbPullRequest {
         // a user or trigger a build when the 'request for testing' phrase contains the
         // whitelist/trigger phrase and the bot is a member of a whitelisted organisation
         if (helper.isBotUser(sender)) {
-            logger.log(Level.FINEST, "Comment from bot user {0} ignored.", sender);
+            logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);
             return;
         }
 
