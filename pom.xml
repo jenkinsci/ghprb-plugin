@@ -93,6 +93,12 @@
             <version>1.10</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+        	<groupId>com.cloudbees.plugins</groupId>
+        	<artifactId>build-flow-plugin</artifactId>
+        	<version>0.12</version>
+        	<optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>

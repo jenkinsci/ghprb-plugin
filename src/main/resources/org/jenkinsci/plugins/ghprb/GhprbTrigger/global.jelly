@@ -29,6 +29,9 @@
       <f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
         <f:checkbox />
       </f:entry>
+      <f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
+        <f:checkbox />
+      </f:entry>
       <f:entry title="${%Request for testing phrase}" field="requestForTestingPhrase">
         <f:textbox default="Can one of the admins verify this patch?"/>
       </f:entry>
