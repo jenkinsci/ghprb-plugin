@@ -8,6 +8,7 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.github.GHEventPayload;
+import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -53,6 +54,12 @@ public class GhprbRootAction implements UnprotectedRootAction {
         try {
             if ("issue_comment".equals(event)) {
                 GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
+                GHIssueState state = issueComment.getIssue().getState();
+                if (state == GHIssueState.CLOSED) {
+                    logger.log(Level.INFO, "Skip comment on closed PR");
+                    return;
+                }
+
                 for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
                     logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
                     repo.onIssueCommentHook(issueComment);
