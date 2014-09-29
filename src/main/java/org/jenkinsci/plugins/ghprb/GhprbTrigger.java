@@ -51,11 +51,13 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
-	private final String commentFilePath;
+    private final String commentFilePath;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
+    private String msgSuccess;
+    private String msgFailure;
     private transient Ghprb helper;
     private String project;
 
@@ -72,7 +74,9 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean displayBuildErrorsOnDownstreamBuilds,
                         String commentFilePath,
                         List<GhprbBranch> whiteListTargetBranches,
-                        Boolean allowMembersOfWhitelistedOrgsAsAdmin) throws ANTLRException {
+                        Boolean allowMembersOfWhitelistedOrgsAsAdmin,
+                        String msgSuccess,
+                        String msgFailure) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -87,6 +91,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
+        this.msgSuccess = msgSuccess;
+        this.msgFailure = msgFailure;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -268,6 +274,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return cron;
     }
 
+    public String getMsgSuccess() {
+        return msgSuccess;
+    }
+
+    public String getMsgFailure() {
+        return msgFailure;
+    }
+
     public String getTriggerPhrase() {
         if (triggerPhrase == null) {
             return "";
@@ -356,6 +370,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
+        private Boolean useDetailedComments = false;
         private int logExcerptLines = 0;
         private String unstableAs = GHCommitState.FAILURE.name();
         private String msgSuccess = "Test PASSed.";
@@ -408,6 +423,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             skipBuildPhrase = formData.getString("skipBuildPhrase");
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
+            useDetailedComments = formData.getBoolean("useDetailedComments");
             logExcerptLines = formData.getInt("logExcerptLines");
             unstableAs = formData.getString("unstableAs");
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
@@ -486,6 +502,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return useComments;
         }
 
+        public Boolean getUseDetailedComments() {
+            return useDetailedComments;
+        }
+
         public int getlogExcerptLines() {
             return logExcerptLines;
         }
@@ -529,6 +549,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public boolean isUseComments() {
             return (useComments != null && useComments);
+        }
+
+        public boolean isUseDetailedComments() {
+            return (useDetailedComments != null && useDetailedComments);
         }
 
         public GhprbGitHub getGitHub() {

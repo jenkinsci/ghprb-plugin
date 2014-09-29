@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Result;
+import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
@@ -86,7 +87,7 @@ public class GhprbBuilds {
         }
     }
 
-    public void onCompleted(AbstractBuild<?,?> build, PrintStream logger) {
+    public void onCompleted(AbstractBuild<?,?> build, TaskListener listener) {
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
@@ -116,10 +117,10 @@ public class GhprbBuilds {
         }
         repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID());
 
+        StringBuilder msg = new StringBuilder();
+
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
-            StringBuilder msg = new StringBuilder();
-            
             String commentFilePath = trigger.getCommentFilePath();
             
             if (commentFilePath != null && !commentFilePath.isEmpty()) {
@@ -131,12 +132,11 @@ public class GhprbBuilds {
                     msg.append(content);
                     msg.append("\n--------------\n");
                 } catch (IOException e) {
-					msg.append("\n!!! Couldn't read comment file !!!\n");
-                    logger.println("Couldn't read comment file");
-                    e.printStackTrace(logger);
+                    msg.append("\n!!! Couldn't read commit file !!!\n");
+                    listener.getLogger().println("Couldn't read comment file");
+                    e.printStackTrace(listener.getLogger());
                 }
             }
-            
             
             if (state == GHCommitState.SUCCESS) {
                 msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
@@ -160,12 +160,29 @@ public class GhprbBuilds {
                     }
                     msg.append("```\n");
                 } catch (IOException ex) {
-                    logger.println("Can't add log excerpt to commit comments");
-                    ex.printStackTrace(logger);
+                    listener.getLogger().println("Can't add log excerpt to commit comments");
+                    ex.printStackTrace(listener.getLogger());
                 }
             }
-            logger.println(msg);
-            repo.addComment(c.getPullID(), msg.toString());
+        }
+
+        if (state == GHCommitState.SUCCESS) {
+            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
+                msg.append(trigger.getMsgSuccess());
+            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
+            }
+        } else if (state == GHCommitState.FAILURE) {
+            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
+                msg.append(trigger.getMsgFailure());
+            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
+            }
+        }
+
+        if (msg.length() > 0) {
+            listener.getLogger().println(msg);
+            repo.addComment(c.getPullID(), msg.toString(), build, listener);
         }
 
         // close failed pull request automatically
@@ -178,8 +195,8 @@ public class GhprbBuilds {
                     repo.closePullRequest(c.getPullID());
                 }
             } catch (IOException ex) {
-            	logger.println("Can't close pull request");
-                ex.printStackTrace(logger);
+                listener.getLogger().println("Can't close pull request");
+                ex.printStackTrace(listener.getLogger());
             }
         }
     }
