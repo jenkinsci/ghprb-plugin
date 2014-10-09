@@ -166,18 +166,27 @@ public class GhprbBuilds {
             }
         }
 
+        String buildMessage = null;
         if (state == GHCommitState.SUCCESS) {
             if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                msg.append(trigger.getMsgSuccess());
+                buildMessage = trigger.getMsgSuccess();
             } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
+                buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
             }
         } else if (state == GHCommitState.FAILURE) {
             if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                msg.append(trigger.getMsgFailure());
+                buildMessage = trigger.getMsgFailure();
             } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
+                buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
             }
+        }
+        // Only Append the build's custom message if it has been set.
+        if (buildMessage != null && !buildMessage.isEmpty()) {
+            // When the msg is not empty, append a newline first, to seperate it from the rest of the String
+            if (!"".equals(msg.toString())) {
+                msg.append("\n");
+            }
+            msg.append(buildMessage);
         }
 
         if (msg.length() > 0) {
