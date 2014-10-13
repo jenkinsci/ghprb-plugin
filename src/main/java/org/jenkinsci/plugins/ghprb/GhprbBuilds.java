@@ -144,7 +144,7 @@ public class GhprbBuilds {
                 msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
             }
 
-            msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
+            msg.append("\nRefer to this link for build results (access rights to CI server needed):");
             msg.append(generateCustomizedMessage(build));
 
             int numLines = GhprbTrigger.getDscp().getlogExcerptLines();

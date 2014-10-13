@@ -74,11 +74,12 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
 			String jobInvocationBuildUrl = jobInvocation.getBuildUrl();
 
-			expectedUrl.append("\n\t<a href='");
+			expectedUrl.append("\n\t[");
 			expectedUrl.append(jobInvocationBuildUrl);
-			expectedUrl.append("'>");
+			expectedUrl.append("]");
+			expectedUrl.append("(");
 			expectedUrl.append(jobInvocationBuildUrl);
-			expectedUrl.append("</a>");
+			expectedUrl.append(")");
 
 			count++;
 		}
