@@ -164,39 +164,40 @@ public class GhprbBuilds {
                     ex.printStackTrace(listener.getLogger());
                 }
             }
-        }
+        
 
-        if (state == GHCommitState.SUCCESS) {
-            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                msg.append(trigger.getMsgSuccess());
-            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
-            }
-        } else if (state == GHCommitState.FAILURE) {
-            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                msg.append(trigger.getMsgFailure());
-            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
-            }
-        }
-
-        if (msg.length() > 0) {
-            listener.getLogger().println(msg);
-            repo.addComment(c.getPullID(), msg.toString(), build, listener);
-        }
-
-        // close failed pull request automatically
-        if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
-
-            try {
-                GHPullRequest pr = repo.getPullRequest(c.getPullID());
-
-                if (pr.getState().equals(GHIssueState.OPEN)) {
-                    repo.closePullRequest(c.getPullID());
+            if (state == GHCommitState.SUCCESS) {
+                if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
+                    msg.append(trigger.getMsgSuccess());
+                } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                    msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
                 }
-            } catch (IOException ex) {
-                listener.getLogger().println("Can't close pull request");
-                ex.printStackTrace(listener.getLogger());
+            } else if (state == GHCommitState.FAILURE) {
+                if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
+                    msg.append(trigger.getMsgFailure());
+                } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                    msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
+                }
+            }
+
+            if (msg.length() > 0) {
+                listener.getLogger().println(msg);
+                repo.addComment(c.getPullID(), msg.toString(), build, listener);
+            }
+
+            // close failed pull request automatically
+            if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
+
+                try {
+                    GHPullRequest pr = repo.getPullRequest(c.getPullID());
+
+                    if (pr.getState().equals(GHIssueState.OPEN)) {
+                        repo.closePullRequest(c.getPullID());
+                    }
+                } catch (IOException ex) {
+                    listener.getLogger().println("Can't close pull request");
+                    ex.printStackTrace(listener.getLogger());
+                }
             }
         }
     }
