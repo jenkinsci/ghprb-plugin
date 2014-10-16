@@ -164,48 +164,49 @@ public class GhprbBuilds {
                     ex.printStackTrace(listener.getLogger());
                 }
             }
-        }
+        
 
-        String buildMessage = null;
-        if (state == GHCommitState.SUCCESS) {
-            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                buildMessage = trigger.getMsgSuccess();
-            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
-            }
-        } else if (state == GHCommitState.FAILURE) {
-            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                buildMessage = trigger.getMsgFailure();
-            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
-            }
-        }
-        // Only Append the build's custom message if it has been set.
-        if (buildMessage != null && !buildMessage.isEmpty()) {
-            // When the msg is not empty, append a newline first, to seperate it from the rest of the String
-            if (!"".equals(msg.toString())) {
-                msg.append("\n");
-            }
-            msg.append(buildMessage);
-        }
-
-        if (msg.length() > 0) {
-            listener.getLogger().println(msg);
-            repo.addComment(c.getPullID(), msg.toString(), build, listener);
-        }
-
-        // close failed pull request automatically
-        if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
-
-            try {
-                GHPullRequest pr = repo.getPullRequest(c.getPullID());
-
-                if (pr.getState().equals(GHIssueState.OPEN)) {
-                    repo.closePullRequest(c.getPullID());
+            String buildMessage = null;
+            if (state == GHCommitState.SUCCESS) {
+                if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
+                    buildMessage = trigger.getMsgSuccess();
+                } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                    buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
                 }
-            } catch (IOException ex) {
-                listener.getLogger().println("Can't close pull request");
-                ex.printStackTrace(listener.getLogger());
+            } else if (state == GHCommitState.FAILURE) {
+                if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
+                    buildMessage = trigger.getMsgFailure();
+                } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                    buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
+                }
+            }
+            // Only Append the build's custom message if it has been set.
+            if (buildMessage != null && !buildMessage.isEmpty()) {
+                // When the msg is not empty, append a newline first, to seperate it from the rest of the String
+                if (!"".equals(msg.toString())) {
+                    msg.append("\n");
+                }
+                msg.append(buildMessage);
+            }
+
+            if (msg.length() > 0) {
+                listener.getLogger().println(msg);
+                repo.addComment(c.getPullID(), msg.toString(), build, listener);
+            }
+
+            // close failed pull request automatically
+            if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
+
+                try {
+                    GHPullRequest pr = repo.getPullRequest(c.getPullID());
+
+                    if (pr.getState().equals(GHIssueState.OPEN)) {
+                        repo.closePullRequest(c.getPullID());
+                    }
+                } catch (IOException ex) {
+                    listener.getLogger().println("Can't close pull request");
+                    ex.printStackTrace(listener.getLogger());
+                }
             }
         }
     }
