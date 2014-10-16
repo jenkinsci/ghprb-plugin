@@ -527,23 +527,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
 
         public String getMsgSuccess(AbstractBuild<?, ?> build) {
-        	String msg = msgSuccess;
-            if (msg == null) {
-                msg = "Test PASSed.";
-            }
-            
-        	msg = Ghprb.replaceMacros(build, msg);
+            String msg = msgSuccess;
+            msg = Ghprb.replaceMacros(build, msg);
             return msg;
         }
 
         public String getMsgFailure(AbstractBuild<?, ?> build) {
-        	String msg = msgFailure;
-            if (msg == null) {
-                msg = "Test FAILed.";
-            }
-            
-        	msg = Ghprb.replaceMacros(build, msg);
-            
+            String msg = msgFailure;
+            msg = Ghprb.replaceMacros(build, msg);
             return msg;
         }
 

@@ -46,7 +46,6 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 			JobInvocation jobInvocation = iterator.next();
 
 			sb.append("\n");
-			sb.append("\t");
 			sb.append("<a href='");
 			sb.append(jobInvocation.getBuildUrl());
 			sb.append("'>");

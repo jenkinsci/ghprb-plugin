@@ -10,7 +10,7 @@
 
     <artifactId>ghprb</artifactId>
     <name>GitHub Pull Request Builder</name>
-    <version>1.16-2-SNAPSHOT</version>
+    <version>1.16-5-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <url>https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin</url>
@@ -57,7 +57,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.58</version>
+            <version>1.59</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
