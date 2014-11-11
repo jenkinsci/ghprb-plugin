@@ -143,6 +143,13 @@ public class GhprbPullRequest {
 
             // the title could have been updated since the original PR was opened
             title = pr.getTitle();
+            
+            // the author of the PR could have been whitelisted since its creation
+            if (!accepted && helper.isWhitelisted(pr.getUser())) {
+                logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
+                accepted = true;
+            }
+            
             int commentsChecked = checkComments(pr);
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
