@@ -95,14 +95,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.msgFailure = msgFailure;
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        Trigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
-        }
-        return (GhprbTrigger) trigger;
-    }
-
     public static DescriptorImpl getDscp() {
         return DESCRIPTOR;
     }
