@@ -152,9 +152,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         
         try {triggerAuthor = getString(cause.getTriggerSender().getName(), "");} catch (Exception e) {}
         try {triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");} catch (Exception e) {}
-        
-        setCommitAuthor(cause, values);
-        
+
+        String authorName = "";
+        String authorEmail = "";
+        if (cause.getCommitAuthor() != null) {
+            authorName = getString(cause.getCommitAuthor().getName(), "");
+            authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
+        }
+
+        values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
+        values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
@@ -173,19 +180,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv), new RevisionParameterAction(commitSha));
     }
-    
-    private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
-    	String authorName = "";
-    	String authorEmail = "";
-    	if (cause.getCommitAuthor() != null) {
-    		authorName = getString(cause.getCommitAuthor().getName(), "");
-    		authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
-    	}
-    	
-        values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
-        values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
-    }
-    
+
     private String getString(String actual, String d) {
     	return actual == null ? d : actual;
     }
