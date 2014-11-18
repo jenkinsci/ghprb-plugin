@@ -89,6 +89,7 @@ public class GhprbTestUtil {
 		jsonObject.put("logExcerptLines", "0");
 		jsonObject.put("unstableAs", "");
 		jsonObject.put("testMode", "true");
+		jsonObject.put("neverUseMergeCommit", "false");
 		jsonObject.put("autoCloseFailedPullRequests", "false");
 		jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
 		jsonObject.put("msgSuccess", "Success");
