@@ -45,7 +45,7 @@ public class GhprbBuilds {
         }
 
         if (pr.isMergeable()) {
-            sb.append(" Merged build triggered.");
+            sb.append(" Merge build triggered.");
         } else {
             sb.append(" Build triggered.");
         }
