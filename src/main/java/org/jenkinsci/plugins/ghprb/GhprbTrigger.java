@@ -392,7 +392,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         @Override
         public String getDisplayName() {
-            return "Build GitHub pull request";
+            return "Build GitHub pull requests";
         }
 
         @Override
