@@ -41,10 +41,24 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
     public void doIndex(StaplerRequest req, StaplerResponse resp) {
         String event = req.getHeader("X-GitHub-Event");
-        String payload = req.getParameter("payload");
-        if (payload == null) {
-            logger.log(Level.SEVERE, "Request doesn't contain payload.");
-            return;
+        String type = req.getContentType();
+        String payload;
+
+        if ("application/json".contentEquals(type)) {
+            StringBuilder string = new StringBuilder();
+            BufferedReader br = req.getReader();
+            for (String line; (line = br.readLine()) != null) {
+                  string.append(line);
+            }
+            payload = string.toString();
+        }
+
+        if ("application/x-www-form-urlencoded".contentEquals(type)) {
+            String payload = req.getParameter("payload");
+            if (payload == null) {
+                logger.log(Level.SEVERE, "Request doesn't contain payload. You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                return;
+            }
         }
 
         GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
