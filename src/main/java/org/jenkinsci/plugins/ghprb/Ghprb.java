@@ -139,6 +139,10 @@ public class Ghprb {
         return user != null && user.getLogin().equals(getGitHub().getBotUserLogin());
     }
 
+    public boolean isProjectDisabled() {
+        return this.project.isDisabled();
+    }
+
     private boolean isInWhitelistedOrganisation(GHUser user) {
         for (String organisation : organisations) {
             if (getGitHub().isUserMemberOfOrganization(organisation, user)) {
