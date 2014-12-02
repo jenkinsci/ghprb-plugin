@@ -12,6 +12,7 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashSet;
@@ -42,25 +43,35 @@ public class GhprbRootAction implements UnprotectedRootAction {
     public void doIndex(StaplerRequest req, StaplerResponse resp) {
         String event = req.getHeader("X-GitHub-Event");
         String type = req.getContentType();
-        String payload;
+        String payload = null;
 
         if ("application/json".contentEquals(type)) {
             StringBuilder string = new StringBuilder();
-            BufferedReader br = req.getReader();
-            for (String line; (line = br.readLine()) != null) {
-                  string.append(line);
+            try {
+                BufferedReader br = req.getReader();
+                for (String line; (line = br.readLine()) != null;) {
+                    string.append(line);
+                }
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Can't get request body.");
+                return;
             }
             payload = string.toString();
         }
 
         if ("application/x-www-form-urlencoded".contentEquals(type)) {
-            String payload = req.getParameter("payload");
+            payload = req.getParameter("payload");
             if (payload == null) {
                 logger.log(Level.SEVERE, "Request doesn't contain payload. You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
                 return;
             }
         }
 
+        if (payload == null) {
+            logger.log(Level.SEVERE, String.format("Content type '%s' is not supported by this plugin. Please use 'application/json' or 'application/x-www-form-urlencoded'", req.getContentType()));
+            return;
+        }
+        
         GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
 
         logger.log(Level.INFO, "Got payload event: {0}", event);
