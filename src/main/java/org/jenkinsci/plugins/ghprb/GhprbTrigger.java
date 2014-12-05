@@ -25,6 +25,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
@@ -188,16 +189,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     /**
      * Find the previous BuildData for the given pull request number; this may return null
      */
-    private BuildData findPreviousBuildForPullId(StringParameterValue pullIdPv) {
+    private @CheckForNull BuildData findPreviousBuildForPullId(StringParameterValue pullIdPv) {
         // find the previous build for this particular pull request, it may not be the last build
         for (Run<?, ?> r : job.getBuilds()) {
             ParametersAction pa = r.getAction(ParametersAction.class);
             if (pa != null) {
                 for (ParameterValue pv : pa.getParameters()) {
                     if (pv.equals(pullIdPv)) {
-                        for (BuildData bd : r.getActions(BuildData.class)) {
-                            return bd;
-                        }
+                        return r.getAction(BuildData.class);
                     }
                 }
             }
