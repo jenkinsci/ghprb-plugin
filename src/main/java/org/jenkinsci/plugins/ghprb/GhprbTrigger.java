@@ -6,7 +6,6 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
-import hudson.Util;
 import hudson.model.*;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
@@ -15,7 +14,6 @@ import hudson.plugins.git.util.BuildData;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
-import hudson.util.LogTaskListener;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.github.GHAuthorization;
@@ -39,7 +37,7 @@ import java.util.regex.Pattern;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
-
+    
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
@@ -60,6 +58,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String msgFailure;
     private transient Ghprb helper;
     private String project;
+    private final boolean onlyOnClosed;
 
     @DataBoundConstructor
     public GhprbTrigger(String adminlist,
@@ -67,6 +66,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         String orgslist,
                         String cron,
                         String triggerPhrase,
+                        boolean onlyOnClosed,
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
@@ -83,6 +83,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.orgslist = orgslist;
         this.cron = cron;
         this.triggerPhrase = triggerPhrase;
+        this.onlyOnClosed = onlyOnClosed;
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
@@ -239,7 +240,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             logger.log(Level.SEVERE, "Failed to save new whitelist", ex);
         }
     }
-
+    
     public String getAdminlist() {
         if (adminlist == null) {
             return "";
@@ -288,6 +289,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return triggerPhrase;
     }
+
+    public boolean isOnlyOnClosed() {
+        return onlyOnClosed;
+    }        
 
     public Boolean getOnlyTriggerPhrase() {
         return onlyTriggerPhrase != null && onlyTriggerPhrase;

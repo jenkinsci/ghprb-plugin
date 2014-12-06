@@ -75,32 +75,57 @@ public class GhprbRepository {
             return;
         }
 
-        List<GHPullRequest> openPulls;
-        try {
-            openPulls = ghRepository.getPullRequests(GHIssueState.OPEN);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
-            return;
-        }
-        Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
-
-        for (GHPullRequest pr : openPulls) {
-            if (pr.getHead() == null) {
-                try {
-                    pr = ghRepository.getPullRequest(pr.getNumber());
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
-                    return;
-                }
+        Set<Integer> closedPrIDs;
+        if (helper.ifOnlyOnClosed()) {
+            List<GHPullRequest> closedPulls;
+            try {
+                closedPulls = ghRepository.getPullRequests(GHIssueState.CLOSED);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not retrieve closed pull requests.", ex);
+                return;
             }
-            check(pr);
-            closedPulls.remove(pr.getNumber());
-        }
+            
+            closedPrIDs = new HashSet<Integer>();
+            for (GHPullRequest pr : closedPulls) {
+                if (pr.getHead() == null) {
+                    try {
+                        pr = ghRepository.getPullRequest(pr.getNumber());
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+                        return;
+                    }
+                }
+                check(pr);     
+                closedPrIDs.add(pr.getNumber());
+            }
+        } else {
+            List<GHPullRequest> openPulls;
+            try {
+                openPulls = ghRepository.getPullRequests(GHIssueState.OPEN);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
+                return;
+            }
+            closedPrIDs = new HashSet<Integer>(pulls.keySet());
 
-        // remove closed pulls so we don't check them again
-        for (Integer id : closedPulls) {
-            pulls.remove(id);
+            for (GHPullRequest pr : openPulls) {
+                if (pr.getHead() == null) {
+                    try {
+                        pr = ghRepository.getPullRequest(pr.getNumber());
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+                        return;
+                    }
+                }
+                check(pr);
+                closedPrIDs.remove(pr.getNumber());
+            }
         }
+        
+        // remove closed pulls so we don't check them again
+        for (Integer id : closedPrIDs) {
+            pulls.remove(id);
+        }        
     }
 
     private void check(GHPullRequest pr) {
@@ -238,28 +263,38 @@ public class GhprbRepository {
     }
 
     void onPullRequestHook(PullRequest pr) {
-        if ("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
-            GhprbPullRequest pull = pulls.get(pr.getNumber());
-            if (pull == null) {
-                pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
-                pull = pulls.get(pr.getNumber());
+        if (helper.ifOnlyOnClosed()) {
+            if ("closed".equals(pr.getAction())) {
+                pulls.remove(pr.getNumber());
+                if (helper.ifOnlyOnClosed()) {
+                    logger.log(Level.FINEST, "Check if build should be triggered for the closed pull request #{0}", pr.getNumber());
+                    new GhprbPullRequest(pr.getPullRequest(), helper, this).check(pr.getPullRequest());
+                }        
             }
-            pull.check(pr.getPullRequest());
-        } else if ("synchronize".equals(pr.getAction())) {
-            GhprbPullRequest pull = pulls.get(pr.getNumber());
-            if (pull == null) {
-                pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
-                pull = pulls.get(pr.getNumber());
-            }
-            if (pull == null) {
-                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
-                return;
-            }
-            pull.check(pr.getPullRequest());
-        } else if ("closed".equals(pr.getAction())) {
-            pulls.remove(pr.getNumber());
         } else {
-            logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
+            if ("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
+                GhprbPullRequest pull = pulls.get(pr.getNumber());
+                if (pull == null) {
+                    pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
+                    pull = pulls.get(pr.getNumber());
+                }
+                pull.check(pr.getPullRequest());
+            } else if ("synchronize".equals(pr.getAction())) {
+                GhprbPullRequest pull = pulls.get(pr.getNumber());
+                if (pull == null) {
+                    pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
+                    pull = pulls.get(pr.getNumber());
+                }
+                if (pull == null) {
+                    logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
+                    return;
+                }
+                pull.check(pr.getPullRequest());
+            } else if ("closed".equals(pr.getAction())) {
+                pulls.remove(pr.getNumber());            
+            } else {
+                logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
+            }
         }
         GhprbTrigger.getDscp().save();
     }

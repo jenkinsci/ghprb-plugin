@@ -150,8 +150,10 @@ public class GhprbPullRequest {
                 logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
             }
             updated = pr.getUpdatedAt();
-        }
+        }        
+        logger.log(Level.FINEST, "Checking if the build should be skipped...");
         checkSkipBuild(pr);
+        logger.log(Level.FINEST, "Trying to trigger a build...");
         tryBuild(pr);
     }
 
@@ -234,12 +236,14 @@ public class GhprbPullRequest {
 
             shouldRun = false;
             triggered = false;
+        } else {
+            logger.log(Level.FINEST, "shouldRun is false");
         }
     }
 
-	private void build() {
+    private void build() {
         String message = helper.getBuilds().build(this, triggerSender, commentBody);
-		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
+        repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
         logger.log(Level.INFO, message);
     }
 
