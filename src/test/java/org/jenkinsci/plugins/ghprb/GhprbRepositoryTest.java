@@ -130,6 +130,7 @@ public class GhprbRepositoryTest {
         mockCommitList();
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(true);
+        given(helper.ifOnlyOnClosed()).willReturn(false);
 
         pulls.put(1, ghprbPullRequest);
 
@@ -156,6 +157,7 @@ public class GhprbRepositoryTest {
 
         verify(helper).ifOnlyTriggerPhrase();
         verify(helper).getWhiteListTargetBranches();
+        verify(helper).ifOnlyOnClosed();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -186,6 +188,7 @@ public class GhprbRepositoryTest {
         given(ghUser.getEmail()).willReturn("email");
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.ifOnlyOnClosed()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
         // WHEN
@@ -219,6 +222,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(1)).ifOnlyOnClosed();        
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail();   // Call to Github API
@@ -257,6 +261,7 @@ public class GhprbRepositoryTest {
         given(ghUser.getLogin()).willReturn("login");
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.ifOnlyOnClosed()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
         // WHEN
@@ -292,6 +297,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(2)).ifOnlyOnClosed();
 
         verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("comment body"));
@@ -334,6 +340,7 @@ public class GhprbRepositoryTest {
         given(ghUser.getLogin()).willReturn("login");
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.ifOnlyOnClosed()).willReturn(false);
         given(helper.isRetestPhrase(eq("test this please"))).willReturn(true);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
@@ -371,6 +378,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(2)).ifOnlyOnClosed();
 
         verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("test this please"));
@@ -429,6 +437,8 @@ public class GhprbRepositoryTest {
 
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
+        
+        verify(helper).ifOnlyOnClosed();
         verifyZeroInteractions(helper);
     }
 

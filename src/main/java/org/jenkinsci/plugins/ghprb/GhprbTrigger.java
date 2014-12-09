@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
 public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
-    
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
@@ -158,12 +158,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
         String triggerAuthorEmail = "";
-        
+
         try {triggerAuthor = getString(cause.getTriggerSender().getName(), "");} catch (Exception e) {}
         try {triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");} catch (Exception e) {}
-        
+
         setCommitAuthor(cause, values);
-        
+
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
@@ -182,7 +182,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv), new RevisionParameterAction(commitSha));
     }
-    
+
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
     	String authorName = "";
     	String authorEmail = "";
@@ -190,11 +190,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     		authorName = getString(cause.getCommitAuthor().getName(), "");
     		authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
     	}
-    	
+
         values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
         values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
     }
-    
+
     private String getString(String actual, String d) {
     	return actual == null ? d : actual;
     }
@@ -240,7 +240,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             logger.log(Level.SEVERE, "Failed to save new whitelist", ex);
         }
     }
-    
+
     public String getAdminlist() {
         if (adminlist == null) {
             return "";
@@ -258,7 +258,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return whitelist;
     }
-    
+
 
     public String getCommentFilePath() {
     	return commentFilePath;
@@ -292,7 +292,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public boolean isOnlyOnClosed() {
         return onlyOnClosed;
-    }        
+    }
 
     public Boolean getOnlyTriggerPhrase() {
         return onlyTriggerPhrase != null && onlyTriggerPhrase;
@@ -359,12 +359,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
-        
-        
+
+
         /**
-         * These settings only really affect testing.  When Jenkins calls configure() then 
+         * These settings only really affect testing.  When Jenkins calls configure() then
          * the formdata will be used to replace all of these fields.
-         * Leaving them here is useful for testing, but must not be confused with a 
+         * Leaving them here is useful for testing, but must not be confused with a
          * default.  They also should not be used as the default value in the global.jelly
          * file as this value is dynamic and will not be retained once configure() is called.
          */
@@ -383,9 +383,9 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private List<GhprbBranch> whiteListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-        
-        
-        
+
+
+
         private String username;
         private String password;
         private String accessToken;
@@ -435,8 +435,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
-           
-            
+
+
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
@@ -494,7 +494,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         public String getRetestPhrase() {
             return retestPhrase;
         }
-        
+
         public String getSkipBuildPhrase() {
             return skipBuildPhrase;
         }
@@ -557,7 +557,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             }
             return gh;
         }
-        
+
         public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
             ConcurrentMap<Integer, GhprbPullRequest> ret;
             if (jobs.containsKey(projectName)) {

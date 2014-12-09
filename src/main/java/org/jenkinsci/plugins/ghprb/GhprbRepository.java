@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
-import org.apache.log4j.lf5.LogLevel;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
@@ -84,7 +83,7 @@ public class GhprbRepository {
                 logger.log(Level.SEVERE, "Could not retrieve closed pull requests.", ex);
                 return;
             }
-            
+
             closedPrIDs = new HashSet<Integer>();
             for (GHPullRequest pr : closedPulls) {
                 if (pr.getHead() == null) {
@@ -95,7 +94,7 @@ public class GhprbRepository {
                         return;
                     }
                 }
-                check(pr);     
+                check(pr);
                 closedPrIDs.add(pr.getNumber());
             }
         } else {
@@ -121,11 +120,11 @@ public class GhprbRepository {
                 closedPrIDs.remove(pr.getNumber());
             }
         }
-        
+
         // remove closed pulls so we don't check them again
         for (Integer id : closedPrIDs) {
             pulls.remove(id);
-        }        
+        }
     }
 
     private void check(GHPullRequest pr) {
@@ -148,7 +147,7 @@ public class GhprbRepository {
     public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
     	createCommitStatus(null, sha1, state, url, message, id);
     }
-    
+
     public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id) {
         logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
         try {
@@ -253,9 +252,17 @@ public class GhprbRepository {
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
+
+        GHPullRequest pr = ghRepository.getPullRequest(id);
+
+        if (helper.ifOnlyOnClosed()) {
+            logger.log(Level.FINER, "Ignore comment for jobs that are configured to run only on closed pull requests");
+            return;
+        }
+
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
-            pull = new GhprbPullRequest(ghRepository.getPullRequest(id), helper, this);
+            pull = new GhprbPullRequest(pr, helper, this);
             pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
@@ -266,10 +273,8 @@ public class GhprbRepository {
         if (helper.ifOnlyOnClosed()) {
             if ("closed".equals(pr.getAction())) {
                 pulls.remove(pr.getNumber());
-                if (helper.ifOnlyOnClosed()) {
-                    logger.log(Level.FINEST, "Check if build should be triggered for the closed pull request #{0}", pr.getNumber());
-                    new GhprbPullRequest(pr.getPullRequest(), helper, this).check(pr.getPullRequest());
-                }        
+                logger.log(Level.FINEST, "Check if build should be triggered for the closed pull request #{0}", pr.getNumber());
+                new GhprbPullRequest(pr.getPullRequest(), helper, this).check(pr.getPullRequest());
             }
         } else {
             if ("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
@@ -291,7 +296,7 @@ public class GhprbRepository {
                 }
                 pull.check(pr.getPullRequest());
             } else if ("closed".equals(pr.getAction())) {
-                pulls.remove(pr.getNumber());            
+                pulls.remove(pr.getNumber());
             } else {
                 logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
             }
