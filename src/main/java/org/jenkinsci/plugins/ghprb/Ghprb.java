@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 
 
 /**
+ * GH PR builder helper class
  * @author janinko
  */
 public class Ghprb {
