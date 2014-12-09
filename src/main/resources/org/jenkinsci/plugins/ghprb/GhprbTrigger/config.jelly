@@ -9,15 +9,15 @@
 	<f:entry title="${%Trigger phrase}" field="triggerPhrase">
 	  <f:textbox />
 	</f:entry>
-		<f:entry title="${testMode}" field="testMode">
-    	  <f:textbox />
-    	</f:entry>
 	<f:entry title="Only use trigger phrase for build triggering" field="onlyTriggerPhrase">
 	  <f:checkbox />
 	</f:entry>
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
+    <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
+  	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
+    </f:entry>
 	<f:entry title="${%Commit Status Context}" field="commitStatusContext">
 		<f:textbox />
 	</f:entry>
@@ -27,8 +27,14 @@
 	<f:entry title="${%White list}" field="whitelist">
 	  <f:textarea />
 	</f:entry>
+	<f:entry title="${%Comment file path}" field="commentFilePath">
+	  <f:textbox />
+	</f:entry>
 	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
 	  <f:textarea />
+	</f:entry>
+	<f:entry title="Allow members of whitelisted organisations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
+	  <f:checkbox />
 	</f:entry>
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
       <f:checkbox />

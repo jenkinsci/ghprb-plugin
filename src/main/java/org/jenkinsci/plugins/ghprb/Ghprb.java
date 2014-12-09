@@ -1,9 +1,12 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
-import com.google.common.base.Preconditions;
+
+import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import jenkins.model.Jenkins;
+import hudson.util.LogTaskListener;
+
 import org.kohsuke.github.GHUser;
 
 import java.util.*;
@@ -13,7 +16,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.*;
 
 /**
  * @author janinko
@@ -131,8 +133,14 @@ public class Ghprb {
                 || isInWhitelistedOrganisation(user);
     }
 
-    public boolean isAdmin(String username) {
-        return admins.contains(username);
+    public boolean isAdmin(GHUser user) {
+        return admins.contains(user.getLogin())
+                || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
+                    && isInWhitelistedOrganisation(user));
+    }
+
+    public boolean isBotUser(GHUser user) {
+        return user != null && user.getLogin().equals(getGitHub().getBotUserLogin());
     }
 
     private boolean isInWhitelistedOrganisation(GHUser user) {
@@ -146,6 +154,26 @@ public class Ghprb {
 
     List<GhprbBranch> getWhiteListTargetBranches() {
         return trigger.getWhiteListTargetBranches();
+    }
+    
+    public static String replaceMacros(AbstractBuild<?, ?> build, String inputString) {
+    	String returnString = inputString;
+        if (build != null && inputString != null) {
+            try {
+                Map<String, String> messageEnvVars = new HashMap<String, String>();
+
+                messageEnvVars.putAll(build.getCharacteristicEnvVars());
+                messageEnvVars.putAll(build.getBuildVariables());
+                messageEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
+
+                returnString = Util.replaceMacro(inputString, messageEnvVars);
+
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Couldn't replace macros in message: ", e);
+            }
+        }
+        return returnString;
+
     }
 
 }

@@ -11,7 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -116,10 +115,14 @@ public class GhprbRepository {
 
     public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id, String context) {
         String sha1 = build.getCause(GhprbCause.class).getCommit();
-        createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context);
+        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context);
     }
 
     public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id, String context) {
+    	createCommitStatus(null, sha1, state, url, message, id, context);
+    }
+    
+    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context) {
         logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
         try {
             ghRepository.createCommitStatus(sha1, state, url, message, context);
@@ -127,9 +130,9 @@ public class GhprbRepository {
             if (GhprbTrigger.getDscp().getUseComments()) {
                 logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
                 if (state == GHCommitState.SUCCESS) {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgSuccess();
+                    message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
                 } else {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgFailure();
+                    message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
                 }
                 addComment(id, message);
             } else {
@@ -188,7 +191,7 @@ public class GhprbRepository {
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
             return true;
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
+            logger.log(Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
             return false;
         }
     }
@@ -227,7 +230,11 @@ public class GhprbRepository {
         } else if ("synchronize".equals(pr.getAction())) {
             GhprbPullRequest pull = pulls.get(pr.getNumber());
             if (pull == null) {
-                logger.log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());
+                pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
+                pull = pulls.get(pr.getNumber());
+            }
+            if (pull == null) {
+                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
                 return;
             }
             pull.check(pr.getPullRequest());
