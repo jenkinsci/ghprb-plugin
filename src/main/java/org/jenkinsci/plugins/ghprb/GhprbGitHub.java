@@ -9,6 +9,7 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 
 /**
+ * Connection helper
  * @author janinko
  */
 public class GhprbGitHub {
@@ -26,7 +27,7 @@ public class GhprbGitHub {
 						.withConnector(new HttpConnectorWithJenkinsProxy())
 						.build();
 			} catch(IOException e) {
-				logger.log(Level.SEVERE, "Can''t connect to {0} using oauth", serverAPIUrl);
+				logger.log(Level.SEVERE, "Can't connect to {0} using oauth", serverAPIUrl);
 				throw e;
 			}
 		} else {
