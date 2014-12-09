@@ -6,12 +6,14 @@ import org.kohsuke.github.GitUser;
 
 import hudson.model.Cause;
 
+import javax.annotation.Nonnull;
 import java.net.URL;
 
 /**
+ * GitHub PR cause info, immutable.
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public class GhprbCause extends Cause{
+public class GhprbCause extends Cause {
 	private final String commit;
 	private final int pullID;
 	private final boolean merged;
@@ -85,16 +87,14 @@ public class GhprbCause extends Cause{
     }
 
 	/**
-	 * Returns the title of the cause, not null.
-	 * @return
+	 * Returns the title of the cause, never null.
 	 */
-	public String getTitle() {
+	public @Nonnull String getTitle() {
 		return title != null ? title : "";
 	}
 
 	/**
-	 * Returns at most the first 30 characters of the title, or 
-	 * @return
+	 * Returns at most the first 30 characters of the title, or
 	 */
 	public String getAbbreviatedTitle() {
 		return StringUtils.abbreviate(getTitle(), 30);
