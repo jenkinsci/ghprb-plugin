@@ -9,6 +9,7 @@ import hudson.util.LogTaskListener;
 
 import org.kohsuke.github.GHUser;
 
+import javax.annotation.CheckForNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
@@ -30,24 +31,21 @@ public class Ghprb {
     private final Set<String> organisations;
     private final String triggerPhrase;
     private final GhprbTrigger trigger;
-    private final AbstractProject<?, ?> project;
     private final Pattern retestPhrasePattern;
     private final Pattern whitelistPhrasePattern;
     private final Pattern oktotestPhrasePattern;
     private GhprbRepository repository;
     private GhprbBuilds builds;
 
-    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
-        this.project = project;
-
+    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger, @CheckForNull ConcurrentMap<Integer, GhprbPullRequest> pulls) {
         final GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
         if (ghpp == null || ghpp.getProjectUrl() == null) {
-            throw new IllegalStateException("A GitHub project url is required.");
+            throw new IllegalArgumentException("A GitHub project url is required.");
         }
         String baseUrl = ghpp.getProjectUrl().baseUrl();
         Matcher m = githubUserRepoPattern.matcher(baseUrl);
         if (!m.matches()) {
-            throw new IllegalStateException(String.format("Invalid GitHub project url: %s", baseUrl));
+            throw new IllegalArgumentException(String.format("Invalid GitHub project url: %s", baseUrl));
         }
         final String user = m.group(2);
         final String repo = m.group(3);
