@@ -138,12 +138,6 @@ public class GhprbBuilds {
                 }
             }
             
-            if (state == GHCommitState.SUCCESS) {
-                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
-            } else {
-                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
-            }
-
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(generateCustomizedMessage(build));
 
