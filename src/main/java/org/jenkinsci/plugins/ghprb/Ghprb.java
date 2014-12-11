@@ -147,6 +147,10 @@ public class Ghprb {
         }
         return false;
     }
+    
+    public AbstractProject<?,?> getProject() {
+        return project;
+    }
 
     List<GhprbBranch> getWhiteListTargetBranches() {
         return trigger.getWhiteListTargetBranches();
@@ -165,11 +169,15 @@ public class Ghprb {
                 returnString = Util.replaceMacro(inputString, messageEnvVars);
 
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Couldn't replace macros in message: ", e);
+                logger.log(Level.SEVERE, "({0}) Couldn't replace macros in message: {1}", e);
             }
         }
         return returnString;
-
+    }
+    
+    public void log(Logger logger,Level level, String message, Object... objects) {
+        String formatted = String.format( "(%s) %s", project.getName(), message);
+        logger.log(level, formatted, objects);
     }
 
 }

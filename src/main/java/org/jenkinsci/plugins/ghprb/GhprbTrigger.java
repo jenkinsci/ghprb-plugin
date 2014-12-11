@@ -6,7 +6,6 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
-import hudson.Util;
 import hudson.model.*;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
@@ -15,7 +14,6 @@ import hudson.plugins.git.util.BuildData;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
-import hudson.util.LogTaskListener;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.github.GHAuthorization;
@@ -96,7 +94,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        Trigger trigger = p.getTrigger(GhprbTrigger.class);
+        Trigger<?> trigger = p.getTrigger(GhprbTrigger.class);
         if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
             return null;
         }
@@ -121,7 +119,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return;
         }
 
-        logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", new String[]{this.project, String.valueOf(newInstance)});
+        helper.log(logger, Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", this.project, String.valueOf(newInstance));
         super.start(project, newInstance);
         helper.init();
     }
@@ -236,7 +234,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         try {
             this.job.save();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to save new whitelist", ex);
+            helper.log(logger, Level.SEVERE, "Failed to save new whitelist", ex);
         }
     }
 

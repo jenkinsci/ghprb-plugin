@@ -175,7 +175,6 @@ public class GhprbPullRequestMerge extends Recorder {
 		String branchName = pr.getHead().getRef();
 		try {
 			GHBranch branch = pr.getRepository().getBranches().get(branchName);
-			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

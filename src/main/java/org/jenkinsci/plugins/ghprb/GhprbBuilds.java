@@ -211,7 +211,7 @@ public class GhprbBuilds {
         }
     }
 
-    private String generateCustomizedMessage(AbstractBuild build) {
+    private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
         JobConfiguration jobConfiguration =
             JobConfiguration.builder()
                 .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())

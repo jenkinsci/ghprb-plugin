@@ -77,11 +77,11 @@ public class GhprbPullRequest {
             accepted = true;
             shouldRun = true;
         } else {
-            logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author.getLogin(), reponame});
+            helper.log(logger, Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", id, author.getLogin(), reponame);
             repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
         }
 
-        logger.log(Level.INFO, "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", new Object[]{id, reponame, author.getLogin(), authorEmail, updated, head});
+        helper.log(logger, Level.INFO, "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", id, reponame, author.getLogin(), authorEmail, updated, head);
     }
 
     public void init(Ghprb helper, GhprbRepository repo) {
@@ -116,7 +116,7 @@ public class GhprbPullRequest {
 				skipBuildPhrase = skipBuildPhrase.trim();
 				Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
 				if(skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
-					logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
+					helper.log(logger, Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
 					shouldRun = false;
 					break;
 				}
@@ -139,7 +139,7 @@ public class GhprbPullRequest {
         }
 
         if (isUpdated(pr)) {
-            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[]{id, reponame, updated, author});
+            helper.log(logger, Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", id, reponame, updated, author);
 
             // the title could have been updated since the original PR was opened
             title = pr.getTitle();
@@ -147,7 +147,7 @@ public class GhprbPullRequest {
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
             if (!newCommit && commentsChecked == 0) {
-                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
+                helper.log(logger, Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
             }
             updated = pr.getUpdatedAt();
         }
@@ -160,7 +160,7 @@ public class GhprbPullRequest {
             checkComment(comment);
             updated = comment.getUpdatedAt();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
+            helper.log(logger, Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
             return;
         }
 
@@ -168,7 +168,7 @@ public class GhprbPullRequest {
         try {
             pr = repo.getPullRequest(id);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
+            helper.log(logger, Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
         }
         checkSkipBuild(comment.getParent());
         tryBuild(pr);
@@ -186,7 +186,9 @@ public class GhprbPullRequest {
                 return true;
             }
         }
-        logger.log(Level.FINEST, "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}", new Object[]{id, target, Joiner.on(',').skipNulls().join(branches)});
+        helper.log(logger, Level.FINEST, "#{3} - PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}",
+                id, target, Joiner.on(',').skipNulls().join(branches),
+                helper.getProject().getName());
         return false;
     }
 
@@ -198,23 +200,23 @@ public class GhprbPullRequest {
 
     private void tryBuild(GHPullRequest pr) {
         if (helper.ifOnlyTriggerPhrase() && !triggered) {
-            logger.log(Level.FINEST, "Trigger only phrase but we are not triggered");
+            helper.log(logger, Level.FINEST, "Trigger only phrase but we are not triggered");
             shouldRun = false;
         }
         if (!isWhiteListedTargetBranch()) {
             return;
         }
         if (shouldRun) {
-            logger.log(Level.FINEST, "Running the build");
+            helper.log(logger, Level.FINEST, "Running the build");
 
             if (authorEmail == null) {
                 // If this instance was create before authorEmail was introduced (before v1.10), it can be null.
                 obtainAuthorEmail(pr);
-                logger.log(Level.FINEST, "Author email was not set, trying to set it to {0}", authorEmail);
+                helper.log(logger, Level.FINEST, "Author email was not set, trying to set it to {0}", authorEmail);
             }
 
             if (pr != null) {
-                logger.log(Level.FINEST, "PR is not null, checking if mergable");
+                helper.log(logger, Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
                 try {
 	                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
@@ -224,12 +226,12 @@ public class GhprbPullRequest {
 	    	    		}
 	    	    	}
                 } catch (Exception ex) {
-                	logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+                	helper.log(logger, Level.INFO, "Unable to get PR commits: ", ex);
                 }
                 
             }
 
-            logger.log(Level.FINEST, "Running build...");
+            helper.log(logger, Level.FINEST, "Running build...");
             build();
 
             shouldRun = false;
@@ -240,7 +242,7 @@ public class GhprbPullRequest {
 	private void build() {
         String message = helper.getBuilds().build(this, triggerSender, commentBody);
 		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
-        logger.log(Level.INFO, message);
+        helper.log(logger, Level.INFO, message);
     }
 
     // returns false if no new commit
@@ -248,7 +250,7 @@ public class GhprbPullRequest {
         if (head.equals(sha)) {
             return false;
         }
-        logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[]{head, sha});
+        helper.log(logger, Level.FINE, "New commit. Sha: {0} => {1}", head, sha);
         head = sha;
         if (accepted) {
             shouldRun = true;
@@ -264,39 +266,39 @@ public class GhprbPullRequest {
         // a user or trigger a build when the 'request for testing' phrase contains the
         // whitelist/trigger phrase and the bot is a member of a whitelisted organisation
         if (helper.isBotUser(sender)) {
-            logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);
+            helper.log(logger, Level.INFO, "Comment from bot user {0} ignored.", sender);
             return;
         }
 
         if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) {       // add to whitelist
             if (!helper.isWhitelisted(author)) {
-                logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
+                helper.log(logger, Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
                 helper.addWhitelist(author.getLogin());
             }
             accepted = true;
             shouldRun = true;
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) {       // ok to test
-            logger.log(Level.FINEST, "Admin {0} gave OK to test", sender);
+            helper.log(logger, Level.FINEST, "Admin {0} gave OK to test", sender);
             accepted = true;
             shouldRun = true;
         } else if (helper.isRetestPhrase(body)) {        // test this please
-            logger.log(Level.FINEST, "Retest phrase");
+            helper.log(logger, Level.FINEST, "Retest phrase");
             if (helper.isAdmin(sender)) {
-                logger.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
+                helper.log(logger, Level.FINEST, "Admin {0} gave retest phrase", sender);
                 shouldRun = true;
             } else if (accepted && helper.isWhitelisted(sender)) {
-                logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
+                helper.log(logger, Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
                 triggered = true;
             }
         } else if (helper.isTriggerPhrase(body)) {      // trigger phrase
-            logger.log(Level.FINEST, "Trigger phrase");
+            helper.log(logger, Level.FINEST, "Trigger phrase");
             if (helper.isAdmin(sender)) {
-                logger.log(Level.FINEST, "Admin {0} ran trigger phrase", sender);
+                helper.log(logger, Level.FINEST, "Admin {0} ran trigger phrase", sender);
                 shouldRun = true;
                 triggered = true;
             } else if (accepted && helper.isWhitelisted(sender)) {
-                logger.log(Level.FINEST, "Trigger accepted and user {0} is whitelisted", sender);
+                helper.log(logger, Level.FINEST, "Trigger accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
                 triggered = true;
             }
@@ -317,12 +319,12 @@ public class GhprbPullRequest {
                     try {
                         checkComment(comment);
                     } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
+                        helper.log(logger, Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
                     }
                 }
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Couldn't obtain comments.", e);
+            helper.log(logger, Level.SEVERE, "Couldn't obtain comments.", e);
         }
         return count;
     }
@@ -343,7 +345,7 @@ public class GhprbPullRequest {
             mergeable = isMergeable != null && isMergeable;
         } catch (IOException e) {
             mergeable = false;
-            logger.log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
+            helper.log(logger, Level.SEVERE, "Couldn't obtain mergeable status.", e);
         }
     }
 
@@ -351,7 +353,7 @@ public class GhprbPullRequest {
         try {
             authorEmail = pr.getUser().getEmail();
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Couldn't obtain author email.", e);
+            helper.log(logger, Level.WARNING, "Couldn't obtain author email.", e);
         }
     }
 
