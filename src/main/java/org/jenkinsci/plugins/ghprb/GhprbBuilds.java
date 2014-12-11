@@ -122,13 +122,13 @@ public class GhprbBuilds {
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
             String commentFilePath = trigger.getCommentFilePath();
-            
+
             if (commentFilePath != null && !commentFilePath.isEmpty()) {
                 try {
                     String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
-                    
+
                     String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
-                	msg.append("Build comment file: \n--------------\n");
+                    msg.append("Build comment file: \n--------------\n");
                     msg.append(content);
                     msg.append("\n--------------\n");
                 } catch (IOException e) {
@@ -137,70 +137,69 @@ public class GhprbBuilds {
                     e.printStackTrace(listener.getLogger());
                 }
             }
-            
+
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(generateCustomizedMessage(build));
+        }
 
-            int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
-            if (state != GHCommitState.SUCCESS && numLines > 0) {
-                // on failure, append an excerpt of the build log
-                try {
-                    // wrap log in "code" markdown
-                    msg.append("\n\n**Build Log**\n*last ").append(numLines).append(" lines*\n");
-                    msg.append("\n ```\n");
-                    List<String> log = build.getLog(numLines);
-                    for (String line : log) {
-                        msg.append(line).append('\n');
-                    }
-                    msg.append("```\n");
-                } catch (IOException ex) {
-                    listener.getLogger().println("Can't add log excerpt to commit comments");
-                    ex.printStackTrace(listener.getLogger());
+        int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
+        if (state != GHCommitState.SUCCESS && numLines > 0) {
+            // on failure, append an excerpt of the build log
+            try {
+                // wrap log in "code" markdown
+                msg.append("\n\n**Build Log**\n*last ").append(numLines).append(" lines*\n");
+                msg.append("\n ```\n");
+                List<String> log = build.getLog(numLines);
+                for (String line : log) {
+                    msg.append(line).append('\n');
                 }
+                msg.append("```\n");
+            } catch (IOException ex) {
+                listener.getLogger().println("Can't add log excerpt to commit comments");
+                ex.printStackTrace(listener.getLogger());
             }
-        
+        }
 
-            String buildMessage = null;
-            if (state == GHCommitState.SUCCESS) {
-                if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                    buildMessage = trigger.getMsgSuccess();
-                } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                    buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
-                }
-            } else if (state == GHCommitState.FAILURE) {
-                if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                    buildMessage = trigger.getMsgFailure();
-                } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                    buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
-                }
+        String buildMessage = null;
+        if (state == GHCommitState.SUCCESS) {
+            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
+                buildMessage = trigger.getMsgSuccess();
+            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
             }
-            // Only Append the build's custom message if it has been set.
-            if (buildMessage != null && !buildMessage.isEmpty()) {
-                // When the msg is not empty, append a newline first, to seperate it from the rest of the String
-                if (!"".equals(msg.toString())) {
-                    msg.append("\n");
-                }
-                msg.append(buildMessage);
+        } else if (state == GHCommitState.FAILURE) {
+            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
+                buildMessage = trigger.getMsgFailure();
+            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
             }
-
-            if (msg.length() > 0) {
-                listener.getLogger().println(msg);
-                repo.addComment(c.getPullID(), msg.toString(), build, listener);
+        }
+        // Only Append the build's custom message if it has been set.
+        if (buildMessage != null && !buildMessage.isEmpty()) {
+            // When the msg is not empty, append a newline first, to seperate it from the rest of the String
+            if (!"".equals(msg.toString())) {
+                msg.append("\n");
             }
+            msg.append(buildMessage);
+        }
 
-            // close failed pull request automatically
-            if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
+        if (msg.length() > 0) {
+            listener.getLogger().println(msg);
+            repo.addComment(c.getPullID(), msg.toString(), build, listener);
+        }
 
-                try {
-                    GHPullRequest pr = repo.getPullRequest(c.getPullID());
+        // close failed pull request automatically
+        if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
 
-                    if (pr.getState().equals(GHIssueState.OPEN)) {
-                        repo.closePullRequest(c.getPullID());
-                    }
-                } catch (IOException ex) {
-                    listener.getLogger().println("Can't close pull request");
-                    ex.printStackTrace(listener.getLogger());
+            try {
+                GHPullRequest pr = repo.getPullRequest(c.getPullID());
+
+                if (pr.getState().equals(GHIssueState.OPEN)) {
+                    repo.closePullRequest(c.getPullID());
                 }
+            } catch (IOException ex) {
+                listener.getLogger().println("Can't close pull request");
+                ex.printStackTrace(listener.getLogger());
             }
         }
     }
