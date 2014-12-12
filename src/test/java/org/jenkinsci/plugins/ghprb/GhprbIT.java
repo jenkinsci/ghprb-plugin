@@ -243,6 +243,7 @@ public class GhprbIT {
         jsonObject.put("okToTestPhrase", "ok to test");
         jsonObject.put("retestPhrase", "retest this please");
         jsonObject.put("skipBuildPhrase", "[skip ci]");
+        jsonObject.put("commitStatusContext", "jenkins");
         jsonObject.put("cron", "*/1 * * * *");
         jsonObject.put("useComments", "true");
         jsonObject.put("logExcerptLines", "0");
