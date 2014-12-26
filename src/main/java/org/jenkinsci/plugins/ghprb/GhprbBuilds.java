@@ -117,6 +117,25 @@ public class GhprbBuilds {
 
         StringBuilder msg = new StringBuilder();
 
+        String buildMessage = null;
+        if (state == GHCommitState.SUCCESS) {
+            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
+                buildMessage = trigger.getMsgSuccess();
+            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
+            }
+        } else if (state == GHCommitState.FAILURE) {
+            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
+                buildMessage = trigger.getMsgFailure();
+            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
+            }
+        }
+        // Only Append the build's custom message if it has been set.
+        if (buildMessage != null && !buildMessage.isEmpty()) {
+            msg.append(buildMessage).append("\n");
+        }
+        
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
             String commentFilePath = trigger.getCommentFilePath();
@@ -157,30 +176,6 @@ public class GhprbBuilds {
                 }
             }
         
-
-            String buildMessage = null;
-            if (state == GHCommitState.SUCCESS) {
-                if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                    buildMessage = trigger.getMsgSuccess();
-                } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                    buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
-                }
-            } else if (state == GHCommitState.FAILURE) {
-                if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                    buildMessage = trigger.getMsgFailure();
-                } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                    buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
-                }
-            }
-            // Only Append the build's custom message if it has been set.
-            if (buildMessage != null && !buildMessage.isEmpty()) {
-                // When the msg is not empty, append a newline first, to separate it from the rest of the String
-                if (!"".equals(msg.toString())) {
-                    msg.append("\n");
-                }
-                msg.append(buildMessage);
-            }
-
             if (msg.length() > 0) {
                 listener.getLogger().println(msg);
                 repo.addComment(c.getPullID(), msg.toString(), build, listener);
