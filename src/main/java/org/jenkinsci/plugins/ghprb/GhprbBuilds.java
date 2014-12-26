@@ -1,18 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
-import hudson.model.AbstractBuild;
-import hudson.model.Cause;
-import hudson.model.Result;
-import hudson.model.TaskListener;
-import hudson.model.queue.QueueTaskFuture;
-import hudson.plugins.git.util.BuildData;
-
 import org.apache.commons.io.FileUtils;
-
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
-
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -24,6 +15,13 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import hudson.model.AbstractBuild;
+import hudson.model.Cause;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
+import hudson.plugins.git.util.BuildData;
 
 /**
  * @author janinko
@@ -176,7 +174,7 @@ public class GhprbBuilds {
             }
             // Only Append the build's custom message if it has been set.
             if (buildMessage != null && !buildMessage.isEmpty()) {
-                // When the msg is not empty, append a newline first, to seperate it from the rest of the String
+                // When the msg is not empty, append a newline first, to separate it from the rest of the String
                 if (!"".equals(msg.toString())) {
                     msg.append("\n");
                 }
