@@ -44,7 +44,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	}
 
 	/**
-	 * Calculate the build URL of a build of default type. This will be overriden
+	 * Calculate the build URL of a build of default type. This will be overridden
 	 * by specific build types.
 	 * 
 	 * @return the build URL of a build of default type
@@ -56,7 +56,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	}
 
 	/**
-	 * Return a downstream iterator of a build of default type. This will be overriden
+	 * Return a downstream iterator of a build of default type. This will be overridden
 	 * by specific build types.
 	 *
 	 * If the receiver of the call has no child projects, it will return an
@@ -77,7 +77,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 	}
 
 	/**
-	 * Return the tests results of a build of default type. This will be overriden
+	 * Return the tests results of a build of default type. This will be overridden
 	 * by specific build types.
 	 *
 	 * @return the tests result of a build of default type

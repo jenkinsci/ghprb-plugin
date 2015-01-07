@@ -89,7 +89,7 @@ public class GhprbPullRequestMerge extends Recorder {
 			return true;
 		}
 		
-		trigger = GhprbTrigger.extractTrigger(project);
+		trigger = project.getTrigger(GhprbTrigger.class);
 		if (trigger == null) return false;
 				
 		cause = getCause(build);

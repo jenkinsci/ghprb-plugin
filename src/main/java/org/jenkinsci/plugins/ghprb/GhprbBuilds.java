@@ -57,19 +57,21 @@ public class GhprbBuilds {
 
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
-            logger.log(Level.SEVERE, "Job did not start");
+            logger.log(Level.SEVERE, "Job didn't start");
         }
         return sb.toString();
     }
 
+    /**
+     * Cancel previous builds for specified PR id.
+     * TODO: remove or implement this
+     */
     private boolean cancelBuild(int id) {
         return false;
     }
 
     private GhprbCause getCause(AbstractBuild<?,?> build) {
-        Cause cause = build.getCause(GhprbCause.class);
-        if (cause == null || (!(cause instanceof GhprbCause))) return null;
-        return (GhprbCause) cause;
+        return build.getCause(GhprbCause.class);
     }
 
     public void onStarted(AbstractBuild<?,?> build, PrintStream logger) {

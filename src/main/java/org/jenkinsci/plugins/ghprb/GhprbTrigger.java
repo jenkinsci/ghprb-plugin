@@ -25,6 +25,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
@@ -95,14 +96,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.msgFailure = msgFailure;
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        Trigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
-        }
-        return (GhprbTrigger) trigger;
-    }
-
     public static DescriptorImpl getDscp() {
         return DESCRIPTOR;
     }
@@ -160,9 +153,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         
         try {triggerAuthor = getString(cause.getTriggerSender().getName(), "");} catch (Exception e) {}
         try {triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");} catch (Exception e) {}
-        
-        setCommitAuthor(cause, values);
-        
+
+        String authorName = "";
+        String authorEmail = "";
+        if (cause.getCommitAuthor() != null) {
+            authorName = getString(cause.getCommitAuthor().getName(), "");
+            authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
+        }
+
+        values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
+        values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
@@ -181,19 +181,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv), new RevisionParameterAction(commitSha));
     }
-    
-    private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
-    	String authorName = "";
-    	String authorEmail = "";
-    	if (cause.getCommitAuthor() != null) {
-    		authorName = getString(cause.getCommitAuthor().getName(), "");
-    		authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
-    	}
-    	
-        values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
-        values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
-    }
-    
+
     private String getString(String actual, String d) {
     	return actual == null ? d : actual;
     }
@@ -201,16 +189,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     /**
      * Find the previous BuildData for the given pull request number; this may return null
      */
-    private BuildData findPreviousBuildForPullId(StringParameterValue pullIdPv) {
+    private @CheckForNull BuildData findPreviousBuildForPullId(StringParameterValue pullIdPv) {
         // find the previous build for this particular pull request, it may not be the last build
         for (Run<?, ?> r : job.getBuilds()) {
             ParametersAction pa = r.getAction(ParametersAction.class);
             if (pa != null) {
                 for (ParameterValue pv : pa.getParameters()) {
                     if (pv.equals(pullIdPv)) {
-                        for (BuildData bd : r.getActions(BuildData.class)) {
-                            return bd;
-                        }
+                        return r.getAction(BuildData.class);
                     }
                 }
             }
@@ -337,7 +323,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public GhprbBuilds getBuilds() {
         if(helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
+            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn't properly started - helper is null", this.project);
             return null;
         }
         return helper.getBuilds();
@@ -345,7 +331,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public GhprbRepository getRepository() {
         if(helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
+            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn't properly started - helper is null", this.project);
             return null;
         }
         return helper.getRepository();
@@ -405,7 +391,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         @Override
         public String getDisplayName() {
-            return "GitHub Pull Request Builder";
+            return "Build GitHub pull requests";
         }
 
         @Override
