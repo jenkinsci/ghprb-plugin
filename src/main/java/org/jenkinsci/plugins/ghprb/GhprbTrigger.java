@@ -53,6 +53,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean permitAll;
     private final String commentFilePath;
     private String whitelist;
+    private Boolean neverUseMergeCommit;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
@@ -70,6 +71,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean onlyTriggerPhrase,
                         Boolean useGitHubHooks,
                         Boolean permitAll,
+                        Boolean neverUseMergeCommit,
                         Boolean autoCloseFailedPullRequests,
                         Boolean displayBuildErrorsOnDownstreamBuilds,
                         String commentFilePath,
@@ -86,6 +88,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
+        this.neverUseMergeCommit = neverUseMergeCommit;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
@@ -152,7 +155,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
         ArrayList<ParameterValue> values = getDefaultParameters();
-        final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+        final String commitSha;
+        if ((getDescriptor().getNeverUseMergeCommit()) || (!cause.isMerged())) {
+            commitSha = cause.getCommit();
+        } else {
+            commitSha = "origin/pr/" + cause.getPullID() + "/merge";
+        }
         values.add(new StringParameterValue("sha1", commitSha));
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
@@ -376,6 +384,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String msgSuccess = "Test PASSed.";
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
+        private Boolean neverUseMergeCommit = false;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
         
@@ -426,12 +435,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             useDetailedComments = formData.getBoolean("useDetailedComments");
             logExcerptLines = formData.getInt("logExcerptLines");
             unstableAs = formData.getString("unstableAs");
+            neverUseMergeCommit = formData.getBoolean("neverUseMergeCommit");
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
-           
-            
+
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
@@ -508,6 +517,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public int getlogExcerptLines() {
             return logExcerptLines;
+        }
+
+        public Boolean getNeverUseMergeCommit() {
+            return neverUseMergeCommit;
         }
 
         public Boolean getAutoCloseFailedPullRequests() {
