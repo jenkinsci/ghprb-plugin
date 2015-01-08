@@ -6,6 +6,9 @@
     <f:checkbox />
   </f:entry>
   <f:advanced>
+    <f:entry title="Trigger build only when a pull request is closed" field="onlyOnClosed">
+        <f:checkbox default="false"/>
+    </f:entry>
     <f:entry title="${%Success message}" field="msgSuccess">
       <f:textarea default="${descriptor.msgSuccess}"/>
     </f:entry>
