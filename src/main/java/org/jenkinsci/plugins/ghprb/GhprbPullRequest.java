@@ -239,7 +239,8 @@ public class GhprbPullRequest {
 
 	private void build() {
         String message = helper.getBuilds().build(this, triggerSender, commentBody);
-		repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id);
+        String context = helper.getTrigger().getCommitStatusContext();
+        repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id,context);
         logger.log(Level.INFO, message);
     }
 
