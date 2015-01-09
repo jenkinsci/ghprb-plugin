@@ -26,6 +26,9 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
 import org.mockito.Mockito;
+//import org.mockserver.client.server.MockServerClient;
+//import org.mockserver.model.HttpRequest;
+//import org.mockserver.model.HttpResponse;
 
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
@@ -36,6 +39,14 @@ public class GhprbTestUtil {
 
 	public static final int INITIAL_RATE_LIMIT = 5000;
 	public static final String GHPRB_PLUGIN_NAME = "ghprb";
+	
+	// TODO: When anyone has time to investigate mocking the github request.
+//	public static void mockGithubUserPage() {
+//		new MockServerClient("https://api.github.com", 80)
+//			.when(new HttpRequest().withMethod("GET").withPath("/user"))
+//			.respond(new HttpResponse().withStatusCode(200));
+//					
+//	}
 
 	public static void mockCommitList(GHPullRequest ghPullRequest) {
 		PagedIterator itr = Mockito.mock(PagedIterator.class);
@@ -93,10 +104,11 @@ public class GhprbTestUtil {
 		jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
 		jsonObject.put("msgSuccess", "Success");
 		jsonObject.put("msgFailure", "Failure");
+		jsonObject.put("commitStatusContext", "Status Context");
 
 		return jsonObject;
 	}
-
+	
 	public static GitSCM provideGitSCM() {
 		return new GitSCM(
 			newArrayList(

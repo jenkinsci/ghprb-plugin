@@ -6,7 +6,6 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
-import hudson.Util;
 import hudson.model.*;
 import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
@@ -15,7 +14,6 @@ import hudson.plugins.git.util.BuildData;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
-import hudson.util.LogTaskListener;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.github.GHAuthorization;
@@ -58,6 +56,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private List<GhprbBranch> whiteListTargetBranches;
     private String msgSuccess;
     private String msgFailure;
+    private String commitStatusContext;
     private transient Ghprb helper;
     private String project;
 
@@ -76,7 +75,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         List<GhprbBranch> whiteListTargetBranches,
                         Boolean allowMembersOfWhitelistedOrgsAsAdmin,
                         String msgSuccess,
-                        String msgFailure) throws ANTLRException {
+                        String msgFailure,
+                        String commitStatusContext) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -89,6 +89,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
+        this.commitStatusContext = commitStatusContext;
         this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
@@ -324,6 +325,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return whiteListTargetBranches;
     }
 
+    public String getCommitStatusContext() {
+        return commitStatusContext;
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -376,6 +381,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String msgSuccess = "Test PASSed.";
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
+        private String commitStatusContext = "";
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
         
@@ -430,7 +436,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
-           
+            commitStatusContext = formData.getString("commitStatusContext");
             
             save();
             gh = new GhprbGitHub();
@@ -544,6 +550,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public boolean isUseDetailedComments() {
             return (useDetailedComments != null && useDetailedComments);
+        }
+        
+        public String getCommitStatusContext() {
+            return commitStatusContext;
         }
 
         public GhprbGitHub getGitHub() {
