@@ -51,10 +51,13 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
-	private final String commentFilePath;
+    private final String commentFilePath;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
+    private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
+    private String msgSuccess;
+    private String msgFailure;
     private transient Ghprb helper;
     private String project;
 
@@ -68,9 +71,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean useGitHubHooks,
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
+                        Boolean displayBuildErrorsOnDownstreamBuilds,
                         String commentFilePath,
                         List<GhprbBranch> whiteListTargetBranches,
-                        Boolean allowMembersOfWhitelistedOrgsAsAdmin) throws ANTLRException {
+                        Boolean allowMembersOfWhitelistedOrgsAsAdmin,
+                        String msgSuccess,
+                        String msgFailure) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -81,9 +87,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
+        this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
+        this.msgSuccess = msgSuccess;
+        this.msgFailure = msgFailure;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -265,6 +274,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return cron;
     }
 
+    public String getMsgSuccess() {
+        return msgSuccess;
+    }
+
+    public String getMsgFailure() {
+        return msgFailure;
+    }
+
     public String getTriggerPhrase() {
         if (triggerPhrase == null) {
             return "";
@@ -288,9 +305,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         if (autoCloseFailedPullRequests == null) {
             Boolean autoClose = getDescriptor().getAutoCloseFailedPullRequests();
             return (autoClose != null && autoClose);
-        } else {
-            return autoCloseFailedPullRequests;
         }
+        return autoCloseFailedPullRequests;
+    }
+
+    public Boolean isDisplayBuildErrorsOnDownstreamBuilds() {
+        if (displayBuildErrorsOnDownstreamBuilds == null) {
+            Boolean displayErrors = getDescriptor().getDisplayBuildErrorsOnDownstreamBuilds();
+            return (displayErrors != null && displayErrors);
+        }
+        return displayBuildErrorsOnDownstreamBuilds;
     }
 
     public List<GhprbBranch> getWhiteListTargetBranches() {
@@ -346,12 +370,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
+        private Boolean useDetailedComments = false;
         private int logExcerptLines = 0;
         private String unstableAs = GHCommitState.FAILURE.name();
         private String msgSuccess = "Test PASSed.";
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
+        private Boolean displayBuildErrorsOnDownstreamBuilds = false;
         
         
         
@@ -397,9 +423,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             skipBuildPhrase = formData.getString("skipBuildPhrase");
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
+            useDetailedComments = formData.getBoolean("useDetailedComments");
             logExcerptLines = formData.getInt("logExcerptLines");
             unstableAs = formData.getString("unstableAs");
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
+            displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
            
@@ -474,12 +502,20 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return useComments;
         }
 
+        public Boolean getUseDetailedComments() {
+            return useDetailedComments;
+        }
+
         public int getlogExcerptLines() {
             return logExcerptLines;
         }
 
         public Boolean getAutoCloseFailedPullRequests() {
             return autoCloseFailedPullRequests;
+        }
+
+        public Boolean getDisplayBuildErrorsOnDownstreamBuilds() {
+            return displayBuildErrorsOnDownstreamBuilds;
         }
 
         public String getServerAPIUrl() {
@@ -491,28 +527,23 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
 
         public String getMsgSuccess(AbstractBuild<?, ?> build) {
-        	String msg = msgSuccess;
-            if (msg == null) {
-                msg = "Test PASSed.";
-            }
-            
-        	msg = Ghprb.replaceMacros(build, msg);
+            String msg = msgSuccess;
+            msg = Ghprb.replaceMacros(build, msg);
             return msg;
         }
 
         public String getMsgFailure(AbstractBuild<?, ?> build) {
-        	String msg = msgFailure;
-            if (msg == null) {
-                msg = "Test FAILed.";
-            }
-            
-        	msg = Ghprb.replaceMacros(build, msg);
-            
+            String msg = msgFailure;
+            msg = Ghprb.replaceMacros(build, msg);
             return msg;
         }
 
         public boolean isUseComments() {
             return (useComments != null && useComments);
+        }
+
+        public boolean isUseDetailedComments() {
+            return (useDetailedComments != null && useDetailedComments);
         }
 
         public GhprbGitHub getGitHub() {

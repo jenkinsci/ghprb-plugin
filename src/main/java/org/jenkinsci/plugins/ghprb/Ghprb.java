@@ -115,7 +115,7 @@ public class Ghprb {
     }
 
     public boolean isTriggerPhrase(String comment) {
-        return !triggerPhrase.equals("") && comment.contains(triggerPhrase);
+        return !triggerPhrase.equals("") && comment != null && comment.contains(triggerPhrase);
     }
 
     public boolean ifOnlyTriggerPhrase() {

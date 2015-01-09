@@ -2,7 +2,9 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.annotations.VisibleForTesting;
 import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.apache.log4j.lf5.LogLevel;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
@@ -128,13 +130,16 @@ public class GhprbRepository {
             ghRepository.createCommitStatus(sha1, state, url, message);
         } catch (IOException ex) {
             if (GhprbTrigger.getDscp().getUseComments()) {
-                logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
+                logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub.", ex);
                 if (state == GHCommitState.SUCCESS) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
-                } else {
+                } else if (state == GHCommitState.FAILURE) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
                 }
-                addComment(id, message);
+                if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
+                  logger.log(Level.INFO, "Trying to send comment.", ex);
+                  addComment(id, message);
+                }
             } else {
                 logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.", ex);
             }
@@ -146,8 +151,21 @@ public class GhprbRepository {
     }
 
     public void addComment(int id, String comment) {
+      addComment(id, comment, null, null);
+    }
+
+    public void addComment(int id, String comment, AbstractBuild<?, ?> build, TaskListener listener) {
         if (comment.trim().isEmpty())
             return;
+
+        if (build != null && listener != null) {
+          try {
+            comment = build.getEnvironment(listener).expand(comment);
+          } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error", e);
+          }
+        }
+
         try {
             ghRepository.getPullRequest(id).comment(comment);
         } catch (IOException ex) {

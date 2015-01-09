@@ -6,6 +6,12 @@
     <f:checkbox />
   </f:entry>
   <f:advanced>
+    <f:entry title="${%Success message}" field="msgSuccess">
+      <f:textarea default="${descriptor.msgSuccess}"/>
+    </f:entry>
+    <f:entry title="${%Failure message}" field="msgFailure">
+      <f:textarea default="${descriptor.msgFailure}"/>
+    </f:entry>
 	<f:entry title="${%Trigger phrase}" field="triggerPhrase">
 	  <f:textbox />
 	</f:entry>
@@ -18,6 +24,9 @@
     <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
   	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
     </f:entry>
+	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
+	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
+	</f:entry>
 	<f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
 	  <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
 	</f:entry>
