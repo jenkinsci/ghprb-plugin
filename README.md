@@ -50,7 +50,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
     * Press the ``Create Access Token`` button  
     * Copy the generated Access Token into the field ``Access Token``
     * Clear the username and password fields
-  * If you don't want to use Access Token leve the field empty and fill the username and password in ``Advanced...``.
+  * If you don't want to use Access Token leave the field empty and fill the username and password in ``Advanced...``.
 * Add GitHub usernames of admins (these usernames will be used as defaults in new jobs).  
 * Under Advanced, you can modify:  
   * The phrase for adding users to the whitelist via comment. (Java regexp)  
