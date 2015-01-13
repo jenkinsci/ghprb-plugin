@@ -58,6 +58,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private List<GhprbBranch> whiteListTargetBranches;
     private String msgSuccess;
     private String msgFailure;
+    private final Boolean skipMergeCommit;
     private transient Ghprb helper;
     private String project;
 
@@ -76,7 +77,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         List<GhprbBranch> whiteListTargetBranches,
                         Boolean allowMembersOfWhitelistedOrgsAsAdmin,
                         String msgSuccess,
-                        String msgFailure) throws ANTLRException {
+                        String msgFailure,
+                        Boolean skipMergeCommit) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -93,6 +95,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
         this.msgFailure = msgFailure;
+        this.skipMergeCommit = skipMergeCommit;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -152,7 +155,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
         ArrayList<ParameterValue> values = getDefaultParameters();
-        final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+        final String commitSha = getCommitShaString(cause);
         values.add(new StringParameterValue("sha1", commitSha));
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
@@ -181,7 +184,11 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv), new RevisionParameterAction(commitSha));
     }
-    
+
+    public String getCommitShaString(GhprbCause cause) {
+        return cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+    }
+
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
     	String authorName = "";
     	String authorEmail = "";
@@ -295,6 +302,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     public Boolean getUseGitHubHooks() {
         return useGitHubHooks != null && useGitHubHooks;
+    }
+
+    public Boolean getSkipMergeCommit() {
+        return skipMergeCommit != null && skipMergeCommit;
     }
 
     public Boolean getPermitAll() {

@@ -6,6 +6,9 @@
     <f:checkbox />
   </f:entry>
   <f:advanced>
+    <f:entry title="Do not use GitHub's merge commit" field="skipMergeCommit">
+      <f:checkbox />
+    </f:entry>
     <f:entry title="${%Success message}" field="msgSuccess">
       <f:textarea default="${descriptor.msgSuccess}"/>
     </f:entry>

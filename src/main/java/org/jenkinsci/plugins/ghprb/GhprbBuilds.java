@@ -53,7 +53,8 @@ public class GhprbBuilds {
         GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), 
         		pr.isMergeable(), pr.getTarget(), pr.getSource(), 
         		pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(),
-        		triggerSender, commentBody, pr.getCommitAuthor());
+        		triggerSender, commentBody, pr.getCommitAuthor(),
+        		trigger.getSkipMergeCommit());
 
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
