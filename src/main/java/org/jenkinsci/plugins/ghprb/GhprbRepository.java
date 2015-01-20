@@ -1,16 +1,18 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
-import org.apache.log4j.lf5.LogLevel;
+
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -115,22 +117,46 @@ public class GhprbRepository {
         pull.check(pr);
     }
 
-    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id, String context) {
+    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id, String context, PrintStream stream) {
         String sha1 = build.getCause(GhprbCause.class).getCommit();
-        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context);
+        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context, stream);
     }
 
     public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id, String context) {
-    	createCommitStatus(null, sha1, state, url, message, id, context);
+    	createCommitStatus(null, sha1, state, url, message, id, context, null);
     }
     
-    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context) {
-        logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
+    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context, PrintStream stream) {
+        String newMessage = String.format("Setting status of %s to %s with url %s and message: %s", sha1, state, url, message);
+        if (stream != null) {
+            stream.println(newMessage);
+        } else {
+            logger.log(Level.INFO, newMessage);
+        }
         try {
-            ghRepository.createCommitStatus(sha1, state, url, message, context);
+            if (context != null && !context.isEmpty()) {
+                ghRepository.createCommitStatus(sha1, state, url, message, context);
+            } else {
+                ghRepository.createCommitStatus(sha1, state, url, message);
+            }
+        } catch (FileNotFoundException ex) {
+            newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or that something is really wrong with github.";
+            if (stream != null) {
+                stream.println(newMessage);
+                ex.printStackTrace(stream);
+            } else {
+                logger.log(Level.INFO, newMessage, ex);
+            }
         } catch (IOException ex) {
+            newMessage = "Could not update commit status of the Pull Request on GitHub.";
+            if (stream != null) {
+                stream.println(newMessage);
+                ex.printStackTrace(stream);
+            } else {
+                logger.log(Level.INFO, newMessage, ex);
+            }
             if (GhprbTrigger.getDscp().getUseComments()) {
-                logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub.", ex);
+                
                 if (state == GHCommitState.SUCCESS) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
                 } else if (state == GHCommitState.FAILURE) {
@@ -141,7 +167,7 @@ public class GhprbRepository {
                   addComment(id, message);
                 }
             } else {
-                logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.", ex);
+                logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
             }
         }
     }

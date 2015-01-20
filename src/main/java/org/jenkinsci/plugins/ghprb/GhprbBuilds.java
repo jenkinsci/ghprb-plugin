@@ -78,7 +78,7 @@ public class GhprbBuilds {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID(), trigger.getCommitStatusContext());
+        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID(), trigger.getCommitStatusContext(), logger);
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
@@ -115,7 +115,7 @@ public class GhprbBuilds {
         } else {
             state = GHCommitState.FAILURE;
         }
-        repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID(), trigger.getCommitStatusContext());
+        repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
 
         StringBuilder msg = new StringBuilder();
 
@@ -205,7 +205,7 @@ public class GhprbBuilds {
         }
     }
 
-    private String generateCustomizedMessage(AbstractBuild build) {
+    private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
         JobConfiguration jobConfiguration =
             JobConfiguration.builder()
                 .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
