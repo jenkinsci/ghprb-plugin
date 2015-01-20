@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.ghprb;
 
-import hudson.util.CopyOnWriteMap.Hash;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +9,6 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
@@ -27,16 +24,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.kohsuke.github.GHCommitState.PENDING;
 import static org.kohsuke.github.GHIssueState.OPEN;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.doReturn;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
