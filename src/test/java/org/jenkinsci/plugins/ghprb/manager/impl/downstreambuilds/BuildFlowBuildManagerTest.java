@@ -109,15 +109,12 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
 		GhprbTrigger trigger = new GhprbTrigger("user", "user", "",
 			"*/1 * * * *", "retest this please", false, false, false, false,
-			false, null, null, false, null, null);
+			false, null, null, false, null, null, null);
 
 		given(commitPointer.getSha()).willReturn("sha");
 		JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
 
-		jenkinsRule.getPluginManager()
-			.getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME)
-			.getPlugin()
-			.configure(null, jsonObject);
+		GhprbTrigger.DESCRIPTOR.configure(null, jsonObject);
 
 		buildFlowProject.addProperty(new GithubProjectProperty(
 			"https://github.com/user/dropwizard"));

@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.ghprb;
 
-import hudson.util.CopyOnWriteMap.Hash;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +9,6 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
@@ -27,16 +24,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.kohsuke.github.GHCommitState.PENDING;
 import static org.kohsuke.github.GHIssueState.OPEN;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.doReturn;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -77,6 +71,8 @@ public class GhprbRepositoryTest {
     private GHCommitPointer head;
     @Mock
     private GHUser ghUser;
+    @Mock
+    private GhprbTrigger trigger;
 
     private GhprbRepository ghprbRepository;
     private ConcurrentMap<Integer,GhprbPullRequest> pulls;
@@ -187,6 +183,9 @@ public class GhprbRepositoryTest {
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
+
+        given(trigger.getCommitStatusContext()).willReturn("default");
 
         // WHEN
         ghprbRepository.check();
@@ -200,7 +199,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verify(ghRepository, times(1))
-                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
+                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg"), eq("default")); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
@@ -219,6 +218,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(1)).getTrigger();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail();   // Call to Github API
@@ -258,6 +258,7 @@ public class GhprbRepositoryTest {
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
 
         // WHEN
         ghprbRepository.check();  // PR was created
@@ -292,8 +293,9 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(1)).getTrigger();
 
-        verify(helper).isBotUser(eq(ghUser));
+//        verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("comment body"));
         verify(helper).isOktotestPhrase(eq("comment body"));
         verify(helper).isRetestPhrase(eq("comment body"));
@@ -336,6 +338,9 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isRetestPhrase(eq("test this please"))).willReturn(true);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
+
+        given(trigger.getCommitStatusContext()).willReturn("default");
 
         // WHEN
         ghprbRepository.check();  // PR was created
@@ -349,7 +354,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(2)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2))
-                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg")); // Call to Github API
+                .createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq("msg"), eq("default")); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
@@ -371,8 +376,9 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(2)).getTrigger();
 
-        verify(helper).isBotUser(eq(ghUser));
+//        verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));
         verify(helper).isRetestPhrase(eq("test this please"));

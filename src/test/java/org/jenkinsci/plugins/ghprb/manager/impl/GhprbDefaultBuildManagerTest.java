@@ -38,6 +38,7 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
 	@Before
 	public void setUp() throws Exception {
+//    	GhprbTestUtil.mockGithubUserPage();
 		super.beforeTest();
 	}
 
@@ -65,18 +66,15 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
 		GhprbTrigger trigger = new GhprbTrigger("user", "user", "",
 			"*/1 * * * *", "retest this please", false, false, false, false,
-			false, null, null, false, null, null);
+			false, null, null, false, null, null, null);
 
 		given(commitPointer.getSha()).willReturn("sha");
 
 		JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
+		
 
 		jsonObject.put("publishedURL", "defaultPublishedURL");
-
-		jenkinsRule.getPluginManager()
-			.getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME)
-			.getPlugin()
-			.configure(null, jsonObject);
+		GhprbTrigger.DESCRIPTOR.configure(null, jsonObject);
 
 		project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 

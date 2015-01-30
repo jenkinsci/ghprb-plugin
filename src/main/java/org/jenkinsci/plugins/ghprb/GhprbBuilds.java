@@ -78,7 +78,7 @@ public class GhprbBuilds {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID());
+        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID(), trigger.getCommitStatusContext(), logger);
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
@@ -115,7 +115,7 @@ public class GhprbBuilds {
         } else {
             state = GHCommitState.FAILURE;
         }
-        repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID());
+        repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
 
         StringBuilder msg = new StringBuilder();
 
@@ -138,12 +138,6 @@ public class GhprbBuilds {
                 }
             }
             
-            if (state == GHCommitState.SUCCESS) {
-                msg.append(GhprbTrigger.getDscp().getMsgSuccess(build));
-            } else {
-                msg.append(GhprbTrigger.getDscp().getMsgFailure(build));
-            }
-
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(generateCustomizedMessage(build));
 

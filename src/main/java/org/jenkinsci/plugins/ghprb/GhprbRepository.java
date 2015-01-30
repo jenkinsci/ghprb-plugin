@@ -1,15 +1,18 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -52,9 +55,9 @@ public class GhprbRepository {
                 return false;
             }
         } catch (FileNotFoundException ex) {
-            helper.log(logger, Level.INFO, "Rate limit API not found.");
+            logger.log(Level.INFO, "Rate limit API not found.");
         } catch (IOException ex) {
-            helper.log(logger, Level.SEVERE, "Error while accessing rate limit API", ex);
+            logger.log(Level.SEVERE, "Error while accessing rate limit API", ex);
             return false;
         }
 
@@ -62,7 +65,7 @@ public class GhprbRepository {
             try {
                 ghRepository = gitHub.getRepository(reponame);
             } catch (IOException ex) {
-                helper.log(logger, Level.SEVERE, "Could not retrieve GitHub repository named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+                logger.log(Level.SEVERE, "Could not retrieve GitHub repository named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
                 return false;
             }
         }
@@ -78,7 +81,7 @@ public class GhprbRepository {
         try {
             openPulls = ghRepository.getPullRequests(GHIssueState.OPEN);
         } catch (IOException ex) {
-            helper.log(logger, Level.SEVERE, "Could not retrieve open pull requests.", ex);
+            logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
         Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
@@ -88,7 +91,7 @@ public class GhprbRepository {
                 try {
                     pr = ghRepository.getPullRequest(pr.getNumber());
                 } catch (IOException ex) {
-                    helper.log(logger, Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+                    logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
                     return;
                 }
             }
@@ -114,33 +117,57 @@ public class GhprbRepository {
         pull.check(pr);
     }
 
-    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id) {
+    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id, String context, PrintStream stream) {
         String sha1 = build.getCause(GhprbCause.class).getCommit();
-        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id);
+        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context, stream);
     }
 
-    public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
-    	createCommitStatus(null, sha1, state, url, message, id);
+    public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id, String context) {
+    	createCommitStatus(null, sha1, state, url, message, id, context, null);
     }
     
-    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id) {
-        helper.log(logger, Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", sha1, state, url, message);
+    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context, PrintStream stream) {
+        String newMessage = String.format("Setting status of %s to %s with url %s and message: %s", sha1, state, url, message);
+        if (stream != null) {
+            stream.println(newMessage);
+        } else {
+            logger.log(Level.INFO, newMessage);
+        }
         try {
-            ghRepository.createCommitStatus(sha1, state, url, message);
+            if (context != null && !context.isEmpty()) {
+                ghRepository.createCommitStatus(sha1, state, url, message, context);
+            } else {
+                ghRepository.createCommitStatus(sha1, state, url, message);
+            }
+        } catch (FileNotFoundException ex) {
+            newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or that something is really wrong with github.";
+            if (stream != null) {
+                stream.println(newMessage);
+                ex.printStackTrace(stream);
+            } else {
+                logger.log(Level.INFO, newMessage, ex);
+            }
         } catch (IOException ex) {
+            newMessage = "Could not update commit status of the Pull Request on GitHub.";
+            if (stream != null) {
+                stream.println(newMessage);
+                ex.printStackTrace(stream);
+            } else {
+                logger.log(Level.INFO, newMessage, ex);
+            }
             if (GhprbTrigger.getDscp().getUseComments()) {
-                helper.log(logger, Level.INFO, "Could not update commit status of the Pull Request on GitHub.", ex);
+                
                 if (state == GHCommitState.SUCCESS) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
                 } else if (state == GHCommitState.FAILURE) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
                 }
                 if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
-                  helper.log(logger, Level.INFO, "Trying to send comment.", ex);
+                  logger.log(Level.INFO, "Trying to send comment.", ex);
                   addComment(id, message);
                 }
             } else {
-                helper.log(logger, Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.", ex);
+                logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
             }
         }
     }
@@ -161,14 +188,14 @@ public class GhprbRepository {
           try {
             comment = build.getEnvironment(listener).expand(comment);
           } catch (Exception e) {
-            helper.log(logger, Level.SEVERE, "Error", e);
+            logger.log(Level.SEVERE, "Error", e);
           }
         }
 
         try {
             ghRepository.getPullRequest(id).comment(comment);
         } catch (IOException ex) {
-            helper.log(logger, Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
+            logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
         }
     }
 
@@ -176,7 +203,7 @@ public class GhprbRepository {
         try {
             ghRepository.getPullRequest(id).close();
         } catch (IOException ex) {
-            helper.log(logger, Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
+            logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
         }
     }
 
@@ -195,7 +222,7 @@ public class GhprbRepository {
 
     public boolean createHook() {
         if (ghRepository == null) {
-            helper.log(logger, Level.INFO, "Repository not available, cannot set pull request hook for repository {0}", reponame);
+            logger.log(Level.INFO, "Repository not available, cannot set pull request hook for repository {0}", reponame);
             return false;
         }
         try {
@@ -208,7 +235,7 @@ public class GhprbRepository {
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
             return true;
         } catch (IOException ex) {
-            helper.log(logger, Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
+            logger.log(Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
             return false;
         }
     }
@@ -223,7 +250,7 @@ public class GhprbRepository {
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
         int id = issueComment.getIssue().getNumber();
-        helper.log(logger, Level.FINER, "Comment on issue #{0} from {1}: {2}", id, issueComment.getComment().getUser(), issueComment.getComment().getBody());
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[]{id, issueComment.getComment().getUser(), issueComment.getComment().getBody()});
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
@@ -251,14 +278,14 @@ public class GhprbRepository {
                 pull = pulls.get(pr.getNumber());
             }
             if (pull == null) {
-                helper.log(logger, Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
+                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
                 return;
             }
             pull.check(pr.getPullRequest());
         } else if ("closed".equals(pr.getAction())) {
             pulls.remove(pr.getNumber());
         } else {
-            helper.log(logger, Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
+            logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
         }
         GhprbTrigger.getDscp().save();
     }

@@ -34,6 +34,9 @@
       </f:entry>
       <f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
         <f:checkbox />
+	  </f:entry>
+      <f:entry title="${%Commit Status Context}" field="commitStatusContext">
+        <f:textbox />
       </f:entry>
       <f:entry title="${%Request for testing phrase}" field="requestForTestingPhrase">
         <f:textbox default="Can one of the admins verify this patch?"/>
@@ -68,5 +71,10 @@
       <f:validateButton title="${%Create access token}" progress="${%Creating...}"
         method="createApiToken" with="username,password" />
     </f:advanced>
+      <f:entry title="${%Application Setup}">
+    <!-- TODO: switch to <f:repeatableHeteroList field="extensions"> -->
+    <f:hetero-list name="extensions" items="${instance.extensions}" descriptors="${descriptor.getGlobalExtensionDescriptors()}"
+                   hasHeader="true" />
+  </f:entry>
   </f:section>
 </j:jelly>

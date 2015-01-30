@@ -31,6 +31,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
 
 	@Before
 	public void setUp() throws Exception {
+//    	GhprbTestUtil.mockGithubUserPage();
 		super.beforeTest();
 	}
 
@@ -39,11 +40,11 @@ public class GhprbIT extends GhprbITBaseTestCase {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null, null
         );
         given(commitPointer.getSha()).willReturn("sha");
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        jenkinsRule.getPluginManager().getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
+        GhprbTrigger.getDscp().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
          given(ghPullRequest.getNumber()).willReturn(1);
 
@@ -73,12 +74,12 @@ public class GhprbIT extends GhprbITBaseTestCase {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null, null
         );
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        jenkinsRule.getPluginManager().getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
+        GhprbTrigger.getDscp().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -101,7 +102,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null
+                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null, null
         );
 
         given(commitPointer.getSha()).willReturn("sha");
@@ -113,7 +114,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5).willReturn(5).willReturn(6).willReturn(6);
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        jenkinsRule.getPluginManager().getPlugin(GhprbTestUtil.GHPRB_PLUGIN_NAME).getPlugin().configure(null, jsonObject);
+        GhprbTrigger.getDscp().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
         Ghprb ghprb = spy(trigger.createGhprb(project));

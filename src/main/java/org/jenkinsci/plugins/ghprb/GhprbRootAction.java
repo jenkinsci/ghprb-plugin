@@ -5,14 +5,17 @@ import hudson.model.AbstractProject;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
+
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
+import org.apache.commons.io.IOUtils;
 import org.kohsuke.github.GHEventPayload;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashSet;
@@ -42,12 +45,33 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
     public void doIndex(StaplerRequest req, StaplerResponse resp) {
         String event = req.getHeader("X-GitHub-Event");
-        String payload = req.getParameter("payload");
-        if (payload == null) {
-            logger.log(Level.SEVERE, "Request doesn't contain payload.");
-            return;
+        String type = req.getContentType();
+        String payload = null;
+
+        if ("application/json".equals(type)) {
+            BufferedReader br = null;
+            try {
+                br = req.getReader();
+                payload = IOUtils.toString(req.getReader());
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Can't get request body for application/json.");
+                return;
+            } finally {
+                IOUtils.closeQuietly(br);
+            }
+        } else if ("application/x-www-form-urlencoded".equals(type)) {
+            payload = req.getParameter("payload");
+            if (payload == null) {
+                logger.log(Level.SEVERE, "Request doesn't contain payload. You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                return;
+            }
         }
 
+        if (payload == null) {
+            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. Please use 'application/json' or 'application/x-www-form-urlencoded'", new Object[] {type});
+            return;
+        }
+        
         GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
 
         logger.log(Level.INFO, "Got payload event: {0}", event);

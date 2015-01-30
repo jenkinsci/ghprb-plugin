@@ -16,8 +16,6 @@ import java.io.IOException;
 
 import org.joda.time.DateTime;
 
-import org.junit.Before;
-
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRateLimit;
@@ -82,7 +80,7 @@ public abstract class GhprbITBaseTestCase {
 	}
 
 	protected Ghprb spyCreatingGhprb(
-		GhprbTrigger trigger, AbstractProject project) {
+		GhprbTrigger trigger, AbstractProject<?,?> project) {
 
 		return Mockito.spy(trigger.createGhprb(project));
 	}
