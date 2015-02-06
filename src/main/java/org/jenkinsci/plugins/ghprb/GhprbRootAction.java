@@ -120,7 +120,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     continue;
                 }
                 GhprbRepository r = trigger.getRepository();
-                if (repo.equals(r.getName())) {
+                if (repo.equalsIgnoreCase(r.getName())) {
                     ret.add(r);
                 }
             }
