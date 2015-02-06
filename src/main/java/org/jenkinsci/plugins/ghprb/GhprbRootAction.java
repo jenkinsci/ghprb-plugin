@@ -128,9 +128,8 @@ public class GhprbRootAction implements UnprotectedRootAction {
             SecurityContextHolder.getContext().setAuthentication(old);
         }
 
-        if (repos.size() == 0) {
-            logger.log(Level.WARNING, "No repos with plugin trigger found for GitHub repo named {0}", 
-                new Object[] { repo.getFullName() });
+        if (ret.size() == 0) {
+            logger.log(Level.WARNING, "No repos with plugin trigger found for GitHub repo named {0}", repo);
         }
 
         return ret;
