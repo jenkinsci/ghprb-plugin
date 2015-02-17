@@ -127,6 +127,9 @@ public class GhprbRepository {
     }
     
     public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context, PrintStream stream) {
+        if (!GhprbTrigger.getDscp().getCreateCommitStatuses()) {
+            return;
+        }
         String newMessage = String.format("Setting status of %s to %s with url %s and message: %s", sha1, state, url, message);
         if (stream != null) {
             stream.println(newMessage);

@@ -21,11 +21,14 @@
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
-    <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
-  	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
-    </f:entry>
+	<f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
+	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
+	</f:entry>
 	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
 	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
+	</f:entry>
+	<f:entry title="Enable GitHub commit status creation" field="createCommitStatuses">
+	  <f:checkbox default="${descriptor.createCommitStatuses}"/>
 	</f:entry>
 	<f:entry title="${%Commit Status Context}" field="commitStatusContext">
 		<f:textbox />

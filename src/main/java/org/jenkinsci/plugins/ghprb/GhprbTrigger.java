@@ -52,6 +52,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
+    private Boolean createCommitStatuses;
     private List<GhprbBranch> whiteListTargetBranches;
     private String msgSuccess;
     private String msgFailure;
@@ -70,6 +71,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
                         Boolean displayBuildErrorsOnDownstreamBuilds,
+                        Boolean createCommitStatuses,
                         String commentFilePath,
                         List<GhprbBranch> whiteListTargetBranches,
                         Boolean allowMembersOfWhitelistedOrgsAsAdmin,
@@ -87,6 +89,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
+        this.createCommitStatuses = createCommitStatuses;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commitStatusContext = commitStatusContext;
         this.commentFilePath = commentFilePath;
@@ -318,6 +321,14 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return displayBuildErrorsOnDownstreamBuilds;
     }
 
+    public Boolean isCreateCommitStatuses() {
+        if (createCommitStatuses == null) {
+            Boolean commitStatuses = getDescriptor().getCreateCommitStatuses();
+            return (commitStatuses != null && commitStatuses);
+        }
+        return createCommitStatuses;
+    }
+
     public List<GhprbBranch> getWhiteListTargetBranches() {
         if (whiteListTargetBranches == null) {
             return new ArrayList<GhprbBranch>();
@@ -384,6 +395,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String commitStatusContext = "";
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
+        private Boolean createCommitStatuses = true;
         
         
         
@@ -434,6 +446,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             unstableAs = formData.getString("unstableAs");
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
+            createCommitStatuses = formData.getBoolean("createCommitStatuses");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
@@ -522,6 +535,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public Boolean getDisplayBuildErrorsOnDownstreamBuilds() {
             return displayBuildErrorsOnDownstreamBuilds;
+        }
+
+        public Boolean getCreateCommitStatuses() {
+            return createCommitStatuses;
         }
 
         public String getServerAPIUrl() {

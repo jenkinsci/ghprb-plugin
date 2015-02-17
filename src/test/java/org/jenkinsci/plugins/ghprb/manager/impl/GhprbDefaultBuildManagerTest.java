@@ -66,7 +66,7 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
 		GhprbTrigger trigger = new GhprbTrigger("user", "user", "",
 			"*/1 * * * *", "retest this please", false, false, false, false,
-			false, null, null, false, null, null, null);
+			false, true, null, null, false, null, null, null);
 
 		given(commitPointer.getSha()).willReturn("sha");
 
