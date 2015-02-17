@@ -102,6 +102,7 @@ public class GhprbTestUtil {
 		jsonObject.put("testMode", "true");
 		jsonObject.put("autoCloseFailedPullRequests", "false");
 		jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
+		jsonObject.put("createCommitStatuses", "true");
 		jsonObject.put("msgSuccess", "Success");
 		jsonObject.put("msgFailure", "Failure");
 		jsonObject.put("commitStatusContext", "Status Context");
