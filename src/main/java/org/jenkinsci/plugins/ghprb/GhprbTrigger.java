@@ -58,6 +58,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String commitStatusContext;
     private transient Ghprb helper;
     private String project;
+    private String secret;
 
     @DataBoundConstructor
     public GhprbTrigger(String adminlist,
@@ -75,6 +76,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean allowMembersOfWhitelistedOrgsAsAdmin,
                         String msgSuccess,
                         String msgFailure,
+                        String secret,
                         String commitStatusContext) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -93,6 +95,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
         this.msgFailure = msgFailure;
+        this.secret = secret;
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -283,6 +286,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return msgFailure;
     }
 
+    public String getSecret() {
+        return secret;
+    }
+
     public String getTriggerPhrase() {
         if (triggerPhrase == null) {
             return "";
@@ -384,6 +391,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String commitStatusContext = "";
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
+        private String secret = "";
         
         
         
@@ -437,6 +445,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
+            secret = formData.getString("secret");
             
             save();
             gh = new GhprbGitHub();
@@ -514,6 +523,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public int getlogExcerptLines() {
             return logExcerptLines;
+        }
+
+        public String getSecret() {
+            return secret;
         }
 
         public Boolean getAutoCloseFailedPullRequests() {

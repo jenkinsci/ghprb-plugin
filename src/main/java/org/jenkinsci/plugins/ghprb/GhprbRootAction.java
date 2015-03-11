@@ -9,12 +9,15 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
+import org.apache.mina.util.Base64;
 import org.kohsuke.github.GHEventPayload;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -45,6 +48,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
     public void doIndex(StaplerRequest req, StaplerResponse resp) {
         String event = req.getHeader("X-GitHub-Event");
+        String signature = req.getHeader("X-GitHub-Signature");
         String type = req.getContentType();
         String payload = null;
 
@@ -67,11 +71,36 @@ public class GhprbRootAction implements UnprotectedRootAction {
             }
         }
 
+        String secret = GhprbTrigger.getDscp().getSecret();
+
         if (payload == null) {
             logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. Please use 'application/json' or 'application/x-www-form-urlencoded'", new Object[] {type});
             return;
+        } else if (secret != null && ! secret.isEmpty()) {
+            if (signature != null) {
+                SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), "HmacSHA1");
+                try {
+                    Mac mac = Mac.getInstance("HmacSHA1");
+                    mac.init(keySpec);
+                    byte[] clientSignatureBytes = mac.doFinal(payload.getBytes());
+                    String clientSignature = "sha1=" + new String(Base64.encodeBase64(clientSignatureBytes));
+                    if (! clientSignature.equals(signature)){
+                        logger.log(Level.SEVERE, "Local signature {0} doesn't match with external signature {1}.",
+                                new Object[] {signature, clientSignature});
+                        return;
+                    } else {
+                        logger.log(Level.INFO, "Signatures checking OK");
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Couldn't match both signatures");
+                    return;
+                }
+            } else {
+                logger.log(Level.SEVERE, "Request doesn't contain a signature. Check that github has a secret that should be attached to the hook");
+                return;
+            }
         }
-        
+
         GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
 
         logger.log(Level.INFO, "Got payload event: {0}", event);

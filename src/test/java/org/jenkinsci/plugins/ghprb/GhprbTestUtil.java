@@ -20,6 +20,7 @@ import static org.mockito.BDDMockito.given;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.mina.util.Base64;
 import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
@@ -35,10 +36,14 @@ import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 public class GhprbTestUtil {
 
 	public static final int INITIAL_RATE_LIMIT = 5000;
 	public static final String GHPRB_PLUGIN_NAME = "ghprb";
+    public static final String GITHUB_SECRET = "61c6f58144702262d65d1015445e5f2635ccb6a6";
 	
 	// TODO: When anyone has time to investigate mocking the github request.
 //	public static void mockGithubUserPage() {
@@ -105,6 +110,7 @@ public class GhprbTestUtil {
 		jsonObject.put("msgSuccess", "Success");
 		jsonObject.put("msgFailure", "Failure");
 		jsonObject.put("commitStatusContext", "Status Context");
+        jsonObject.put("secret", GITHUB_SECRET);
 
 		return jsonObject;
 	}
@@ -127,5 +133,18 @@ public class GhprbTestUtil {
 
 	private GhprbTestUtil() {
 	}
+
+    public static String createSignature(String payload) {
+        SecretKeySpec keySpec = new SecretKeySpec(GITHUB_SECRET.getBytes(), "HmacSHA1");
+        try {
+            Mac mac = Mac.getInstance("HmacSHA1");
+            mac.init(keySpec);
+            byte[] signatureBytes = mac.doFinal(payload.getBytes());
+            String signature = new String(Base64.encodeBase64(signatureBytes));
+            return "sha1=" + signature;
+        } catch (Exception e){
+            return "";
+        }
+    }
 
 }

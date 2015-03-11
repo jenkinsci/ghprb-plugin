@@ -228,6 +228,7 @@ public class GhprbRootActionTest {
         given(req.getContentType()).willReturn("application/x-www-form-urlencoded");
         given(req.getParameter("payload")).willReturn(payload);
         given(req.getHeader("X-GitHub-Event")).willReturn("issue_comment");
+        given(req.getHeader("X-GitHub-Signature")).willReturn(GhprbTestUtil.createSignature(payload));
 
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
