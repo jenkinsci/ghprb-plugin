@@ -391,7 +391,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String commitStatusContext = "";
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-        private String secret = "";
         
         
         
@@ -445,7 +444,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
-            secret = formData.getString("secret");
             
             save();
             gh = new GhprbGitHub();
@@ -523,10 +521,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         public int getlogExcerptLines() {
             return logExcerptLines;
-        }
-
-        public String getSecret() {
-            return secret;
         }
 
         public Boolean getAutoCloseFailedPullRequests() {

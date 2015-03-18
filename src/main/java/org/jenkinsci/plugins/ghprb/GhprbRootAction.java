@@ -9,18 +9,17 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
-import org.apache.mina.util.Base64;
 import org.kohsuke.github.GHEventPayload;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -48,57 +47,35 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
     public void doIndex(StaplerRequest req, StaplerResponse resp) {
         String event = req.getHeader("X-GitHub-Event");
-        String signature = req.getHeader("X-GitHub-Signature");
+        String signature = req.getHeader("X-Hub-Signature");
         String type = req.getContentType();
         String payload = null;
+        String body = null;
 
         if ("application/json".equals(type)) {
-            BufferedReader br = null;
-            try {
-                br = req.getReader();
-                payload = IOUtils.toString(req.getReader());
-            } catch (IOException e) {
+            body = extractRequestBody(req);
+            if (body == null) {
                 logger.log(Level.SEVERE, "Can't get request body for application/json.");
                 return;
-            } finally {
-                IOUtils.closeQuietly(br);
             }
+            payload = body;
         } else if ("application/x-www-form-urlencoded".equals(type)) {
-            payload = req.getParameter("payload");
-            if (payload == null) {
+            body = extractRequestBody(req);
+            if (body == null || body.length() <= 8) {
                 logger.log(Level.SEVERE, "Request doesn't contain payload. You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                return;
+            }
+            try {
+                payload = URLDecoder.decode(body.substring(8), req.getCharacterEncoding());
+            } catch (UnsupportedEncodingException e) {
+                logger.log(Level.SEVERE, "Error while trying to encode the payload");
                 return;
             }
         }
 
-        String secret = GhprbTrigger.getDscp().getSecret();
-
         if (payload == null) {
             logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. Please use 'application/json' or 'application/x-www-form-urlencoded'", new Object[] {type});
             return;
-        } else if (secret != null && ! secret.isEmpty()) {
-            if (signature != null) {
-                SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), "HmacSHA1");
-                try {
-                    Mac mac = Mac.getInstance("HmacSHA1");
-                    mac.init(keySpec);
-                    byte[] clientSignatureBytes = mac.doFinal(payload.getBytes());
-                    String clientSignature = "sha1=" + new String(Base64.encodeBase64(clientSignatureBytes));
-                    if (! clientSignature.equals(signature)){
-                        logger.log(Level.SEVERE, "Local signature {0} doesn't match with external signature {1}.",
-                                new Object[] {signature, clientSignature});
-                        return;
-                    } else {
-                        logger.log(Level.INFO, "Signatures checking OK");
-                    }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Couldn't match both signatures");
-                    return;
-                }
-            } else {
-                logger.log(Level.SEVERE, "Request doesn't contain a signature. Check that github has a secret that should be attached to the hook");
-                return;
-            }
         }
 
         GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
@@ -115,13 +92,15 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
                 for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
                     logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
-                    repo.onIssueCommentHook(issueComment);
+                    if(repo.checkSignature(body, signature))
+                        repo.onIssueCommentHook(issueComment);
                 }
             } else if ("pull_request".equals(event)) {
                 GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
                 for (GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())) {
                     logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber()});
-                    repo.onPullRequestHook(pr);
+                    if(repo.checkSignature(body, signature))
+                        repo.onPullRequestHook(pr);
                 }
             } else {
                 logger.log(Level.WARNING, "Request not known");
@@ -129,6 +108,20 @@ public class GhprbRootAction implements UnprotectedRootAction {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to parse github hook payload.", ex);
         }
+    }
+
+    private String extractRequestBody(StaplerRequest req) {
+        String body = null;
+        BufferedReader br = null;
+        try {
+            br = req.getReader();
+            body = IOUtils.toString(br);
+        } catch (IOException e) {
+            body = null;
+        } finally {
+            IOUtils.closeQuietly(br);
+        }
+        return body;
     }
 
     private Set<GhprbRepository> getRepos(GHRepository repo) {
