@@ -109,7 +109,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     @Override
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
-        this.project = project.getName();
+        this.project = project.getFullName();
         if (project.getProperty(GithubProjectProperty.class) == null) {
             logger.log(Level.INFO, "GitHub project not set up, cannot start ghprb trigger for job " + this.project);
             return;
@@ -127,7 +127,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     }
 
     Ghprb createGhprb(AbstractProject<?, ?> project) {
-        return new Ghprb(project, this, getDescriptor().getPullRequests(project.getName()));
+        return new Ghprb(project, this, getDescriptor().getPullRequests(project.getFullName()));
     }
 
     @Override
