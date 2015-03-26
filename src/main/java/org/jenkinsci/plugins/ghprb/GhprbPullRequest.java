@@ -59,14 +59,19 @@ public class GhprbPullRequest {
 
     GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
-        updated = pr.getUpdatedAt();
+        try {
+            updated = pr.getUpdatedAt();
+        } catch (IOException e) {
+            e.printStackTrace();
+            updated = new Date();
+        }
         head = pr.getHead().getSha();
         title = pr.getTitle();
         author = pr.getUser();
         reponame = repo.getName();
         target = pr.getBase().getRef();
         source = pr.getHead().getRef();
-        url = pr.getUrl();
+        url = pr.getHtmlUrl();
         this.pr = pr;
         obtainAuthorEmail(pr);
 
@@ -149,7 +154,12 @@ public class GhprbPullRequest {
             if (!newCommit && commentsChecked == 0) {
                 logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
             }
-            updated = pr.getUpdatedAt();
+            try {
+                updated = pr.getUpdatedAt();
+            } catch (IOException e) {
+                e.printStackTrace();
+                updated = new Date();
+            }
         }
         checkSkipBuild(pr);
         tryBuild(pr);
@@ -191,7 +201,13 @@ public class GhprbPullRequest {
     }
 
     private boolean isUpdated(GHPullRequest pr) {
-        boolean ret = updated.compareTo(pr.getUpdatedAt()) < 0;
+        Date lastUpdated = new Date();
+        try {
+            lastUpdated = pr.getUpdatedAt();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        boolean ret = updated.compareTo(lastUpdated) < 0;
         ret = ret || !pr.getHead().getSha().equals(head);
         return ret;
     }
