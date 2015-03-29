@@ -44,7 +44,7 @@ public class GhprbPullRequest {
     private String source;
     private String authorEmail;
     private URL url;
-    
+
     private GHUser triggerSender;
     private GitUser commitAuthor;
 
@@ -55,7 +55,7 @@ public class GhprbPullRequest {
     private transient Ghprb helper;
     private transient GhprbRepository repo;
 
-	private String commentBody;
+    private String commentBody;
 
     GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
@@ -96,38 +96,38 @@ public class GhprbPullRequest {
             reponame = repo.getName(); // If this instance was created before v1.8, it can be null.
         }
     }
-    
+
     /**
-     * Returns skip build phrases from Jenkins global configuration 
+     * Returns skip build phrases from Jenkins global configuration
      * @return
      */
     public Set<String> getSkipBuildPhrases() {
-		return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
-	}
-	
+        return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
+    }
+
     /**
      * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
      * @param issue
      */
-	private void checkSkipBuild(GHIssue issue) {
-		// check for skip build phrase.
-		String pullRequestBody = issue.getBody();
-		if(StringUtils.isNotBlank(pullRequestBody)) {
-			pullRequestBody = pullRequestBody.trim();
-			Set<String> skipBuildPhrases = getSkipBuildPhrases();
-			skipBuildPhrases.remove("");
-			
-			for (String skipBuildPhrase : skipBuildPhrases) {
-				skipBuildPhrase = skipBuildPhrase.trim();
-				Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
-				if(skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
-					logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
-					shouldRun = false;
-					break;
-				}
-			}
-		}
-	}
+    private void checkSkipBuild(GHIssue issue) {
+        // check for skip build phrase.
+        String pullRequestBody = issue.getBody();
+        if(StringUtils.isNotBlank(pullRequestBody)) {
+            pullRequestBody = pullRequestBody.trim();
+            Set<String> skipBuildPhrases = getSkipBuildPhrases();
+            skipBuildPhrases.remove("");
+
+            for (String skipBuildPhrase : skipBuildPhrases) {
+                skipBuildPhrase = skipBuildPhrase.trim();
+                Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
+                if(skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+                    logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
+                    shouldRun = false;
+                    break;
+                }
+            }
+        }
+    }
 
     /**
      * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers
@@ -233,16 +233,16 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
                 try {
-	                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-	    	    		if (commitDetails.getSha().equals(getHead())) {
-	    	    			commitAuthor = commitDetails.getCommit().getCommitter();
-	    	    			break;
-	    	    		}
-	    	    	}
+                    for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                        if (commitDetails.getSha().equals(getHead())) {
+                            commitAuthor = commitDetails.getCommit().getCommitter();
+                            break;
+                        }
+                    }
                 } catch (Exception ex) {
-                	logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+                    logger.log(Level.INFO, "Unable to get PR commits: ", ex);
                 }
-                
+
             }
 
             logger.log(Level.FINEST, "Running build...");
@@ -253,10 +253,12 @@ public class GhprbPullRequest {
         }
     }
 
-	private void build() {
+    private void build() {
         String message = helper.getBuilds().build(this, triggerSender, commentBody);
-        String context = helper.getTrigger().getCommitStatusContext();
-        repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id,context);
+        if ( !helper.getTrigger().getSkipCommitStatus() ) {
+            String context = helper.getTrigger().getCommitStatusContext();
+            repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id,context);
+        }
         logger.log(Level.INFO, message);
     }
 
@@ -319,10 +321,10 @@ public class GhprbPullRequest {
                 triggered = true;
             }
         }
-        
+
         if (shouldRun) {
-        	triggerSender = sender;
-        	commentBody = body;
+            triggerSender = sender;
+            commentBody = body;
         }
     }
 
@@ -426,11 +428,11 @@ public class GhprbPullRequest {
         return url;
     }
 
-	public GitUser getCommitAuthor() {
-		return commitAuthor;
-	}
-	
-	public GHPullRequest getPullRequest() {
-		return pr;
-	}
+    public GitUser getCommitAuthor() {
+        return commitAuthor;
+    }
+
+    public GHPullRequest getPullRequest() {
+        return pr;
+    }
 }
