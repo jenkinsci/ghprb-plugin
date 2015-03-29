@@ -56,6 +56,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String msgSuccess;
     private String msgFailure;
     private String commitStatusContext;
+    private Boolean skipCommitStatus;
     private transient Ghprb helper;
     private String project;
 
@@ -75,7 +76,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                         Boolean allowMembersOfWhitelistedOrgsAsAdmin,
                         String msgSuccess,
                         String msgFailure,
-                        String commitStatusContext) throws ANTLRException {
+                        String commitStatusContext,
+                        Boolean skipCommitStatus) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -89,6 +91,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commitStatusContext = commitStatusContext;
+        this.skipCommitStatus = skipCommitStatus;
         this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
@@ -157,12 +160,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
         String triggerAuthorEmail = "";
-        
+
         try {triggerAuthor = getString(cause.getTriggerSender().getName(), "");} catch (Exception e) {}
         try {triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");} catch (Exception e) {}
-        
+
         setCommitAuthor(cause, values);
-        
+
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
@@ -182,21 +185,21 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, 
                 new ParametersAction(values), findPreviousBuildForPullId(pullIdPv));
     }
-    
+
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
-    	String authorName = "";
-    	String authorEmail = "";
-    	if (cause.getCommitAuthor() != null) {
-    		authorName = getString(cause.getCommitAuthor().getName(), "");
-    		authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
-    	}
-    	
+        String authorName = "";
+        String authorEmail = "";
+        if (cause.getCommitAuthor() != null) {
+            authorName = getString(cause.getCommitAuthor().getName(), "");
+            authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
+        }
+
         values.add(new StringParameterValue("ghprbActualCommitAuthor", authorName));
         values.add(new StringParameterValue("ghprbActualCommitAuthorEmail", authorEmail));
     }
-    
+
     private String getString(String actual, String d) {
-    	return actual == null ? d : actual;
+        return actual == null ? d : actual;
     }
 
     /**
@@ -258,10 +261,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
         return whitelist;
     }
-    
+
 
     public String getCommentFilePath() {
-    	return commentFilePath;
+        return commentFilePath;
     }
 
     public String getOrgslist() {
@@ -329,6 +332,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return commitStatusContext;
     }
 
+    public Boolean getSkipCommitStatus() {
+        return skipCommitStatus;
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -359,8 +366,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
-        
-        
+
+
         /**
          * These settings only really affect testing.  When Jenkins calls configure() then 
          * the formdata will be used to replace all of these fields.
@@ -382,11 +389,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
         private String commitStatusContext = "";
+        private Boolean skipCommitStatus = false;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-        
-        
-        
+
+
+
         private String username;
         private String password;
         private String accessToken;
@@ -437,7 +445,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
-            
+            skipCommitStatus = formData.getBoolean("skipCommitStatus");
+
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
@@ -495,7 +504,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         public String getRetestPhrase() {
             return retestPhrase;
         }
-        
+
         public String getSkipBuildPhrase() {
             return skipBuildPhrase;
         }
@@ -551,9 +560,13 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         public boolean isUseDetailedComments() {
             return (useDetailedComments != null && useDetailedComments);
         }
-        
+
         public String getCommitStatusContext() {
             return commitStatusContext;
+        }
+
+        public Boolean getSkipCommitStatus() {
+            return skipCommitStatus;
         }
 
         public GhprbGitHub getGitHub() {
@@ -562,7 +575,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             }
             return gh;
         }
-        
+
         public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
             ConcurrentMap<Integer, GhprbPullRequest> ret;
             if (jobs.containsKey(projectName)) {

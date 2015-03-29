@@ -105,6 +105,8 @@ public class GhprbTestUtil {
 		jsonObject.put("msgSuccess", "Success");
 		jsonObject.put("msgFailure", "Failure");
 		jsonObject.put("commitStatusContext", "Status Context");
+		jsonObject.put("skipCommitStatus", "false");
+
 
 		return jsonObject;
 	}

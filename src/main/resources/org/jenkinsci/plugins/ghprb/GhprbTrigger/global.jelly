@@ -34,7 +34,10 @@
       </f:entry>
       <f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
         <f:checkbox />
-	  </f:entry>
+      </f:entry>
+      <f:entry title="${%Skip setting the commit status?}" field="skipCommitStatus">
+        <f:checkbox />
+      </f:entry>
       <f:entry title="${%Commit Status Context}" field="commitStatusContext">
         <f:textbox />
       </f:entry>
@@ -51,7 +54,7 @@
         <f:textbox default=".*test\W+this\W+please.*"/>
       </f:entry>
       <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
-      	<f:textbox default=".*\[skip\W+ci\].*"/>
+        <f:textbox default=".*\[skip\W+ci\].*"/>
       </f:entry>
       <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
         <f:textbox default="H/5 * * * *" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>

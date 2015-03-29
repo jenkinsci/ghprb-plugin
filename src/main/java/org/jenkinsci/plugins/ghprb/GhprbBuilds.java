@@ -50,10 +50,10 @@ public class GhprbBuilds {
             sb.append(" Build triggered.");
         }
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), 
-        		pr.isMergeable(), pr.getTarget(), pr.getSource(), 
-        		pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(),
-        		triggerSender, commentBody, pr.getCommitAuthor());
+        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(),
+                pr.isMergeable(), pr.getTarget(), pr.getSource(),
+                pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(),
+                triggerSender, commentBody, pr.getCommitAuthor());
 
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
@@ -78,7 +78,9 @@ public class GhprbBuilds {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID(), trigger.getCommitStatusContext(), logger);
+        if ( !trigger.getSkipCommitStatus() ) {
+            repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID(), trigger.getCommitStatusContext(), logger);
+        }
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
@@ -115,20 +117,23 @@ public class GhprbBuilds {
         } else {
             state = GHCommitState.FAILURE;
         }
-        repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+
+        if ( !trigger.getSkipCommitStatus() ) {
+            repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+        }
 
         StringBuilder msg = new StringBuilder();
 
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
             String commentFilePath = trigger.getCommentFilePath();
-            
+
             if (commentFilePath != null && !commentFilePath.isEmpty()) {
                 try {
                     String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
-                    
+
                     String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
-                	msg.append("Build comment file: \n--------------\n");
+                    msg.append("Build comment file: \n--------------\n");
                     msg.append(content);
                     msg.append("\n--------------\n");
                 } catch (IOException e) {
@@ -137,7 +142,7 @@ public class GhprbBuilds {
                     e.printStackTrace(listener.getLogger());
                 }
             }
-            
+
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(generateCustomizedMessage(build));
 
@@ -158,7 +163,7 @@ public class GhprbBuilds {
                     ex.printStackTrace(listener.getLogger());
                 }
             }
-        
+
 
             String buildMessage = null;
             if (state == GHCommitState.SUCCESS) {
