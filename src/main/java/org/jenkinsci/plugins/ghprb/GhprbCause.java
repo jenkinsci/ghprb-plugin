@@ -43,10 +43,21 @@ public class GhprbCause extends Cause{
         this.commitAuthor = commitAuthor;
 	}
 
-	@Override
-	public String getShortDescription() {
-		return "GitHub pull request #" + pullID + " of commit " + commit + (merged? " automatically merged." : ".");
-	}
+    @Override
+    public String getShortDescription() {
+        String[] splitUrl = StringUtils.split(this.url.toString(), '/');
+        String ownerAndRepo = splitUrl[2] + '/' + splitUrl[3];
+
+        return String.format(
+                "%s created pull request a from %s to %s@%s: %s",
+                this.commitAuthor.getName(),
+                this.sourceBranch,
+                ownerAndRepo,
+                this.targetBranch,
+                this.getUrl()
+
+        );
+    }
 
 	public String getCommit() {
 		return commit;
