@@ -17,7 +17,6 @@ package org.jenkinsci.plugins.ghprb;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.joda.time.DateTime;
@@ -29,6 +28,7 @@ import org.mockito.Mockito;
 //import org.mockserver.client.server.MockServerClient;
 //import org.mockserver.model.HttpRequest;
 //import org.mockserver.model.HttpResponse;
+
 
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
@@ -60,7 +60,7 @@ public class GhprbTestUtil {
 	public static void mockPR(
 			GHPullRequest prToMock, GHCommitPointer commitPointer,
 			DateTime... updatedDate)
-		throws MalformedURLException {
+		throws Exception {
 
 		given(prToMock.getHead()).willReturn(commitPointer);
 		given(prToMock.getBase()).willReturn(commitPointer);

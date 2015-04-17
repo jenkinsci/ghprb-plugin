@@ -8,11 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 
-import antlr.ANTLRException;
-
 import hudson.model.AbstractProject;
-
-import java.io.IOException;
 
 import org.joda.time.DateTime;
 
@@ -47,7 +43,7 @@ public abstract class GhprbITBaseTestCase {
 	// Stubs
 	protected GHRateLimit ghRateLimit = new GHRateLimit();
 
-	protected void beforeTest() throws IOException, ANTLRException {
+	protected void beforeTest() throws Exception {
 		given(ghprbGitHub.get()).willReturn(gitHub);
 		given(gitHub.getRateLimit()).willReturn(ghRateLimit);
 		given(gitHub.getRepository(anyString())).willReturn(ghRepository);
