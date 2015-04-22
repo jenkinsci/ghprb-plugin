@@ -18,6 +18,9 @@ f.advanced() {
   f.entry(field: "onlyTriggerPhrase", title: "Only use trigger phrase for build triggering") {
     f.checkbox() 
   }
+  f.entry(field: "suppressTestingRequest", title: "Don't send request for approval message for non-whitelisted builders") {
+    f.checkbox() 
+  }
   f.entry(field: "autoCloseFailedPullRequests", title: _("Close failed pull request automatically?")) {
     f.checkbox(default: descriptor.autoCloseFailedPullRequests) 
   }

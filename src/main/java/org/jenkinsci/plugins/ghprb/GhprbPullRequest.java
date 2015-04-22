@@ -125,7 +125,7 @@ public class GhprbPullRequest {
 
         if (ghprb.isWhitelisted(author)) {
             setAccepted(true);
-        } else {
+        } else if (!helper.suppressTestingRequest()) {
             logger.log(Level.INFO,
                        "Author of #{0} {1} on {2} not in whitelist!",
                        new Object[] { id, author.getLogin(), reponame });

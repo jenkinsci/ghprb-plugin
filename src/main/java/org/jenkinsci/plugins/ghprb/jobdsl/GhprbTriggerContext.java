@@ -19,6 +19,7 @@ class GhprbTriggerContext implements Context {
     String triggerPhrase;
     String skipBuildPhrase;
     boolean onlyTriggerPhrase;
+    boolean suppressTestingRequest;
     boolean useGitHubHooks;
     boolean permitAll;
     boolean autoCloseFailedPullRequests;
@@ -174,6 +175,14 @@ class GhprbTriggerContext implements Context {
      */
     public void onlyTriggerPhrase() {
         onlyTriggerPhrase(true);
+    }
+    
+    public void suppressTestingRequest(boolean suppressTestingRequest) {
+        this.suppressTestingRequest = suppressTestingRequest;
+    }
+    
+    public void suppressTestingRequest() {
+        suppressTestingRequest(true);
     }
 
     /**

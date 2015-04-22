@@ -21,6 +21,9 @@
 	<f:entry title="Only use trigger phrase for build triggering" field="onlyTriggerPhrase">
 	  <f:checkbox />
 	</f:entry>
+	<f:entry title="Don't send request for approval message for non-whitelisted builders" field="suppressTestingRequest">
+	  <f:checkbox />
+	</f:entry>
 	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
