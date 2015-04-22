@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  */
 public class GhprbPullRequest {
 
-    private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
+    private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getPackage().getName());
 
     @Deprecated
     @SuppressWarnings("unused")

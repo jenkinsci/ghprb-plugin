@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * @author janinko
  */
 public class GhprbBuilds {
-    private static final Logger logger = Logger.getLogger(GhprbBuilds.class.getName());
+    private static final Logger logger = Logger.getLogger(GhprbBuilds.class.getPackage().getName());
     private final GhprbTrigger trigger;
     private final GhprbRepository repo;
 

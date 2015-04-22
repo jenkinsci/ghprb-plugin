@@ -49,7 +49,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-    private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
+    private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getPackage().getName());
     private final String adminlist;
     private final Boolean allowMembersOfWhitelistedOrgsAsAdmin;
     private final String orgslist;

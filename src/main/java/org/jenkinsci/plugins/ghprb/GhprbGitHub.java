@@ -11,7 +11,7 @@ import org.kohsuke.github.GHUser;
  * @author janinko
  */
 public class GhprbGitHub {
-    private static final Logger logger = Logger.getLogger(GhprbGitHub.class.getName());
+    private static final Logger logger = Logger.getLogger(GhprbGitHub.class.getPackage().getName());
     private final GhprbTrigger trigger;
     
     public GhprbGitHub(GhprbTrigger trigger) {
