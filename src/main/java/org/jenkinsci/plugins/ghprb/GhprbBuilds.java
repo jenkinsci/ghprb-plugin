@@ -116,8 +116,31 @@ public class GhprbBuilds {
         }
 
         GHCommitState state;
-        state = Ghprb.getState(build);
-        repo.createCommitStatus(build, state, "Build finished.", c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+        if (build.getResult() == Result.SUCCESS) {
+            state = GHCommitState.SUCCESS;
+        } else if (build.getResult() == Result.UNSTABLE) {
+            state = GHCommitState.valueOf(GhprbTrigger.getDscp().getUnstableAs());
+        } else {
+            state = GHCommitState.FAILURE;
+        }
+        
+        JobConfiguration jobConfiguration =
+            JobConfiguration.builder()
+                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
+                .build();
+
+        GhprbBuildManager buildManager =
+            GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
+        
+        StringBuilder replyMessage = new StringBuilder();
+        
+        if (c.isMerged()) {
+            replyMessage.append("Merged build finished. ");
+        } else {
+            replyMessage.append("Build finished. ");
+        }
+        replyMessage.append(buildManager.getTestResults());
+        repo.createCommitStatus(build, state, replyMessage.toString(), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
 
         buildResultMessage(build, listener, state, c);
         // close failed pull request automatically
