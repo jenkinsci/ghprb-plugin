@@ -139,7 +139,7 @@ public class GhprbBuilds {
         } else {
             replyMessage.append("Build finished. ");
         }
-        replyMessage.append(buildManager.getTestResults());
+        replyMessage.append(buildManager.getOneLineTestResults());
         repo.createCommitStatus(build, state, replyMessage.toString(), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
 
         buildResultMessage(build, listener, state, c);
