@@ -92,6 +92,7 @@ If you want to manually build the job, in the job setting check ``This build is 
 * Ignoring case when matching repo to url.
 * Changing the wording for pull requests that are mergeable.
 * Change requestForTesting phrase to a textArea.
+* Check if project is disabled, if it is then don't do anything.
 
 #### -> 1.14
 * A comment file can be created during the build and added to any comment made to the pull request.  podarok#33

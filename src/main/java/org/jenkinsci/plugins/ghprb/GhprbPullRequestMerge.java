@@ -97,7 +97,7 @@ public class GhprbPullRequestMerge extends Recorder {
 			return true;
 		}
 				
-		ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getName()); 
+		ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getFullName()); 
 
 		
 		pr = pulls.get(cause.getPullID()).getPullRequest();

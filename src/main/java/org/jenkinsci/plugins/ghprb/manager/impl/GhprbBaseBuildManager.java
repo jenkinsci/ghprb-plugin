@@ -137,12 +137,12 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
 			sb.append("<h3>");
 			sb.append("<a name='");
-			sb.append(project.getName());
+			sb.append(project.getFullName());
 			sb.append("' />");
 			sb.append("<a href='");
 			sb.append(baseUrl);
 			sb.append("'>");
-			sb.append(project.getName());
+			sb.append(project.getFullName());
 			sb.append("</a>");
 			sb.append(": ");
 			sb.append("<span class='status-failure'>");
