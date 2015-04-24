@@ -65,7 +65,7 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 		MatrixProject project = jenkinsRule.createMatrixProject("MTXPRJ");
 
 		GhprbTrigger trigger = new GhprbTrigger("user", "user", "",
-			"*/1 * * * *", "retest this please", false, false, false, false,
+			"0 0 31 2 0", "retest this please", false, false, false, false,
 			false, null, null, false, null, null, null);
 
 		given(commitPointer.getSha()).willReturn("sha");
@@ -102,9 +102,8 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
 		setTriggerHelper(trigger, ghprb);
 
-		// THEN
-		Thread.sleep(130000);
-
+        triggerRunAndWait(10, trigger, project);
+        
 		return project;
 	}
 }

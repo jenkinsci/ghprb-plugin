@@ -39,7 +39,7 @@
         <f:textbox />
       </f:entry>
       <f:entry title="${%Request for testing phrase}" field="requestForTestingPhrase">
-        <f:textbox default="Can one of the admins verify this patch?"/>
+        <f:textarea default="Can one of the admins verify this patch?"/>
       </f:entry>
       <f:entry title="${%Add to white list phrase}" field="whitelistPhrase">
         <f:textbox default=".*add\W+to\W+whitelist.*"/>

@@ -85,6 +85,15 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.18
+* Add support for folder projects.
+* Correcting issue with default credentials.
+* Correcting issue with ghRepository being null when it shouldn't be.
+* Ignoring case when matching repo to url.
+* Changing the wording for pull requests that are mergeable.
+* Change requestForTesting phrase to a textArea.
+* Check if project is disabled, if it is then don't do anything.
+
 #### -> 1.14
 * A comment file can be created during the build and added to any comment made to the pull request.  podarok#33
 * Added a ``[skip ci]`` setting, that can be changed.  Adding the skip statement to the pull request body will cause the job not to run. sathiya-mit#29

@@ -25,11 +25,6 @@
             <id>valdisrigdon</id>
             <name>Valdis Rigdon</name>
         </developer>
-        <developer>
-            <id>DavidTanner</id>
-            <name>David Tanner</name>
-            <email>david.joel.tanner@gmail.com</email>
-        </developer>
     </developers>
 
     <scm>

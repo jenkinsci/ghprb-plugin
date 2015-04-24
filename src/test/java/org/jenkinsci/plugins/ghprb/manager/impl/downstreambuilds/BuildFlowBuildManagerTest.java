@@ -108,7 +108,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 		buildFlowProject.setDsl(dsl.toString());
 
 		GhprbTrigger trigger = new GhprbTrigger("user", "user", "",
-			"*/1 * * * *", "retest this please", false, false, false, false,
+			"0 0 31 2 0", "retest this please", false, false, false, false,
 			false, null, null, false, null, null, null);
 
 		given(commitPointer.getSha()).willReturn("sha");
@@ -143,7 +143,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
 		setTriggerHelper(trigger, ghprb);
 
-		Thread.sleep(130000);
+        triggerRunAndWait(10, trigger, buildFlowProject);
 
 		return buildFlowProject;
 	}

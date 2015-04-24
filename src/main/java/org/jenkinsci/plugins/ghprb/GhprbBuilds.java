@@ -43,11 +43,13 @@ public class GhprbBuilds {
         if (cancelBuild(pr.getId())) {
             sb.append("Previous build stopped.");
         }
-
+        
+        sb.append(" Build triggered.");
+        
         if (pr.isMergeable()) {
-            sb.append(" Merge build triggered.");
+            sb.append(" sha1 is merged.");
         } else {
-            sb.append(" Build triggered.");
+            sb.append(" sha1 is original commit.");
         }
 
         GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), 
@@ -78,7 +80,7 @@ public class GhprbBuilds {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Merged build started." : "Build started."), c.getPullID(), trigger.getCommitStatusContext(), logger);
+        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(), trigger.getCommitStatusContext(), logger);
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
@@ -115,7 +117,7 @@ public class GhprbBuilds {
         } else {
             state = GHCommitState.FAILURE;
         }
-        repo.createCommitStatus(build, state, (c.isMerged() ? "Merged build finished." : "Build finished."), c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+        repo.createCommitStatus(build, state, "Build finished.", c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
 
         StringBuilder msg = new StringBuilder();
 

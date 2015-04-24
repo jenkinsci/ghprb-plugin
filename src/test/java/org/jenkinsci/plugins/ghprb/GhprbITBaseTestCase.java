@@ -1,24 +1,19 @@
 package org.jenkinsci.plugins.ghprb;
 
 import static com.google.common.collect.Lists.newArrayList;
-
 import static org.kohsuke.github.GHIssueState.OPEN;
-
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-
 import hudson.model.AbstractProject;
 
 import org.joda.time.DateTime;
-
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
-
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -80,5 +75,18 @@ public abstract class GhprbITBaseTestCase {
 
 		return Mockito.spy(trigger.createGhprb(project));
 	}
+	
+
+    public void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
+        for (int i=0; i<numOfTriggers; ++i) {
+            trigger.run();
+
+            while(project.isBuilding() || project.isInQueue()) {
+                // THEN
+                Thread.sleep(500);
+            }
+        }
+        
+    }
 
 }

@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 
 import hudson.model.AbstractBuild;
 import hudson.model.FreeStyleBuild;
+import hudson.model.ItemGroup;
 import hudson.model.StreamBuildListener;
 import hudson.model.FreeStyleProject;
 import hudson.model.Run;
@@ -72,6 +73,9 @@ public class GhprbPullRequestMergeTest {
     @Mock
     private StreamBuildListener listener;
     
+    @Mock
+    private ItemGroup<?> parent;
+    
    
     private final String triggerPhrase = "ok to merge";
     private final String nonTriggerPhrase = "This phrase is not the trigger phrase";
@@ -104,7 +108,9 @@ public class GhprbPullRequestMergeTest {
 		
 		PrintStream logger = mock(PrintStream.class);
 
+		given(parent.getFullName()).willReturn("");
         
+		given(project.getParent()).willReturn(parent);
 		given(project.getTrigger(GhprbTrigger.class)).willReturn(trigger);
 		given(project.getName()).willReturn("project");
 		given(project.getProperty(GithubProjectProperty.class)).willReturn(projectProperty);

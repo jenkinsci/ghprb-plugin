@@ -7,7 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.model.*;
-import hudson.model.StringParameterValue;
+import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 import hudson.triggers.Trigger;
@@ -31,6 +31,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
+import jenkins.model.Jenkins;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -109,7 +111,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     @Override
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
-        this.project = project.getName();
+        this.project = project.getFullName();
         if (project.getProperty(GithubProjectProperty.class) == null) {
             logger.log(Level.INFO, "GitHub project not set up, cannot start ghprb trigger for job " + this.project);
             return;
@@ -127,7 +129,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     }
 
     Ghprb createGhprb(AbstractProject<?, ?> project) {
-        return new Ghprb(project, this, getDescriptor().getPullRequests(project.getName()));
+        return new Ghprb(project, this, getDescriptor().getPullRequests(project.getFullName()));
     }
 
     @Override
@@ -146,6 +148,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         if (getUseGitHubHooks()) {
             return;
         }
+        List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
+        for (AbstractProject<?,?> project : projects) {
+            if (project.getFullName().equals(this.project)) {
+                if (project.isDisabled()) { // If the project is disabled, don't do anything else.
+                    return;
+                }
+            }
+        }
+        
+        
         helper.run();
         getDescriptor().save();
     }

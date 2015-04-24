@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.util.concurrent.ConcurrentMap;
 
 import org.kohsuke.github.GHBranch;
-//import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
@@ -97,7 +96,7 @@ public class GhprbPullRequestMerge extends Recorder {
 			return true;
 		}
 				
-		ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getName()); 
+		ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getFullName()); 
 
 		
 		pr = pulls.get(cause.getPullID()).getPullRequest();
