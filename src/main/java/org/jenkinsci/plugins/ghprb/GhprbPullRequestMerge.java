@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.util.concurrent.ConcurrentMap;
 
 import org.kohsuke.github.GHBranch;
-//import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
