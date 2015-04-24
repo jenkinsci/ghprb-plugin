@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.collect.Lists;
 
+import hudson.model.AbstractProject;
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.GitSCM;
 import net.sf.json.JSONObject;
@@ -40,7 +41,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null, null
+                "user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null
         );
         given(commitPointer.getSha()).willReturn("sha");
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
@@ -64,8 +65,8 @@ public class GhprbIT extends GhprbITBaseTestCase {
         trigger.start(project, true);
         trigger.setHelper(ghprb);
 
-        // THEN
-        Thread.sleep(65000);
+        triggerRunAndWait(10, trigger, project);
+
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
 
@@ -74,7 +75,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null, null
+                "user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null
         );
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
@@ -91,9 +92,9 @@ public class GhprbIT extends GhprbITBaseTestCase {
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
-
-        // THEN
-        Thread.sleep(130000);
+        
+        triggerRunAndWait(10, trigger, project);
+        
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
@@ -102,7 +103,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "*/1 * * * *", "retest this please", false, false, false, false, false, null, null, false, null, null, null
+                "user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null
         );
 
         given(commitPointer.getSha()).willReturn("sha");
@@ -112,7 +113,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(comment.getUpdatedAt()).willReturn(new DateTime().plusDays(1).toDate());
         given(comment.getUser()).willReturn(ghUser);
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
-        given(ghPullRequest.getNumber()).willReturn(5).willReturn(5).willReturn(6).willReturn(6);
+        given(ghPullRequest.getNumber()).willReturn(5).willReturn(5);
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
         GhprbTrigger.getDscp().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
@@ -126,9 +127,8 @@ public class GhprbIT extends GhprbITBaseTestCase {
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
-
-        // THEN
-        Thread.sleep(130000);
+        
+        triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
