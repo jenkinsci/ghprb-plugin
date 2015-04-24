@@ -80,12 +80,13 @@ public abstract class GhprbITBaseTestCase {
     public void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
         for (int i=0; i<numOfTriggers; ++i) {
             trigger.run();
+
+            while(project.isBuilding() || project.isInQueue()) {
+                // THEN
+                Thread.sleep(500);
+            }
         }
         
-        while(project.isBuilding() || project.isInQueue()) {
-            // THEN
-            Thread.sleep(500);
-        }
     }
 
 }
