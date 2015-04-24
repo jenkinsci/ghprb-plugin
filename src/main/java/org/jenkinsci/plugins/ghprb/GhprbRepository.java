@@ -254,6 +254,11 @@ public class GhprbRepository {
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
+        
+        if (ghRepository == null) {
+            init();
+        }
+        
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
             pull = new GhprbPullRequest(ghRepository.getPullRequest(id), helper, this);
