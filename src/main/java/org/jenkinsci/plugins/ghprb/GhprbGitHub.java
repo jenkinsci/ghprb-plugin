@@ -20,16 +20,19 @@ public class GhprbGitHub {
         String serverAPIUrl = GhprbTrigger.getDscp().getServerAPIUrl();
         if (accessToken != null && !accessToken.isEmpty()) {
             try {
-                gh = new GitHubBuilder().withEndpoint(serverAPIUrl).withOAuthToken(accessToken).withConnector(new HttpConnectorWithJenkinsProxy()).build();
+                gh = new GitHubBuilder().withEndpoint(serverAPIUrl)
+                        .withOAuthToken(accessToken).withConnector(new HttpConnectorWithJenkinsProxy()).build();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Can''t connect to {0} using oauth", serverAPIUrl);
                 throw e;
             }
         } else {
             if (serverAPIUrl.contains("api/v3")) {
-                gh = GitHub.connectToEnterprise(serverAPIUrl, GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
+                gh = GitHub.connectToEnterprise(serverAPIUrl, 
+                        GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
             } else {
-                gh = new GitHubBuilder().withPassword(GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword()).withConnector(new HttpConnectorWithJenkinsProxy()).build();
+                gh = new GitHubBuilder().withPassword(GhprbTrigger.getDscp().getUsername(), 
+                        GhprbTrigger.getDscp().getPassword()).withConnector(new HttpConnectorWithJenkinsProxy()).build();
             }
         }
     }
@@ -46,7 +49,8 @@ public class GhprbGitHub {
         try {
             GHOrganization org = get().getOrganization(organisation);
             orgHasMember = org.hasMember(member);
-            logger.log(Level.FINE, "org.hasMember(member)? user:{0} org: {1} == {2}", new Object[] { member.getLogin(), organisation, orgHasMember ? "yes" : "no" });
+            logger.log(Level.FINE, "org.hasMember(member)? user:{0} org: {1} == {2}", 
+                    new Object[] { member.getLogin(), organisation, orgHasMember ? "yes" : "no" });
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);

@@ -90,10 +90,12 @@ public class GhprbBuilds {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(),
+        repo.createCommitStatus(build, GHCommitState.PENDING, 
+                (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(),
                 trigger.getCommitStatusContext(), logger);
         try {
-            build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
+            build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + 
+                    "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
             logger.println("Can't update build description");
             ex.printStackTrace(logger);
@@ -176,13 +178,15 @@ public class GhprbBuilds {
             if (state == GHCommitState.SUCCESS) {
                 if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
                     buildMessage = trigger.getMsgSuccess();
-                } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
+                } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null 
+                        && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
                     buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
                 }
             } else if (state == GHCommitState.FAILURE) {
                 if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
                     buildMessage = trigger.getMsgFailure();
-                } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
+                } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null 
+                        && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
                     buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
                 }
             }
@@ -218,7 +222,8 @@ public class GhprbBuilds {
     }
 
     private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
-        JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
+        JobConfiguration jobConfiguration = JobConfiguration.builder()
+                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
 
         GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
 
