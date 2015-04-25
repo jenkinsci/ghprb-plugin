@@ -9,22 +9,20 @@ import org.junit.Test;
  */
 public class JobConfigurationTest {
 
-	@Test
-	public void shouldNotPrintStackTrace() {
-		JobConfiguration jobConfiguration =
-			JobConfiguration.builder().printStackTrace(false).build();
+    @Test
+    public void shouldNotPrintStackTrace() {
+        JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(false).build();
 
-		assertThat(jobConfiguration).isNotNull();
-		assertThat(jobConfiguration.printStackTrace()).isFalse();
-	}
+        assertThat(jobConfiguration).isNotNull();
+        assertThat(jobConfiguration.printStackTrace()).isFalse();
+    }
 
-	@Test
-	public void shouldPrintStackTrace() {
-		JobConfiguration jobConfiguration =
-			JobConfiguration.builder().printStackTrace(true).build();
+    @Test
+    public void shouldPrintStackTrace() {
+        JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(true).build();
 
-		assertThat(jobConfiguration).isNotNull();
-		assertThat(jobConfiguration.printStackTrace()).isTrue();
-	}
+        assertThat(jobConfiguration).isNotNull();
+        assertThat(jobConfiguration.printStackTrace()).isTrue();
+    }
 
 }

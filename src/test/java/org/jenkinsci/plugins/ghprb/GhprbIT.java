@@ -30,24 +30,22 @@ public class GhprbIT extends GhprbITBaseTestCase {
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
-	@Before
-	public void setUp() throws Exception {
-//    	GhprbTestUtil.mockGithubUserPage();
-		super.beforeTest();
-	}
+    @Before
+    public void setUp() throws Exception {
+        // GhprbTestUtil.mockGithubUserPage();
+        super.beforeTest();
+    }
 
     @Test
     public void shouldBuildTriggersOnNewPR() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
-        GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null
-        );
+        GhprbTrigger trigger = new GhprbTrigger("user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null);
         given(commitPointer.getSha()).willReturn("sha");
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
         GhprbTrigger.getDscp().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
-         given(ghPullRequest.getNumber()).willReturn(1);
+        given(ghPullRequest.getNumber()).willReturn(1);
 
         // Creating spy on ghprb, configuring repo
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -74,11 +72,9 @@ public class GhprbIT extends GhprbITBaseTestCase {
     public void shouldBuildTriggersOnUpdatingNewCommitsPR() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
-        GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null
-        );
+        GhprbTrigger trigger = new GhprbTrigger("user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null);
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
-        given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
+        given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment> newArrayList());
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
         GhprbTrigger.getDscp().configure(null, jsonObject);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
@@ -92,9 +88,9 @@ public class GhprbIT extends GhprbITBaseTestCase {
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
-        
+
         triggerRunAndWait(10, trigger, project);
-        
+
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
 
@@ -102,9 +98,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
     public void shouldBuildTriggersOnUpdatingRetestMessagePR() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
-        GhprbTrigger trigger = new GhprbTrigger(
-                "user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null
-        );
+        GhprbTrigger trigger = new GhprbTrigger("user", "user", "", "0 0 31 2 0", "retest this please", false, false, false, false, false, null, null, false, null, null, null);
 
         given(commitPointer.getSha()).willReturn("sha");
 
@@ -127,7 +121,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
-        
+
         triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }

@@ -23,8 +23,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
- * Maintains state about a Pull Request for a particular Jenkins job.  This is what understands the current state
- * of a PR for a particular job.
+ * Maintains state about a Pull Request for a particular Jenkins job. This is what understands the current state of a PR for a particular job.
  *
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
@@ -44,7 +43,7 @@ public class GhprbPullRequest {
     private String source;
     private String authorEmail;
     private URL url;
-    
+
     private GHUser triggerSender;
     private GitUser commitAuthor;
 
@@ -55,7 +54,7 @@ public class GhprbPullRequest {
     private transient Ghprb helper;
     private transient GhprbRepository repo;
 
-	private String commentBody;
+    private String commentBody;
 
     GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
@@ -82,11 +81,13 @@ public class GhprbPullRequest {
             accepted = true;
             shouldRun = true;
         } else {
-            logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[]{id, author.getLogin(), reponame});
+            logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[] { id, author.getLogin(), reponame });
             repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
         }
 
-        logger.log(Level.INFO, "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", new Object[]{id, reponame, author.getLogin(), authorEmail, updated, head});
+        logger.log(Level.INFO, "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", 
+                new Object[] { id, reponame, author.getLogin(), authorEmail, updated, head }
+        );
     }
 
     public void init(Ghprb helper, GhprbRepository repo) {
@@ -96,42 +97,43 @@ public class GhprbPullRequest {
             reponame = repo.getName(); // If this instance was created before v1.8, it can be null.
         }
     }
-    
+
     /**
-     * Returns skip build phrases from Jenkins global configuration 
+     * Returns skip build phrases from Jenkins global configuration
+     * 
      * @return
      */
     public Set<String> getSkipBuildPhrases() {
-		return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
-	}
-	
-    /**
-     * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
-     * @param issue
-     */
-	private void checkSkipBuild(GHIssue issue) {
-		// check for skip build phrase.
-		String pullRequestBody = issue.getBody();
-		if(StringUtils.isNotBlank(pullRequestBody)) {
-			pullRequestBody = pullRequestBody.trim();
-			Set<String> skipBuildPhrases = getSkipBuildPhrases();
-			skipBuildPhrases.remove("");
-			
-			for (String skipBuildPhrase : skipBuildPhrases) {
-				skipBuildPhrase = skipBuildPhrase.trim();
-				Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
-				if(skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
-					logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
-					shouldRun = false;
-					break;
-				}
-			}
-		}
-	}
+        return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
+    }
 
     /**
-     * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers
-     * a build if necessary.
+     * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
+     * 
+     * @param issue
+     */
+    private void checkSkipBuild(GHIssue issue) {
+        // check for skip build phrase.
+        String pullRequestBody = issue.getBody();
+        if (StringUtils.isNotBlank(pullRequestBody)) {
+            pullRequestBody = pullRequestBody.trim();
+            Set<String> skipBuildPhrases = getSkipBuildPhrases();
+            skipBuildPhrases.remove("");
+
+            for (String skipBuildPhrase : skipBuildPhrases) {
+                skipBuildPhrase = skipBuildPhrase.trim();
+                Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
+                if (skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+                    logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
+                    shouldRun = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers a build if necessary.
      *
      * @param pr
      */
@@ -144,7 +146,7 @@ public class GhprbPullRequest {
         }
 
         if (isUpdated(pr)) {
-            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[]{id, reponame, updated, author});
+            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
 
             // the title could have been updated since the original PR was opened
             title = pr.getTitle();
@@ -152,7 +154,10 @@ public class GhprbPullRequest {
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
             if (!newCommit && commentsChecked == 0) {
-                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; that may mean that commit status was updated.", new Object[] {id, reponame});
+                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
+                        + "that may mean that commit status was updated.", 
+                        new Object[] { id, reponame }
+                );
             }
             try {
                 updated = pr.getUpdatedAt();
@@ -196,7 +201,9 @@ public class GhprbPullRequest {
                 return true;
             }
         }
-        logger.log(Level.FINEST, "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}", new Object[]{id, target, Joiner.on(',').skipNulls().join(branches)});
+        logger.log(Level.FINEST, "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}", 
+                new Object[] { id, target, Joiner.on(',').skipNulls().join(branches) }
+        );
         return false;
     }
 
@@ -233,16 +240,16 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
                 try {
-	                for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-	    	    		if (commitDetails.getSha().equals(getHead())) {
-	    	    			commitAuthor = commitDetails.getCommit().getCommitter();
-	    	    			break;
-	    	    		}
-	    	    	}
+                    for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                        if (commitDetails.getSha().equals(getHead())) {
+                            commitAuthor = commitDetails.getCommit().getCommitter();
+                            break;
+                        }
+                    }
                 } catch (Exception ex) {
-                	logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+                    logger.log(Level.INFO, "Unable to get PR commits: ", ex);
                 }
-                
+
             }
 
             logger.log(Level.FINEST, "Running build...");
@@ -253,10 +260,10 @@ public class GhprbPullRequest {
         }
     }
 
-	private void build() {
+    private void build() {
         String message = helper.getBuilds().build(this, triggerSender, commentBody);
         String context = helper.getTrigger().getCommitStatusContext();
-        repo.createCommitStatus(head, GHCommitState.PENDING, null, message,id,context);
+        repo.createCommitStatus(head, GHCommitState.PENDING, null, message, id, context);
         logger.log(Level.INFO, message);
     }
 
@@ -265,7 +272,7 @@ public class GhprbPullRequest {
         if (head.equals(sha)) {
             return false;
         }
-        logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[]{head, sha});
+        logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[] { head, sha });
         head = sha;
         if (accepted) {
             shouldRun = true;
@@ -281,23 +288,23 @@ public class GhprbPullRequest {
         // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
         // a user or trigger a build when the 'request for testing' phrase contains the
         // whitelist/trigger phrase and the bot is a member of a whitelisted organisation
-//        if (helper.isBotUser(sender)) {
-//            logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);
-//            return;
-//        }
+        // if (helper.isBotUser(sender)) {
+        // logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);
+        // return;
+        // }
 
-        if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) {       // add to whitelist
+        if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) { // add to whitelist
             if (!helper.isWhitelisted(author)) {
                 logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
                 helper.addWhitelist(author.getLogin());
             }
             accepted = true;
             shouldRun = true;
-        } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) {       // ok to test
+        } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) { // ok to test
             logger.log(Level.FINEST, "Admin {0} gave OK to test", sender);
             accepted = true;
             shouldRun = true;
-        } else if (helper.isRetestPhrase(body)) {        // test this please
+        } else if (helper.isRetestPhrase(body)) { // test this please
             logger.log(Level.FINEST, "Retest phrase");
             if (helper.isAdmin(sender)) {
                 logger.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
@@ -307,7 +314,7 @@ public class GhprbPullRequest {
                 shouldRun = true;
                 triggered = true;
             }
-        } else if (helper.isTriggerPhrase(body)) {      // trigger phrase
+        } else if (helper.isTriggerPhrase(body)) { // trigger phrase
             logger.log(Level.FINEST, "Trigger phrase");
             if (helper.isAdmin(sender)) {
                 logger.log(Level.FINEST, "Admin {0} ran trigger phrase", sender);
@@ -319,10 +326,10 @@ public class GhprbPullRequest {
                 triggered = true;
             }
         }
-        
+
         if (shouldRun) {
-        	triggerSender = sender;
-        	commentBody = body;
+            triggerSender = sender;
+            commentBody = body;
         }
     }
 
@@ -426,11 +433,11 @@ public class GhprbPullRequest {
         return url;
     }
 
-	public GitUser getCommitAuthor() {
-		return commitAuthor;
-	}
-	
-	public GHPullRequest getPullRequest() {
-		return pr;
-	}
+    public GitUser getCommitAuthor() {
+        return commitAuthor;
+    }
+
+    public GHPullRequest getPullRequest() {
+        return pr;
+    }
 }

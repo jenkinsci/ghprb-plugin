@@ -30,6 +30,8 @@ import org.mockito.Mockito;
 //import org.mockserver.model.HttpResponse;
 
 
+
+import antlr.ANTLRException;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
@@ -37,95 +39,108 @@ import net.sf.json.JSONObject;
 
 public class GhprbTestUtil {
 
-	public static final int INITIAL_RATE_LIMIT = 5000;
-	public static final String GHPRB_PLUGIN_NAME = "ghprb";
-	
-	// TODO: When anyone has time to investigate mocking the github request.
-//	public static void mockGithubUserPage() {
-//		new MockServerClient("https://api.github.com", 80)
-//			.when(new HttpRequest().withMethod("GET").withPath("/user"))
-//			.respond(new HttpResponse().withStatusCode(200));
-//					
-//	}
+    public static final int INITIAL_RATE_LIMIT = 5000;
+    public static final String GHPRB_PLUGIN_NAME = "ghprb";
 
-	public static void mockCommitList(GHPullRequest ghPullRequest) {
-		PagedIterator itr = Mockito.mock(PagedIterator.class);
-		PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
+    // TODO: When anyone has time to investigate mocking the github request.
+    // public static void mockGithubUserPage() {
+    // new MockServerClient("https://api.github.com", 80)
+    // .when(new HttpRequest().withMethod("GET").withPath("/user"))
+    // .respond(new HttpResponse().withStatusCode(200));
+    //
+    // }
 
-		Mockito.when(ghPullRequest.listCommits()).thenReturn(pagedItr);
-		Mockito.when(pagedItr.iterator()).thenReturn(itr);
-		Mockito.when(itr.hasNext()).thenReturn(false);
-	}
+    public static void mockCommitList(GHPullRequest ghPullRequest) {
+        PagedIterator itr = Mockito.mock(PagedIterator.class);
+        PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
 
-	public static void mockPR(
-			GHPullRequest prToMock, GHCommitPointer commitPointer,
-			DateTime... updatedDate)
-		throws Exception {
+        Mockito.when(ghPullRequest.listCommits()).thenReturn(pagedItr);
+        Mockito.when(pagedItr.iterator()).thenReturn(itr);
+        Mockito.when(itr.hasNext()).thenReturn(false);
+    }
 
-		given(prToMock.getHead()).willReturn(commitPointer);
-		given(prToMock.getBase()).willReturn(commitPointer);
-		given(prToMock.getUrl()).willReturn(new URL("http://127.0.0.1"));
-		given(prToMock.getApiURL()).willReturn(new URL("http://127.0.0.1"));
+    public static void mockPR(GHPullRequest prToMock, GHCommitPointer commitPointer, DateTime... updatedDate) throws Exception {
 
-		if (updatedDate.length > 1) {
-			given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate())
-				.willReturn(updatedDate[0].toDate())
-				.willReturn(updatedDate[1].toDate())
-				.willReturn(updatedDate[1].toDate())
-				.willReturn(updatedDate[1].toDate());
-		}
-		else {
-			given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate());
-		}
-	}
+        given(prToMock.getHead()).willReturn(commitPointer);
+        given(prToMock.getBase()).willReturn(commitPointer);
+        given(prToMock.getUrl()).willReturn(new URL("http://127.0.0.1"));
+        given(prToMock.getApiURL()).willReturn(new URL("http://127.0.0.1"));
 
-	public static JSONObject provideConfiguration() {
-		JSONObject jsonObject = new JSONObject();
+        if (updatedDate.length > 1) {
+            given(prToMock.getUpdatedAt())
+            .willReturn(updatedDate[0].toDate())
+            .willReturn(updatedDate[0].toDate())
+            .willReturn(updatedDate[1].toDate())
+            .willReturn(updatedDate[1].toDate())
+            .willReturn(updatedDate[1].toDate());
+        } else {
+            given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate());
+        }
+    }
 
-		jsonObject.put("serverAPIUrl", "https://api.github.com");
-		jsonObject.put("username", "user");
-		jsonObject.put("password", "1111");
-		jsonObject.put("accessToken", "accessToken");
-		jsonObject.put("adminlist", "user");
-		jsonObject.put("allowMembersOfWhitelistedOrgsAsAdmin", "false");
-		jsonObject.put("publishedURL", "");
-		jsonObject.put("requestForTestingPhrase", "test this");
-		jsonObject.put("whitelistPhrase", "");
-		jsonObject.put("okToTestPhrase", "ok to test");
-		jsonObject.put("retestPhrase", "retest this please");
-		jsonObject.put("skipBuildPhrase", "[skip ci]");
-		jsonObject.put("cron", "*/1 * * * *");
-		jsonObject.put("useComments", "true");
-		jsonObject.put("useDetailedComments", "false");
-		jsonObject.put("logExcerptLines", "0");
-		jsonObject.put("unstableAs", "");
-		jsonObject.put("testMode", "true");
-		jsonObject.put("autoCloseFailedPullRequests", "false");
-		jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
-		jsonObject.put("msgSuccess", "Success");
-		jsonObject.put("msgFailure", "Failure");
-		jsonObject.put("commitStatusContext", "Status Context");
+    public static JSONObject provideConfiguration() {
+        JSONObject jsonObject = new JSONObject();
 
-		return jsonObject;
-	}
-	
-	public static GitSCM provideGitSCM() {
-		return new GitSCM(
-			newArrayList(
-				new UserRemoteConfig(
-					"https://github.com/user/dropwizard", "",
-					"+refs/pull/*:refs/remotes/origin/pr/*", "")
-			),
-			newArrayList(new BranchSpec("${sha1}")),
-			false,
-			null,
-			null,
-			"",
-			null
-		);
-	}
+        jsonObject.put("serverAPIUrl", "https://api.github.com");
+        jsonObject.put("username", "user");
+        jsonObject.put("password", "1111");
+        jsonObject.put("accessToken", "accessToken");
+        jsonObject.put("adminlist", "user");
+        jsonObject.put("allowMembersOfWhitelistedOrgsAsAdmin", "false");
+        jsonObject.put("publishedURL", "");
+        jsonObject.put("requestForTestingPhrase", "test this");
+        jsonObject.put("whitelistPhrase", "");
+        jsonObject.put("okToTestPhrase", "ok to test");
+        jsonObject.put("retestPhrase", "retest this please");
+        jsonObject.put("skipBuildPhrase", "[skip ci]");
+        jsonObject.put("cron", "*/1 * * * *");
+        jsonObject.put("useComments", "true");
+        jsonObject.put("useDetailedComments", "false");
+        jsonObject.put("logExcerptLines", "0");
+        jsonObject.put("unstableAs", "");
+        jsonObject.put("testMode", "true");
+        jsonObject.put("autoCloseFailedPullRequests", "false");
+        jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
+        jsonObject.put("msgSuccess", "Success");
+        jsonObject.put("msgFailure", "Failure");
+        jsonObject.put("commitStatusContext", "Status Context");
 
-	private GhprbTestUtil() {
-	}
+        return jsonObject;
+    }
+
+    public static GitSCM provideGitSCM() {
+        return new GitSCM(newArrayList(
+                new UserRemoteConfig("https://github.com/user/dropwizard", 
+                    "", "+refs/pull/*:refs/remotes/origin/pr/*", "")), 
+                newArrayList(new BranchSpec("${sha1}")), 
+                false,
+                null, 
+                null, 
+                "", 
+                null);
+    }
+    
+    public static GhprbTrigger getTrigger() throws ANTLRException {
+        GhprbTrigger trigger = new GhprbTrigger(
+                "user", 
+                "user", 
+                "", 
+                "0 0 31 2 0", 
+                "retest this please", 
+                false, 
+                false, 
+                false, 
+                false, 
+                false, 
+                null, 
+                null, 
+                false, 
+                null, 
+                null, 
+                null);
+        return trigger;
+    }
+
+    private GhprbTestUtil() {}
 
 }

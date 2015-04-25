@@ -15,8 +15,8 @@ public class GhprbBranch extends AbstractDescribableImpl<GhprbBranch> {
     public String getBranch() {
         return branch;
     }
-    
-    public boolean matches(String s){
+
+    public boolean matches(String s) {
         return s.matches(branch);
     }
 
@@ -24,7 +24,7 @@ public class GhprbBranch extends AbstractDescribableImpl<GhprbBranch> {
     public GhprbBranch(String branch) {
         this.branch = branch.trim();
     }
-    
+
     @Extension
     public static class DescriptorImpl extends Descriptor<GhprbBranch> {
         @Override

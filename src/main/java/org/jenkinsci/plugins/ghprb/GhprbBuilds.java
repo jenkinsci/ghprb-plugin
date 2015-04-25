@@ -43,19 +43,27 @@ public class GhprbBuilds {
         if (cancelBuild(pr.getId())) {
             sb.append("Previous build stopped.");
         }
-        
+
         sb.append(" Build triggered.");
-        
+
         if (pr.isMergeable()) {
             sb.append(" sha1 is merged.");
         } else {
             sb.append(" sha1 is original commit.");
         }
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), 
-        		pr.isMergeable(), pr.getTarget(), pr.getSource(), 
-        		pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(),
-        		triggerSender, commentBody, pr.getCommitAuthor());
+        GhprbCause cause = new GhprbCause(
+                pr.getHead(), 
+                pr.getId(), 
+                pr.isMergeable(), 
+                pr.getTarget(), 
+                pr.getSource(), 
+                pr.getAuthorEmail(), 
+                pr.getTitle(), 
+                pr.getUrl(), 
+                triggerSender, 
+                commentBody,
+                pr.getCommitAuthor());
 
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
@@ -68,19 +76,22 @@ public class GhprbBuilds {
         return false;
     }
 
-    private GhprbCause getCause(AbstractBuild<?,?> build) {
+    private GhprbCause getCause(AbstractBuild<?, ?> build) {
         Cause cause = build.getCause(GhprbCause.class);
-        if (cause == null || (!(cause instanceof GhprbCause))) return null;
+        if (cause == null || (!(cause instanceof GhprbCause))) {
+            return null;
+        }
         return (GhprbCause) cause;
     }
 
-    public void onStarted(AbstractBuild<?,?> build, PrintStream logger) {
+    public void onStarted(AbstractBuild<?, ?> build, PrintStream logger) {
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(), trigger.getCommitStatusContext(), logger);
+        repo.createCommitStatus(build, GHCommitState.PENDING, (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(),
+                trigger.getCommitStatusContext(), logger);
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
@@ -89,7 +100,7 @@ public class GhprbBuilds {
         }
     }
 
-    public void onCompleted(AbstractBuild<?,?> build, TaskListener listener) {
+    public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
@@ -124,13 +135,13 @@ public class GhprbBuilds {
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
         if (publishedURL != null && !publishedURL.isEmpty()) {
             String commentFilePath = trigger.getCommentFilePath();
-            
+
             if (commentFilePath != null && !commentFilePath.isEmpty()) {
                 try {
                     String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
-                    
+
                     String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
-                	msg.append("Build comment file: \n--------------\n");
+                    msg.append("Build comment file: \n--------------\n");
                     msg.append(content);
                     msg.append("\n--------------\n");
                 } catch (IOException e) {
@@ -139,7 +150,7 @@ public class GhprbBuilds {
                     e.printStackTrace(listener.getLogger());
                 }
             }
-            
+
             msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
             msg.append(generateCustomizedMessage(build));
 
@@ -160,7 +171,6 @@ public class GhprbBuilds {
                     ex.printStackTrace(listener.getLogger());
                 }
             }
-        
 
             String buildMessage = null;
             if (state == GHCommitState.SUCCESS) {
@@ -208,21 +218,16 @@ public class GhprbBuilds {
     }
 
     private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
-        JobConfiguration jobConfiguration =
-            JobConfiguration.builder()
-                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
-                .build();
+        JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
 
-        GhprbBuildManager buildManager =
-            GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
+        GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
 
         StringBuilder sb = new StringBuilder();
 
         sb.append(buildManager.calculateBuildUrl());
 
         if (build.getResult() != Result.SUCCESS) {
-            sb.append(
-                buildManager.getTestResults());
+            sb.append(buildManager.getTestResults());
         }
 
         return sb.toString();
