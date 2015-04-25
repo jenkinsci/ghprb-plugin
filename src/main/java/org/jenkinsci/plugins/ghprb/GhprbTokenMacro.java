@@ -10,12 +10,11 @@ import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import java.io.IOException;
 
 /**
- * {@code PR_Name} token that expands to the PR Name.
- * {@code PR_User} token that expands to the PR Opener's email.
+ * {@code PR_Name} token that expands to the PR Name. {@code PR_User} token that expands to the PR Opener's email.
  *
  * @author Josh Caldwell
  */
-@Extension(optional=true)
+@Extension(optional = true)
 public class GhprbTokenMacro extends DataBoundTokenMacro {
     @Override
     public boolean acceptsMacroName(String macroName) {
@@ -23,7 +22,8 @@ public class GhprbTokenMacro extends DataBoundTokenMacro {
     }
 
     @Override
-    public String evaluate(AbstractBuild<?, ?> context, TaskListener listener, String macroName) throws MacroEvaluationException, IOException, InterruptedException {
+    public String evaluate(AbstractBuild<?, ?> context, TaskListener listener, String macroName) 
+            throws MacroEvaluationException, IOException, InterruptedException {
         GhprbCause cause = (GhprbCause) context.getCause(GhprbCause.class);
         if (cause == null) {
             return "";
@@ -34,7 +34,7 @@ public class GhprbTokenMacro extends DataBoundTokenMacro {
         } else if (macroName.equals("PR_Email")) {
             return cause.getAuthorEmail();
         } else {
-        	return "";
+            return "";
         }
     }
 }

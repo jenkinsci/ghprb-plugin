@@ -22,33 +22,29 @@ import org.junit.Test;
  */
 public class GhprbBuildManagerFactoryUtilTest {
 
-	@Rule
-	public JenkinsRuleWithBuildFlow jenkinsRule = new JenkinsRuleWithBuildFlow();
+    @Rule
+    public JenkinsRuleWithBuildFlow jenkinsRule = new JenkinsRuleWithBuildFlow();
 
-	@Test
-	public void shouldReturnDefaultManager() throws Exception {
-		// GIVEN
-		MatrixProject project = jenkinsRule.createMatrixProject("PRJ");
+    @Test
+    public void shouldReturnDefaultManager() throws Exception {
+        // GIVEN
+        MatrixProject project = jenkinsRule.createMatrixProject("PRJ");
 
-		GhprbBuildManager buildManager =
-			GhprbBuildManagerFactoryUtil.getBuildManager(
-				new MatrixBuild(project));
+        GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(new MatrixBuild(project));
 
-		// THEN
-		assertThat(buildManager).isInstanceOf(GhprbDefaultBuildManager.class);
-	}
+        // THEN
+        assertThat(buildManager).isInstanceOf(GhprbDefaultBuildManager.class);
+    }
 
-	@Test
-	public void shouldReturnBuildFlowManager() throws Exception {
-		// GIVEN
-		BuildFlow buildFlowProject = jenkinsRule.createBuildFlowProject("BFPRJ");
+    @Test
+    public void shouldReturnBuildFlowManager() throws Exception {
+        // GIVEN
+        BuildFlow buildFlowProject = jenkinsRule.createBuildFlowProject("BFPRJ");
 
-		GhprbBuildManager buildManager =
-			GhprbBuildManagerFactoryUtil.getBuildManager(
-				new FlowRun(buildFlowProject));
+        GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(new FlowRun(buildFlowProject));
 
-		// THEN
-		assertThat(buildManager).isInstanceOf(BuildFlowBuildManager.class);
-	}
+        // THEN
+        assertThat(buildManager).isInstanceOf(BuildFlowBuildManager.class);
+    }
 
 }

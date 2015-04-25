@@ -123,9 +123,9 @@ public class GhprbRepository {
     }
 
     public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id, String context) {
-    	createCommitStatus(null, sha1, state, url, message, id, context, null);
+        createCommitStatus(null, sha1, state, url, message, id, context, null);
     }
-    
+
     public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context, PrintStream stream) {
         String newMessage = String.format("Setting status of %s to %s with url %s and message: %s", sha1, state, url, message);
         if (stream != null) {
@@ -156,15 +156,15 @@ public class GhprbRepository {
                 logger.log(Level.INFO, newMessage, ex);
             }
             if (GhprbTrigger.getDscp().getUseComments()) {
-                
+
                 if (state == GHCommitState.SUCCESS) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
                 } else if (state == GHCommitState.FAILURE) {
                     message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
                 }
                 if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
-                  logger.log(Level.INFO, "Trying to send comment.", ex);
-                  addComment(id, message);
+                    logger.log(Level.INFO, "Trying to send comment.", ex);
+                    addComment(id, message);
                 }
             } else {
                 logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
@@ -177,7 +177,7 @@ public class GhprbRepository {
     }
 
     public void addComment(int id, String comment) {
-      addComment(id, comment, null, null);
+        addComment(id, comment, null, null);
     }
 
     public void addComment(int id, String comment, AbstractBuild<?, ?> build, TaskListener listener) {
@@ -185,11 +185,11 @@ public class GhprbRepository {
             return;
 
         if (build != null && listener != null) {
-          try {
-            comment = build.getEnvironment(listener).expand(comment);
-          } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error", e);
-          }
+            try {
+                comment = build.getEnvironment(listener).expand(comment);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error", e);
+            }
         }
 
         try {
@@ -250,15 +250,15 @@ public class GhprbRepository {
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
         int id = issueComment.getIssue().getNumber();
-        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[]{id, issueComment.getComment().getUser(), issueComment.getComment().getBody()});
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
-        
+
         if (ghRepository == null) {
             init();
         }
-        
+
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
             pull = new GhprbPullRequest(ghRepository.getPullRequest(id), helper, this);

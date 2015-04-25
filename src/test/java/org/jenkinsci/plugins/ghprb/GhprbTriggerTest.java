@@ -1,4 +1,3 @@
-
 package org.jenkinsci.plugins.ghprb;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -24,44 +23,43 @@ import org.mockito.runners.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbTriggerTest {
-	
-	@Mock
-	private GhprbPullRequest pr;
 
-	@Test
-	public void testCheckSkipBuild() throws NoSuchFieldException, SecurityException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		GHIssue issue = mock(GHIssue.class);
-		
-		String[] comments = {"Some dumb comment\r\nThat shouldn't match", "[skip ci]"};
-		String[] phraseArray = {"\\[skip\\W+ci\\]", "skip ci"};
+    @Mock
+    private GhprbPullRequest pr;
 
-		Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild", GHIssue.class);
-		checkSkip.setAccessible(true);
-		
-		Field shouldRun = GhprbPullRequest.class.getDeclaredField("shouldRun");
-		shouldRun.setAccessible(true);
-		
-		for (String phraseString : phraseArray) {
-			for (String comment : comments) {
-				
-				Set<String> phrases = new HashSet<String>(Arrays.asList(phraseString.split("[\\r\\n]+")));
-				given(issue.getBody()).willReturn(comment);
-				given(pr.getSkipBuildPhrases()).willReturn(phrases);
-				boolean isMatch = false;
-				for (String phrase : phrases) {
-					isMatch = Pattern.matches(phrase, comment);
-					if (isMatch) {
-						break;
-					}
-				}
-				shouldRun.set(pr, true);
-				checkSkip.invoke(pr, issue);
-				assertThat(shouldRun.get(pr)).isEqualTo(!isMatch);
-				
-			}
-		}
-		
-	}
-	
+    @Test
+    public void testCheckSkipBuild() throws Exception {
+        GHIssue issue = mock(GHIssue.class);
+
+        String[] comments = { "Some dumb comment\r\nThat shouldn't match", "[skip ci]" };
+        String[] phraseArray = { "\\[skip\\W+ci\\]", "skip ci" };
+
+        Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild", GHIssue.class);
+        checkSkip.setAccessible(true);
+
+        Field shouldRun = GhprbPullRequest.class.getDeclaredField("shouldRun");
+        shouldRun.setAccessible(true);
+
+        for (String phraseString : phraseArray) {
+            for (String comment : comments) {
+
+                Set<String> phrases = new HashSet<String>(Arrays.asList(phraseString.split("[\\r\\n]+")));
+                given(issue.getBody()).willReturn(comment);
+                given(pr.getSkipBuildPhrases()).willReturn(phrases);
+                boolean isMatch = false;
+                for (String phrase : phrases) {
+                    isMatch = Pattern.matches(phrase, comment);
+                    if (isMatch) {
+                        break;
+                    }
+                }
+                shouldRun.set(pr, true);
+                checkSkip.invoke(pr, issue);
+                assertThat(shouldRun.get(pr)).isEqualTo(!isMatch);
+
+            }
+        }
+
+    }
 
 }

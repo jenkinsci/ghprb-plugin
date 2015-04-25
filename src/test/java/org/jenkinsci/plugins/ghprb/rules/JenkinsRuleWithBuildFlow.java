@@ -11,14 +11,13 @@ import com.cloudbees.plugins.flow.BuildFlow;
  */
 public class JenkinsRuleWithBuildFlow extends JenkinsRule {
 
-	public BuildFlow createBuildFlowProject() throws IOException {
-		return createBuildFlowProject(createUniqueProjectName());
-	}
+    public BuildFlow createBuildFlowProject() throws IOException {
+        return createBuildFlowProject(createUniqueProjectName());
+    }
 
-	public BuildFlow createBuildFlowProject(String name)
-		throws IOException {
+    public BuildFlow createBuildFlowProject(String name) throws IOException {
 
-		return jenkins.createProject(BuildFlow.class, name);
-	}
+        return jenkins.createProject(BuildFlow.class, name);
+    }
 
 }

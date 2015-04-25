@@ -22,71 +22,54 @@ import org.mockito.Mockito;
  */
 public abstract class GhprbITBaseTestCase {
 
-	@Mock
-	protected GHCommitPointer commitPointer;
-	@Mock
-	protected GHPullRequest ghPullRequest;
-	@Mock
-	protected GhprbGitHub ghprbGitHub;
-	@Mock
-	protected GHRepository ghRepository;
-	@Mock
-	protected GHUser ghUser;
-	@Mock
-	protected GitHub gitHub;
+    @Mock
+    protected GHCommitPointer commitPointer;
+    @Mock
+    protected GHPullRequest ghPullRequest;
+    @Mock
+    protected GhprbGitHub ghprbGitHub;
+    @Mock
+    protected GHRepository ghRepository;
+    @Mock
+    protected GHUser ghUser;
+    @Mock
+    protected GitHub gitHub;
 
-	// Stubs
-	protected GHRateLimit ghRateLimit = new GHRateLimit();
+    // Stubs
+    protected GHRateLimit ghRateLimit = new GHRateLimit();
 
-	protected void beforeTest() throws Exception {
-		given(ghprbGitHub.get()).willReturn(gitHub);
-		given(gitHub.getRateLimit()).willReturn(ghRateLimit);
-		given(gitHub.getRepository(anyString())).willReturn(ghRepository);
-		given(commitPointer.getRef()).willReturn("ref");
-		given(ghRepository.getName()).willReturn("dropwizard");
+    protected void beforeTest() throws Exception {
+        given(ghprbGitHub.get()).willReturn(gitHub);
+        given(gitHub.getRateLimit()).willReturn(ghRateLimit);
+        given(gitHub.getRepository(anyString())).willReturn(ghRepository);
+        given(commitPointer.getRef()).willReturn("ref");
+        given(ghRepository.getName()).willReturn("dropwizard");
 
-		GhprbTestUtil.mockPR(
-			ghPullRequest, commitPointer, new DateTime(),
-			new DateTime().plusDays(1));
+        GhprbTestUtil.mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
 
-		given(ghRepository.getPullRequests(eq(OPEN)))
-			.willReturn(newArrayList(ghPullRequest))
-			.willReturn(newArrayList(ghPullRequest));
+        given(ghRepository.getPullRequests(eq(OPEN))).willReturn(newArrayList(ghPullRequest)).willReturn(newArrayList(ghPullRequest));
 
-		given(ghPullRequest.getUser()).willReturn(ghUser);
-		given(ghUser.getEmail()).willReturn("email@email.com");
-		given(ghUser.getLogin()).willReturn("user");
+        given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghUser.getEmail()).willReturn("email@email.com");
+        given(ghUser.getLogin()).willReturn("user");
 
-		ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
+        ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
 
-		GhprbTestUtil.mockCommitList(ghPullRequest);
-	}
-
-	protected void setRepositoryHelper(Ghprb ghprb) {
-		ghprb.getRepository().setHelper(ghprb);
-	}
-
-	protected void setTriggerHelper(GhprbTrigger trigger, Ghprb ghprb) {
-		trigger.setHelper(ghprb);
-	}
-
-	protected Ghprb spyCreatingGhprb(
-		GhprbTrigger trigger, AbstractProject<?,?> project) {
-
-		return Mockito.spy(trigger.createGhprb(project));
-	}
-	
-
-    public void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
-        for (int i=0; i<numOfTriggers; ++i) {
-            trigger.run();
-
-            while(project.isBuilding() || project.isInQueue()) {
-                // THEN
-                Thread.sleep(500);
-            }
-        }
-        
+        GhprbTestUtil.mockCommitList(ghPullRequest);
     }
+
+    protected void setRepositoryHelper(Ghprb ghprb) {
+        ghprb.getRepository().setHelper(ghprb);
+    }
+
+    protected void setTriggerHelper(GhprbTrigger trigger, Ghprb ghprb) {
+        trigger.setHelper(ghprb);
+    }
+
+    protected Ghprb spyCreatingGhprb(GhprbTrigger trigger, AbstractProject<?, ?> project) {
+
+        return Mockito.spy(trigger.createGhprb(project));
+    }
+
 
 }

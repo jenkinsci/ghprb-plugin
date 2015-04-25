@@ -62,22 +62,26 @@ public class GhprbRootAction implements UnprotectedRootAction {
         } else if ("application/x-www-form-urlencoded".equals(type)) {
             payload = req.getParameter("payload");
             if (payload == null) {
-                logger.log(Level.SEVERE, "Request doesn't contain payload. You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                logger.log(Level.SEVERE, "Request doesn't contain payload. "
+                        + "You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
                 return;
             }
         }
 
         if (payload == null) {
-            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. Please use 'application/json' or 'application/x-www-form-urlencoded'", new Object[] {type});
+            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. "
+                    + "Please use 'application/json' or 'application/x-www-form-urlencoded'",
+                    new Object[] { type });
             return;
         }
-        
+
         GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
 
         logger.log(Level.INFO, "Got payload event: {0}", event);
         try {
             if ("issue_comment".equals(event)) {
-                GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
+                GHEventPayload.IssueComment issueComment = gh.get()
+                        .parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
                 GHIssueState state = issueComment.getIssue().getState();
                 if (state == GHIssueState.CLOSED) {
                     logger.log(Level.INFO, "Skip comment on closed PR");
@@ -85,13 +89,15 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 }
 
                 for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
-                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
+                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", 
+                            new Object[] { issueComment.getComment(), repo.getName() }
+                    );
                     repo.onIssueCommentHook(issueComment);
                 }
             } else if ("pull_request".equals(event)) {
                 GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
                 for (GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())) {
-                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber()});
+                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber() });
                     repo.onPullRequestHook(pr);
                 }
             } else {
