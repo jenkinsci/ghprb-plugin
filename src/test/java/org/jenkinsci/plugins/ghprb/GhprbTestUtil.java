@@ -41,14 +41,6 @@ public class GhprbTestUtil {
     public static final int INITIAL_RATE_LIMIT = 5000;
     public static final String GHPRB_PLUGIN_NAME = "ghprb";
 
-    // TODO: When anyone has time to investigate mocking the github request.
-    // public static void mockGithubUserPage() {
-    // new MockServerClient("https://api.github.com", 80)
-    // .when(new HttpRequest().withMethod("GET").withPath("/user"))
-    // .respond(new HttpResponse().withStatusCode(200));
-    //
-    // }
-
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void mockCommitList(GHPullRequest ghPullRequest) {
         PagedIterator itr = Mockito.mock(PagedIterator.class);

@@ -32,8 +32,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jenkins.model.Jenkins;
-
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
@@ -111,6 +109,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     @Override
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
+        if (project.isDisabled()) {
+            logger.log(Level.FINE, "Project is disabled, not starting trigger");
+            return;
+        }
         this.project = project.getFullName();
         if (project.getProperty(GithubProjectProperty.class) == null) {
             logger.log(Level.INFO, "GitHub project not set up, cannot start ghprb trigger for job " + this.project);
@@ -147,6 +149,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     public void run() {
         // triggers are always triggered on the cron, but we just no-op if we are using GitHub hooks.
         if (getUseGitHubHooks()) {
+            return;
+        }
+        
+        if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
+            return;
+        }
+        
+        if (helper == null) {
+            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
             return;
         }
         helper.run();

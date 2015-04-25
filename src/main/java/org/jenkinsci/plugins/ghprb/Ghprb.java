@@ -80,7 +80,7 @@ public class Ghprb {
         trigger.addWhitelist(author);
     }
     
-    public boolean isDisabled() {
+    public boolean isProjectDisabled() {
         return project.isDisabled();
     }
 

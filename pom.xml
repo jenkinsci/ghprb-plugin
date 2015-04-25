@@ -94,12 +94,6 @@
             <version>0.12</version>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-netty</artifactId>
-            <version>3.9.1</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
