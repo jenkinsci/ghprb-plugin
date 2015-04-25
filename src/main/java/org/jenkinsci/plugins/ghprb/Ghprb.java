@@ -79,6 +79,10 @@ public class Ghprb {
         whitelisted.add(author);
         trigger.addWhitelist(author);
     }
+    
+    public boolean isDisabled() {
+        return project.isDisabled();
+    }
 
     public GhprbBuilds getBuilds() {
         return builds;

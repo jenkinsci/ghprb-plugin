@@ -104,7 +104,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
         buildFlowProject.setDsl(dsl.toString());
 
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger();
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
 
         given(commitPointer.getSha()).willReturn("sha");
         JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
@@ -136,7 +136,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
         setTriggerHelper(trigger, ghprb);
 
-        triggerRunAndWait(10, trigger, buildFlowProject);
+        GhprbTestUtil.triggerRunAndWait(10, trigger, buildFlowProject);
 
         return buildFlowProject;
     }

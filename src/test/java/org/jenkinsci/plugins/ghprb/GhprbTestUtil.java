@@ -18,6 +18,9 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.BDDMockito.given;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
@@ -25,13 +28,9 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
 import org.mockito.Mockito;
-//import org.mockserver.client.server.MockServerClient;
-//import org.mockserver.model.HttpRequest;
-//import org.mockserver.model.HttpResponse;
-
-
 
 import antlr.ANTLRException;
+import hudson.model.AbstractProject;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
@@ -50,6 +49,7 @@ public class GhprbTestUtil {
     //
     // }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void mockCommitList(GHPullRequest ghPullRequest) {
         PagedIterator itr = Mockito.mock(PagedIterator.class);
         PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
@@ -93,7 +93,7 @@ public class GhprbTestUtil {
         jsonObject.put("okToTestPhrase", "ok to test");
         jsonObject.put("retestPhrase", "retest this please");
         jsonObject.put("skipBuildPhrase", "[skip ci]");
-        jsonObject.put("cron", "*/1 * * * *");
+        jsonObject.put("cron", "0 0 31 2 0");
         jsonObject.put("useComments", "true");
         jsonObject.put("useDetailedComments", "false");
         jsonObject.put("logExcerptLines", "0");
@@ -120,25 +120,68 @@ public class GhprbTestUtil {
                 null);
     }
     
-    public static GhprbTrigger getTrigger() throws ANTLRException {
+    @SuppressWarnings("unchecked")
+    public static GhprbTrigger getTrigger(Map<String, Object> values) throws ANTLRException {
+        if (values == null) {
+            values = new HashMap<String, Object>();
+        }
+        Map<String, Object> defaultValues = new HashMap<String, Object> (){
+            private static final long serialVersionUID = -6720840565156773837L;
+
+        {
+            put("adminlist", "user");
+            put("whitelist", "user");
+            put("orgslist", "");
+            put("cron", "0 0 31 2 0");
+            put("triggerPhrase", "retest this please");
+            put("onlyTriggerPhrase", false);
+            put("useGitHubHooks", false);
+            put("permitAll", false);
+            put("autoCloseFailedPullRequests", false);
+            put("displayBuildErrorsOnDownstreamBuilds", false);
+            put("commentFilePath", null);
+            put("whiteListTargetBranches", null);
+            put("allowMembersOfWhitelistedOrgsAsAdmin", false);
+            put("msgSuccess", null);
+            put("msgFailure", null);
+            put("commitStatusContext", null);
+        }};
+        
+        defaultValues.putAll(values);
         GhprbTrigger trigger = new GhprbTrigger(
-                "user", 
-                "user", 
-                "", 
-                "0 0 31 2 0", 
-                "retest this please", 
-                false, 
-                false, 
-                false, 
-                false, 
-                false, 
-                null, 
-                null, 
-                false, 
-                null, 
-                null, 
-                null);
+                (String)defaultValues.get("adminlist"),
+                (String)defaultValues.get("whitelist"),
+                (String)defaultValues.get("orgslist"),
+                (String)defaultValues.get("cron"),
+                (String)defaultValues.get("triggerPhrase"),
+                (Boolean)defaultValues.get("onlyTriggerPhrase"),
+                (Boolean)defaultValues.get("useGitHubHooks"),
+                (Boolean)defaultValues.get("permitAll"),
+                (Boolean)defaultValues.get("autoCloseFailedPullRequests"),
+                (Boolean)defaultValues.get("displayBuildErrorsOnDownstreamBuilds"),
+                (String)defaultValues.get("commentFilePath"),
+                (List<GhprbBranch>)defaultValues.get("whiteListTargetBranches"),
+                (Boolean)defaultValues.get("allowMembersOfWhitelistedOrgsAsAdmin"),
+                (String)defaultValues.get("msgSuccess"),
+                (String)defaultValues.get("msgFailure"),
+                (String)defaultValues.get("commitStatusContext"));
         return trigger;
+    }
+    
+    public static void waitForBuildsToFinish(AbstractProject<?, ?> project) throws InterruptedException {
+        while (project.isBuilding() || project.isInQueue()) {
+            // THEN
+            Thread.sleep(500);
+        }
+    }
+    
+
+    public static void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
+        for (int i = 0; i < numOfTriggers; ++i) {
+            trigger.run();
+            waitForBuildsToFinish(project);
+        }
+
     }
 
     private GhprbTestUtil() {}

@@ -2,8 +2,10 @@ package org.jenkinsci.plugins.ghprb;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
@@ -18,6 +20,8 @@ import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import hudson.model.AbstractProject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -42,6 +46,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.spy;
 
 /**
  * Unit tests for {@link GhprbRepository}.
@@ -71,15 +76,21 @@ public class GhprbRepositoryTest {
     private GHCommitPointer head;
     @Mock
     private GHUser ghUser;
-    @Mock
+    
     private GhprbTrigger trigger;
 
     private GhprbRepository ghprbRepository;
     private ConcurrentMap<Integer, GhprbPullRequest> pulls;
     private GhprbPullRequest ghprbPullRequest;
 
+    @Rule
+    public JenkinsRule jenkinsRule = new JenkinsRule();
+
     @Before
-    public void setUp() throws IOException {
+    @SuppressWarnings("unused")
+    public void setUp() throws Exception {
+        AbstractProject<?, ?> project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
+        trigger = spy(GhprbTestUtil.getTrigger(null));
         initGHPRWithTestData();
 
         // Mock github API
@@ -152,6 +163,7 @@ public class GhprbRepositoryTest {
 
         verify(helper).ifOnlyTriggerPhrase();
         verify(helper).getWhiteListTargetBranches();
+        verify(helper).isDisabled();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -218,6 +230,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(1)).getTrigger();
+        verify(helper, times(2)).isDisabled();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -298,6 +311,7 @@ public class GhprbRepositoryTest {
         verify(helper).isOktotestPhrase(eq("comment body"));
         verify(helper).isRetestPhrase(eq("comment body"));
         verify(helper).isTriggerPhrase(eq("comment body"));
+        verify(helper, times(2)).isDisabled();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -380,6 +394,7 @@ public class GhprbRepositoryTest {
         verify(helper).isOktotestPhrase(eq("test this please"));
         verify(helper).isRetestPhrase(eq("test this please"));
         verify(helper).isAdmin(eq(ghUser));
+        verify(helper, times(2)).isDisabled();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -408,6 +423,7 @@ public class GhprbRepositoryTest {
         given(head.getSha()).willReturn("head sha");
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void mockCommitList() {
         PagedIterator itr = Mockito.mock(PagedIterator.class);
         PagedIterable pagedItr = Mockito.mock(PagedIterable.class);

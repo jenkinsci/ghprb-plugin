@@ -3,10 +3,13 @@ package org.jenkinsci.plugins.ghprb;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author janinko
@@ -42,6 +45,11 @@ public class GhprbGitHub {
             connect();
         }
         return gh;
+    }
+    
+    @VisibleForTesting
+    void setGitHub(GitHub gh) {
+        this.gh = gh;
     }
 
     public boolean isUserMemberOfOrganization(String organisation, GHUser member) {

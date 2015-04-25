@@ -71,16 +71,5 @@ public abstract class GhprbITBaseTestCase {
         return Mockito.spy(trigger.createGhprb(project));
     }
 
-    public void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
-        for (int i = 0; i < numOfTriggers; ++i) {
-            trigger.run();
-
-            while (project.isBuilding() || project.isInQueue()) {
-                // THEN
-                Thread.sleep(500);
-            }
-        }
-
-    }
 
 }

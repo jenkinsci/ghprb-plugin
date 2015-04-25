@@ -90,10 +90,16 @@ public class GhprbPullRequestMergeTest {
     private final String mergeComment = "merge";
 
     private final Integer pullId = 1;
+    
+    private Map<String, Object> triggerValues;
 
     @Before
     public void beforeTest() throws Exception {
-        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger());
+        triggerValues = new HashMap<String, Object>(10);
+        triggerValues.put("adminlist", adminList);
+        triggerValues.put("triggerPhrase", triggerPhrase);
+        
+        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(triggerValues));
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
         pulls.put(pullId, pullRequest);
@@ -111,6 +117,7 @@ public class GhprbPullRequestMergeTest {
         given(project.getTrigger(GhprbTrigger.class)).willReturn(trigger);
         given(project.getName()).willReturn("project");
         given(project.getProperty(GithubProjectProperty.class)).willReturn(projectProperty);
+        given(project.isDisabled()).willReturn(false);
 
         given(build.getCause(GhprbCause.class)).willReturn(cause);
         given(build.getResult()).willReturn(Result.SUCCESS);

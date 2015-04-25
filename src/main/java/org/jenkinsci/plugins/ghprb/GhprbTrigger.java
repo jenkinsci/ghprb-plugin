@@ -149,15 +149,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         if (getUseGitHubHooks()) {
             return;
         }
-        List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
-        for (AbstractProject<?, ?> project : projects) {
-            if (project.getFullName().equals(this.project)) {
-                if (project.isDisabled()) { // If the project is disabled, don't do anything else.
-                    return;
-                }
-            }
-        }
-
         helper.run();
         getDescriptor().save();
     }
@@ -572,6 +563,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                 gh = new GhprbGitHub();
             }
             return gh;
+        }
+        
+
+        @VisibleForTesting
+        void setGitHub(GhprbGitHub gh) {
+            this.gh = gh;
         }
 
         public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
