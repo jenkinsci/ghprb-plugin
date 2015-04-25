@@ -151,6 +151,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper).ifOnlyTriggerPhrase();
+        verify(helper).isProjectDisabled();
         verify(helper).getWhiteListTargetBranches();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
@@ -215,6 +216,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
+        verify(helper, times(2)).isProjectDisabled();
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
@@ -288,8 +290,9 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(2)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
-
+;
         verify(helper, times(1)).isWhitelisted(eq(ghUser));  // Call to Github API
+        verify(helper, times(2)).isProjectDisabled();
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
@@ -373,6 +376,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(2)).isWhitelisted(eq(ghUser));  // Call to Github API
+        verify(helper, times(2)).isProjectDisabled();
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();

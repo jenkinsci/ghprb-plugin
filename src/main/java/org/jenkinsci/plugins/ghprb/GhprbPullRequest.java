@@ -213,6 +213,11 @@ public class GhprbPullRequest {
     }
 
     private void tryBuild(GHPullRequest pr) {
+        if(helper.isProjectDisabled()) {
+            logger.log(Level.INFO, "Not triggering a build since the project is disabled");
+            return;
+        }
+
         if (helper.ifOnlyTriggerPhrase() && !triggered) {
             logger.log(Level.FINEST, "Trigger only phrase but we are not triggered");
             shouldRun = false;
