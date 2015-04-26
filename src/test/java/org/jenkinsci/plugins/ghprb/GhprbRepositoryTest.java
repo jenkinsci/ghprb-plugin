@@ -229,7 +229,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(1)).getTrigger();
+        verify(helper, times(2)).getTrigger();
         verify(helper, times(5)).isProjectDisabled();
         verifyNoMoreInteractions(helper);
 
@@ -304,7 +304,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(1)).getTrigger();
+        verify(helper, times(2)).getTrigger();
 
         // verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("comment body"));
@@ -387,7 +387,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(2)).getTrigger();
+        verify(helper, times(4)).getTrigger();
 
         // verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("test this please"));
