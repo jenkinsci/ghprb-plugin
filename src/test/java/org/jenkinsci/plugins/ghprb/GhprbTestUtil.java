@@ -96,6 +96,7 @@ public class GhprbTestUtil {
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
+        jsonObject.put("skipCommitStatus", "false");
 
         return jsonObject;
     }
@@ -137,6 +138,7 @@ public class GhprbTestUtil {
             put("msgSuccess", null);
             put("msgFailure", null);
             put("commitStatusContext", null);
+            put("skipCommitStatus", false);
         }};
 
         defaultValues.putAll(values);
@@ -156,7 +158,8 @@ public class GhprbTestUtil {
                 (Boolean)defaultValues.get("allowMembersOfWhitelistedOrgsAsAdmin"),
                 (String)defaultValues.get("msgSuccess"),
                 (String)defaultValues.get("msgFailure"),
-                (String)defaultValues.get("commitStatusContext"));
+                (String)defaultValues.get("commitStatusContext"),
+                (Boolean)defaultValues.get("skipCommitStatus"));
         return trigger;
     }
 
