@@ -111,7 +111,7 @@ public class GhprbTestUtil {
                 "", 
                 null);
     }
-    
+
     @SuppressWarnings("unchecked")
     public static GhprbTrigger getTrigger(Map<String, Object> values) throws ANTLRException {
         if (values == null) {
@@ -138,7 +138,7 @@ public class GhprbTestUtil {
             put("msgFailure", null);
             put("commitStatusContext", null);
         }};
-        
+
         defaultValues.putAll(values);
         GhprbTrigger trigger = new GhprbTrigger(
                 (String)defaultValues.get("adminlist"),
@@ -159,14 +159,14 @@ public class GhprbTestUtil {
                 (String)defaultValues.get("commitStatusContext"));
         return trigger;
     }
-    
+
     public static void waitForBuildsToFinish(AbstractProject<?, ?> project) throws InterruptedException {
         while (project.isBuilding() || project.isInQueue()) {
             // THEN
             Thread.sleep(500);
         }
     }
-    
+
 
     public static void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
         for (int i = 0; i < numOfTriggers; ++i) {
