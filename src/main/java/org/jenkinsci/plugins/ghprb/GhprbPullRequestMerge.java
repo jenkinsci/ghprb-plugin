@@ -115,6 +115,7 @@ public class GhprbPullRequestMerge extends Recorder {
         if (isMergeable == null || !isMergeable) {
             logger.println("Pull request cannot be automerged.");
             commentOnRequest("Pull request is not mergeable.");
+            listener.finished(Result.FAILURE);
             return false;
         }
 
@@ -157,6 +158,11 @@ public class GhprbPullRequestMerge extends Recorder {
             // deleteBranch(); //TODO: Update so it also deletes the branch being pulled from. probably make it an option.
         }
 
+        if (merge) {
+            listener.finished(Result.SUCCESS);
+        } else {
+            listener.finished(Result.FAILURE);
+        }
         return merge;
     }
 
