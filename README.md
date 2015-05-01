@@ -85,6 +85,10 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.20
+* PullRequestMerger now notifies the taskListener of failures.
+* AutoCloseFailedPullRequest has been extracted from the published URL check.
+
 #### -> 1.19
 * More work for disabled builds.
 * Unified tabs to spaces.
