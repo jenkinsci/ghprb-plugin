@@ -178,5 +178,14 @@ public class Ghprb {
         return returnString;
 
     }
+    
+
+    public static Set<String> createSet(String list) {
+        String listString = list == null ? "" : list;
+        List<String> listList = Arrays.asList(listString.split("\\s+"));
+        Set<String> listSet = new HashSet<String>(listList);
+        listSet.remove("");
+        return listSet;
+    }
 
 }

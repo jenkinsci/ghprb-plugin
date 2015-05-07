@@ -7,18 +7,16 @@ import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
-import org.apache.commons.io.FileUtils;
-
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
-
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHUser;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
@@ -158,20 +156,10 @@ public class GhprbBuilds {
     
     private void buildResultMessage(AbstractBuild<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
         StringBuilder msg = new StringBuilder();
-        String commentFilePath = trigger.getCommentFilePath();
-
-        if (commentFilePath != null && !commentFilePath.isEmpty()) {
-            try {
-                String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
-
-                String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
-                msg.append("Build comment file: \n--------------\n");
-                msg.append(content);
-                msg.append("\n--------------\n");
-            } catch (IOException e) {
-                msg.append("\n!!! Couldn't read commit file !!!\n");
-                listener.getLogger().println("Couldn't read comment file");
-                e.printStackTrace(listener.getLogger());
+        
+        for (GhprbExtension ext : trigger.getExtensions()) {
+            if (ext instanceof GhprbCommentAppender) {
+                msg.append(((GhprbCommentAppender) ext).postBuildComment(build, listener));
             }
         }
 

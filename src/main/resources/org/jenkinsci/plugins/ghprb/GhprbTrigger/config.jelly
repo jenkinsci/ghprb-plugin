@@ -36,9 +36,6 @@
 	<f:entry title="${%White list}" field="whitelist">
 	  <f:textarea />
 	</f:entry>
-	<f:entry title="${%Comment file path}" field="commentFilePath">
-	  <f:textbox />
-	</f:entry>
 	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
 	  <f:textarea />
 	</f:entry>
@@ -63,4 +60,8 @@
       </f:repeatable>
     </f:entry>
   </f:advanced>
+  
+  <f:entry title="${%Application Setup}">
+    <f:hetero-list name="extensions" items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
+  </f:entry>
 </j:jelly>

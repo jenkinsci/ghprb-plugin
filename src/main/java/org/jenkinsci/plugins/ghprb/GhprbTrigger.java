@@ -6,15 +6,17 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.*;
-import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
-import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
@@ -35,7 +37,7 @@ import java.util.regex.Pattern;
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
+public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -48,7 +50,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
-    private final String commentFilePath;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
@@ -58,6 +59,21 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String commitStatusContext;
     private transient Ghprb helper;
     private String project;
+    
+
+    private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions;
+    
+    public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
+        if (extensions == null) {
+            extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP,Util.fixNull(extensions));
+        }
+        return extensions;
+    }
+    
+    private void setExtensions(List<GhprbExtension> extensions) {
+        this.extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(
+                Saveable.NOOP,Util.fixNull(extensions));
+    }
 
     @DataBoundConstructor
     public GhprbTrigger(String adminlist, 
@@ -75,7 +91,9 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             Boolean allowMembersOfWhitelistedOrgsAsAdmin, 
             String msgSuccess, 
             String msgFailure, 
-            String commitStatusContext) throws ANTLRException {
+            String commitStatusContext,
+            List<GhprbExtension> extensions
+            ) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -89,10 +107,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commitStatusContext = commitStatusContext;
-        this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
         this.msgFailure = msgFailure;
+        setExtensions(extensions);
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
@@ -109,11 +127,12 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
     @Override
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
+        this.project = project.getFullName();
+        
         if (project.isDisabled()) {
-            logger.log(Level.FINE, "Project is disabled, not starting trigger");
+            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + this.project);
             return;
         }
-        this.project = project.getFullName();
         if (project.getProperty(GithubProjectProperty.class) == null) {
             logger.log(Level.INFO, "GitHub project not set up, cannot start ghprb trigger for job " + this.project);
             return;
@@ -151,16 +170,17 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         if (getUseGitHubHooks()) {
             return;
         }
+
+        if (helper == null) {
+            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
+            return;
+        }
         
         if (helper.isProjectDisabled()) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
             return;
         }
         
-        if (helper == null) {
-            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
-            return;
-        }
         helper.run();
         getDescriptor().save();
     }
@@ -275,10 +295,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return "";
         }
         return whitelist;
-    }
-
-    public String getCommentFilePath() {
-        return commentFilePath;
     }
 
     public String getOrgslist() {
@@ -409,6 +425,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private transient GhprbGitHub gh;
         // map of jobs (by their fullName) abd their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
+        
+        public List<GhprbExtensionDescriptor> getExtensionDescriptors() {
+            return GhprbExtensionDescriptor.all();
+        }
 
         public DescriptorImpl() {
             load();
@@ -419,7 +439,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
         @Override
         public boolean isApplicable(Item item) {
-            return item instanceof AbstractProject;
+            return true;
         }
 
         @Override
