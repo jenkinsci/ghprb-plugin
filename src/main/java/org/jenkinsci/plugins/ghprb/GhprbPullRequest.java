@@ -138,6 +138,10 @@ public class GhprbPullRequest {
      * @param pr
      */
     public void check(GHPullRequest pr) {
+        if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Project is disabled, ignoring pull request");
+            return;
+        }
         if (target == null) {
             target = pr.getBase().getRef(); // If this instance was created before target was introduced (before v1.8), it can be null.
         }
@@ -171,6 +175,10 @@ public class GhprbPullRequest {
     }
 
     public void check(GHIssueComment comment) {
+        if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Project is disabled, ignoring comment");
+            return;
+        }
         try {
             checkComment(comment);
             updated = comment.getUpdatedAt();
@@ -220,7 +228,7 @@ public class GhprbPullRequest {
     }
 
     private void tryBuild(GHPullRequest pr) {
-        if (helper.isDisabled()) {
+        if (helper.isProjectDisabled()) {
             logger.log(Level.FINEST, "Project is disabled, not trying to build");
             shouldRun = false;
             triggered = false;

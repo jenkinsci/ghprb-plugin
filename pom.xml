@@ -10,7 +10,7 @@
 
     <artifactId>ghprb</artifactId>
     <name>GitHub Pull Request Builder</name>
-    <version>1.18-SNAPSHOT</version>
+    <version>1.21-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <url>https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin</url>
@@ -93,12 +93,6 @@
             <artifactId>build-flow-plugin</artifactId>
             <version>0.12</version>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-netty</artifactId>
-            <version>3.9.1</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

@@ -76,6 +76,11 @@ public class GhprbRepository {
         if (!initGhRepository()) {
             return;
         }
+        
+        if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Project is disabled, not checking github state");
+            return;
+        }
 
         List<GHPullRequest> openPulls;
         try {
@@ -249,6 +254,10 @@ public class GhprbRepository {
     }
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
+        if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Not checking comments since build is disabled");
+            return;
+        }
         int id = issueComment.getIssue().getNumber();
         logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
         if (!"created".equals(issueComment.getAction())) {
@@ -269,7 +278,11 @@ public class GhprbRepository {
     }
 
     void onPullRequestHook(PullRequest pr) {
-        if ("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
+        if ("closed".equals(pr.getAction())) {
+            pulls.remove(pr.getNumber());
+        } else if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Not processing Pull request since the build is disabled");
+        } else if ("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
             GhprbPullRequest pull = pulls.get(pr.getNumber());
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
@@ -287,8 +300,6 @@ public class GhprbRepository {
                 return;
             }
             pull.check(pr.getPullRequest());
-        } else if ("closed".equals(pr.getAction())) {
-            pulls.remove(pr.getNumber());
         } else {
             logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
         }

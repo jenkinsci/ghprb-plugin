@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
+import hudson.security.csrf.CrumbExclusion;
 import jenkins.model.Jenkins;
 
 import org.acegisecurity.Authentication;
@@ -22,6 +23,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -139,5 +145,23 @@ public class GhprbRootAction implements UnprotectedRootAction {
         }
 
         return ret;
+    }
+
+    @Extension
+    public static class GhprbRootActionCrumbExclusion extends CrumbExclusion {
+
+        @Override
+        public boolean process(HttpServletRequest req, HttpServletResponse resp, FilterChain chain) throws IOException, ServletException {
+            String pathInfo = req.getPathInfo();
+            if (pathInfo != null && pathInfo.equals(getExclusionPath())) {
+                chain.doFilter(req, resp);
+                return true;
+            }
+            return false;
+        }
+
+        public String getExclusionPath() {
+            return "/" + URL + "/";
+        }
     }
 }
