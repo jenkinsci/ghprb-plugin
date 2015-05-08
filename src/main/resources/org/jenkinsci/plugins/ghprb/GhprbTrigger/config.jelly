@@ -12,39 +12,42 @@
     <f:entry title="${%Failure message}" field="msgFailure">
       <f:textarea default="${descriptor.msgFailure}"/>
     </f:entry>
-	<f:entry title="${%Trigger phrase}" field="triggerPhrase">
-	  <f:textbox />
-	</f:entry>
-	<f:entry title="Only use trigger phrase for build triggering" field="onlyTriggerPhrase">
-	  <f:checkbox />
-	</f:entry>
-	<f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
-	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
-	</f:entry>
-    <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
-  	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
+    <f:entry title="${%Trigger phrase}" field="triggerPhrase">
+      <f:textbox />
     </f:entry>
-	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
-	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
-	</f:entry>
-	<f:entry title="${%Commit Status Context}" field="commitStatusContext">
-		<f:textbox />
-	</f:entry>
-	<f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
-	  <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
-	</f:entry>
-	<f:entry title="${%White list}" field="whitelist">
-	  <f:textarea />
-	</f:entry>
-	<f:entry title="${%Comment file path}" field="commentFilePath">
-	  <f:textbox />
-	</f:entry>
-	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
-	  <f:textarea />
-	</f:entry>
-	<f:entry title="Allow members of whitelisted organisations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
-	  <f:checkbox />
-	</f:entry>
+    <f:entry title="Only use trigger phrase for build triggering" field="onlyTriggerPhrase">
+      <f:checkbox />
+    </f:entry>
+    <f:entry title="${%Close failed pull request automatically?}" field="autoCloseFailedPullRequests">
+      <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
+    </f:entry>
+    <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
+      <f:textarea default="${descriptor.skipBuildPhrase}"/>
+    </f:entry>
+    <f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
+      <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
+    </f:entry>
+    <f:entry title="${%Skip setting the commit status?}" field="skipCommitStatus">
+      <f:checkbox default="${descriptor.skipCommitStatus}"/>
+    </f:entry>
+    <f:entry title="${%Commit Status Context}" field="commitStatusContext">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
+      <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
+    </f:entry>
+    <f:entry title="${%White list}" field="whitelist">
+      <f:textarea />
+    </f:entry>
+    <f:entry title="${%Comment file path}" field="commentFilePath">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
+      <f:textarea />
+    </f:entry>
+    <f:entry title="Allow members of whitelisted organisations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
+      <f:checkbox />
+    </f:entry>
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
       <f:checkbox />
     </f:entry>

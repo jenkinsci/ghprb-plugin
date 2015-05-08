@@ -56,6 +56,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
     private String msgSuccess;
     private String msgFailure;
     private String commitStatusContext;
+    private Boolean skipCommitStatus;
     private transient Ghprb helper;
     private String project;
 
@@ -75,7 +76,8 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             Boolean allowMembersOfWhitelistedOrgsAsAdmin, 
             String msgSuccess, 
             String msgFailure, 
-            String commitStatusContext) throws ANTLRException {
+            String commitStatusContext, 
+            Boolean skipCommitStatus) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
         this.whitelist = whitelist;
@@ -89,6 +91,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commitStatusContext = commitStatusContext;
+        this.skipCommitStatus = skipCommitStatus;
         this.commentFilePath = commentFilePath;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
@@ -156,7 +159,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
             return;
         }
-        
+
         if (helper == null) {
             logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
             return;
@@ -346,6 +349,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return commitStatusContext;
     }
 
+    public Boolean getSkipCommitStatus() {
+        return skipCommitStatus;
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -397,8 +404,10 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
         private String commitStatusContext = "";
+        private Boolean skipCommitStatus = false;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
+
 
         private String username;
         private String password;
@@ -450,6 +459,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
+            skipCommitStatus = formData.getBoolean("skipCommitStatus");
 
             save();
             gh = new GhprbGitHub();
@@ -570,13 +580,16 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return commitStatusContext;
         }
 
+        public Boolean getSkipCommitStatus() {
+            return skipCommitStatus;
+        }
+
         public GhprbGitHub getGitHub() {
             if (gh == null) {
                 gh = new GhprbGitHub();
             }
             return gh;
         }
-        
 
         @VisibleForTesting
         void setGitHub(GhprbGitHub gh) {

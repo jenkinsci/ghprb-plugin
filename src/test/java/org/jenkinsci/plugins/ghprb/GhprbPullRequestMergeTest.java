@@ -90,7 +90,7 @@ public class GhprbPullRequestMergeTest {
     private final String mergeComment = "merge";
 
     private final Integer pullId = 1;
-    
+
     private Map<String, Object> triggerValues;
 
     @Before
@@ -98,7 +98,7 @@ public class GhprbPullRequestMergeTest {
         triggerValues = new HashMap<String, Object>(10);
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
-        
+
         GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(triggerValues));
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);

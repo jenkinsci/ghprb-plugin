@@ -90,9 +90,11 @@ public class GhprbBuilds {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, 
-                (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(),
-                trigger.getCommitStatusContext(), logger);
+        if ( !trigger.getSkipCommitStatus() ) {
+            repo.createCommitStatus(build, GHCommitState.PENDING, 
+                    (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(),
+                    trigger.getCommitStatusContext(), logger);
+        }
         try {
             build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + 
                     "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
@@ -130,7 +132,10 @@ public class GhprbBuilds {
         } else {
             state = GHCommitState.FAILURE;
         }
-        repo.createCommitStatus(build, state, "Build finished.", c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+
+        if ( !trigger.getSkipCommitStatus() ) {
+            repo.createCommitStatus(build, state, "Build finished.", c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+        }
 
 
         String publishedURL = GhprbTrigger.getDscp().getPublishedURL();

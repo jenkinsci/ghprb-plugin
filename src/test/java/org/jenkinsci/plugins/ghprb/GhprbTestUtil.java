@@ -96,6 +96,7 @@ public class GhprbTestUtil {
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
+        jsonObject.put("skipCommitStatus", "false");
 
         return jsonObject;
     }
@@ -111,7 +112,7 @@ public class GhprbTestUtil {
                 "", 
                 null);
     }
-    
+
     @SuppressWarnings("unchecked")
     public static GhprbTrigger getTrigger(Map<String, Object> values) throws ANTLRException {
         if (values == null) {
@@ -137,8 +138,9 @@ public class GhprbTestUtil {
             put("msgSuccess", null);
             put("msgFailure", null);
             put("commitStatusContext", null);
+            put("skipCommitStatus", false);
         }};
-        
+
         defaultValues.putAll(values);
         GhprbTrigger trigger = new GhprbTrigger(
                 (String)defaultValues.get("adminlist"),
@@ -156,17 +158,18 @@ public class GhprbTestUtil {
                 (Boolean)defaultValues.get("allowMembersOfWhitelistedOrgsAsAdmin"),
                 (String)defaultValues.get("msgSuccess"),
                 (String)defaultValues.get("msgFailure"),
-                (String)defaultValues.get("commitStatusContext"));
+                (String)defaultValues.get("commitStatusContext"),
+                (Boolean)defaultValues.get("skipCommitStatus"));
         return trigger;
     }
-    
+
     public static void waitForBuildsToFinish(AbstractProject<?, ?> project) throws InterruptedException {
         while (project.isBuilding() || project.isInQueue()) {
             // THEN
             Thread.sleep(500);
         }
     }
-    
+
 
     public static void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
         for (int i = 0; i < numOfTriggers; ++i) {
