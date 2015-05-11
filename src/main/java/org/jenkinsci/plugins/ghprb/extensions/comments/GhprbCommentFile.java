@@ -15,18 +15,27 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppender {
     
-    private final String filePath;
+    private final String commentFilePath;
 
     @DataBoundConstructor
-    public GhprbCommentFile(String filePath) {
-        this.filePath = filePath;
+    public GhprbCommentFile(String commentFilePath) {
+        this.commentFilePath = commentFilePath;
+    }
+    
+    public String getCommentFilePath() {
+        return commentFilePath != null ? commentFilePath : "";
+    }
+    
+    public boolean ignorePublishedUrl() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
-        if (filePath != null && !filePath.isEmpty()) {
+        if (commentFilePath != null && !commentFilePath.isEmpty()) {
             try {
-                String scriptFilePathResolved = Ghprb.replaceMacros(build, filePath);
+                String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
                 
                 String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
                 msg.append("Build comment file: \n--------------\n");
@@ -44,7 +53,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
 
 
     @Extension
-    public static class DescriptorImpl extends GhprbExtensionDescriptor {
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor {
 
         @Override
         public String getDisplayName() {
@@ -52,6 +61,5 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         }
         
     }
-    
 
 }

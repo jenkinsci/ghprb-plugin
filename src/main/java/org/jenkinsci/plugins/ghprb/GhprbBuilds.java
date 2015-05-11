@@ -121,20 +121,10 @@ public class GhprbBuilds {
         }
 
         GHCommitState state;
-        if (build.getResult() == Result.SUCCESS) {
-            state = GHCommitState.SUCCESS;
-        } else if (build.getResult() == Result.UNSTABLE) {
-            state = GHCommitState.valueOf(GhprbTrigger.getDscp().getUnstableAs());
-        } else {
-            state = GHCommitState.FAILURE;
-        }
+        state = Ghprb.getState(build);
         repo.createCommitStatus(build, state, "Build finished.", c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
 
-
-        String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
-        if (publishedURL != null && !publishedURL.isEmpty()) {
-            buildResultMessage(build, listener, state, c);
-        }
+        buildResultMessage(build, listener, state, c);
         // close failed pull request automatically
         if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
             closeFailedRequest(listener, c);
@@ -156,31 +146,10 @@ public class GhprbBuilds {
     
     private void buildResultMessage(AbstractBuild<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
         StringBuilder msg = new StringBuilder();
-        
+
         for (GhprbExtension ext : trigger.getExtensions()) {
             if (ext instanceof GhprbCommentAppender) {
                 msg.append(((GhprbCommentAppender) ext).postBuildComment(build, listener));
-            }
-        }
-
-        msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
-        msg.append(generateCustomizedMessage(build));
-
-        int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
-        if (state != GHCommitState.SUCCESS && numLines > 0) {
-            // on failure, append an excerpt of the build log
-            try {
-                // wrap log in "code" markdown
-                msg.append("\n\n**Build Log**\n*last ").append(numLines).append(" lines*\n");
-                msg.append("\n ```\n");
-                List<String> log = build.getLog(numLines);
-                for (String line : log) {
-                    msg.append(line).append('\n');
-                }
-                msg.append("```\n");
-            } catch (IOException ex) {
-                listener.getLogger().println("Can't add log excerpt to commit comments");
-                ex.printStackTrace(listener.getLogger());
             }
         }
 
@@ -215,20 +184,4 @@ public class GhprbBuilds {
         }
     }
 
-    private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
-        JobConfiguration jobConfiguration = JobConfiguration.builder()
-                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
-
-        GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(buildManager.calculateBuildUrl());
-
-        if (build.getResult() != Result.SUCCESS) {
-            sb.append(buildManager.getTestResults());
-        }
-
-        return sb.toString();
-    }
 }

@@ -10,6 +10,7 @@ import hudson.Util;
 import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
+import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
@@ -17,6 +18,7 @@ import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
@@ -37,9 +39,8 @@ import java.util.regex.Pattern;
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
+public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
 
-    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
     private final String adminlist;
@@ -112,13 +113,30 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
         this.msgFailure = msgFailure;
         setExtensions(extensions);
     }
-
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
+    
+    @Deprecated
+    private String commentFilePath; // TODO: once satisfied with changes, make transient
+    
+    @Override
+    public Object readResolve() {
+        checkCommentsFile();
+        
+        return this;
+    }
+    
+    private void checkCommentsFile() {
+        if (commentFilePath != null && !commentFilePath.isEmpty()) {
+            GhprbCommentFile comments = new GhprbCommentFile(commentFilePath);
+            addIfMissing(comments);
+//            commentFilePath = null; // TODO: Disable once satisfied with changes.
         }
-        return trigger;
+    }
+    
+
+    private void addIfMissing(GhprbExtension ext) {
+        if (getExtensions().get(ext.getClass()) == null) {
+            getExtensions().add(ext);
+        }
     }
 
     public static DescriptorImpl getDscp() {
@@ -180,6 +198,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
             return;
         }
+        
+        logger.log(Level.FINE, "Running trigger for {0}", project);
         
         helper.run();
         getDescriptor().save();
@@ -388,6 +408,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
         return helper.getRepository();
     }
 
+    @Extension
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
@@ -429,6 +450,20 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
         public List<GhprbExtensionDescriptor> getExtensionDescriptors() {
             return GhprbExtensionDescriptor.all();
         }
+        
+        
+//        public List<GhprbGlobalExtensionDescriptor> getGlobalExtensionDescriptors() {
+//            return GhprbGlobalExtensionDescriptor.all();
+//        }
+//        
+//        private DescribableList<GhprbGlobalExtension, GhprbGlobalExtensionDescriptor> extensions;
+//        
+//        public DescribableList<GhprbGlobalExtension, GhprbGlobalExtensionDescriptor> getExtensions() {
+//            if (extensions == null) {
+//                extensions = new DescribableList<GhprbGlobalExtension, GhprbGlobalExtensionDescriptor>(Saveable.NOOP,Util.fixNull(extensions));
+//            }
+//            return extensions;
+//        }
 
         public DescriptorImpl() {
             load();
@@ -470,7 +505,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatibility {
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
-
+            
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);

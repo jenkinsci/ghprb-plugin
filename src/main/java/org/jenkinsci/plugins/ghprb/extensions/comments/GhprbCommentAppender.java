@@ -6,4 +6,5 @@ import hudson.model.TaskListener;
 public interface GhprbCommentAppender {
 
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener);
+    
 }

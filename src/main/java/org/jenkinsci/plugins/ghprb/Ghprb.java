@@ -5,8 +5,10 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Result;
 import hudson.util.LogTaskListener;
 
+import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHUser;
 
 import java.util.*;
@@ -179,6 +181,18 @@ public class Ghprb {
 
     }
     
+    public static GHCommitState getState(AbstractBuild<?, ?> build) {
+
+        GHCommitState state;
+        if (build.getResult() == Result.SUCCESS) {
+            state = GHCommitState.SUCCESS;
+        } else if (build.getResult() == Result.UNSTABLE) {
+            state = GHCommitState.valueOf(GhprbTrigger.getDscp().getUnstableAs());
+        } else {
+            state = GHCommitState.FAILURE;
+        }
+        return state;
+    }
 
     public static Set<String> createSet(String list) {
         String listString = list == null ? "" : list;
@@ -186,6 +200,18 @@ public class Ghprb {
         Set<String> listSet = new HashSet<String>(listList);
         listSet.remove("");
         return listSet;
+    }
+    
+    public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
+        return extractTrigger(build.getProject());
+    }
+
+    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
+        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
+        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
+            return null;
+        }
+        return trigger;
     }
 
 }

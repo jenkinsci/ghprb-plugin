@@ -60,7 +60,6 @@
       </f:repeatable>
     </f:entry>
   </f:advanced>
-  
   <f:entry title="${%Application Setup}">
     <f:hetero-list name="extensions" items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
   </f:entry>
