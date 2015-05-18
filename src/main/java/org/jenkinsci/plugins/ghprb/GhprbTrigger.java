@@ -7,6 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.init.Initializer;
 import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
@@ -14,11 +15,13 @@ import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
@@ -39,8 +42,9 @@ import java.util.regex.Pattern;
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
+public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
+    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
     private final String adminlist;
@@ -111,34 +115,19 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
         this.msgFailure = msgFailure;
+        this.commentFilePath = commentFilePath;
         setExtensions(extensions);
     }
-    
-    @Deprecated
-    private String commentFilePath; // TODO: once satisfied with changes, make transient
-    
+
+    public String getCommentFilePath() {
+        return commentFilePath;
+    }
     @Override
     public Object readResolve() {
-        checkCommentsFile();
-        
+        convertPropertiesToExtensions();
         return this;
     }
     
-    private void checkCommentsFile() {
-        if (commentFilePath != null && !commentFilePath.isEmpty()) {
-            GhprbCommentFile comments = new GhprbCommentFile(commentFilePath);
-            addIfMissing(comments);
-//            commentFilePath = null; // TODO: Disable once satisfied with changes.
-        }
-    }
-    
-
-    private void addIfMissing(GhprbExtension ext) {
-        if (getExtensions().get(ext.getClass()) == null) {
-            getExtensions().add(ext);
-        }
-    }
-
     public static DescriptorImpl getDscp() {
         return DESCRIPTOR;
     }
@@ -190,7 +179,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         }
 
         if (helper == null) {
-            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
+            logger.log(Level.INFO, "Helper is null, unable to run trigger");
             return;
         }
         
@@ -408,7 +397,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         return helper.getRepository();
     }
 
-    @Extension
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
@@ -429,7 +417,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private Boolean useComments = false;
         private Boolean useDetailedComments = false;
         private int logExcerptLines = 0;
-        private String unstableAs = GHCommitState.FAILURE.name();
+        private GHCommitState unstableAs = GHCommitState.FAILURE;
         private String msgSuccess = "Test PASSed.";
         private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
@@ -448,22 +436,21 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
         
         public List<GhprbExtensionDescriptor> getExtensionDescriptors() {
-            return GhprbExtensionDescriptor.all();
+            return GhprbExtensionDescriptor.allProject();
         }
         
+        public List<GhprbExtensionDescriptor> getGlobalExtensionDescriptors() {
+            return GhprbExtensionDescriptor.allGlobal();
+        }
         
-//        public List<GhprbGlobalExtensionDescriptor> getGlobalExtensionDescriptors() {
-//            return GhprbGlobalExtensionDescriptor.all();
-//        }
-//        
-//        private DescribableList<GhprbGlobalExtension, GhprbGlobalExtensionDescriptor> extensions;
-//        
-//        public DescribableList<GhprbGlobalExtension, GhprbGlobalExtensionDescriptor> getExtensions() {
-//            if (extensions == null) {
-//                extensions = new DescribableList<GhprbGlobalExtension, GhprbGlobalExtensionDescriptor>(Saveable.NOOP,Util.fixNull(extensions));
-//            }
-//            return extensions;
-//        }
+        private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions;
+        
+        public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
+            if (extensions == null) {
+                extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+            }
+            return extensions;
+        }
 
         public DescriptorImpl() {
             load();
@@ -499,16 +486,42 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             useComments = formData.getBoolean("useComments");
             useDetailedComments = formData.getBoolean("useDetailedComments");
             logExcerptLines = formData.getInt("logExcerptLines");
-            unstableAs = formData.getString("unstableAs");
+            unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             msgSuccess = formData.getString("msgSuccess");
             msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
             
+            extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+            
+            Object exts = formData.get("extensions");
+            JSONArray extsArray;
+            if (exts instanceof JSONArray) {
+                extsArray = formData.getJSONArray("extensions");
+                for (int i=0; i<extsArray.size(); ++i) {
+                    JSONObject next = extsArray.getJSONObject(i);
+                    extensions.add(createExtension(req, next));
+                }   
+            } else {
+                extensions.add(createExtension(req, (JSONObject)exts));
+            }
+
             save();
             gh = new GhprbGitHub();
             return super.configure(req, formData);
+        }
+        
+        private GhprbExtension createExtension(StaplerRequest req, JSONObject json) {
+            String clazz = json.getString("stapler-class");
+            Class<?> type;
+            try {
+                type = Class.forName(clazz);
+                return (GhprbExtension) req.bindJSON(type, json);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
 
         public FormValidation doCheckAdminlist(@QueryParameter String value) throws ServletException {
@@ -527,6 +540,20 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
                 return FormValidation.ok();
             }
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
+        }
+        
+        public ListBoxModel doFillUnstableAsItems() {
+            ListBoxModel items = new ListBoxModel();
+            GHCommitState[] results = new GHCommitState[] {GHCommitState.SUCCESS,GHCommitState.ERROR,GHCommitState.FAILURE};
+            for (GHCommitState nextResult : results) {
+                String text = StringUtils.capitalize(nextResult.toString().toLowerCase());
+                items.add(text, nextResult.toString());
+                if (unstableAs.toString().equals(nextResult)) {
+                    items.get(items.size()-1).selected = true;
+                } 
+            }
+
+            return items;
         }
 
         public String getUsername() {
@@ -597,7 +624,7 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
             return serverAPIUrl;
         }
 
-        public String getUnstableAs() {
+        public GHCommitState getUnstableAs() {
             return unstableAs;
         }
 
@@ -669,5 +696,6 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         public List<GhprbBranch> getWhiteListTargetBranches() {
             return whiteListTargetBranches;
         }
+        
     }
 }

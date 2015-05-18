@@ -7,14 +7,17 @@ import hudson.model.AbstractBuild;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbCommentAppender {
+public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbCommentAppender, GhprbGlobalExtension {
 
     @DataBoundConstructor
     public GhprbPublishJenkinsUrl() {
@@ -54,7 +57,7 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
 
 
     @Extension
-    public static final class DescriptorImpl extends GhprbExtensionDescriptor {
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbGlobalExtension {
 
         @Override
         public String getDisplayName() {

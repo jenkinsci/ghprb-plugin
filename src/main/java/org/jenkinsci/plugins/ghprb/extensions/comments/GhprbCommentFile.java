@@ -9,11 +9,14 @@ import hudson.model.AbstractBuild;
 
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppender {
+public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppender, GhprbProjectExtension {
     
     private final String commentFilePath;
 
@@ -53,7 +56,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
 
 
     @Extension
-    public static final class DescriptorImpl extends GhprbExtensionDescriptor {
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbProjectExtension {
 
         @Override
         public String getDisplayName() {

@@ -20,11 +20,7 @@
     </f:entry>
     <f:advanced>
       <f:entry title="${%Mark Unstable build in github as}" field="unstableAs">
-        <select name="unstableAs">
-          <option value="FAILURE">Failure</option>
-          <option value="SUCCESS">Success</option>
-          <option value="ERROR">Error</option>
-        </select>
+        <f:select />
       </f:entry>
       <f:entry title="${%Published Jenkins URL}" field="publishedURL">
         <f:textbox/>
@@ -71,5 +67,8 @@
       <f:validateButton title="${%Create access token}" progress="${%Creating...}"
         method="createApiToken" with="username,password" />
     </f:advanced>
+    <f:entry title="${%Application Setup}">
+      <f:hetero-list oneEach="true" name="extensions" items="${descriptor.extensions}" descriptors="${descriptor.getGlobalExtensionDescriptors()}"/>
+    </f:entry>
   </f:section>
 </j:jelly>

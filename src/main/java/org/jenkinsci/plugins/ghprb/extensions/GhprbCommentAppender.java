@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.ghprb.extensions.comments;
+package org.jenkinsci.plugins.ghprb.extensions;
 
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;

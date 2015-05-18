@@ -187,7 +187,7 @@ public class Ghprb {
         if (build.getResult() == Result.SUCCESS) {
             state = GHCommitState.SUCCESS;
         } else if (build.getResult() == Result.UNSTABLE) {
-            state = GHCommitState.valueOf(GhprbTrigger.getDscp().getUnstableAs());
+            state = GhprbTrigger.getDscp().getUnstableAs();
         } else {
             state = GHCommitState.FAILURE;
         }
