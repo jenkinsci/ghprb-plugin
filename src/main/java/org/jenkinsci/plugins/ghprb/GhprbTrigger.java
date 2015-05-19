@@ -151,16 +151,17 @@ public class GhprbTrigger extends Trigger<AbstractProject<?, ?>> {
         if (getUseGitHubHooks()) {
             return;
         }
-        
+
+        if (helper == null) {
+            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
+            return;
+        }
+
         if (helper.isProjectDisabled()) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
             return;
         }
         
-        if (helper == null) {
-            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
-            return;
-        }
         helper.run();
         getDescriptor().save();
     }
