@@ -5,42 +5,38 @@ package org.jenkinsci.plugins.ghprb.manager.configuration;
  */
 public class JobConfiguration {
 
-	public static PrintStackTrace builder() {
-		return new JobConfigurationBuilder();
-	}
+    public static PrintStackTrace builder() {
+        return new JobConfigurationBuilder();
+    }
 
-	private boolean printStacktrace;
+    private boolean printStacktrace;
 
-	private JobConfiguration() {
-	}
+    private JobConfiguration() {}
 
-	public boolean printStackTrace() {
-		return this.printStacktrace;
-	}
+    public boolean printStackTrace() {
+        return this.printStacktrace;
+    }
 
-	public static interface PrintStackTrace {
-		Build printStackTrace(boolean print);
-	}
+    public static interface PrintStackTrace {
+        Build printStackTrace(boolean print);
+    }
 
-	public static interface Build {
-		JobConfiguration build();
-	}
+    public static interface Build {
+        JobConfiguration build();
+    }
 
+    public static final class JobConfigurationBuilder implements Build, PrintStackTrace {
 
-	public static final class JobConfigurationBuilder implements Build, PrintStackTrace {
+        private JobConfiguration jobConfiguration = new JobConfiguration();
 
-		private JobConfiguration jobConfiguration = new JobConfiguration();
+        public JobConfiguration build() {
+            return jobConfiguration;
+        }
 
-		public JobConfiguration build() {
-			return jobConfiguration;
-		}
-
-		public Build printStackTrace(boolean print) {
-			jobConfiguration.printStacktrace = print;
-			return this;
-		}
-	}
+        public Build printStackTrace(boolean print) {
+            jobConfiguration.printStacktrace = print;
+            return this;
+        }
+    }
 
 }
-
-

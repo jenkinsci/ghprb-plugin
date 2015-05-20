@@ -33,78 +33,71 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
-	@Rule
-	public JenkinsRule jenkinsRule = new JenkinsRule();
+    @Rule
+    public JenkinsRule jenkinsRule = new JenkinsRule();
 
-	@Before
-	public void setUp() throws Exception {
-//    	GhprbTestUtil.mockGithubUserPage();
-		super.beforeTest();
-	}
+    @Before
+    public void setUp() throws Exception {
+        // GhprbTestUtil.mockGithubUserPage();
+        super.beforeTest();
+    }
 
-	@Test
-	public void shouldCalculateUrlFromDefault() throws Exception {
-		// GIVEN
-		MatrixProject project = givenThatGhprbHasBeenTriggeredForAMatrixProject();
+    @Test
+    public void shouldCalculateUrlFromDefault() throws Exception {
+        // GIVEN
+        MatrixProject project = givenThatGhprbHasBeenTriggeredForAMatrixProject();
 
-		// THEN
-		assertThat(project.getBuilds().toArray().length).isEqualTo(1);
+        // THEN
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
 
-		MatrixBuild matrixBuild = project.getBuilds().getFirstBuild();
+        MatrixBuild matrixBuild = project.getBuilds().getFirstBuild();
 
-		GhprbBuildManager buildManager =
-			GhprbBuildManagerFactoryUtil.getBuildManager(matrixBuild);
+        GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(matrixBuild);
 
-		assertThat(buildManager).isInstanceOf(GhprbDefaultBuildManager.class);
+        assertThat(buildManager).isInstanceOf(GhprbDefaultBuildManager.class);
 
-		assertThat(buildManager.calculateBuildUrl()).isEqualTo(
-			"defaultPublishedURL/" + matrixBuild.getUrl());
-	}
+        assertThat(buildManager.calculateBuildUrl()).isEqualTo("defaultPublishedURL/" + matrixBuild.getUrl());
+    }
 
-	private MatrixProject givenThatGhprbHasBeenTriggeredForAMatrixProject() throws Exception {
-		MatrixProject project = jenkinsRule.createMatrixProject("MTXPRJ");
+    private MatrixProject givenThatGhprbHasBeenTriggeredForAMatrixProject() throws Exception {
+        MatrixProject project = jenkinsRule.createMatrixProject("MTXPRJ");
 
-		GhprbTrigger trigger = new GhprbTrigger("user", "user", "",
-			"*/1 * * * *", "retest this please", false, false, false, false,
-			false, null, null, false, null, null, null, null);
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
 
-		given(commitPointer.getSha()).willReturn("sha");
+        given(commitPointer.getSha()).willReturn("sha");
 
-		JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-		
+        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
 
-		jsonObject.put("publishedURL", "defaultPublishedURL");
-		GhprbTrigger.DESCRIPTOR.configure(null, jsonObject);
+        jsonObject.put("publishedURL", "defaultPublishedURL");
+        GhprbTrigger.DESCRIPTOR.configure(null, jsonObject);
 
-		project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
+        project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
-		given(ghPullRequest.getNumber()).willReturn(1);
+        given(ghPullRequest.getNumber()).willReturn(1);
 
-		// Creating spy on ghprb, configuring repo
-		Ghprb ghprb = spyCreatingGhprb(trigger, project);
+        // Creating spy on ghprb, configuring repo
+        Ghprb ghprb = spyCreatingGhprb(trigger, project);
 
-		doReturn(ghprbGitHub).when(ghprb).getGitHub();
+        doReturn(ghprbGitHub).when(ghprb).getGitHub();
 
-		setRepositoryHelper(ghprb);
+        setRepositoryHelper(ghprb);
 
-		given(ghRepository.getPullRequest(1)).willReturn(ghPullRequest);
+        given(ghRepository.getPullRequest(1)).willReturn(ghPullRequest);
 
-		// Configuring and adding Ghprb trigger
-		project.addTrigger(trigger);
+        // Configuring and adding Ghprb trigger
+        project.addTrigger(trigger);
 
-		project.getTriggers().keySet().iterator().next()
-			.configure(null, jsonObject);
+        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
 
-		// Configuring Git SCM
-		project.setScm(GhprbTestUtil.provideGitSCM());
+        // Configuring Git SCM
+        project.setScm(GhprbTestUtil.provideGitSCM());
 
-		trigger.start(project, true);
+        trigger.start(project, true);
 
-		setTriggerHelper(trigger, ghprb);
+        setTriggerHelper(trigger, ghprb);
 
-		// THEN
-		Thread.sleep(130000);
+        GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
-		return project;
-	}
+        return project;
+    }
 }

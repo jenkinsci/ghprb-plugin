@@ -20,90 +20,86 @@ import hudson.tasks.test.AggregatedTestResultAction;
  */
 public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
-	private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
+    private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
 
-	public BuildFlowBuildManager(AbstractBuild build) {
-		super(build);
-	}
+    public BuildFlowBuildManager(AbstractBuild build) {
+        super(build);
+    }
 
-	public BuildFlowBuildManager(AbstractBuild build, JobConfiguration jobConfiguration) {
-		super(build, jobConfiguration);
-	}
+    public BuildFlowBuildManager(AbstractBuild build, JobConfiguration jobConfiguration) {
+        super(build, jobConfiguration);
+    }
 
-	/**
-	 * Calculate the build URL of a build of BuildFlow type, traversing its
-	 * downstream builds graph
-	 * 
-	 * @return the build URL of a BuildFlow build, with all its downstream builds
-	 */
-	@Override
-	public String calculateBuildUrl() {
-		Iterator<JobInvocation> iterator = downstreamProjects();
+    /**
+     * Calculate the build URL of a build of BuildFlow type, traversing its downstream builds graph
+     * 
+     * @return the build URL of a BuildFlow build, with all its downstream builds
+     */
+    @Override
+    public String calculateBuildUrl() {
+        Iterator<JobInvocation> iterator = downstreamProjects();
 
-		StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-		while (iterator.hasNext()) {
-			JobInvocation jobInvocation = iterator.next();
+        while (iterator.hasNext()) {
+            JobInvocation jobInvocation = iterator.next();
 
-			sb.append("\n");
-			sb.append("<a href='");
-			sb.append(jobInvocation.getBuildUrl());
-			sb.append("'>");
-			sb.append(jobInvocation.getBuildUrl());
-			sb.append("</a>");
-		}
+            sb.append("\n");
+            sb.append("<a href='");
+            sb.append(jobInvocation.getBuildUrl());
+            sb.append("'>");
+            sb.append(jobInvocation.getBuildUrl());
+            sb.append("</a>");
+        }
 
-		return sb.toString();
-	}
+        return sb.toString();
+    }
 
-	/**
-	 * Return a downstream iterator of a build of default type. This will be overriden
-	 * by specific build types.
-	 * 
-	 * @return the downstream builds as an iterator
-	 */
-	@Override
-	public Iterator downstreamProjects() {
-		FlowRun flowRun = (FlowRun) build;
+    /**
+     * Return a downstream iterator of a build of default type. This will be overriden by specific build types.
+     * 
+     * @return the downstream builds as an iterator
+     */
+    @Override
+    public Iterator downstreamProjects() {
+        FlowRun flowRun = (FlowRun) build;
 
-		DirectedGraph directedGraph = flowRun.getJobsGraph();
+        DirectedGraph directedGraph = flowRun.getJobsGraph();
 
-		return directedGraph.vertexSet().iterator();
-	}
+        return directedGraph.vertexSet().iterator();
+    }
 
-	/**
-	 * Return the tests results of a build of default type. This will be overriden
-	 * by specific build types.
-	 *
-	 * @return the tests result of a build of default type
-	 */
-	@Override
-	public String getTestResults() {
-		Iterator<JobInvocation> iterator = downstreamProjects();
+    /**
+     * Return the tests results of a build of default type. This will be overriden by specific build types.
+     *
+     * @return the tests result of a build of default type
+     */
+    @Override
+    public String getTestResults() {
+        Iterator<JobInvocation> iterator = downstreamProjects();
 
-		StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-		while (iterator.hasNext()) {
-			JobInvocation jobInvocation = iterator.next();
+        while (iterator.hasNext()) {
+            JobInvocation jobInvocation = iterator.next();
 
-			try {
-				AbstractBuild build = (AbstractBuild)jobInvocation.getBuild();
+            try {
+                AbstractBuild build = (AbstractBuild) jobInvocation.getBuild();
 
-				AggregatedTestResultAction testResultAction =
-					build.getAction(AggregatedTestResultAction.class);
+                AggregatedTestResultAction testResultAction = build.getAction(AggregatedTestResultAction.class);
 
-				if (testResultAction != null) {
-					sb.append("\n");
-					sb.append(jobInvocation.getBuildUrl());
-					sb.append("\n");
-					sb.append(getAggregatedTestResults(build));
-				}
-			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Job execution has failed", e);
-			}
-		}
+                if (testResultAction != null) {
+                    sb.append("\n");
+                    sb.append(jobInvocation.getBuildUrl());
+                    sb.append("\n");
+                    sb.append(getAggregatedTestResults(build));
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Job execution has failed", e);
+            }
+        }
 
-		return sb.toString();
-	}
+        return sb.toString();
+    }
 
 }

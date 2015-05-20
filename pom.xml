@@ -10,7 +10,7 @@
 
     <artifactId>ghprb</artifactId>
     <name>GitHub Pull Request Builder</name>
-    <version>1.16-9-SNAPSHOT</version>
+    <version>1.21-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <url>https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin</url>
@@ -24,11 +24,6 @@
         <developer>
             <id>valdisrigdon</id>
             <name>Valdis Rigdon</name>
-        </developer>
-        <developer>
-            <id>DavidTanner</id>
-            <name>David Tanner</name>
-            <email>david.joel.tanner@gmail.com</email>
         </developer>
     </developers>
 
@@ -58,7 +53,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.59</version>
+            <version>1.66</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -99,12 +94,6 @@
             <artifactId>build-flow-plugin</artifactId>
             <version>0.12</version>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-netty</artifactId>
-            <version>3.9.1</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

@@ -4,6 +4,7 @@ import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
+import hudson.security.csrf.CrumbExclusion;
 import jenkins.model.Jenkins;
 
 import org.acegisecurity.Authentication;
@@ -24,6 +25,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -62,7 +68,8 @@ public class GhprbRootAction implements UnprotectedRootAction {
         } else if ("application/x-www-form-urlencoded".equals(type)) {
             body = extractRequestBody(req);
             if (body == null || body.length() <= 8) {
-                logger.log(Level.SEVERE, "Request doesn't contain payload. You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                logger.log(Level.SEVERE, "Request doesn't contain payload. "
+                        + "You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
                 return;
             }
             try {
@@ -74,7 +81,9 @@ public class GhprbRootAction implements UnprotectedRootAction {
         }
 
         if (payload == null) {
-            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. Please use 'application/json' or 'application/x-www-form-urlencoded'", new Object[] {type});
+            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. "
+                    + "Please use 'application/json' or 'application/x-www-form-urlencoded'",
+                    new Object[] { type });
             return;
         }
 
@@ -83,7 +92,8 @@ public class GhprbRootAction implements UnprotectedRootAction {
         logger.log(Level.INFO, "Got payload event: {0}", event);
         try {
             if ("issue_comment".equals(event)) {
-                GHEventPayload.IssueComment issueComment = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
+                GHEventPayload.IssueComment issueComment = gh.get()
+                        .parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
                 GHIssueState state = issueComment.getIssue().getState();
                 if (state == GHIssueState.CLOSED) {
                     logger.log(Level.INFO, "Skip comment on closed PR");
@@ -91,14 +101,16 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 }
 
                 for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
-                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] {issueComment.getComment(), repo.getName()});
+                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}",
+                            new Object[] { issueComment.getComment(), repo.getName() }
+                    );
                     if(repo.checkSignature(body, signature))
                         repo.onIssueCommentHook(issueComment);
                 }
             } else if ("pull_request".equals(event)) {
                 GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
                 for (GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())) {
-                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber()});
+                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber() });
                     if(repo.checkSignature(body, signature))
                         repo.onPullRequestHook(pr);
                 }
@@ -142,13 +154,36 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     continue;
                 }
                 GhprbRepository r = trigger.getRepository();
-                if (repo.equals(r.getName())) {
+                if (repo.equalsIgnoreCase(r.getName())) {
                     ret.add(r);
                 }
             }
         } finally {
             SecurityContextHolder.getContext().setAuthentication(old);
         }
+
+        if (ret.size() == 0) {
+            logger.log(Level.WARNING, "No repos with plugin trigger found for GitHub repo named {0}", repo);
+        }
+
         return ret;
+    }
+
+    @Extension
+    public static class GhprbRootActionCrumbExclusion extends CrumbExclusion {
+
+        @Override
+        public boolean process(HttpServletRequest req, HttpServletResponse resp, FilterChain chain) throws IOException, ServletException {
+            String pathInfo = req.getPathInfo();
+            if (pathInfo != null && pathInfo.equals(getExclusionPath())) {
+                chain.doFilter(req, resp);
+                return true;
+            }
+            return false;
+        }
+
+        public String getExclusionPath() {
+            return "/" + URL + "/";
+        }
     }
 }

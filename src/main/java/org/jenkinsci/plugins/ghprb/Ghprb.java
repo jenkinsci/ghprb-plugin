@@ -16,7 +16,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 /**
  * @author janinko
  */
@@ -80,6 +79,10 @@ public class Ghprb {
         whitelisted.add(author);
         trigger.addWhitelist(author);
     }
+    
+    public boolean isProjectDisabled() {
+        return project.isDisabled();
+    }
 
     public GhprbBuilds getBuilds() {
         return builds;
@@ -136,7 +139,7 @@ public class Ghprb {
     public boolean isAdmin(GHUser user) {
         return admins.contains(user.getLogin())
                 || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
-                    && isInWhitelistedOrganisation(user));
+                        && isInWhitelistedOrganisation(user));
     }
 
     public boolean isBotUser(GHUser user) {
@@ -155,9 +158,9 @@ public class Ghprb {
     List<GhprbBranch> getWhiteListTargetBranches() {
         return trigger.getWhiteListTargetBranches();
     }
-    
+
     public static String replaceMacros(AbstractBuild<?, ?> build, String inputString) {
-    	String returnString = inputString;
+        String returnString = inputString;
         if (build != null && inputString != null) {
             try {
                 Map<String, String> messageEnvVars = new HashMap<String, String>();

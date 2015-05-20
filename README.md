@@ -18,7 +18,7 @@ A new build can also be started with a comment: ``retest this please``.
 You can extend the standard build comment message on github 
 creating a comment file from shell console or any other 
 jenkins plugin. Contents of that file will be added to the comment on GitHub. 
-This is usefull for posting some build dependent urls for users without 
+This is useful for posting some build dependent urls for users without 
 access to the jenkins UI console.
 
 Jobs can be configured to only build if a matching comment is added to a pull request.  For instance, if you have two job you want to run against a pull request,
@@ -68,6 +68,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
   * If you **just** want to build PRs, set ``refspec`` to ``+refs/pull/*:refs/remotes/origin/pr/*``
   * If you want to build PRs **and** branches, set ``refspec`` to ``+refs/heads/*:refs/remotes/origin/* +refs/pull/*:refs/remotes/origin/pr/*`` (see note below about [parameterized builds](#parameterized-builds))
 * In ``Branch Specifier``, enter ``${sha1}`` instead of the default ``*/master``.
+* If you want to use the actual commit in the pull request, use ``${ghprbActualCommit}`` instead of ``${sha1}``
 * Under ``Build Triggers``, check ``GitHub pull requests builder``.
   * Add admins for this specific job.  
   * If you want to use GitHub hooks for automatic testing, read the help for ``Use github hooks for build triggering`` in job configuration. Then you can check the checkbox.
@@ -84,6 +85,28 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 
 ### Updates
+
+#### -> 1.20.1
+* Null Pointer fix for trigger.
+* Added clarity to error message when access is forbidden.
+
+#### -> 1.20
+* PullRequestMerger now notifies the taskListener of failures.
+* AutoCloseFailedPullRequest has been extracted from the published URL check.
+
+#### -> 1.19
+* More work for disabled builds.
+* Unified tabs to spaces.
+* Updates to the tests, and added some tests.
+
+#### -> 1.18
+* Add support for folder projects.
+* Correcting issue with default credentials.
+* Correcting issue with ghRepository being null when it shouldn't be.
+* Ignoring case when matching repo to url.
+* Changing the wording for pull requests that are mergeable.
+* Change requestForTesting phrase to a textArea.
+* Check if project is disabled, if it is then don't do anything.
 
 #### -> 1.14
 * A comment file can be created during the build and added to any comment made to the pull request.  podarok#33
