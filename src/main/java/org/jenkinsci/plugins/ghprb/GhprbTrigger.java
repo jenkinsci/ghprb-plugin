@@ -113,8 +113,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.commitStatusContext = commitStatusContext;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
-        this.msgSuccess = msgSuccess;
-        this.msgFailure = msgFailure;
         setExtensions(extensions);
     }
 
@@ -175,10 +173,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
 
         if (helper == null) {
-            logger.log(Level.INFO, "Helper is null, unable to run trigger");
+            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
             return;
         }
-        
+
         if (helper.isProjectDisabled()) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
             return;
@@ -415,14 +413,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private String accessToken;
         private String adminlist;
         
-        @Deprecated
-        private String publishedURL;
-        @Deprecated
-        private Integer logExcerptLines = 0;
-        @Deprecated
-        private String msgSuccess;
-        @Deprecated
-        private String msgFailure;
         
         private String requestForTestingPhrase;
         private transient GhprbGitHub gh;
@@ -675,6 +665,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         public List<GhprbBranch> getWhiteListTargetBranches() {
             return whiteListTargetBranches;
         }
+        
+
+        @Deprecated
+        private transient String publishedURL;
+        @Deprecated
+        private transient Integer logExcerptLines = 0;
+        @Deprecated
+        private transient String msgSuccess;
+        @Deprecated
+        private transient String msgFailure;
         
         public void readBackFromLegacy() {
             if (logExcerptLines != null && logExcerptLines > 0) {

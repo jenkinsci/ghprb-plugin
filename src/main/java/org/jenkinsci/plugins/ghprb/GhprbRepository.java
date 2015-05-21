@@ -147,16 +147,12 @@ public class GhprbRepository {
             } else {
                 ghRepository.createCommitStatus(sha1, state, url, message);
             }
-        } catch (FileNotFoundException ex) {
-            newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or that something is really wrong with github.";
-            if (stream != null) {
-                stream.println(newMessage);
-                ex.printStackTrace(stream);
-            } else {
-                logger.log(Level.INFO, newMessage, ex);
-            }
         } catch (IOException ex) {
-            newMessage = "Could not update commit status of the Pull Request on GitHub.";
+            if (ex instanceof FileNotFoundException) {
+              newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or the user account does not have write access to the repo.";
+            } else {
+              newMessage = "Could not update commit status of the Pull Request on GitHub.";
+            }
             if (stream != null) {
                 stream.println(newMessage);
                 ex.printStackTrace(stream);
