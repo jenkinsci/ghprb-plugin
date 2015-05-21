@@ -7,11 +7,9 @@ import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.Util;
-import hudson.init.Initializer;
 import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
-import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
@@ -22,6 +20,10 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
@@ -59,8 +61,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
-    private String msgSuccess;
-    private String msgFailure;
     private String commitStatusContext;
     private transient Ghprb helper;
     private String project;
@@ -115,13 +115,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.msgSuccess = msgSuccess;
         this.msgFailure = msgFailure;
-        this.commentFilePath = commentFilePath;
         setExtensions(extensions);
     }
 
-    public String getCommentFilePath() {
-        return commentFilePath;
-    }
     @Override
     public Object readResolve() {
         convertPropertiesToExtensions();
@@ -317,14 +313,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return cron;
     }
 
-    public String getMsgSuccess() {
-        return msgSuccess;
-    }
-
-    public String getMsgFailure() {
-        return msgFailure;
-    }
-
     public String getTriggerPhrase() {
         if (triggerPhrase == null) {
             return "";
@@ -416,10 +404,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
         private Boolean useDetailedComments = false;
-        private int logExcerptLines = 0;
         private GHCommitState unstableAs = GHCommitState.FAILURE;
-        private String msgSuccess = "Test PASSed.";
-        private String msgFailure = "Test FAILed.";
         private List<GhprbBranch> whiteListTargetBranches;
         private String commitStatusContext = "";
         private Boolean autoCloseFailedPullRequests = false;
@@ -429,10 +414,19 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private String password;
         private String accessToken;
         private String adminlist;
+        
+        @Deprecated
         private String publishedURL;
+        @Deprecated
+        private Integer logExcerptLines = 0;
+        @Deprecated
+        private String msgSuccess;
+        @Deprecated
+        private String msgFailure;
+        
         private String requestForTestingPhrase;
         private transient GhprbGitHub gh;
-        // map of jobs (by their fullName) abd their map of pull requests
+        // map of jobs (by their fullName) and their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
         
         public List<GhprbExtensionDescriptor> getExtensionDescriptors() {
@@ -454,6 +448,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public DescriptorImpl() {
             load();
+            readBackFromLegacy();
             if (jobs == null) {
                 jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>();
             }
@@ -476,7 +471,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             password = formData.getString("password");
             accessToken = formData.getString("accessToken");
             adminlist = formData.getString("adminlist");
-            publishedURL = formData.getString("publishedURL");
             requestForTestingPhrase = formData.getString("requestForTestingPhrase");
             whitelistPhrase = formData.getString("whitelistPhrase");
             okToTestPhrase = formData.getString("okToTestPhrase");
@@ -485,27 +479,27 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
             useDetailedComments = formData.getBoolean("useDetailedComments");
-            logExcerptLines = formData.getInt("logExcerptLines");
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
-            msgSuccess = formData.getString("msgSuccess");
-            msgFailure = formData.getString("msgFailure");
             commitStatusContext = formData.getString("commitStatusContext");
             
             extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
             
             Object exts = formData.get("extensions");
-            JSONArray extsArray;
-            if (exts instanceof JSONArray) {
-                extsArray = formData.getJSONArray("extensions");
-                for (int i=0; i<extsArray.size(); ++i) {
-                    JSONObject next = extsArray.getJSONObject(i);
-                    extensions.add(createExtension(req, next));
-                }   
-            } else {
-                extensions.add(createExtension(req, (JSONObject)exts));
+            if (exts != null) {
+                JSONArray extsArray;
+                if (exts instanceof JSONArray) {
+                    extsArray = formData.getJSONArray("extensions");
+                    for (int i=0; i<extsArray.size(); ++i) {
+                        JSONObject next = extsArray.getJSONObject(i);
+                        extensions.add(createExtension(req, next));
+                    }   
+                } else {
+                    extensions.add(createExtension(req, (JSONObject)exts));
+                }
             }
+            readBackFromLegacy();
 
             save();
             gh = new GhprbGitHub();
@@ -514,10 +508,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
         private GhprbExtension createExtension(StaplerRequest req, JSONObject json) {
             String clazz = json.getString("stapler-class");
+            if (StringUtils.isEmpty(clazz)) {
+                return null;
+            }
             Class<?> type;
             try {
                 type = Class.forName(clazz);
-                return (GhprbExtension) req.bindJSON(type, json);
+                GhprbExtension extension = (GhprbExtension) req.bindJSON(type, json);
+                return extension;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -572,10 +570,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return adminlist;
         }
 
-        public String getPublishedURL() {
-            return publishedURL;
-        }
-
         public String getRequestForTestingPhrase() {
             return requestForTestingPhrase;
         }
@@ -608,9 +602,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return useDetailedComments;
         }
 
-        public int getlogExcerptLines() {
-            return logExcerptLines;
-        }
 
         public Boolean getAutoCloseFailedPullRequests() {
             return autoCloseFailedPullRequests;
@@ -626,18 +617,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public GHCommitState getUnstableAs() {
             return unstableAs;
-        }
-
-        public String getMsgSuccess(AbstractBuild<?, ?> build) {
-            String msg = msgSuccess;
-            msg = Ghprb.replaceMacros(build, msg);
-            return msg;
-        }
-
-        public String getMsgFailure(AbstractBuild<?, ?> build) {
-            String msg = msgFailure;
-            msg = Ghprb.replaceMacros(build, msg);
-            return msg;
         }
 
         public boolean isUseComments() {
@@ -695,6 +674,35 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public List<GhprbBranch> getWhiteListTargetBranches() {
             return whiteListTargetBranches;
+        }
+        
+        public void readBackFromLegacy() {
+            if (logExcerptLines != null && logExcerptLines > 0) {
+                addIfMissing(new GhprbBuildLog(logExcerptLines));
+                // logExceprtLines = null;
+            }
+            if (!StringUtils.isEmpty(publishedURL)) {
+                addIfMissing(new GhprbPublishJenkinsUrl(publishedURL));
+            }
+            if (!StringUtils.isEmpty(msgFailure) || !StringUtils.isEmpty(msgSuccess)) {
+                List<GhprbBuildResultMessage> messages = new ArrayList<GhprbBuildResultMessage>(2);
+                if (!StringUtils.isEmpty(msgFailure)) {
+                    messages.add(new GhprbBuildResultMessage(GHCommitState.FAILURE, msgFailure));
+                    msgFailure = null;
+                }
+                if (!StringUtils.isEmpty(msgSuccess)) {
+                    messages.add(new GhprbBuildResultMessage(GHCommitState.SUCCESS, msgSuccess));
+                    msgSuccess = null;
+                }
+                addIfMissing(new GhprbBuildStatus(messages));
+            }
+        }
+        
+
+        private void addIfMissing(GhprbExtension ext) {
+            if (getExtensions().get(ext.getClass()) == null) {
+                getExtensions().add(ext);
+            }
         }
         
     }

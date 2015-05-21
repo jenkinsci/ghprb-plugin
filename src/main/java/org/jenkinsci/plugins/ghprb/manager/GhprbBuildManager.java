@@ -12,14 +12,14 @@ public interface GhprbBuildManager {
      * 
      * @return the build URL
      */
-    String calculateBuildUrl();
+    String calculateBuildUrl(String publishedURL);
 
     /**
      * Returns downstream builds as an iterator
      * 
      * @return the iterator
      */
-    Iterator downstreamProjects();
+    Iterator<?> downstreamProjects();
 
     /**
      * Print tests result of a build

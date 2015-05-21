@@ -90,7 +90,7 @@ public class GhprbTestUtil {
         jsonObject.put("useComments", "true");
         jsonObject.put("useDetailedComments", "false");
         jsonObject.put("logExcerptLines", "0");
-        jsonObject.put("unstableAs", "");
+        jsonObject.put("unstableAs", "FAILURE");
         jsonObject.put("testMode", "true");
         jsonObject.put("autoCloseFailedPullRequests", "false");
         jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");

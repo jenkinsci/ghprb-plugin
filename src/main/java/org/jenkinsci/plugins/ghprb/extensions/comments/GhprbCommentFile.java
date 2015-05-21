@@ -12,11 +12,14 @@ import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus.DescriptorImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppender, GhprbProjectExtension {
+
+    @Extension
+    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     
     private final String commentFilePath;
 
@@ -52,10 +55,13 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         }
         return msg.toString();
     }
-    
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return DESCRIPTOR;
+    }
 
 
-    @Extension
     public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbProjectExtension {
 
         @Override

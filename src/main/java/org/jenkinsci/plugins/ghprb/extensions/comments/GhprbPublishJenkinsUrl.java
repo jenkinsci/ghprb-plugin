@@ -11,7 +11,7 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus.DescriptorImpl;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
@@ -19,9 +19,18 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbCommentAppender, GhprbGlobalExtension {
 
+    @Extension
+    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    
+    private final String publishedURL;
+    
     @DataBoundConstructor
-    public GhprbPublishJenkinsUrl() {
-        
+    public GhprbPublishJenkinsUrl(String publishedURL) {
+        this.publishedURL = publishedURL;
+    }
+    
+    public String getPublishedURL() {
+        return publishedURL;
     }
 
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
@@ -29,6 +38,7 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
 
         msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
         msg.append(generateCustomizedMessage(build));
+        msg.append("\n");
         
         return msg.toString();
     }
@@ -46,7 +56,7 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append(buildManager.calculateBuildUrl());
+        sb.append(buildManager.calculateBuildUrl(publishedURL));
 
         if (build.getResult() != Result.SUCCESS) {
             sb.append(buildManager.getTestResults());
@@ -55,8 +65,11 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
         return sb.toString();
     }
 
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return DESCRIPTOR;
+    }
 
-    @Extension
     public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbGlobalExtension {
 
         @Override

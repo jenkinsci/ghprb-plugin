@@ -6,8 +6,17 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+import hudson.model.Saveable;
+import hudson.util.DescribableList;
 import hudson.util.LogTaskListener;
 
+import org.apache.commons.collections.Predicate;
+import org.apache.commons.collections.PredicateUtils;
+import org.apache.commons.collections.functors.InstanceofPredicate;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHUser;
 
@@ -212,6 +221,65 @@ public class Ghprb {
             return null;
         }
         return trigger;
+    }
+    
+    private static List<Predicate> createPredicate(Class<?> ...types) {
+        List<Predicate> predicates = new ArrayList<Predicate>(types.length);
+        for (Class<?> type : types) {
+            predicates.add(InstanceofPredicate.getInstance(type));
+        }
+        return predicates;
+    }
+    
+    public static void filterList(DescribableList<GhprbExtension, GhprbExtensionDescriptor> descriptors, Predicate predicate) {
+        for (GhprbExtension descriptor : descriptors) {
+            if (!predicate.evaluate(descriptor)) {
+                descriptors.remove(descriptor);
+            }
+        }
+    }
+    
+    private static DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions(DescribableList<GhprbExtension, GhprbExtensionDescriptor> ...extensionsList){
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copiedList = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+        for (DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions: extensionsList) {
+            copiedList.addAll(extensions);
+        }
+        return copiedList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> getJobExtensions(GhprbTrigger trigger, Class<?> ...types) {
+        
+        // First get all global extensions
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copied = copyExtensions(trigger.getDescriptor().getExtensions());
+        
+        // Remove extensions that are specified by job
+        filterList(copied, PredicateUtils.notPredicate(InstanceofPredicate.getInstance(GhprbProjectExtension.class)));
+        
+        // Then get the rest of the extensions from the job
+        copied = copyExtensions(copied, trigger.getExtensions());
+        
+        // Filter extensions by desired interface
+        filterList(copied, PredicateUtils.anyPredicate(createPredicate(types)));
+        return copied;
+    }
+    
+    public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> matchesAll(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, Class<?> ...types) {
+        Predicate predicate = PredicateUtils.allPredicate(createPredicate(types));
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+        
+        copyExtensions.addAll(extensions);
+        filterList(copyExtensions, predicate);
+        return copyExtensions;
+    }
+    
+    public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> matchesSome(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, Class<?> ...types) {
+        Predicate predicate = PredicateUtils.anyPredicate(createPredicate(types));
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+        
+        copyExtensions.addAll(extensions);
+        filterList(copyExtensions, predicate);
+        return copyExtensions;
     }
 
 }

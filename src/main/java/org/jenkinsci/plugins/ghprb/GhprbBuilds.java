@@ -2,16 +2,12 @@ package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
-import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
-import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
-import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -19,7 +15,6 @@ import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -146,38 +141,13 @@ public class GhprbBuilds {
     
     private void buildResultMessage(AbstractBuild<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
         StringBuilder msg = new StringBuilder();
-
-        for (GhprbExtension ext : trigger.getExtensions()) {
+        
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommentAppender.class)){
             if (ext instanceof GhprbCommentAppender) {
                 msg.append(((GhprbCommentAppender) ext).postBuildComment(build, listener));
             }
         }
-
-        String buildMessage = null;
-        if (state == GHCommitState.SUCCESS) {
-            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                buildMessage = trigger.getMsgSuccess();
-            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null 
-                    && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
-            }
-        } else if (state == GHCommitState.FAILURE) {
-            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                buildMessage = trigger.getMsgFailure();
-            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null 
-                    && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
-            }
-        }
-        // Only Append the build's custom message if it has been set.
-        if (buildMessage != null && !buildMessage.isEmpty()) {
-            // When the msg is not empty, append a newline first, to seperate it from the rest of the String
-            if (!"".equals(msg.toString())) {
-                msg.append("\n");
-            }
-            msg.append(buildMessage);
-        }
-
+        
         if (msg.length() > 0) {
             listener.getLogger().println(msg);
             repo.addComment(c.getPullID(), msg.toString(), build, listener);

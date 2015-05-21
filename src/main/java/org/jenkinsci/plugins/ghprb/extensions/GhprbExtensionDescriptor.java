@@ -6,8 +6,6 @@ import java.util.List;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.NullArgumentException;
 
 import jenkins.model.Jenkins;
 import hudson.DescriptorExtensionList;

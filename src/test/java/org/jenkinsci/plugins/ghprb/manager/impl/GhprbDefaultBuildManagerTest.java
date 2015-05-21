@@ -56,7 +56,7 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
         assertThat(buildManager).isInstanceOf(GhprbDefaultBuildManager.class);
 
-        assertThat(buildManager.calculateBuildUrl()).isEqualTo("defaultPublishedURL/" + matrixBuild.getUrl());
+        assertThat(buildManager.calculateBuildUrl("defaultPublishedURL")).isEqualTo("defaultPublishedURL/" + matrixBuild.getUrl());
     }
 
     private MatrixProject givenThatGhprbHasBeenTriggeredForAMatrixProject() throws Exception {
