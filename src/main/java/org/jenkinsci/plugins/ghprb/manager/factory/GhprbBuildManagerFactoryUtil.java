@@ -21,13 +21,13 @@ public class GhprbBuildManagerFactoryUtil {
      * @param build
      * @return
      */
-    public static GhprbBuildManager getBuildManager(AbstractBuild build) {
+    public static GhprbBuildManager getBuildManager(AbstractBuild<?, ?> build) {
         JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(false).build();
 
         return getBuildManager(build, jobConfiguration);
     }
 
-    public static GhprbBuildManager getBuildManager(AbstractBuild build, JobConfiguration jobConfiguration) {
+    public static GhprbBuildManager getBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
         try {
             if (build instanceof FlowRun) {
                 return new BuildFlowBuildManager(build, jobConfiguration);

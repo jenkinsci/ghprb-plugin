@@ -7,7 +7,7 @@ import hudson.model.AbstractBuild;
  */
 public class GhprbDefaultBuildManager extends GhprbBaseBuildManager {
 
-    public GhprbDefaultBuildManager(AbstractBuild build) {
+    public GhprbDefaultBuildManager(AbstractBuild<?, ?> build) {
         super(build);
     }
 
