@@ -86,6 +86,9 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.21
+* Move all commenting logic out into extensions.
+
 #### -> 1.20.1
 * Null Pointer fix for trigger.
 * Added clarity to error message when access is forbidden.
