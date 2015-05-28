@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.ghprb.manager.impl.GhprbBaseBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
-
 import org.jgrapht.DirectedGraph;
 
 import com.cloudbees.plugins.flow.FlowRun;
@@ -22,11 +21,11 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
     private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
 
-    public BuildFlowBuildManager(AbstractBuild build) {
+    public BuildFlowBuildManager(AbstractBuild<?, ?> build) {
         super(build);
     }
 
-    public BuildFlowBuildManager(AbstractBuild build, JobConfiguration jobConfiguration) {
+    public BuildFlowBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
         super(build, jobConfiguration);
     }
 
@@ -35,9 +34,10 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
      * 
      * @return the build URL of a BuildFlow build, with all its downstream builds
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public String calculateBuildUrl() {
-        Iterator<JobInvocation> iterator = downstreamProjects();
+    public String calculateBuildUrl(String publishedURL) {
+        Iterator<JobInvocation> iterator = (Iterator<JobInvocation>) downstreamProjects();
 
         StringBuilder sb = new StringBuilder();
 
@@ -61,10 +61,10 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
      * @return the downstream builds as an iterator
      */
     @Override
-    public Iterator downstreamProjects() {
+    public Iterator<?> downstreamProjects() {
         FlowRun flowRun = (FlowRun) build;
 
-        DirectedGraph directedGraph = flowRun.getJobsGraph();
+        DirectedGraph<JobInvocation, FlowRun.JobEdge> directedGraph = flowRun.getJobsGraph();
 
         return directedGraph.vertexSet().iterator();
     }
@@ -74,9 +74,10 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
      *
      * @return the tests result of a build of default type
      */
+    @SuppressWarnings("unchecked")
     @Override
     public String getTestResults() {
-        Iterator<JobInvocation> iterator = downstreamProjects();
+        Iterator<JobInvocation> iterator = (Iterator<JobInvocation>) downstreamProjects();
 
         StringBuilder sb = new StringBuilder();
 
@@ -84,7 +85,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
             JobInvocation jobInvocation = iterator.next();
 
             try {
-                AbstractBuild build = (AbstractBuild) jobInvocation.getBuild();
+                AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) jobInvocation.getBuild();
 
                 AggregatedTestResultAction testResultAction = build.getAction(AggregatedTestResultAction.class);
 

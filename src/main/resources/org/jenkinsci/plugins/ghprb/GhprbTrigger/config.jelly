@@ -6,12 +6,6 @@
     <f:checkbox />
   </f:entry>
   <f:advanced>
-    <f:entry title="${%Success message}" field="msgSuccess">
-      <f:textarea default="${descriptor.msgSuccess}"/>
-    </f:entry>
-    <f:entry title="${%Failure message}" field="msgFailure">
-      <f:textarea default="${descriptor.msgFailure}"/>
-    </f:entry>
 	<f:entry title="${%Trigger phrase}" field="triggerPhrase">
 	  <f:textbox />
 	</f:entry>
@@ -36,13 +30,10 @@
 	<f:entry title="${%White list}" field="whitelist">
 	  <f:textarea />
 	</f:entry>
-	<f:entry title="${%Comment file path}" field="commentFilePath">
-	  <f:textbox />
-	</f:entry>
-	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
+	<f:entry title="${%List of organizations. Their members will be whitelisted.}" field="orgslist">
 	  <f:textarea />
 	</f:entry>
-	<f:entry title="Allow members of whitelisted organisations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
+	<f:entry title="Allow members of whitelisted organizations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
 	  <f:checkbox />
 	</f:entry>
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
@@ -63,4 +54,7 @@
       </f:repeatable>
     </f:entry>
   </f:advanced>
+  <f:entry title="${%Application Setup}">
+    <f:hetero-list name="extensions" items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
+  </f:entry>
 </j:jelly>

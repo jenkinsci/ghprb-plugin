@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
@@ -89,7 +90,7 @@ public class GhprbTestUtil {
         jsonObject.put("useComments", "true");
         jsonObject.put("useDetailedComments", "false");
         jsonObject.put("logExcerptLines", "0");
-        jsonObject.put("unstableAs", "");
+        jsonObject.put("unstableAs", "FAILURE");
         jsonObject.put("testMode", "true");
         jsonObject.put("autoCloseFailedPullRequests", "false");
         jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
@@ -137,6 +138,7 @@ public class GhprbTestUtil {
             put("msgSuccess", null);
             put("msgFailure", null);
             put("commitStatusContext", null);
+            put("extensions", null);
         }};
         
         defaultValues.putAll(values);
@@ -156,7 +158,8 @@ public class GhprbTestUtil {
                 (Boolean)defaultValues.get("allowMembersOfWhitelistedOrgsAsAdmin"),
                 (String)defaultValues.get("msgSuccess"),
                 (String)defaultValues.get("msgFailure"),
-                (String)defaultValues.get("commitStatusContext"));
+                (String)defaultValues.get("commitStatusContext"),
+                (List<GhprbExtension>)defaultValues.get("extensions"));
         return trigger;
     }
     

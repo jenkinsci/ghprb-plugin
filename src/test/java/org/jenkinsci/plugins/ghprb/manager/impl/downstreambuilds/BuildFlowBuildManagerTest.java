@@ -57,7 +57,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
         assertThat(buildManager).isInstanceOf(BuildFlowBuildManager.class);
 
-        Iterator iterator = buildManager.downstreamProjects();
+        Iterator<?> iterator = buildManager.downstreamProjects();
 
         StringBuilder expectedUrl = new StringBuilder();
 
@@ -83,7 +83,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
         assertThat(count).isEqualTo(4);
 
-        assertThat(buildManager.calculateBuildUrl()).isEqualTo(expectedUrl.toString());
+        assertThat(buildManager.calculateBuildUrl(null)).isEqualTo(expectedUrl.toString());
     }
 
     private BuildFlow givenThatGhprbHasBeenTriggeredForABuildFlowProject() throws Exception {

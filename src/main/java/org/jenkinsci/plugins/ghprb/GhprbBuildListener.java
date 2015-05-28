@@ -29,6 +29,6 @@ public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
     }
 
     private static Optional<GhprbTrigger> findTrigger(AbstractBuild<?, ?> build) {
-        return Optional.fromNullable(GhprbTrigger.extractTrigger(build.getProject()));
+        return Optional.fromNullable(Ghprb.extractTrigger(build));
     }
 }

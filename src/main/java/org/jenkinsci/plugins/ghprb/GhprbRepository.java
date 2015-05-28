@@ -6,6 +6,9 @@ import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
@@ -76,7 +79,7 @@ public class GhprbRepository {
         if (!initGhRepository()) {
             return;
         }
-        
+
         if (helper.isProjectDisabled()) {
             logger.log(Level.FINE, "Project is disabled, not checking github state");
             return;
@@ -144,16 +147,12 @@ public class GhprbRepository {
             } else {
                 ghRepository.createCommitStatus(sha1, state, url, message);
             }
-        } catch (FileNotFoundException ex) {
-            newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or that something is really wrong with github.";
-            if (stream != null) {
-                stream.println(newMessage);
-                ex.printStackTrace(stream);
-            } else {
-                logger.log(Level.INFO, newMessage, ex);
-            }
         } catch (IOException ex) {
-            newMessage = "Could not update commit status of the Pull Request on GitHub.";
+            if (ex instanceof FileNotFoundException) {
+              newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or the user account does not have write access to the repo.";
+            } else {
+              newMessage = "Could not update commit status of the Pull Request on GitHub.";
+            }
             if (stream != null) {
                 stream.println(newMessage);
                 ex.printStackTrace(stream);
@@ -162,14 +161,21 @@ public class GhprbRepository {
             }
             if (GhprbTrigger.getDscp().getUseComments()) {
 
-                if (state == GHCommitState.SUCCESS) {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
-                } else if (state == GHCommitState.FAILURE) {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
+                StringBuilder msg = new StringBuilder(message);
+
+                if (build != null) {
+                    msg.append("\n");
+                    GhprbTrigger trigger = Ghprb.extractTrigger(build);
+                    for (GhprbExtension ext : Ghprb.matchesAll(trigger.getExtensions(), GhprbBuildStatus.class)) {
+                        if (ext instanceof GhprbCommentAppender) {
+                            msg.append(((GhprbCommentAppender) ext).postBuildComment(build, null));
+                        }
+                    }
                 }
+
                 if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
                     logger.log(Level.INFO, "Trying to send comment.", ex);
-                    addComment(id, message);
+                    addComment(id, msg.toString());
                 }
             } else {
                 logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
