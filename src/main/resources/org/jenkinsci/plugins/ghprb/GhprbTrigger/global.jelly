@@ -25,9 +25,6 @@
       <f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
         <f:checkbox />
 	  </f:entry>
-      <f:entry title="${%Commit Status Context}" field="commitStatusContext">
-        <f:textbox />
-      </f:entry>
       <f:entry title="${%Request for testing phrase}" field="requestForTestingPhrase">
         <f:textarea default="Can one of the admins verify this patch?"/>
       </f:entry>
@@ -56,7 +53,8 @@
         method="createApiToken" with="username,password" />
     </f:advanced>
     <f:entry title="${%Application Setup}">
-      <f:hetero-list oneEach="true" name="extensions" items="${descriptor.extensions}" descriptors="${descriptor.getGlobalExtensionDescriptors()}"/>
+      <f:hetero-list oneEach="true" name="extensions" hasHeader="true"
+      items="${descriptor.extensions}" descriptors="${descriptor.getGlobalExtensionDescriptors()}"/>
     </f:entry>
   </f:section>
 </j:jelly>
