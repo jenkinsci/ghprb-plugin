@@ -110,8 +110,9 @@ public class GhprbRepositoryTest {
     }
     
     
-    private void addSimpleStatus() {
+    private void addSimpleStatus() throws IOException {
         GhprbSimpleStatus status = new GhprbSimpleStatus("default");
+        trigger.getExtensions().remove(GhprbSimpleStatus.class);
         trigger.getExtensions().add(status);
     }
 
@@ -369,6 +370,8 @@ public class GhprbRepositoryTest {
 
         /** GH PR verifications */
         verify(builds, times(2)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
+        verifyNoMoreInteractions(builds);
+        
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2)).createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq(msg), eq("default")); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
