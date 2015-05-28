@@ -51,8 +51,10 @@
       </f:repeatable>
     </f:entry>
   </f:advanced>
-  <f:entry title="${%Application Setup}">
-    <f:hetero-list oneEach="true" name="extensions" hasHeader="true" 
-    items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
-  </f:entry>
+  <f:advanced title="${%Trigger Setup}">
+    <f:entry title="${%Trigger Setup}">
+      <f:hetero-list oneEach="true" name="extensions" hasHeader="true" 
+        items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
+    </f:entry>
+  </f:advanced>
 </j:jelly>
