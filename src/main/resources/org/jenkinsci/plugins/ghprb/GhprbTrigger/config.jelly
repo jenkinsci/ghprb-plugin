@@ -52,7 +52,7 @@
     </f:entry>
   </f:advanced>
   <f:entry title="${%Application Setup}">
-    <f:hetero-list name="extensions" hasHeader="true" 
+    <f:hetero-list oneEach="true" name="extensions" hasHeader="true" 
     items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
   </f:entry>
 </j:jelly>
