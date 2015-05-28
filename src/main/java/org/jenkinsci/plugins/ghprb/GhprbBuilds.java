@@ -15,6 +15,7 @@ import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,10 +78,30 @@ public class GhprbBuilds {
         return (GhprbCause) cause;
     }
 
-    public void onStarted(AbstractBuild<?, ?> build, PrintStream logger) {
+    public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
+        PrintStream logger = listener.getLogger();
         GhprbCause c = getCause(build);
         if (c == null) {
             return;
+        }
+        
+        GhprbTrigger trigger = Ghprb.extractTrigger(build);
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(build.getProject().getFullName());
+
+        GHPullRequest pr = pulls.get(c.getPullID()).getPullRequest();
+        
+        try {
+            while (pr.getMergeable() == null) {
+                Thread.sleep(1000);
+            }
+            // TODO: Figure out what to do if the status of the PR has changed.
+//            if (pr.getMergeable() != c.isMerged()) {
+//                listener.fatalError("PR status has changed!");
+//            }
+        } catch (Exception e) {
+            logger.print("Unable to query GitHub for status of PullRequest");
+            e.printStackTrace(logger);
         }
 
         repo.createCommitStatus(build, GHCommitState.PENDING, 
