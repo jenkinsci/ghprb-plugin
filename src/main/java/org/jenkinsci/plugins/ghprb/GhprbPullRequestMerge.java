@@ -1,33 +1,27 @@
 package org.jenkinsci.plugins.ghprb;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.concurrent.ConcurrentMap;
-
-import org.kohsuke.github.GHBranch;
-import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-
 import com.google.common.annotations.VisibleForTesting;
-
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.Cause;
-import hudson.model.Result;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
+import org.kohsuke.github.GHBranch;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.concurrent.ConcurrentMap;
 
 public class GhprbPullRequestMerge extends Recorder {
 
@@ -158,11 +152,8 @@ public class GhprbPullRequestMerge extends Recorder {
             // deleteBranch(); //TODO: Update so it also deletes the branch being pulled from. probably make it an option.
         }
 
-        if (merge) {
-            listener.finished(Result.SUCCESS);
-        } else {
-            listener.finished(Result.FAILURE);
-        }
+        listener.finished(Result.SUCCESS);
+
         return merge;
     }
 
