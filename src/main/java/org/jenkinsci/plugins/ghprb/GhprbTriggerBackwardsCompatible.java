@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
+import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
 
 import antlr.ANTLRException;
@@ -20,6 +21,9 @@ import hudson.util.DescribableList;
 public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractProject<?, ?>> {
     
     public abstract DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions();
+    
+
+    protected Integer configVersion;
 
     public GhprbTriggerBackwardsCompatible(String cron) throws ANTLRException {
         super(cron);
@@ -32,11 +36,20 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected transient String msgSuccess;
     @Deprecated
     protected transient String msgFailure;
+    @Deprecated 
+    protected transient String commitStatusContext;
     
     
     protected void convertPropertiesToExtensions() {
+        if (configVersion == null) {
+            configVersion = 0;
+        }
+        
         checkCommentsFile();
         checkBuildStatusMessages();
+        checkCommitStatusContext();
+        
+        configVersion = 1;
     }
     
     private void checkBuildStatusMessages() {
@@ -55,14 +68,21 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     }
 
     private void checkCommentsFile() {
-        if (commentFilePath != null && !commentFilePath.isEmpty()) {
+        if (!StringUtils.isEmpty(commentFilePath)) {
             GhprbCommentFile comments = new GhprbCommentFile(commentFilePath);
             addIfMissing(comments);
-//            commentFilePath = null; // TODO: Disable once satisfied with changes.
+            commentFilePath = null;
         }
     }
     
-    private void addIfMissing(GhprbExtension ext) {
+    private void checkCommitStatusContext() {
+        if (configVersion < 1) {
+            GhprbSimpleStatus status = new GhprbSimpleStatus(commitStatusContext);
+            addIfMissing(status);
+        }
+    }
+    
+    protected void addIfMissing(GhprbExtension ext) {
         if (getExtensions().get(ext.getClass()) == null) {
             getExtensions().add(ext);
         }

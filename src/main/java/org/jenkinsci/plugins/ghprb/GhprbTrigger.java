@@ -18,12 +18,14 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
+import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
@@ -61,9 +63,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
-    private String commitStatusContext;
     private transient Ghprb helper;
     private String project;
+    
     
 
     private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions;
@@ -71,13 +73,22 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
         if (extensions == null) {
             extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP,Util.fixNull(extensions));
+            extensions.add(new GhprbSimpleStatus(null));
         }
         return extensions;
     }
     
     private void setExtensions(List<GhprbExtension> extensions) {
-        this.extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> rawList = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(
                 Saveable.NOOP,Util.fixNull(extensions));
+        
+        // Filter out items that we only want one of, like the status updater.
+        this.extensions = Ghprb.onlyOneEntry(rawList, 
+                                              GhprbCommitStatus.class
+                                            );
+        
+        // Now make sure we have at least one of the types we need one of.
+        Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(""), GhprbCommitStatus.class);
     }
 
     @DataBoundConstructor
@@ -111,9 +122,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
-        this.commitStatusContext = commitStatusContext;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         setExtensions(extensions);
+        configVersion = 1;
     }
 
     @Override
@@ -353,9 +364,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return whiteListTargetBranches;
     }
 
-    public String getCommitStatusContext() {
-        return commitStatusContext;
-    }
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -386,6 +394,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
+        
+        private Integer configVersion;
 
         /**
          * These settings only really affect testing. When Jenkins calls configure() then the formdata will 
@@ -404,7 +414,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private Boolean useDetailedComments = false;
         private GHCommitState unstableAs = GHCommitState.FAILURE;
         private List<GhprbBranch> whiteListTargetBranches;
-        private String commitStatusContext = "";
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
 
@@ -472,23 +481,15 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
-            commitStatusContext = formData.getString("commitStatusContext");
             
             extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
-            
-            Object exts = formData.get("extensions");
-            if (exts != null) {
-                JSONArray extsArray;
-                if (exts instanceof JSONArray) {
-                    extsArray = formData.getJSONArray("extensions");
-                    for (int i=0; i<extsArray.size(); ++i) {
-                        JSONObject next = extsArray.getJSONObject(i);
-                        extensions.add(createExtension(req, next));
-                    }   
-                } else {
-                    extensions.add(createExtension(req, (JSONObject)exts));
-                }
+
+            try {
+                extensions.rebuildHetero(req, formData, getGlobalExtensionDescriptors(), "extensions");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            
             readBackFromLegacy();
 
             save();
@@ -496,21 +497,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return super.configure(req, formData);
         }
         
-        private GhprbExtension createExtension(StaplerRequest req, JSONObject json) {
-            String clazz = json.getString("stapler-class");
-            if (StringUtils.isEmpty(clazz)) {
-                return null;
-            }
-            Class<?> type;
-            try {
-                type = Class.forName(clazz);
-                GhprbExtension extension = (GhprbExtension) req.bindJSON(type, json);
-                return extension;
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
 
         public FormValidation doCheckAdminlist(@QueryParameter String value) throws ServletException {
             if (!adminlistPattern.matcher(value).matches()) {
@@ -617,10 +603,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return (useDetailedComments != null && useDetailedComments);
         }
 
-        public String getCommitStatusContext() {
-            return commitStatusContext;
-        }
-
         public GhprbGitHub getGitHub() {
             if (gh == null) {
                 gh = new GhprbGitHub();
@@ -670,19 +652,26 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         @Deprecated
         private transient String publishedURL;
         @Deprecated
-        private transient Integer logExcerptLines = 0;
+        private transient Integer logExcerptLines;
         @Deprecated
         private transient String msgSuccess;
         @Deprecated
         private transient String msgFailure;
+        @Deprecated
+        private transient String commitStatusContext;
         
         public void readBackFromLegacy() {
+            if (configVersion == null) {
+                configVersion = 0;
+            }
+            
             if (logExcerptLines != null && logExcerptLines > 0) {
                 addIfMissing(new GhprbBuildLog(logExcerptLines));
-                // logExceprtLines = null;
+                logExcerptLines = null;
             }
             if (!StringUtils.isEmpty(publishedURL)) {
                 addIfMissing(new GhprbPublishJenkinsUrl(publishedURL));
+                publishedURL = null;
             }
             if (!StringUtils.isEmpty(msgFailure) || !StringUtils.isEmpty(msgSuccess)) {
                 List<GhprbBuildResultMessage> messages = new ArrayList<GhprbBuildResultMessage>(2);
@@ -696,6 +685,15 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                 }
                 addIfMissing(new GhprbBuildStatus(messages));
             }
+            
+            if (configVersion < 1) {
+                GhprbSimpleStatus status = new GhprbSimpleStatus(commitStatusContext);
+                addIfMissing(status);
+                commitStatusContext = null;
+            }
+            
+            
+            configVersion = 1;
         }
         
 
