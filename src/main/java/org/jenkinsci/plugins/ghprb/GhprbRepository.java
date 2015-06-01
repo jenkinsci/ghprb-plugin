@@ -125,46 +125,47 @@ public class GhprbRepository {
         }
         pull.check(pr);
     }
-    
+
     public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
         PrintStream stream = null;
         if (listener != null) {
             stream = listener.getLogger();
         }
         GHCommitState state = ex.getState();
+        Exception baseException = ex.getException();
         String newMessage;
-        if (ex.getException() instanceof FileNotFoundException) {
+        if (baseException instanceof FileNotFoundException) {
             newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or the user account does not have write access to the repo.";
-          } else {
+        } else {
             newMessage = "Could not update commit status of the Pull Request on GitHub.";
-          }
-          if (stream != null) {
-              stream.println(newMessage);
-              ex.printStackTrace(stream);
-          } else {
-              logger.log(Level.INFO, newMessage, ex);
-          }
-          if (GhprbTrigger.getDscp().getUseComments()) {
+        }
+        if (stream != null) {
+            stream.println(newMessage);
+            baseException.printStackTrace(stream);
+        } else {
+            logger.log(Level.INFO, newMessage, baseException);
+        }
+        if (GhprbTrigger.getDscp().getUseComments()) {
 
-              StringBuilder msg = new StringBuilder(ex.getMessage());
+            StringBuilder msg = new StringBuilder(ex.getMessage());
 
-              if (build != null) {
-                  msg.append("\n");
-                  GhprbTrigger trigger = Ghprb.extractTrigger(build);
-                  for (GhprbExtension ext : Ghprb.matchesAll(trigger.getExtensions(), GhprbBuildStatus.class)) {
-                      if (ext instanceof GhprbCommentAppender) {
-                          msg.append(((GhprbCommentAppender) ext).postBuildComment(build, null));
-                      }
-                  }
-              }
+            if (build != null) {
+                msg.append("\n");
+                GhprbTrigger trigger = Ghprb.extractTrigger(build);
+                for (GhprbExtension ext : Ghprb.matchesAll(trigger.getExtensions(), GhprbBuildStatus.class)) {
+                    if (ext instanceof GhprbCommentAppender) {
+                        msg.append(((GhprbCommentAppender) ext).postBuildComment(build, null));
+                    }
+                }
+            }
 
-              if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
-                  logger.log(Level.INFO, "Trying to send comment.", ex);
-                  addComment(ex.getId(), msg.toString());
-              }
-          } else {
-              logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
-          }
+            if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
+                logger.log(Level.INFO, "Trying to send comment.", baseException);
+                addComment(ex.getId(), msg.toString());
+            }
+        } else {
+            logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
+        }
     }
 
     public String getName() {
