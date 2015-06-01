@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb.extensions.status;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
@@ -80,10 +81,14 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         
         String sha1 = cause.getCommit();
         String url = Jenkins.getInstance().getRootUrl() + build.getUrl();
+        String context = Util.fixEmpty(commitStatusContext);
         
-        listener.getLogger().println(String.format("Setting status of %s to %s with url %s and message: %s", sha1, state, url, message));
+        listener.getLogger().println(String.format("Setting status of %s to %s with url %s and message: '%s'", sha1, state, url, message));
+        if (context != null) {
+            listener.getLogger().println(String.format("Using conext: " + context));
+        }
         try {
-            repo.createCommitStatus(sha1, state, url, message, commitStatusContext);
+            repo.createCommitStatus(sha1, state, url, message, context);
         } catch (IOException e) {
             throw new GhprbCommitStatusException(e, state, message, cause.getPullID());
         }
