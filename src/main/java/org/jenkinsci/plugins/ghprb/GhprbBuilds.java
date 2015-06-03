@@ -67,13 +67,29 @@ public class GhprbBuilds {
         GHPullRequest pr = pulls.get(c.getPullID()).getPullRequest();
 
         try {
-            while (pr.getMergeable() == null) {
+            int counter = 0;
+            Boolean isMergeable = pr.getMergeable();
+            Boolean isMerged = pr.isMerged();
+            while (isMergeable == null && !isMerged && counter++ < 60) {
                 Thread.sleep(1000);
+                isMergeable = pr.getMergeable();
+                isMerged = pr.isMerged();
             }
-            // TODO: Figure out what to do if the status of the PR has changed.
-            // if (pr.getMergeable() != c.isMerged()) {
-            // listener.fatalError("PR status has changed!");
-            // }
+
+            if (isMergeable != c.isMerged() || isMerged == true) {
+                logger.println("!!! PR status has changed !!!  ");
+                if (isMergeable == null) {
+                    if (isMerged) {
+                        logger.println("PR has already been merged");
+                    } else {
+                        logger.println("PR merge status couldn't be retrieved, GitHub maybe hasn't settled yet");
+                    }
+                } else if (isMergeable) {
+                    logger.println("PR has NO merge conflicts");
+                } else if (!isMergeable) {
+                    logger.println("PR has merge conflicts!");
+                }
+            }
         } catch (Exception e) {
             logger.print("Unable to query GitHub for status of PullRequest");
             e.printStackTrace(logger);
