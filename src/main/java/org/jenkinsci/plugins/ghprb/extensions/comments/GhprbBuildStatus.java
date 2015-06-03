@@ -8,7 +8,6 @@ import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
-import org.jenkinsci.plugins.ghprb.GhprbTrigger.DescriptorImpl;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;

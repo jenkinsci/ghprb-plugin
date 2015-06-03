@@ -5,6 +5,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.Saveable;
 import hudson.util.DescribableList;
@@ -15,7 +16,6 @@ import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHUser;
@@ -211,6 +211,15 @@ public class Ghprb {
         return listSet;
     }
     
+
+    public static GhprbCause getCause(AbstractBuild<?, ?> build) {
+        Cause cause = build.getCause(GhprbCause.class);
+        if (cause == null || (!(cause instanceof GhprbCause))) {
+            return null;
+        }
+        return (GhprbCause) cause;
+    }
+    
     public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
         return extractTrigger(build.getProject());
     }
@@ -280,6 +289,45 @@ public class Ghprb {
         copyExtensions.addAll(extensions);
         filterList(copyExtensions, predicate);
         return copyExtensions;
+    }
+    
+    public static DescribableList<GhprbExtension, GhprbExtensionDescriptor> onlyOneEntry(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, Class<?> ...types) {
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+        
+        Set<Class<?>> extSet = new HashSet<Class<?>>(types.length);
+        List<Predicate> predicates = createPredicate(types);
+        for (GhprbExtension extension: extensions) {
+            if (addExtension(extension, predicates, extSet)) {
+                copyExtensions.add(extension);
+            }
+        }
+        
+        return copyExtensions;
+    }
+    
+    private static boolean addExtension(GhprbExtension extension, List<Predicate> predicates, Set<Class<?>> extSet) {
+        for (Predicate predicate: predicates) {
+            if (predicate.evaluate(extension)) {
+                Class<?> clazz = ((InstanceofPredicate)predicate).getType();
+                if (extSet.contains(clazz)) {
+                    return false;
+                } else {
+                    extSet.add(clazz);
+                    return true;
+                }
+            }
+        }
+        return true;
+    }
+    
+    public static void addIfMissing(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, GhprbExtension ext, Class<?> type) {
+        Predicate predicate = InstanceofPredicate.getInstance(type);
+        for (GhprbExtension extension : extensions) {
+            if (predicate.evaluate(extension)){
+                return;
+            }
+        }
+        extensions.add(ext);
     }
 
 }

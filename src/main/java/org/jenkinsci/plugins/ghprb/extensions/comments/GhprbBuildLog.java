@@ -8,12 +8,10 @@ import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
-import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
-import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus.DescriptorImpl;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.stapler.DataBoundConstructor;
 
