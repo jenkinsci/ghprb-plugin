@@ -7,54 +7,22 @@ import java.util.logging.Logger;
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitHubBuilder;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author janinko
  */
 public class GhprbGitHub {
     private static final Logger logger = Logger.getLogger(GhprbGitHub.class.getName());
-    private GitHub gh;
-
-    private void connect() throws IOException {
-        String accessToken = GhprbTrigger.getDscp().getAccessToken();
-        String serverAPIUrl = GhprbTrigger.getDscp().getServerAPIUrl();
-        if (accessToken != null && !accessToken.isEmpty()) {
-            try {
-                gh = new GitHubBuilder()
-                    .withEndpoint(serverAPIUrl)
-                    .withOAuthToken(accessToken)
-                    .withConnector(new HttpConnectorWithJenkinsProxy())
-                    .build();
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Can''t connect to {0} using oauth", serverAPIUrl);
-                throw e;
-            }
-        } else {
-            if (serverAPIUrl.contains("api/v3")) {
-                gh = GitHub.connectToEnterprise(serverAPIUrl, 
-                        GhprbTrigger.getDscp().getUsername(), GhprbTrigger.getDscp().getPassword());
-            } else {
-                gh = new GitHubBuilder().withPassword(GhprbTrigger.getDscp().getUsername(), 
-                        GhprbTrigger.getDscp().getPassword()).withConnector(new HttpConnectorWithJenkinsProxy()).build();
-            }
-        }
+    private final GhprbTrigger trigger;
+    
+    public GhprbGitHub(GhprbTrigger trigger) {
+        this.trigger = trigger;
     }
 
     public GitHub get() throws IOException {
-        if (gh == null) {
-            connect();
-        }
-        return gh;
+        return trigger.getGitHub();
     }
     
-    @VisibleForTesting
-    void setGitHub(GitHub gh) {
-        this.gh = gh;
-    }
-
     public boolean isUserMemberOfOrganization(String organisation, GHUser member) {
         boolean orgHasMember = false;
         try {

@@ -49,18 +49,9 @@ public class GhprbBuildStatus extends GhprbExtension implements GhprbCommentAppe
 
     public static class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbGlobalExtension, GhprbProjectExtension {
         
-        public final Class<GhprbBuildResultMessage> resultMessageClazz = GhprbBuildResultMessage.class;
-        public final GhprbBuildResultMessage.DescriptorImpl messageIt = new GhprbBuildResultMessage.DescriptorImpl();
-
         @Override
         public String getDisplayName() {
             return "Build Status Messages";
-        }
-        
-        public List<GhprbBuildResultMessage.DescriptorImpl> getBuildResultMessages() {
-            List<GhprbBuildResultMessage.DescriptorImpl> list = new ArrayList<GhprbBuildResultMessage.DescriptorImpl>(1);
-            list.add(new GhprbBuildResultMessage.DescriptorImpl());
-            return list;
         }
         
 
