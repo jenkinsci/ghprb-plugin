@@ -143,6 +143,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     @Override
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
+        // We should always start the trigger, and handle cases where we don't run in the run function.
+        super.start(project, newInstance);
         this.project = project.getFullName();
         
         if (project.isDisabled()) {
@@ -162,7 +164,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", 
                 new String[] { this.project, String.valueOf(newInstance) });
-        super.start(project, newInstance);
         helper.init();
     }
 

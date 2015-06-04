@@ -13,10 +13,12 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.tasks.junit.TestResult;
+import hudson.tasks.junit.TestResultAction;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction.ChildReport;
 
+import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 
@@ -167,6 +169,16 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
     }
 
     protected static final Logger LOGGER = Logger.getLogger(GhprbBaseBuildManager.class.getName());
+
+    public String getOneLineTestResults() {
+
+        TestResultAction testResultAction = build.getAction(TestResultAction.class);
+
+        if (testResultAction == null) {
+            return "No test results found.";
+        }
+        return String.format("%d tests run, %d skipped, %d failed.", testResultAction.getTotalCount(), testResultAction.getSkipCount(), testResultAction.getFailCount());
+    }
 
     protected AbstractBuild<?, ?> build;
 
