@@ -23,8 +23,11 @@ public class GhprbGitHub {
         String serverAPIUrl = GhprbTrigger.getDscp().getServerAPIUrl();
         if (accessToken != null && !accessToken.isEmpty()) {
             try {
-                gh = new GitHubBuilder().withEndpoint(serverAPIUrl)
-                        .withOAuthToken(accessToken).withConnector(new HttpConnectorWithJenkinsProxy()).build();
+                gh = new GitHubBuilder()
+                    .withEndpoint(serverAPIUrl)
+                    .withOAuthToken(accessToken)
+                    .withConnector(new HttpConnectorWithJenkinsProxy())
+                    .build();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Can''t connect to {0} using oauth", serverAPIUrl);
                 throw e;

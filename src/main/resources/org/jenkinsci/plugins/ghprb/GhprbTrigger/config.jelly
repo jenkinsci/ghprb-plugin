@@ -30,22 +30,16 @@
 	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
 	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
 	</f:entry>
-	<f:entry title="${%Commit Status Context}" field="commitStatusContext">
-		<f:textbox />
-	</f:entry>
 	<f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
 	  <f:textbox default="${descriptor.cron}" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
 	</f:entry>
 	<f:entry title="${%White list}" field="whitelist">
 	  <f:textarea />
 	</f:entry>
-	<f:entry title="${%Comment file path}" field="commentFilePath">
-	  <f:textbox />
-	</f:entry>
-	<f:entry title="${%List of organisations. Their members will be whitelisted.}" field="orgslist">
+	<f:entry title="${%List of organizations. Their members will be whitelisted.}" field="orgslist">
 	  <f:textarea />
 	</f:entry>
-	<f:entry title="Allow members of whitelisted organisations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
+	<f:entry title="Allow members of whitelisted organizations as admins" field="allowMembersOfWhitelistedOrgsAsAdmin">
 	  <f:checkbox />
 	</f:entry>
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
@@ -64,6 +58,12 @@
           </f:entry>
         </table>
       </f:repeatable>
+    </f:entry>
+  </f:advanced>
+  <f:advanced title="${%Trigger Setup}">
+    <f:entry title="${%Trigger Setup}">
+      <f:hetero-list oneEach="true" name="extensions" hasHeader="true" 
+        items="${instance.extensions}" descriptors="${descriptor.getExtensionDescriptors()}"/>
     </f:entry>
   </f:advanced>
 </j:jelly>

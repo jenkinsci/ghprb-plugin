@@ -1,27 +1,22 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.model.AbstractBuild;
-import hudson.model.Cause;
-import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
-import org.apache.commons.io.FileUtils;
-
-import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
-import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
-import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
-
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHUser;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,64 +33,86 @@ public class GhprbBuilds {
         this.repo = repo;
     }
 
-    public String build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
-        StringBuilder sb = new StringBuilder();
-        if (cancelBuild(pr.getId())) {
-            sb.append("Previous build stopped.");
-        }
+    public void build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
 
-        sb.append(" Build triggered.");
-
-        if (pr.isMergeable()) {
-            sb.append(" sha1 is merged.");
-        } else {
-            sb.append(" sha1 is original commit.");
-        }
-
-        GhprbCause cause = new GhprbCause(
-                pr.getHead(), 
-                pr.getId(), 
-                pr.isMergeable(), 
-                pr.getTarget(), 
-                pr.getSource(), 
-                pr.getAuthorEmail(), 
-                pr.getTitle(), 
-                pr.getUrl(), 
-                triggerSender, 
-                commentBody,
+        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getSource(), pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(), triggerSender, commentBody,
                 pr.getCommitAuthor());
 
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
+            if (ext instanceof GhprbCommitStatus) {
+                try {
+                    ((GhprbCommitStatus) ext).onBuildTriggered(pr, repo.getGitHubRepo());
+                } catch (GhprbCommitStatusException e) {
+                    repo.commentOnFailure(null, null, e);
+                }
+            }
+        }
         QueueTaskFuture<?> build = trigger.startJob(cause, repo);
         if (build == null) {
             logger.log(Level.SEVERE, "Job did not start");
         }
-        return sb.toString();
     }
 
-    private boolean cancelBuild(int id) {
-        return false;
-    }
-
-    private GhprbCause getCause(AbstractBuild<?, ?> build) {
-        Cause cause = build.getCause(GhprbCause.class);
-        if (cause == null || (!(cause instanceof GhprbCause))) {
-            return null;
-        }
-        return (GhprbCause) cause;
-    }
-
-    public void onStarted(AbstractBuild<?, ?> build, PrintStream logger) {
-        GhprbCause c = getCause(build);
+    public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
+        PrintStream logger = listener.getLogger();
+        GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
             return;
         }
 
-        repo.createCommitStatus(build, GHCommitState.PENDING, 
-                (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit."), c.getPullID(),
-                trigger.getCommitStatusContext(), logger);
+        GhprbTrigger trigger = Ghprb.extractTrigger(build);
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(build.getProject().getFullName());
+
+        GHPullRequest pr = pulls.get(c.getPullID()).getPullRequest();
+
         try {
-            build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + 
-                    "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
+            int counter = 0;
+            // If the PR is being resolved by GitHub then getMergeable will return null
+            Boolean isMergeable = pr.getMergeable();
+            Boolean isMerged = pr.isMerged();
+            // Not sure if isMerged can return null, but adding if just in case
+            if (isMerged == null) {
+                isMerged = false;
+            }
+            while (isMergeable == null && !isMerged && counter++ < 60) {
+                Thread.sleep(1000);
+                isMergeable = pr.getMergeable();
+                isMerged = pr.isMerged();
+                if (isMerged == null) {
+                    isMerged = false;
+                }
+            }
+            
+            if (isMerged) {
+                logger.println("PR has already been merged, builds using the merged sha1 will fail!!!");
+            } else if (isMergeable == null) {
+                logger.println("PR merge status couldn't be retrieved, maybe GitHub hasn't settled yet");
+            } else if (isMergeable != c.isMerged()) {
+                logger.println("!!! PR mergeability status has changed !!!  ");
+                 if (isMergeable) {
+                    logger.println("PR now has NO merge conflicts");
+                } else if (!isMergeable) {
+                    logger.println("PR now has merge conflicts!");
+                }
+            }
+            
+        } catch (Exception e) {
+            logger.print("Unable to query GitHub for status of PullRequest");
+            e.printStackTrace(logger);
+        }
+
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
+            if (ext instanceof GhprbCommitStatus) {
+                try {
+                    ((GhprbCommitStatus) ext).onBuildStart(build, listener, repo.getGitHubRepo());
+                } catch (GhprbCommitStatusException e) {
+                    repo.commentOnFailure(build, listener, e);
+                }
+            }
+        }
+        try {
+            build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
         } catch (IOException ex) {
             logger.println("Can't update build description");
             ex.printStackTrace(logger);
@@ -103,7 +120,7 @@ public class GhprbBuilds {
     }
 
     public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
-        GhprbCause c = getCause(build);
+        GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
             return;
         }
@@ -122,27 +139,26 @@ public class GhprbBuilds {
             build.getActions().remove(fakeOne);
         }
 
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
+            if (ext instanceof GhprbCommitStatus) {
+                try {
+                    ((GhprbCommitStatus) ext).onBuildComplete(build, listener, repo.getGitHubRepo());
+                } catch (GhprbCommitStatusException e) {
+                    repo.commentOnFailure(build, listener, e);
+                }
+            }
+        }
+
         GHCommitState state;
-        if (build.getResult() == Result.SUCCESS) {
-            state = GHCommitState.SUCCESS;
-        } else if (build.getResult() == Result.UNSTABLE) {
-            state = GHCommitState.valueOf(GhprbTrigger.getDscp().getUnstableAs());
-        } else {
-            state = GHCommitState.FAILURE;
-        }
-        repo.createCommitStatus(build, state, "Build finished.", c.getPullID(), trigger.getCommitStatusContext(), listener.getLogger());
+        state = Ghprb.getState(build);
 
-
-        String publishedURL = GhprbTrigger.getDscp().getPublishedURL();
-        if (publishedURL != null && !publishedURL.isEmpty()) {
-            buildResultMessage(build, listener, state, c);
-        }
+        commentOnBuildResult(build, listener, state, c);
         // close failed pull request automatically
         if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
             closeFailedRequest(listener, c);
         }
     }
-    
+
     private void closeFailedRequest(TaskListener listener, GhprbCause c) {
         try {
             GHPullRequest pr = repo.getPullRequest(c.getPullID());
@@ -155,70 +171,14 @@ public class GhprbBuilds {
             ex.printStackTrace(listener.getLogger());
         }
     }
-    
-    private void buildResultMessage(AbstractBuild<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
+
+    private void commentOnBuildResult(AbstractBuild<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
         StringBuilder msg = new StringBuilder();
-        String commentFilePath = trigger.getCommentFilePath();
 
-        if (commentFilePath != null && !commentFilePath.isEmpty()) {
-            try {
-                String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
-
-                String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
-                msg.append("Build comment file: \n--------------\n");
-                msg.append(content);
-                msg.append("\n--------------\n");
-            } catch (IOException e) {
-                msg.append("\n!!! Couldn't read commit file !!!\n");
-                listener.getLogger().println("Couldn't read comment file");
-                e.printStackTrace(listener.getLogger());
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommentAppender.class)) {
+            if (ext instanceof GhprbCommentAppender) {
+                msg.append(((GhprbCommentAppender) ext).postBuildComment(build, listener));
             }
-        }
-
-        msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
-        msg.append(generateCustomizedMessage(build));
-
-        int numLines = GhprbTrigger.getDscp().getlogExcerptLines();
-        if (state != GHCommitState.SUCCESS && numLines > 0) {
-            // on failure, append an excerpt of the build log
-            try {
-                // wrap log in "code" markdown
-                msg.append("\n\n**Build Log**\n*last ").append(numLines).append(" lines*\n");
-                msg.append("\n ```\n");
-                List<String> log = build.getLog(numLines);
-                for (String line : log) {
-                    msg.append(line).append('\n');
-                }
-                msg.append("```\n");
-            } catch (IOException ex) {
-                listener.getLogger().println("Can't add log excerpt to commit comments");
-                ex.printStackTrace(listener.getLogger());
-            }
-        }
-
-        String buildMessage = null;
-        if (state == GHCommitState.SUCCESS) {
-            if (trigger.getMsgSuccess() != null && !trigger.getMsgSuccess().isEmpty()) {
-                buildMessage = trigger.getMsgSuccess();
-            } else if (GhprbTrigger.getDscp().getMsgSuccess(build) != null 
-                    && !GhprbTrigger.getDscp().getMsgSuccess(build).isEmpty()) {
-                buildMessage = GhprbTrigger.getDscp().getMsgSuccess(build);
-            }
-        } else if (state == GHCommitState.FAILURE) {
-            if (trigger.getMsgFailure() != null && !trigger.getMsgFailure().isEmpty()) {
-                buildMessage = trigger.getMsgFailure();
-            } else if (GhprbTrigger.getDscp().getMsgFailure(build) != null 
-                    && !GhprbTrigger.getDscp().getMsgFailure(build).isEmpty()) {
-                buildMessage = GhprbTrigger.getDscp().getMsgFailure(build);
-            }
-        }
-        // Only Append the build's custom message if it has been set.
-        if (buildMessage != null && !buildMessage.isEmpty()) {
-            // When the msg is not empty, append a newline first, to seperate it from the rest of the String
-            if (!"".equals(msg.toString())) {
-                msg.append("\n");
-            }
-            msg.append(buildMessage);
         }
 
         if (msg.length() > 0) {
@@ -227,20 +187,4 @@ public class GhprbBuilds {
         }
     }
 
-    private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
-        JobConfiguration jobConfiguration = JobConfiguration.builder()
-                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
-
-        GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(buildManager.calculateBuildUrl());
-
-        if (build.getResult() != Result.SUCCESS) {
-            sb.append(buildManager.getTestResults());
-        }
-
-        return sb.toString();
-    }
 }

@@ -86,6 +86,18 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.22.x
+* Fix issue where if a project was disabled the Jenkins Trigger process would crash
+* Fix commit status context
+* Add one line test results for downstream builds
+* Miscellaneous bug fixes
+
+#### -> 1.22
+* Move commit status over to extension form.  It is now configurable, satisfying #81, #73, and #19 at least.
+
+#### -> 1.21
+* Move all commenting logic out into extensions.
+
 #### -> 1.20.1
 * Null Pointer fix for trigger.
 * Added clarity to error message when access is forbidden.

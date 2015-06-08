@@ -7,6 +7,10 @@ import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.codec.binary.Hex;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
@@ -126,54 +130,45 @@ public class GhprbRepository {
         pull.check(pr);
     }
 
-    public void createCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id, String context, PrintStream stream) {
-        String sha1 = build.getCause(GhprbCause.class).getCommit();
-        createCommitStatus(build, sha1, state, Jenkins.getInstance().getRootUrl() + build.getUrl(), message, id, context, stream);
-    }
-
-    public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id, String context) {
-        createCommitStatus(null, sha1, state, url, message, id, context, null);
-    }
-
-    public void createCommitStatus(AbstractBuild<?, ?> build, String sha1, GHCommitState state, String url, String message, int id, String context, PrintStream stream) {
-        String newMessage = String.format("Setting status of %s to %s with url %s and message: %s", sha1, state, url, message);
+    public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
+        PrintStream stream = null;
+        if (listener != null) {
+            stream = listener.getLogger();
+        }
+        GHCommitState state = ex.getState();
+        Exception baseException = ex.getException();
+        String newMessage;
+        if (baseException instanceof FileNotFoundException) {
+            newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or the user account does not have write access to the repo.";
+        } else {
+            newMessage = "Could not update commit status of the Pull Request on GitHub.";
+        }
         if (stream != null) {
             stream.println(newMessage);
+            baseException.printStackTrace(stream);
         } else {
-            logger.log(Level.INFO, newMessage);
+            logger.log(Level.INFO, newMessage, baseException);
         }
-        try {
-            if (context != null && !context.isEmpty()) {
-                ghRepository.createCommitStatus(sha1, state, url, message, context);
-            } else {
-                ghRepository.createCommitStatus(sha1, state, url, message);
-            }
-        } catch (IOException ex) {
-            if (ex instanceof FileNotFoundException) {
-              newMessage = "FileNotFoundException means that the credentials Jenkins is using is probably wrong. Or the user account does not have write access to the repo.";
-            } else {
-              newMessage = "Could not update commit status of the Pull Request on GitHub.";
-            }
-            if (stream != null) {
-                stream.println(newMessage);
-                ex.printStackTrace(stream);
-            } else {
-                logger.log(Level.INFO, newMessage, ex);
-            }
-            if (GhprbTrigger.getDscp().getUseComments()) {
+        if (GhprbTrigger.getDscp().getUseComments()) {
 
-                if (state == GHCommitState.SUCCESS) {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgSuccess(build);
-                } else if (state == GHCommitState.FAILURE) {
-                    message = message + " " + GhprbTrigger.getDscp().getMsgFailure(build);
+            StringBuilder msg = new StringBuilder(ex.getMessage());
+
+            if (build != null) {
+                msg.append("\n");
+                GhprbTrigger trigger = Ghprb.extractTrigger(build);
+                for (GhprbExtension ext : Ghprb.matchesAll(trigger.getExtensions(), GhprbBuildStatus.class)) {
+                    if (ext instanceof GhprbCommentAppender) {
+                        msg.append(((GhprbCommentAppender) ext).postBuildComment(build, null));
+                    }
                 }
-                if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
-                    logger.log(Level.INFO, "Trying to send comment.", ex);
-                    addComment(id, message);
-                }
-            } else {
-                logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
             }
+
+            if (GhprbTrigger.getDscp().getUseDetailedComments() || (state == GHCommitState.SUCCESS || state == GHCommitState.FAILURE)) {
+                logger.log(Level.INFO, "Trying to send comment.", baseException);
+                addComment(ex.getId(), msg.toString());
+            }
+        } else {
+            logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.");
         }
     }
 
@@ -198,7 +193,7 @@ public class GhprbRepository {
         }
 
         try {
-            ghRepository.getPullRequest(id).comment(comment);
+            getGitHubRepo().getPullRequest(id).comment(comment);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
         }
@@ -206,13 +201,14 @@ public class GhprbRepository {
 
     public void closePullRequest(int id) {
         try {
-            ghRepository.getPullRequest(id).close();
+            getGitHubRepo().getPullRequest(id).close();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
         }
     }
 
     private boolean hookExist() throws IOException {
+        GHRepository ghRepository = getGitHubRepo();
         for (GHHook h : ghRepository.getHooks()) {
             if (!"web".equals(h.getName())) {
                 continue;
@@ -250,7 +246,7 @@ public class GhprbRepository {
     }
 
     public GHPullRequest getPullRequest(int id) throws IOException {
-        return ghRepository.getPullRequest(id);
+        return getGitHubRepo().getPullRequest(id);
     }
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
@@ -264,13 +260,9 @@ public class GhprbRepository {
             return;
         }
 
-        if (ghRepository == null) {
-            init();
-        }
-
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
-            pull = new GhprbPullRequest(ghRepository.getPullRequest(id), helper, this);
+            pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
             pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
@@ -340,5 +332,12 @@ public class GhprbRepository {
     @VisibleForTesting
     void setHelper(Ghprb helper) {
         this.helper = helper;
+    }
+
+    public GHRepository getGitHubRepo() {
+        if (ghRepository == null) {
+            init();
+        }
+        return ghRepository;
     }
 }
