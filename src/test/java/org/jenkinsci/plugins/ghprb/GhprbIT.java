@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.GitSCM;
-import net.sf.json.JSONObject;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -15,6 +14,8 @@ import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.stapler.RequestImpl;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -32,6 +33,9 @@ public class GhprbIT extends GhprbITBaseTestCase {
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
+    
+    @Mock
+    private RequestImpl req;
 
     @Before
     public void setUp() throws Exception {
@@ -45,8 +49,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("PRJ");
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
         given(commitPointer.getSha()).willReturn("sha");
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        GhprbTrigger.getDscp().configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getNumber()).willReturn(1);
 
@@ -57,7 +60,6 @@ public class GhprbIT extends GhprbITBaseTestCase {
 
         // Configuring and adding Ghprb trigger
         project.addTrigger(trigger);
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
 
         // Configuring Git SCM
         GitSCM scm = GhprbTestUtil.provideGitSCM();
@@ -78,8 +80,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
         given(commitPointer.getSha()).willReturn("sha").willReturn("sha").willReturn("newOne").willReturn("newOne");
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment> newArrayList());
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        GhprbTrigger.getDscp().configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -88,7 +89,6 @@ public class GhprbIT extends GhprbITBaseTestCase {
         trigger.setHelper(ghprb);
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
@@ -111,8 +111,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(comment.getUser()).willReturn(ghUser);
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5).willReturn(5);
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        GhprbTrigger.getDscp().configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -121,7 +120,6 @@ public class GhprbIT extends GhprbITBaseTestCase {
         trigger.setHelper(ghprb);
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
@@ -144,8 +142,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(comment.getUser()).willReturn(ghUser);
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5);
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        GhprbTrigger.getDscp().configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -154,7 +151,6 @@ public class GhprbIT extends GhprbITBaseTestCase {
         trigger.setHelper(ghprb);
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
         

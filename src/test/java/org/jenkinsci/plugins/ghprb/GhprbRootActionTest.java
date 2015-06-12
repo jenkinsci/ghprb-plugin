@@ -8,8 +8,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import net.sf.json.JSONObject;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
@@ -87,17 +85,15 @@ public class GhprbRootActionTest {
         ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
 
         GhprbTestUtil.mockCommitList(ghPullRequest);
-        ghprbGitHub.setGitHub(gitHub);
     }
 
     @Test
     public void testUrlEncoded() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(null));
         given(commitPointer.getSha()).willReturn("sha1");
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        GhprbTrigger.getDscp().configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getNumber()).willReturn(1);
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -106,16 +102,14 @@ public class GhprbRootActionTest {
         trigger.setHelper(ghprb);
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
-        
-        GhprbTrigger.getDscp().setGitHub(ghprbGitHub);
-        doReturn(gitHub).when(ghprbGitHub).get();
+
+        doReturn(gitHub).when(trigger).getGitHub();
         
         given(req.getContentType()).willReturn("application/x-www-form-urlencoded");
         given(req.getParameter("payload")).willReturn(payload);
@@ -132,10 +126,9 @@ public class GhprbRootActionTest {
     public void disabledJobsDontBuild() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("disabledJobsDontBuild");
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(null));
         given(commitPointer.getSha()).willReturn("sha1");
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-        GhprbTrigger.getDscp().configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getNumber()).willReturn(1);
         Ghprb ghprb = spy(trigger.createGhprb(project));
@@ -144,7 +137,6 @@ public class GhprbRootActionTest {
         trigger.setHelper(ghprb);
         ghprb.getRepository().setHelper(ghprb);
         project.addTrigger(trigger);
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
 
@@ -154,8 +146,7 @@ public class GhprbRootActionTest {
         
         project.disable();
 
-        GhprbTrigger.getDscp().setGitHub(ghprbGitHub);
-        doReturn(gitHub).when(ghprbGitHub).get();
+        doReturn(gitHub).when(trigger).getGitHub();
         
         given(req.getContentType()).willReturn("application/x-www-form-urlencoded");
         given(req.getParameter("payload")).willReturn(payload);

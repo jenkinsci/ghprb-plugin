@@ -49,7 +49,7 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
         checkBuildStatusMessages();
         checkCommitStatusContext();
         
-        configVersion = 1;
+        configVersion = 2;
     }
     
     private void checkBuildStatusMessages() {

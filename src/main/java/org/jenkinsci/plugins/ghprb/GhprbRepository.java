@@ -54,7 +54,15 @@ public class GhprbRepository {
     private boolean initGhRepository() {
         GitHub gitHub = null;
         try {
-            gitHub = helper.getGitHub().get();
+            GhprbGitHub repo = helper.getGitHub();
+            if (repo == null) {
+                return false;
+            }
+            gitHub = repo.get();
+            if (gitHub == null) {
+                logger.log(Level.SEVERE, "No connection returned to GitHub server!");
+                return false;
+            }
             if (gitHub.getRateLimit().remaining == 0) {
                 return false;
             }

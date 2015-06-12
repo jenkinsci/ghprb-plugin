@@ -10,15 +10,11 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
-import org.kohsuke.github.GHEventPayload;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -81,45 +77,18 @@ public class GhprbRootAction implements UnprotectedRootAction {
             return;
         }
 
-        GhprbGitHub gh = GhprbTrigger.getDscp().getGitHub();
-
-        logger.log(Level.INFO, "Got payload event: {0}", event);
-        try {
-            if ("issue_comment".equals(event)) {
-                GHEventPayload.IssueComment issueComment = gh.get()
-                        .parseEventPayload(new StringReader(payload), GHEventPayload.IssueComment.class);
-                GHIssueState state = issueComment.getIssue().getState();
-                if (state == GHIssueState.CLOSED) {
-                    logger.log(Level.INFO, "Skip comment on closed PR");
-                    return;
-                }
-
-                for (GhprbRepository repo : getRepos(issueComment.getRepository())) {
-                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", 
-                            new Object[] { issueComment.getComment(), repo.getName() }
-                    );
-                    repo.onIssueCommentHook(issueComment);
-                }
-            } else if ("pull_request".equals(event)) {
-                GHEventPayload.PullRequest pr = gh.get().parseEventPayload(new StringReader(payload), GHEventPayload.PullRequest.class);
-                for (GhprbRepository repo : getRepos(pr.getPullRequest().getRepository())) {
-                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber() });
-                    repo.onPullRequestHook(pr);
-                }
-            } else {
-                logger.log(Level.WARNING, "Request not known");
+        for (GhprbWebHook webHook : getWebHooks()) {
+            try {
+                webHook.handleWebHook(event, payload);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
             }
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to parse github hook payload.", ex);
         }
+        
     }
-
-    private Set<GhprbRepository> getRepos(GHRepository repo) {
-        return getRepos(repo.getFullName());
-    }
-
-    private Set<GhprbRepository> getRepos(String repo) {
-        final Set<GhprbRepository> ret = new HashSet<GhprbRepository>();
+    
+    private Set<GhprbWebHook> getWebHooks() {
+        final Set<GhprbWebHook> webHooks = new HashSet<GhprbWebHook>();
 
         // We need this to get access to list of repositories
         Authentication old = SecurityContextHolder.getContext().getAuthentication();
@@ -128,23 +97,20 @@ public class GhprbRootAction implements UnprotectedRootAction {
         try {
             for (AbstractProject<?, ?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)) {
                 GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
-                if (trigger == null || trigger.getRepository() == null) {
+                if (trigger == null || trigger.getWebHook() == null) {
                     continue;
                 }
-                GhprbRepository r = trigger.getRepository();
-                if (repo.equalsIgnoreCase(r.getName())) {
-                    ret.add(r);
-                }
+                webHooks.add(trigger.getWebHook());
             }
         } finally {
             SecurityContextHolder.getContext().setAuthentication(old);
         }
 
-        if (ret.size() == 0) {
-            logger.log(Level.WARNING, "No repos with plugin trigger found for GitHub repo named {0}", repo);
+        if (webHooks.size() == 0) {
+            logger.log(Level.WARNING, "No projects found using GitHub pull request trigger");
         }
 
-        return ret;
+        return webHooks;
     }
 
     @Extension
