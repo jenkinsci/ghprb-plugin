@@ -93,28 +93,26 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     
     public GitHub getConnection(Item context) throws IOException {
         GitHub gh = null;
-        
-        if (credentialsId == null) {
-            return GitHub.connectAnonymously();
-        }
-        
         GitHubBuilder builder = new GitHubBuilder()
-                                        .withEndpoint(serverAPIUrl)
-                                        .withConnector(new HttpConnectorWithJenkinsProxy());
-        StandardCredentials credentials = CredentialsMatchers
-                .firstOrNull(
-                        CredentialsProvider.lookupCredentials(StandardCredentials.class, context,
-                                ACL.SYSTEM, URIRequirementBuilder.fromUri(serverAPIUrl).build()),
-                                CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
+                    .withEndpoint(serverAPIUrl)
+                    .withConnector(new HttpConnectorWithJenkinsProxy());
         
-        if (credentials instanceof StringCredentials) {
-            String accessToken = ((StringCredentials) credentials).getSecret().getPlainText();
-            builder.withOAuthToken(accessToken);
-        } else if (credentials instanceof UsernamePasswordCredentials){
-            UsernamePasswordCredentials creds = (UsernamePasswordCredentials) credentials;
-            String username = creds.getUsername();
-            String password = creds.getPassword().getPlainText();
-            builder.withPassword(username, password);
+        if (!StringUtils.isEmpty(credentialsId)) {
+            StandardCredentials credentials = CredentialsMatchers
+                    .firstOrNull(
+                            CredentialsProvider.lookupCredentials(StandardCredentials.class, context,
+                                    ACL.SYSTEM, URIRequirementBuilder.fromUri(serverAPIUrl).build()),
+                                    CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
+            
+            if (credentials instanceof StringCredentials) {
+                String accessToken = ((StringCredentials) credentials).getSecret().getPlainText();
+                builder.withOAuthToken(accessToken);
+            } else if (credentials instanceof UsernamePasswordCredentials){
+                UsernamePasswordCredentials creds = (UsernamePasswordCredentials) credentials;
+                String username = creds.getUsername();
+                String password = creds.getPassword().getPlainText();
+                builder.withPassword(username, password);
+            }
         }
         try {
             gh = builder.build();

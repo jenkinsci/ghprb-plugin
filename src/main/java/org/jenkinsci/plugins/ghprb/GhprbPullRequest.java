@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.ghprb;
 import com.google.common.base.Joiner;
 
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
