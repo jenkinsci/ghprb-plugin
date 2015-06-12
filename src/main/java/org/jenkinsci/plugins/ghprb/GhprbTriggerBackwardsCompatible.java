@@ -77,7 +77,7 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     
     private void checkCommitStatusContext() {
         if (configVersion < 1) {
-            GhprbSimpleStatus status = new GhprbSimpleStatus(commitStatusContext);
+            GhprbSimpleStatus status = new GhprbSimpleStatus(commitStatusContext, null, null, null);
             addIfMissing(status);
         }
     }
