@@ -111,7 +111,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         
         listener.getLogger().println(String.format("Setting status of %s to %s with url %s and message: '%s'", sha1, state, url, message));
         if (context != null) {
-            listener.getLogger().println(String.format("Using conext: " + context));
+            listener.getLogger().println(String.format("Using context: " + context));
         }
         try {
             repo.createCommitStatus(sha1, state, url, message, context);
