@@ -23,6 +23,7 @@ public class GhprbCause extends Cause {
     private final GHUser triggerSender;
     private final String commentBody;
     private final GitUser commitAuthor;
+    private final String description;
 
     public GhprbCause(String commit, 
             int pullID, 
@@ -34,7 +35,8 @@ public class GhprbCause extends Cause {
             URL url, 
             GHUser triggerSender, 
             String commentBody,
-            GitUser commitAuthor) {
+            GitUser commitAuthor,
+            String description) {
 
         this.commit = commit;
         this.pullID = pullID;
@@ -48,7 +50,17 @@ public class GhprbCause extends Cause {
         this.triggerSender = triggerSender;
         this.commentBody = commentBody;
         this.commitAuthor = commitAuthor;
+        this.description = description;
     }
+
+    public GhprbCause(String commit, int pullID, boolean merged,
+            String targetBranch, String sourceBranch, String authorEmail,
+            String title, URL url, GHUser triggerSender, String commentBody,
+            GitUser commitAuthor) {
+        this(commit, pullID, merged, targetBranch, sourceBranch, authorEmail,
+                title, url, triggerSender, commentBody, commitAuthor, null);
+}
+
 
     @Override
     public String getShortDescription() {
@@ -111,6 +123,10 @@ public class GhprbCause extends Cause {
 
     public GitUser getCommitAuthor() {
         return commitAuthor;
+    }
+    
+    public String getDescription() {
+    	return description;
     }
 
 }

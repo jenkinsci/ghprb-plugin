@@ -54,6 +54,7 @@ public class GhprbPullRequest {
     private transient GhprbRepository repo;
 
     private String commentBody;
+    private String description;
 
     GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
@@ -70,6 +71,7 @@ public class GhprbPullRequest {
         target = pr.getBase().getRef();
         source = pr.getHead().getRef();
         url = pr.getHtmlUrl();
+        description = pr.getBody();
         this.pr = pr;
         obtainAuthorEmail(pr);
 
@@ -151,8 +153,9 @@ public class GhprbPullRequest {
         if (isUpdated(pr)) {
             logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
 
-            // the title could have been updated since the original PR was opened
+            // title or description could have been updated since the original PR was opened
             title = pr.getTitle();
+            description = pr.getBody();
             int commentsChecked = checkComments(pr);
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
@@ -433,6 +436,10 @@ public class GhprbPullRequest {
         return title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+    
     /**
      * Returns the URL to the Github Pull Request.
      *
