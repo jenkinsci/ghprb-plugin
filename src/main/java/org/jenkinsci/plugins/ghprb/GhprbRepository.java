@@ -54,7 +54,15 @@ public class GhprbRepository {
     private boolean initGhRepository() {
         GitHub gitHub = null;
         try {
-            gitHub = helper.getGitHub().get();
+            GhprbGitHub repo = helper.getGitHub();
+            if (repo == null) {
+                return false;
+            }
+            gitHub = repo.get();
+            if (gitHub == null) {
+                logger.log(Level.SEVERE, "No connection returned to GitHub server!");
+                return false;
+            }
             if (gitHub.getRateLimit().remaining == 0) {
                 return false;
             }
@@ -189,7 +197,7 @@ public class GhprbRepository {
         }
 
         try {
-            ghRepository.getPullRequest(id).comment(comment);
+            getGitHubRepo().getPullRequest(id).comment(comment);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
         }
@@ -197,13 +205,14 @@ public class GhprbRepository {
 
     public void closePullRequest(int id) {
         try {
-            ghRepository.getPullRequest(id).close();
+            getGitHubRepo().getPullRequest(id).close();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
         }
     }
 
     private boolean hookExist() throws IOException {
+        GHRepository ghRepository = getGitHubRepo();
         for (GHHook h : ghRepository.getHooks()) {
             if (!"web".equals(h.getName())) {
                 continue;
@@ -241,7 +250,7 @@ public class GhprbRepository {
     }
 
     public GHPullRequest getPullRequest(int id) throws IOException {
-        return ghRepository.getPullRequest(id);
+        return getGitHubRepo().getPullRequest(id);
     }
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
@@ -255,13 +264,9 @@ public class GhprbRepository {
             return;
         }
 
-        if (ghRepository == null) {
-            init();
-        }
-
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
-            pull = new GhprbPullRequest(ghRepository.getPullRequest(id), helper, this);
+            pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
             pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
@@ -303,6 +308,9 @@ public class GhprbRepository {
     }
 
     public GHRepository getGitHubRepo() {
+        if (ghRepository == null) {
+            init();
+        }
         return ghRepository;
     }
 }

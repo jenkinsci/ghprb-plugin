@@ -1,16 +1,16 @@
 package org.jenkinsci.plugins.ghprb.manager.impl;
 
 import static org.fest.assertions.Assertions.assertThat;
-
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
 import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixProject;
-
-import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbITBaseTestCase;
@@ -18,13 +18,11 @@ import org.jenkinsci.plugins.ghprb.GhprbTestUtil;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
@@ -65,11 +63,12 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
 
         given(commitPointer.getSha()).willReturn("sha");
+        
+        Map<String, Object> config = new HashMap<String, Object>(1);
+        config.put("publishedURL", "defaultPublishedURL");
 
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
+        GhprbTestUtil.setupGhprbTriggerDescriptor(config);
 
-        jsonObject.put("publishedURL", "defaultPublishedURL");
-        GhprbTrigger.DESCRIPTOR.configure(null, jsonObject);
 
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
@@ -86,8 +85,6 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
 
         // Configuring and adding Ghprb trigger
         project.addTrigger(trigger);
-
-        project.getTriggers().keySet().iterator().next().configure(null, jsonObject);
 
         // Configuring Git SCM
         project.setScm(GhprbTestUtil.provideGitSCM());

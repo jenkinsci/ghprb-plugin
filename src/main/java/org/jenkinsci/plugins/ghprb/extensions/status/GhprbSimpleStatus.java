@@ -20,6 +20,9 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
+import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
+import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
+import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -71,9 +74,32 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     }
 
     public void onBuildComplete(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
-        GHCommitState state;
-        state = Ghprb.getState(build);
-        createCommitStatus(build, listener, "Build finished.", repo, state);
+        GhprbTrigger trigger = Ghprb.extractTrigger(build);
+        if (trigger == null) {
+            listener.getLogger().println("Unable to get pull request builder trigger!!");
+        }
+        GHCommitState state = Ghprb.getState(build);
+        GhprbCause cause = Ghprb.getCause(build);
+
+        JobConfiguration jobConfiguration =
+            JobConfiguration.builder()
+                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
+                .build();
+
+        GhprbBuildManager buildManager =
+            GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
+        
+        StringBuilder replyMessage = new StringBuilder();
+        
+        if (cause.isMerged()) {
+            replyMessage.append("Merged build finished. ");
+        } else {
+            replyMessage.append("Build finished. ");
+        }
+        
+        replyMessage.append(buildManager.getOneLineTestResults());
+        
+        createCommitStatus(build, listener, replyMessage.toString(), repo, state);
     }
 
     private void createCommitStatus(AbstractBuild<?, ?> build, TaskListener listener, String message, GHRepository repo, GHCommitState state) throws GhprbCommitStatusException {
