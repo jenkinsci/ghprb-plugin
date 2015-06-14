@@ -58,9 +58,9 @@ f.advanced() {
     }
   }
 }
-//f.advanced(title: _("Trigger Setup")) {
+f.advanced(title: _("Trigger Setup")) {
   f.entry(title: _("Trigger Setup")) {
     f.hetero_list(items: instance == null ? null : instance.extensions, 
         name: "extensions", oneEach: "true", hasHeader: "true", descriptors: descriptor.getExtensionDescriptors()) 
   }
-//}
+}
