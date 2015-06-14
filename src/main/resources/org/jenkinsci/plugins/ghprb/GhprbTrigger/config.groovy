@@ -1,4 +1,3 @@
-// Namespaces
 xml = namespace("http://www.w3.org/XML/1998/namespace")
 j = namespace("jelly:core")
 f = namespace("/lib/form")
@@ -59,8 +58,9 @@ f.advanced() {
     }
   }
 }
-f.advanced(title: _("Trigger Setup")) {
+//f.advanced(title: _("Trigger Setup")) {
   f.entry(title: _("Trigger Setup")) {
-    f.hetero_list(items: instance.extensions, name: "extensions", oneEach: "true", hasHeader: "true", descriptors: descriptor.getExtensionDescriptors()) 
+    f.hetero_list(items: instance == null ? null : instance.extensions, 
+        name: "extensions", oneEach: "true", hasHeader: "true", descriptors: descriptor.getExtensionDescriptors()) 
   }
-}
+//}

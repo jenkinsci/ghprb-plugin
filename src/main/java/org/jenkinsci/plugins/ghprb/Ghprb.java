@@ -391,9 +391,7 @@ public class Ghprb {
         specifications.add(new SchemeSpecification(serverUri.getScheme()));
         specifications.add(new PathSpecification(serverUri.getPath(), null, false));
         
-        
-        
-        Domain domain = new Domain(serverAPIUrl, "Auto generated credentials domain", specifications);
+        Domain domain = new Domain(serverUri.getHost(), "Auto generated credentials domain", specifications);
         CredentialsStore provider = new SystemCredentialsProvider.StoreImpl();
         provider.addDomain(domain, credentials);
         return credentials.getId();
