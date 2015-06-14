@@ -70,7 +70,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private GhprbGitHubAuth gitHubApiAuth;
     
     
-    private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions;
+    private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
     
     public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
         if (extensions == null) {
