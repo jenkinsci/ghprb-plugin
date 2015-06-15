@@ -34,6 +34,8 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
 * github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
 * git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
+* credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
+* plain credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Plain+Credentials+Plugin)
 
 ### Pre-installation:
 * I recommend to create GitHub 'bot' user that will be used for communication with GitHub (however you can use your own account if you want).
@@ -43,21 +45,40 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 ### Installation:
 * Install the plugin.  
 * Go to ``Manage Jenkins`` -> ``Configure System`` -> ``GitHub pull requests builder`` section.
-* If you are using Enterprise GitHub set the server api URL in ``GitHub server api URL``. Otherwise leave there ``https://api.github.com``.
-* Set your 'bot' user's Access Token.  
-  * If you don't have generated your access token you can generate one in ``Advanced...``.  
-    * Set your 'bot' user's GitHub username and password.  
-    * Press the ``Create Access Token`` button  
-    * Copy the generated Access Token into the field ``Access Token``
-    * Clear the username and password fields
-  * If you don't want to use Access Token leave the field empty and fill the username and password in ``Advanced...``.
+
 * Add GitHub usernames of admins (these usernames will be used as defaults in new jobs).  
 * Under Advanced, you can modify:  
   * The phrase for adding users to the whitelist via comment. (Java regexp)  
   * The phrase for accepting a pull request for testing. (Java regexp)
   * The phrase for starting a new build. (Java regexp)  
   * The crontab line. This specify default setting for new jobs.  
+* Under Application Setup
+  * There are global and job default extensions that can be configured for things like:
+    * Commit status updates
+    * Build status messages
+    * Adding lines from the build log to the build result message
+    * etc.
 * Save to preserve your changes.  
+
+### Credentials
+* If you are using Enterprise GitHub set the server api URL in ``GitHub server api URL``. Otherwise leave there ``https://api.github.com``.
+* A GitHub API token or username password can be used for access to the GitHub API
+* To setup credentials for a given GitHub Server API URL:
+  * Click Add next to the ``Credentials`` drop down
+    * For a token select ``Kind`` -> ``Secret text``
+      * If you haven't generated an access token you can generate one in ``Test Credentials...``.  
+        * Set your 'bot' user's GitHub username and password.  
+        * Press the ``Create Access Token`` button  
+        * Jenkins will create a token credential, and give you the id of the newly created credentials.  The default description is: ``serverAPIUrl + " GitHub auto generated token credentials"``.
+    * For username/password us ``Kind`` -> ``Username with password``
+      * The scope determines what has access to the credentials you are about to create
+    * The first part of the description is used to show different credentials in the drop down, so use something semi-descriptive
+    * Click ``Add``
+  * Credentials will automatically be created in the domain given by the ``GitHub Server API URL`` field.
+  * Select the credentials you just created in the drop down.
+  * The first fifty characters in the Description are used to differentiate credentials per job, so again use something semi-descriptive
+* Add as many GitHub auth sections as you need, even duplicate server URLs
+
 
 ### Creating a job:
 * Create a new job.  
@@ -85,6 +106,10 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 
 ### Updates
+
+#### -> 1.23 - 1.23.2
+* Credentials are now handled by the jenkins credentials plugin
+* Bug fixes due to switch to groovy config files.
 
 #### -> 1.22.x
 * Fix issue where if a project was disabled the Jenkins Trigger process would crash
