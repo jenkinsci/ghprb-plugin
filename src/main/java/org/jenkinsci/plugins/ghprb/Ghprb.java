@@ -1,15 +1,31 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.plugins.credentials.domains.DomainSpecification;
+import com.cloudbees.plugins.credentials.domains.HostnamePortSpecification;
+import com.cloudbees.plugins.credentials.domains.HostnameSpecification;
+import com.cloudbees.plugins.credentials.domains.PathSpecification;
+import com.cloudbees.plugins.credentials.domains.SchemeSpecification;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
+import hudson.model.Item;
 import hudson.model.Result;
 import hudson.model.Saveable;
+import hudson.security.ACL;
 import hudson.util.DescribableList;
 import hudson.util.LogTaskListener;
+import hudson.util.Secret;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
@@ -17,9 +33,12 @@ import org.apache.commons.collections.functors.InstanceofPredicate;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
+import org.jenkinsci.plugins.gitclient.GitURIRequirementsBuilder;
+import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHUser;
 
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
@@ -108,7 +127,7 @@ public class Ghprb {
     }
 
     public GhprbGitHub getGitHub() {
-        return trigger.getDescriptor().getGitHub();
+        return new GhprbGitHub(trigger);
     }
 
     void run() {
@@ -330,4 +349,51 @@ public class Ghprb {
         extensions.add(ext);
     }
 
+    public static StandardCredentials lookupCredentials(Item project, String credentialId, String uri) {
+        return (credentialId == null) ? null : CredentialsMatchers.firstOrNull(
+                    CredentialsProvider.lookupCredentials(StandardCredentials.class, project, ACL.SYSTEM,
+                            GitURIRequirementsBuilder.fromUri(uri).build()),
+                    CredentialsMatchers.withId(credentialId));
+    }
+    
+    public static String createCredentials(String serverAPIUrl, String token) throws Exception {
+        String description = serverAPIUrl + " GitHub auto generated token credentials";
+        StringCredentialsImpl credentials = new StringCredentialsImpl(
+                CredentialsScope.GLOBAL, 
+                UUID.randomUUID().toString(), 
+                description, 
+                Secret.fromString(token));
+        return createCredentials(serverAPIUrl, credentials);
+    }
+    
+    public static String createCredentials(String serverAPIUrl, String username, String password) throws Exception {
+        String description = serverAPIUrl + " GitHub auto generated Username password credentials";
+        UsernamePasswordCredentialsImpl credentials = new UsernamePasswordCredentialsImpl(
+                CredentialsScope.GLOBAL, 
+                UUID.randomUUID().toString(),
+                description,
+                username,
+                password);
+        return createCredentials(serverAPIUrl, credentials);
+    }
+    
+    private static String createCredentials(String serverAPIUrl, StandardCredentials credentials) throws Exception {
+        List<DomainSpecification> specifications = new ArrayList<DomainSpecification>(2);
+        
+        URI serverUri = new URI(serverAPIUrl);
+        
+        if (serverUri.getPort() > 0) {
+            specifications.add(new HostnamePortSpecification(serverUri.getHost() + ":" + serverUri.getPort(), null));
+        } else {
+            specifications.add(new HostnameSpecification(serverUri.getHost(), null));
+        }
+        
+        specifications.add(new SchemeSpecification(serverUri.getScheme()));
+        specifications.add(new PathSpecification(serverUri.getPath(), null, false));
+        
+        Domain domain = new Domain(serverUri.getHost(), "Auto generated credentials domain", specifications);
+        CredentialsStore provider = new SystemCredentialsProvider.StoreImpl();
+        provider.addDomain(domain, credentials);
+        return credentials.getId();
+    }
 }

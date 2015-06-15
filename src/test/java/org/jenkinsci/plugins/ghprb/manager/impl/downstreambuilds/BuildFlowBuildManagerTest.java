@@ -12,8 +12,6 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
 import java.util.Iterator;
 
-import net.sf.json.JSONObject;
-
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbITBaseTestCase;
 import org.jenkinsci.plugins.ghprb.GhprbTestUtil;
@@ -107,9 +105,7 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
 
         given(commitPointer.getSha()).willReturn("sha");
-        JSONObject jsonObject = GhprbTestUtil.provideConfiguration();
-
-        GhprbTrigger.DESCRIPTOR.configure(null, jsonObject);
+        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
 
         buildFlowProject.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
 
@@ -126,8 +122,6 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
         // Configuring and adding Ghprb trigger
         buildFlowProject.addTrigger(trigger);
-
-        buildFlowProject.getTriggers().keySet().iterator().next().configure(null, jsonObject);
 
         // Configuring Git SCM
         buildFlowProject.setScm(GhprbTestUtil.provideGitSCM());

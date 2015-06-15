@@ -154,13 +154,14 @@ public class GhprbPullRequestMergeTest {
 
     }
 
+    @SuppressWarnings("unchecked")
     private void setupConditions(String triggerLogin, String committerName, String comment) throws IOException {
         given(triggerSender.getLogin()).willReturn(triggerLogin);
         given(triggerSender.getName()).willReturn(committerName);
         given(committer.getName()).willReturn(this.committerName);
 
         PagedIterator<GHPullRequestCommitDetail> itr = Mockito.mock(PagedIterator.class);
-        PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
+        PagedIterable<GHPullRequestCommitDetail> pagedItr = Mockito.mock(PagedIterable.class);
 
         Commit commit = mock(Commit.class);
         GHPullRequestCommitDetail commitDetail = mock(GHPullRequestCommitDetail.class);

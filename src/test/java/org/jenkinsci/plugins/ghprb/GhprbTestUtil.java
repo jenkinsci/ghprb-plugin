@@ -19,23 +19,24 @@ import static org.mockito.BDDMockito.given;
 
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
+import org.kohsuke.stapler.BindInterceptor;
+import org.kohsuke.stapler.RequestImpl;
 import org.mockito.Mockito;
 
-import antlr.ANTLRException;
 import hudson.model.AbstractProject;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
+import static org.mockito.Matchers.any;
 
 public class GhprbTestUtil {
 
@@ -226,6 +227,8 @@ public class GhprbTestUtil {
             "  }" +
             "}";
 
+    
+    private static RequestImpl req;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void mockCommitList(GHPullRequest ghPullRequest) {
@@ -255,8 +258,28 @@ public class GhprbTestUtil {
             given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate());
         }
     }
+    
+    private static final String apiUrl = "https://api.github.com";
+    
+    private static String setUpCredentials() throws Exception {
+        String credentialsId = Ghprb.createCredentials(apiUrl, "accessToken");
+        return credentialsId;
+    }
+    
+    private static String credentialsId;
+    
+    private static String getCredentialsId() throws Exception {
+        if (credentialsId == null) {
+            credentialsId = setUpCredentials();
+        }
+        return credentialsId;
+    }
 
-    public static JSONObject provideConfiguration() {
+    public static void setupGhprbTriggerDescriptor(Map<String, Object> config) throws Exception {
+        setupReq();
+        if (config == null) {
+            config = new HashMap<String, Object>();
+        }
         JSONObject jsonObject = new JSONObject();
 
         jsonObject.put("serverAPIUrl", "https://api.github.com");
@@ -265,7 +288,7 @@ public class GhprbTestUtil {
         jsonObject.put("accessToken", "accessToken");
         jsonObject.put("adminlist", "user");
         jsonObject.put("allowMembersOfWhitelistedOrgsAsAdmin", "false");
-        jsonObject.put("publishedURL", "");
+        jsonObject.put("publishedURL", "defaultPublishedURL");
         jsonObject.put("requestForTestingPhrase", "test this");
         jsonObject.put("whitelistPhrase", "");
         jsonObject.put("okToTestPhrase", "ok to test");
@@ -282,10 +305,33 @@ public class GhprbTestUtil {
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
+        
+        JSONObject githubAuth = new JSONObject();
+        githubAuth.put("credentialsId", getCredentialsId());
+        githubAuth.put("serverAPIUrl", apiUrl);
+        
+        jsonObject.put("githubAuth", githubAuth);
+        
 
-        return jsonObject;
+        for ( Entry<String, Object> next: config.entrySet()) {
+            jsonObject.put(next.getKey(), next.getValue());
+        }
+        
+
+        GhprbTrigger.getDscp().configure(req, jsonObject);
+        
     }
+    
+    @SuppressWarnings("unchecked")
+    private static void setupReq() {
+        req = Mockito.mock(RequestImpl.class);
+        given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
+        req.setBindListener(BindInterceptor.NOOP);
 
+    }
+    
     public static GitSCM provideGitSCM() {
         return new GitSCM(newArrayList(
                 new UserRemoteConfig("https://github.com/user/dropwizard", 
@@ -298,54 +344,33 @@ public class GhprbTestUtil {
                 null);
     }
     
-    @SuppressWarnings("unchecked")
-    public static GhprbTrigger getTrigger(Map<String, Object> values) throws ANTLRException {
+    public static GhprbTrigger getTrigger(Map<String, Object> values) throws Exception {
+        setupReq();
         if (values == null) {
             values = new HashMap<String, Object>();
         }
-        Map<String, Object> defaultValues = new HashMap<String, Object> (){
-            private static final long serialVersionUID = -6720840565156773837L;
 
-        {
-            put("adminlist", "user");
-            put("whitelist", "user");
-            put("orgslist", "");
-            put("cron", "0 0 31 2 0");
-            put("triggerPhrase", "retest this please");
-            put("onlyTriggerPhrase", false);
-            put("useGitHubHooks", false);
-            put("permitAll", false);
-            put("autoCloseFailedPullRequests", false);
-            put("displayBuildErrorsOnDownstreamBuilds", false);
-            put("commentFilePath", null);
-            put("whiteListTargetBranches", null);
-            put("allowMembersOfWhitelistedOrgsAsAdmin", false);
-            put("msgSuccess", null);
-            put("msgFailure", null);
-            put("secret", null);
-            put("commitStatusContext", null);
-            put("extensions", null);
-        }};
+        JSONObject defaults = new JSONObject();
+        defaults.put("adminlist", "user");
+        defaults.put("whitelist", "user");
+        defaults.put("orgslist", "");
+        defaults.put("cron", "0 0 31 2 0");
+        defaults.put("triggerPhrase", "retest this please");
+        defaults.put("onlyTriggerPhrase", false);
+        defaults.put("useGitHubHooks", false);
+        defaults.put("permitAll", false);
+        defaults.put("autoCloseFailedPullRequests", false);
+        defaults.put("displayBuildErrorsOnDownstreamBuilds", false);
+        defaults.put("allowMembersOfWhitelistedOrgsAsAdmin", false);
+        defaults.put("gitHubApi", "https://api.github.com");
+        defaults.put("secret", null);
+
+        for ( Entry<String, Object> next: values.entrySet()) {
+            defaults.put(next.getKey(), next.getValue());
+        }
         
-        defaultValues.putAll(values);
-        GhprbTrigger trigger = new GhprbTrigger(
-                (String)defaultValues.get("adminlist"),
-                (String)defaultValues.get("whitelist"),
-                (String)defaultValues.get("orgslist"),
-                (String)defaultValues.get("cron"),
-                (String)defaultValues.get("triggerPhrase"),
-                (Boolean)defaultValues.get("onlyTriggerPhrase"),
-                (Boolean)defaultValues.get("useGitHubHooks"),
-                (Boolean)defaultValues.get("permitAll"),
-                (Boolean)defaultValues.get("autoCloseFailedPullRequests"),
-                (Boolean)defaultValues.get("displayBuildErrorsOnDownstreamBuilds"),
-                (String)defaultValues.get("commentFilePath"),
-                (List<GhprbBranch>)defaultValues.get("whiteListTargetBranches"),
-                (Boolean)defaultValues.get("allowMembersOfWhitelistedOrgsAsAdmin"),
-                (String)defaultValues.get("msgSuccess"),
-                (String)defaultValues.get("msgFailure"),
-                (String)defaultValues.get("secret"),
-                (List<GhprbExtension>)defaultValues.get("extensions"));
+        GhprbTrigger trigger = req.bindJSON(GhprbTrigger.class, defaults);
+        
         return trigger;
     }
     
@@ -355,7 +380,6 @@ public class GhprbTestUtil {
             Thread.sleep(500);
         }
     }
-    
 
     public static void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
         for (int i = 0; i < numOfTriggers; ++i) {

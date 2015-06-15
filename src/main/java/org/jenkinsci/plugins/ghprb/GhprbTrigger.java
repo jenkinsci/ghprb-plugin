@@ -8,12 +8,14 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.*;
+import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.StringUtils;
@@ -25,7 +27,6 @@ import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
-import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -41,6 +42,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
+import jenkins.model.Jenkins;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -65,10 +68,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private transient Ghprb helper;
     private String project;
     private String secret;
+    private GhprbGitHubAuth gitHubApiAuth;
     
     
-
-    private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions;
+    private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
     
     public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
         if (extensions == null) {
@@ -106,8 +109,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String commentFilePath, 
             List<GhprbBranch> whiteListTargetBranches,
             Boolean allowMembersOfWhitelistedOrgsAsAdmin, 
-            String msgSuccess,
-            String msgFailure,
+            String msgSuccess, 
+            String msgFailure, 
+            String commitStatusContext,
+            String gitHubAuthId,
             String secret,
             List<GhprbExtension> extensions
             ) throws ANTLRException {
@@ -123,6 +128,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
+        this.gitHubApiAuth = getDescriptor().getGitHubAuth(gitHubAuthId);
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.secret = secret;
         setExtensions(extensions);
@@ -183,6 +189,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public void run() {
         // triggers are always triggered on the cron, but we just no-op if we are using GitHub hooks.
         if (getUseGitHubHooks()) {
+            logger.log(Level.FINE, "Use webHooks is set, so not running trigger");
             return;
         }
 
@@ -236,6 +243,35 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         // note that this will be removed from the Actions list after the job is completed so that the old (and incorrect)
         // one isn't there
         return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), findPreviousBuildForPullId(pullIdPv));
+    }
+    
+    
+    public GhprbGitHubAuth getGitHubApiAuth() {
+        if (gitHubApiAuth == null) {
+            for (GhprbGitHubAuth auth: getDescriptor().getGithubAuth()){
+                gitHubApiAuth = auth;
+                break;
+            }
+        }
+        return gitHubApiAuth;
+    }
+    
+
+    public GitHub getGitHub() throws IOException {
+        GhprbGitHubAuth auth = getGitHubApiAuth();
+        if (auth == null) {
+            return null;
+        }
+        @SuppressWarnings("rawtypes")
+        List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
+        
+        for (AbstractProject<?, ?> project : projects) {
+            if (project.getFullName().equals(this.project)) {
+                return auth.getConnection(project);
+            }
+        }
+        
+        return gitHubApiAuth.getConnection(null);
     }
 
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
@@ -325,8 +361,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return cron;
     }
 
+
     public String getSecret() {
         return secret;
+    }
+    public String getProject() {
+        return project;
     }
 
     public String getTriggerPhrase() {
@@ -371,6 +411,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return whiteListTargetBranches;
     }
 
+    public GhprbWebHook getWebHook() {
+        GhprbWebHook webHook = new GhprbWebHook(this);
+        return webHook;
+    }
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -411,7 +455,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
          * value in the global.jelly file as this value is dynamic and will not be
          * retained once configure() is called.
          */
-        private String serverAPIUrl = "https://api.github.com";
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
@@ -423,15 +466,46 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private List<GhprbBranch> whiteListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-
-        private String username;
-        private String password;
-        private String accessToken;
+        
+        private List<GhprbGitHubAuth> githubAuth;
+        
+        public GhprbGitHubAuth getGitHubAuth(String gitHubAuthId) {
+            
+            if (gitHubAuthId == null) {
+                return getGithubAuth().get(0);
+            }
+            
+            GhprbGitHubAuth firstAuth = null;
+            for (GhprbGitHubAuth auth : getGithubAuth()) {
+                if (firstAuth == null) {
+                    firstAuth = auth;
+                }
+                if (auth.getId().equals(gitHubAuthId)) {
+                    return auth;
+                }
+            }
+            return firstAuth;
+        }
+        
+        public List<GhprbGitHubAuth> getGithubAuth() {
+            if (githubAuth == null || githubAuth.size() == 0) {
+                githubAuth = new ArrayList<GhprbGitHubAuth>(1);
+                githubAuth.add(new GhprbGitHubAuth(null, null, "Anonymous connection", null));
+            }
+            return githubAuth;
+        }
+        
+        public List<GhprbGitHubAuth> getDefaultAuth(List<GhprbGitHubAuth> githubAuth) {
+            if (githubAuth != null && githubAuth.size() > 0) {
+                return githubAuth;
+            }
+            return getGithubAuth();
+        }
+        
         private String adminlist;
         
-        
         private String requestForTestingPhrase;
-        private transient GhprbGitHub gh;
+
         // map of jobs (by their fullName) and their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
         
@@ -458,6 +532,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (jobs == null) {
                 jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>();
             }
+//            save();
         }
 
         @Override
@@ -472,10 +547,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            serverAPIUrl = formData.getString("serverAPIUrl");
-            username = formData.getString("username");
-            password = formData.getString("password");
-            accessToken = formData.getString("accessToken");
             adminlist = formData.getString("adminlist");
             requestForTestingPhrase = formData.getString("requestForTestingPhrase");
             whitelistPhrase = formData.getString("whitelistPhrase");
@@ -489,6 +560,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             
+            githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.getJSONObject("githubAuth"));
+            
             extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
 
             try {
@@ -500,7 +573,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             readBackFromLegacy();
 
             save();
-            gh = new GhprbGitHub();
             return super.configure(req, formData);
         }
         
@@ -511,16 +583,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                         + "and cannot begin with a dash. Separate them with whitespaces.");
             }
             return FormValidation.ok();
-        }
-
-        public FormValidation doCheckServerAPIUrl(@QueryParameter String value) {
-            if ("https://api.github.com".equals(value)) {
-                return FormValidation.ok();
-            }
-            if (value.endsWith("/api/v3") || value.endsWith("/api/v3/")) {
-                return FormValidation.ok();
-            }
-            return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
         
         public ListBoxModel doFillUnstableAsItems() {
@@ -536,19 +598,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
             return items;
         }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
+        
         public String getAdminlist() {
             return adminlist;
         }
@@ -594,10 +644,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return displayBuildErrorsOnDownstreamBuilds;
         }
 
-        public String getServerAPIUrl() {
-            return serverAPIUrl;
-        }
-
         public GHCommitState getUnstableAs() {
             return unstableAs;
         }
@@ -610,18 +656,21 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return (useDetailedComments != null && useDetailedComments);
         }
 
-        public GhprbGitHub getGitHub() {
-            if (gh == null) {
-                gh = new GhprbGitHub();
+        public ListBoxModel doFillGitHubAuthIdItems(@QueryParameter("gitHubAuth") String gitHubAuthId) {
+            ListBoxModel model = new ListBoxModel();
+            for (GhprbGitHubAuth auth : getGithubAuth()) {
+                String description = Util.fixNull(auth.getDescription());
+                int length = description.length();
+                length = length > 50 ? 50 : length;
+                Option next = new Option(auth.getServerAPIUrl() + " : " + description.substring(0, length), auth.getId());
+                if (!StringUtils.isEmpty(gitHubAuthId) && gitHubAuthId.equals(auth.getId())) {
+                    next.selected = true;
+                }
+                model.add(next);
             }
-            return gh;
+            return model;
         }
         
-
-        @VisibleForTesting
-        void setGitHub(GhprbGitHub gh) {
-            this.gh = gh;
-        }
 
         public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
             ConcurrentMap<Integer, GhprbPullRequest> ret;
@@ -639,18 +688,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return ret;
         }
 
-        public FormValidation doCreateApiToken(@QueryParameter("username") final String username, 
-                @QueryParameter("password") final String password) {
-            try {
-                GitHub gh = GitHub.connectToEnterprise(this.serverAPIUrl, username, password);
-                GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, 
-                        GHAuthorization.REPO), "Jenkins GitHub Pull Request Builder", null);
-                return FormValidation.ok("Access token created: " + token.getToken());
-            } catch (IOException ex) {
-                return FormValidation.error("GitHub API token couldn't be created: " + ex.getMessage());
-            }
-        }
-
         public List<GhprbBranch> getWhiteListTargetBranches() {
             return whiteListTargetBranches;
         }
@@ -666,6 +703,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private transient String msgFailure;
         @Deprecated
         private transient String commitStatusContext;
+        @Deprecated
+        private transient String accessToken;
+        @Deprecated
+        private transient String username;
+        @Deprecated
+        private transient String password;
+        @Deprecated
+        private transient String serverAPIUrl;
         
         public void readBackFromLegacy() {
             if (configVersion == null) {
@@ -699,6 +744,34 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                 commitStatusContext = null;
             }
             
+            if (!StringUtils.isEmpty(accessToken)) {
+                try {
+                    GhprbGitHubAuth auth = new GhprbGitHubAuth(serverAPIUrl, Ghprb.createCredentials(serverAPIUrl, accessToken), "Pre credentials Token", null);
+                    if (githubAuth == null) {
+                        githubAuth = new ArrayList<GhprbGitHubAuth>(1);
+                    }
+                    githubAuth.add(auth);
+                    accessToken = null;
+                    serverAPIUrl = null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            if (!StringUtils.isEmpty(username) || !StringUtils.isEmpty(password)) {
+                try {
+                    GhprbGitHubAuth auth = new GhprbGitHubAuth(serverAPIUrl, Ghprb.createCredentials(serverAPIUrl, username, password), "Pre credentials username and password", null);
+                    if (githubAuth == null) {
+                        githubAuth = new ArrayList<GhprbGitHubAuth>(1);
+                    }
+                    githubAuth.add(auth);
+                    username = null;
+                    password = null;
+                    serverAPIUrl = null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             
             configVersion = 1;
         }
@@ -711,4 +784,5 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
     }
+
 }
