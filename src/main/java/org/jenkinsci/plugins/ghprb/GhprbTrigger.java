@@ -552,7 +552,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
             
-            githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.getJSONObject("githubAuth"));
+            githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.get("githubAuth"));
             
             extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
 
