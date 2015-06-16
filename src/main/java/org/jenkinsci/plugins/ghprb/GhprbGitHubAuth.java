@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.kohsuke.github.GHAuthorization;
+import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -168,22 +169,27 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 @QueryParameter("username") final String username, 
                 @QueryParameter("password") final String password) {
             try {
-                GitHub gh;
+
+                GitHubBuilder builder = new GitHubBuilder()
+                            .withEndpoint(serverAPIUrl)
+                            .withConnector(new HttpConnectorWithJenkinsProxy());
                 
                 if (StringUtils.isEmpty(credentialsId)) {
                     if (StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {
                         return FormValidation.error("Username and Password required");
                     }
-                    gh = GitHub.connectToEnterprise(serverAPIUrl, username, password);
+
+                    builder.withPassword(username, password);
                 } else {
                     StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
                     if (credentials instanceof StandardUsernamePasswordCredentials) {
                         StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
-                        gh = GitHub.connectToEnterprise(serverAPIUrl, upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
+                        builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
                     } else {
-                        return FormValidation.error("No credentials provided");
+                        return FormValidation.error("No username/password credentials provided");
                     }
                 }
+                GitHub gh = builder.build();
                 GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, 
                         GHAuthorization.REPO), "Jenkins GitHub Pull Request Builder", null);
                 String tokenId;
@@ -227,6 +233,33 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
 
+        public FormValidation doTestGithubAccess(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId) {
+            try {
+
+                GitHubBuilder builder = new GitHubBuilder()
+                            .withEndpoint(serverAPIUrl)
+                            .withConnector(new HttpConnectorWithJenkinsProxy());
+                
+                StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
+                if (credentials instanceof StandardUsernamePasswordCredentials) {
+                    StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
+                    builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
+                    
+                } else if (credentials instanceof StringCredentials) {
+                    StringCredentials tokenCredentials = (StringCredentials) credentials;
+                    builder.withOAuthToken(tokenCredentials.getSecret().getPlainText());
+                } else {
+                    return FormValidation.error("No credentials provided");
+                }
+                GitHub gh = builder.build();
+                GHMyself me = gh.getMyself();
+                return FormValidation.ok("Connected to " + serverAPIUrl + " as " + me.getName());
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to connect to GitHub API: " + ex);
+            }
+        }
     }
 
 }
