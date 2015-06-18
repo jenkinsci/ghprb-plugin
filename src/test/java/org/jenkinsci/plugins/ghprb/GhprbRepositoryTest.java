@@ -111,7 +111,7 @@ public class GhprbRepositoryTest {
     
     
     private void addSimpleStatus() throws IOException {
-        GhprbSimpleStatus status = new GhprbSimpleStatus("default", null, null, null);
+        GhprbSimpleStatus status = new GhprbSimpleStatus("default");
         trigger.getExtensions().remove(GhprbSimpleStatus.class);
         trigger.getExtensions().add(status);
     }

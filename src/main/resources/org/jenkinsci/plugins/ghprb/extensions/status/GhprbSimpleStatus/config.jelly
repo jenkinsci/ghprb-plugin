@@ -2,7 +2,10 @@
   <f:entry title="${%Commit Status Context}" field="commitStatusContext">
     <f:textbox default="${descriptor.getCommitContextDefault(instance.commitStatusContext)}" />
   </f:entry>
-    <f:entry title="${%Commit Status Build Triggered}" field="triggeredStatus">
+  <f:entry title="${%Commit Status URL}" field="statusUrl"> 
+    <f:textbox />
+  </f:entry>  
+  <f:entry title="${%Commit Status Build Triggered}" field="triggeredStatus">
     <f:textbox default="${descriptor.getTriggeredStatusDefault(instance.triggeredStatus)}" />
   </f:entry>
     <f:entry title="${%Commit Status Build Started}" field="startedStatus">

@@ -741,7 +741,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             }
             
             if (configVersion < 1) {
-                GhprbSimpleStatus status = new GhprbSimpleStatus(commitStatusContext, null, null, null);
+                GhprbSimpleStatus status = new GhprbSimpleStatus(commitStatusContext);
                 addIfMissing(status);
                 commitStatusContext = null;
             }

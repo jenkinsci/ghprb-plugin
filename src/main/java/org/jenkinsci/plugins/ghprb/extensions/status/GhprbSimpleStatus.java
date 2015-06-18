@@ -40,24 +40,26 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     private final String commitStatusContext;
     private final String triggeredStatus;
     private final String startedStatus;
+    private final String statusUrl;
     private final List<GhprbBuildResultMessage> completedStatus;
     
     public GhprbSimpleStatus() {
-        this.commitStatusContext = "";
-        this.triggeredStatus = "";
-        this.startedStatus = "";
-        this.completedStatus = new ArrayList<GhprbBuildResultMessage>(0);
+        this(null, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
     }
     
     public GhprbSimpleStatus(String commitStatusContext) {
-        this.commitStatusContext = commitStatusContext;
-        this.triggeredStatus = "";
-        this.startedStatus = "";
-        this.completedStatus = new ArrayList<GhprbBuildResultMessage>(0);
+        this(commitStatusContext, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
     }
     
     @DataBoundConstructor
-    public GhprbSimpleStatus(String commitStatusContext, String triggeredStatus, String startedStatus, List<GhprbBuildResultMessage> completedStatus) {
+    public GhprbSimpleStatus(
+            String commitStatusContext, 
+            String statusUrl, 
+            String triggeredStatus, 
+            String startedStatus, 
+            List<GhprbBuildResultMessage> completedStatus
+            ) {
+        this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
         this.triggeredStatus = triggeredStatus;
         this.startedStatus = startedStatus;
@@ -86,22 +88,25 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         
         AbstractProject<?, ?> project = trigger.getActualProject();
         
-        String context = Util.fixEmpty(getCommitStatusContext());
+        String context = Util.fixEmpty(commitStatusContext);
+        context = Ghprb.replaceMacros(project, context);
         
         if (!StringUtils.isEmpty(triggeredStatus)) {
             sb.append(Ghprb.replaceMacros(project, triggeredStatus));
         } else {
             sb.append("Build triggered.");
+            if (pr.isMergeable()) {
+                sb.append(" sha1 is merged.");
+            } else {
+                sb.append(" sha1 is original commit.");
+            }
         }
+        
+        String url = Ghprb.replaceMacros(project, statusUrl);
 
-        if (pr.isMergeable()) {
-            sb.append(" sha1 is merged.");
-        } else {
-            sb.append(" sha1 is original commit.");
-        }
         String message = sb.toString();
         try {
-            ghRepository.createCommitStatus(pr.getHead(), state, null, message, context);
+            ghRepository.createCommitStatus(pr.getHead(), state, url, message, context);
         } catch (IOException e) {
             throw new GhprbCommitStatusException(e, state, message, pr.getId());
         }
@@ -112,10 +117,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(startedStatus)) {
             sb.append("Build Started");
+            sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
         }
-        sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
         createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
     }
 
@@ -156,7 +161,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         
         String sha1 = cause.getCommit();
         String url = Jenkins.getInstance().getRootUrl() + build.getUrl();
+        if (!StringUtils.isEmpty(statusUrl)) {
+            url = Ghprb.replaceMacros(build,  listener, statusUrl);
+        }
         String context = Util.fixEmpty(commitStatusContext);
+        context = Ghprb.replaceMacros(build, listener, context);
         
         listener.getLogger().println(String.format("Setting status of %s to %s with url %s and message: '%s'", sha1, state, url, message));
         if (context != null) {
