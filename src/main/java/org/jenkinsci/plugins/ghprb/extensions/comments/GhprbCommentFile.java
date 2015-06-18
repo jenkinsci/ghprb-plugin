@@ -40,7 +40,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         StringBuilder msg = new StringBuilder();
         if (commentFilePath != null && !commentFilePath.isEmpty()) {
             try {
-                String scriptFilePathResolved = Ghprb.replaceMacros(build, commentFilePath);
+                String scriptFilePathResolved = Ghprb.replaceMacros(build, listener, commentFilePath);
                 
                 String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
                 msg.append("Build comment file: \n--------------\n");

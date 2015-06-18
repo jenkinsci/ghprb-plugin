@@ -5,6 +5,7 @@ import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
 import org.jenkinsci.plugins.ghprb.GhprbPullRequest;
+import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -24,7 +25,7 @@ public class GhprbNoCommitStatus extends GhprbExtension implements GhprbCommitSt
         
     }
     
-    public void onBuildTriggered(GhprbPullRequest pr, GHRepository ghRepository) throws GhprbCommitStatusException {
+    public void onBuildTriggered(GhprbTrigger trigger, GhprbPullRequest pr, GHRepository ghRepository) throws GhprbCommitStatusException {
         
     }
 

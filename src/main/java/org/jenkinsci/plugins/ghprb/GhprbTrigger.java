@@ -75,7 +75,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
         if (extensions == null) {
             extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP,Util.fixNull(extensions));
-            extensions.add(new GhprbSimpleStatus(null));
+            extensions.add(new GhprbSimpleStatus());
         }
         return extensions;
     }
@@ -90,7 +90,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                                             );
         
         // Now make sure we have at least one of the types we need one of.
-        Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(""), GhprbCommitStatus.class);
+        Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(), GhprbCommitStatus.class);
     }
 
     @DataBoundConstructor
@@ -258,16 +258,21 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         if (auth == null) {
             return null;
         }
+        
+        return gitHubApiAuth.getConnection(getActualProject());
+    }
+    
+    public AbstractProject<?, ?> getActualProject() {
+
         @SuppressWarnings("rawtypes")
         List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
         
         for (AbstractProject<?, ?> project : projects) {
             if (project.getFullName().equals(this.project)) {
-                return auth.getConnection(project);
+                return project;
             }
         }
-        
-        return gitHubApiAuth.getConnection(null);
+        return null;
     }
 
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
