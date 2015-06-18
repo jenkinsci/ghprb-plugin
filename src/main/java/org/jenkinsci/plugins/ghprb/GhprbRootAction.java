@@ -72,7 +72,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
             try {
                 payload = URLDecoder.decode(body.substring(8), req.getCharacterEncoding());
             } catch (UnsupportedEncodingException e) {
-                logger.log(Level.SEVERE, "Error while trying to encode the payload");
+                logger.log(Level.SEVERE, "Error while trying to decode the payload");
                 return;
             }
         }

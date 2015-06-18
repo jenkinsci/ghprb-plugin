@@ -488,13 +488,10 @@ public class GhprbRepositoryTest {
         String actualSecret = "123";
         String actualSignature = createSHA1Signature(actualSecret, body);
         String fakeSignature = createSHA1Signature("abc", body);
-
-        given(helper.getTrigger()).willReturn(trigger);
-        given(trigger.getSecret()).willReturn(actualSecret);
-
+        
         Assert.assertFalse(actualSignature.equals(fakeSignature));
-        Assert.assertTrue(ghprbRepository.checkSignature(body, actualSignature));
-        Assert.assertFalse(ghprbRepository.checkSignature(body, fakeSignature));
+        Assert.assertTrue(GhprbWebHook.checkSignature(body, actualSignature, actualSecret));
+        Assert.assertFalse(GhprbWebHook.checkSignature(body, fakeSignature, actualSecret));
     }
 
     private String createSHA1Signature(String secret, String body) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {

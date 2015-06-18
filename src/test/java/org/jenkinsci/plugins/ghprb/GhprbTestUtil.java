@@ -309,6 +309,7 @@ public class GhprbTestUtil {
         JSONObject githubAuth = new JSONObject();
         githubAuth.put("credentialsId", getCredentialsId());
         githubAuth.put("serverAPIUrl", apiUrl);
+        githubAuth.put("secret", null);
         
         jsonObject.put("githubAuth", githubAuth);
         
@@ -363,7 +364,6 @@ public class GhprbTestUtil {
         defaults.put("displayBuildErrorsOnDownstreamBuilds", false);
         defaults.put("allowMembersOfWhitelistedOrgsAsAdmin", false);
         defaults.put("gitHubApi", "https://api.github.com");
-        defaults.put("secret", null);
 
         for ( Entry<String, Object> next: values.entrySet()) {
             defaults.put(next.getKey(), next.getValue());
