@@ -6,6 +6,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
+import org.apache.commons.codec.binary.Hex;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -13,6 +14,9 @@ import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -300,6 +304,37 @@ public class GhprbRepository {
             logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
         }
         GhprbTrigger.getDscp().save();
+    }
+
+    boolean checkSignature(String body, String signature) {
+        String secret = helper.getTrigger().getSecret();
+        if (secret != null && ! secret.isEmpty()) {
+            if (signature != null && signature.startsWith("sha1=")) {
+                String expected = signature.substring(5);
+                String algorithm = "HmacSHA1";
+                try {
+                    SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), algorithm);
+                    Mac mac = Mac.getInstance(algorithm);
+                    mac.init(keySpec);
+                    byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));
+                    String localSignature = Hex.encodeHexString(localSignatureBytes);
+                    if (! localSignature.equals(expected)) {
+                        logger.log(Level.SEVERE, "Local signature {0} does not match external signature {1}",
+                                new Object[] {localSignature, expected});
+                        return false;
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Couldn't match both signatures");
+                    return false;
+                }
+            } else {
+                logger.log(Level.SEVERE, "Request doesn't contain a signature. Check that github has a secret that should be attached to the hook");
+                return false;
+            }
+        }
+
+        logger.log(Level.INFO, "Signatures checking OK");
+        return true;
     }
 
     @VisibleForTesting

@@ -1,7 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
+import org.apache.commons.codec.binary.Hex;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,12 +24,18 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -472,6 +480,32 @@ public class GhprbRepositoryTest {
         verifyZeroInteractions(ghRepository);
         verifyZeroInteractions(gitHub);
         verifyZeroInteractions(gt);
+    }
+
+    @Test
+    public void testSignature() throws IOException, InvalidKeyException, NoSuchAlgorithmException {
+        String body = URLEncoder.encode("payload=" + GhprbTestUtil.PAYLOAD, "UTF-8");
+        String actualSecret = "123";
+        String actualSignature = createSHA1Signature(actualSecret, body);
+        String fakeSignature = createSHA1Signature("abc", body);
+
+        given(helper.getTrigger()).willReturn(trigger);
+        given(trigger.getSecret()).willReturn(actualSecret);
+
+        Assert.assertFalse(actualSignature.equals(fakeSignature));
+        Assert.assertTrue(ghprbRepository.checkSignature(body, actualSignature));
+        Assert.assertFalse(ghprbRepository.checkSignature(body, fakeSignature));
+    }
+
+    private String createSHA1Signature(String secret, String body) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
+        String algorithm = "HmacSHA1";
+        SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), algorithm);
+        Mac mac = Mac.getInstance(algorithm);
+        mac.init(keySpec);
+
+        byte[] signatureBytes = mac.doFinal(body.getBytes("UTF-8"));
+        String signature = new String(Hex.encodeHexString(signatureBytes));
+        return "sha1=" + signature;
     }
 
     private void initGHPRWithTestData() throws IOException {

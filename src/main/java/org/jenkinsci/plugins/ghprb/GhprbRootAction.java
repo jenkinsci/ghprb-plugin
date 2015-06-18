@@ -15,6 +15,9 @@ import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -47,25 +50,29 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
     public void doIndex(StaplerRequest req, StaplerResponse resp) {
         String event = req.getHeader("X-GitHub-Event");
+        String signature = req.getHeader("X-Hub-Signature");
         String type = req.getContentType();
         String payload = null;
+        String body = null;
 
         if ("application/json".equals(type)) {
-            BufferedReader br = null;
-            try {
-                br = req.getReader();
-                payload = IOUtils.toString(req.getReader());
-            } catch (IOException e) {
+            body = extractRequestBody(req);
+            if (body == null) {
                 logger.log(Level.SEVERE, "Can't get request body for application/json.");
                 return;
-            } finally {
-                IOUtils.closeQuietly(br);
             }
+            payload = body;
         } else if ("application/x-www-form-urlencoded".equals(type)) {
-            payload = req.getParameter("payload");
-            if (payload == null) {
+            body = extractRequestBody(req);
+            if (body == null || body.length() <= 8) {
                 logger.log(Level.SEVERE, "Request doesn't contain payload. "
                         + "You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                return;
+            }
+            try {
+                payload = URLDecoder.decode(body.substring(8), req.getCharacterEncoding());
+            } catch (UnsupportedEncodingException e) {
+                logger.log(Level.SEVERE, "Error while trying to encode the payload");
                 return;
             }
         }
@@ -79,13 +86,28 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
         for (GhprbWebHook webHook : getWebHooks()) {
             try {
-                webHook.handleWebHook(event, payload);
+                webHook.handleWebHook(event, payload, body, signature);
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
             }
         }
         
     }
+
+    private String extractRequestBody(StaplerRequest req) {
+        String body = null;
+        BufferedReader br = null;
+        try {
+            br = req.getReader();
+            body = IOUtils.toString(br);
+        } catch (IOException e) {
+            body = null;
+        } finally {
+            IOUtils.closeQuietly(br);
+        }
+        return body;
+    }
+
     
     private Set<GhprbWebHook> getWebHooks() {
         final Set<GhprbWebHook> webHooks = new HashSet<GhprbWebHook>();

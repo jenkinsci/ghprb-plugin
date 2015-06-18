@@ -19,7 +19,7 @@ public class GhprbWebHook {
         this.trigger = trigger;
     }
     
-    public void handleWebHook(String event, String payload) {
+    public void handleWebHook(String event, String payload, String body, String signature) {
 
         GhprbRepository repo = trigger.getRepository();
 
@@ -41,7 +41,8 @@ public class GhprbWebHook {
                     logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", 
                             new Object[] { issueComment.getComment(), repo.getName() }
                     );
-                    repo.onIssueCommentHook(issueComment);
+                    if (repo.checkSignature(body, signature))
+                        repo.onIssueCommentHook(issueComment);
                 }
 
             } else if ("pull_request".equals(event)) {
@@ -50,7 +51,8 @@ public class GhprbWebHook {
                         GHEventPayload.PullRequest.class);
                 if (matchRepo(repo, pr.getPullRequest().getRepository())) {
                     logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber() });
-                    repo.onPullRequestHook(pr);
+                    if (repo.checkSignature(body, signature))
+                        repo.onPullRequestHook(pr);
                 }
                 
             } else {
