@@ -107,6 +107,10 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.24
+* Signature checking for webhooks
+* Added fields to status updates for custom messages and a custom URL
+
 #### -> 1.23 - 1.23.2
 * Credentials are now handled by the jenkins credentials plugin
 * Bug fixes due to switch to groovy config files.
