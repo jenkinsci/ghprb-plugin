@@ -6,6 +6,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
+import org.apache.commons.codec.binary.Hex;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -13,6 +14,9 @@ import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

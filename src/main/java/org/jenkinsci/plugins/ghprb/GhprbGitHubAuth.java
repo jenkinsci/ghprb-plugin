@@ -24,6 +24,7 @@ import org.kohsuke.stapler.export.Exported;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -56,9 +57,16 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private final String credentialsId;
     private final String id;
     private final String description;
+    private final String secret;
 
     @DataBoundConstructor
-    public GhprbGitHubAuth(String serverAPIUrl, String credentialsId, String description, String id) {
+    public GhprbGitHubAuth(
+            String serverAPIUrl, 
+            String credentialsId, 
+            String description, 
+            String id,
+            String secret
+            ) {
         if (StringUtils.isEmpty(serverAPIUrl)) {
             serverAPIUrl = "https://api.github.com";
         }
@@ -68,8 +76,9 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             id = UUID.randomUUID().toString();
         }
         
-        this.id = id;
+        this.id = IdCredentials.Helpers.fixEmptyId(id);
         this.description = description;
+        this.secret = secret;
     }
 
     @Exported
@@ -90,6 +99,12 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     @Exported
     public String getId() {
         return id;
+    }
+    
+
+    @Exported
+    public String getSecret() {
+        return secret;
     }
     
     public GitHub getConnection(Item context) throws IOException {

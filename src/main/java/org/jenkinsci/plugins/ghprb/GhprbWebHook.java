@@ -5,6 +5,11 @@ import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHEventPayload;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
@@ -19,7 +24,10 @@ public class GhprbWebHook {
         this.trigger = trigger;
     }
     
-    public void handleWebHook(String event, String payload) {
+    public void handleWebHook(String event, String payload, String body, String signature) {
+        if (!checkSignature(body, signature, trigger.getGitHubApiAuth().getSecret())){
+            return;
+        }
 
         GhprbRepository repo = trigger.getRepository();
 
@@ -59,6 +67,38 @@ public class GhprbWebHook {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to parse github hook payload for " + trigger.getProject(), ex);
         }
+    }
+    
+    public static boolean checkSignature(String body, String signature, String secret) {
+        if (StringUtils.isEmpty(secret)) {
+            return true;
+        }
+        
+        if (signature != null && signature.startsWith("sha1=")) {
+            String expected = signature.substring(5);
+            String algorithm = "HmacSHA1";
+            try {
+                SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), algorithm);
+                Mac mac = Mac.getInstance(algorithm);
+                mac.init(keySpec);
+                byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));
+                String localSignature = Hex.encodeHexString(localSignatureBytes);
+                if (! localSignature.equals(expected)) {
+                    logger.log(Level.SEVERE, "Local signature {0} does not match external signature {1}",
+                            new Object[] {localSignature, expected});
+                    return false;
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Couldn't match both signatures");
+                return false;
+            }
+        } else {
+            logger.log(Level.SEVERE, "Request doesn't contain a signature. Check that github has a secret that should be attached to the hook");
+            return false;
+        }
+
+        logger.log(Level.INFO, "Signatures checking OK");
+        return true;
     }
     
     private boolean matchRepo(GhprbRepository ghprbRepo, GHRepository ghRepo) {

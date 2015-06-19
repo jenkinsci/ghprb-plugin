@@ -5,6 +5,10 @@ f.entry(title:_("GitHub Server API URL"), field:"serverAPIUrl") {
     f.textbox()
 }
 
+f.entry(title:_("Shared secret"), field:"secret") {
+    f.password()
+}
+
 f.entry(title:_("Credentials"), field:"credentialsId") {
     c.select(onchange="""{
             var self = this.targetElement ? this.targetElement : this;
