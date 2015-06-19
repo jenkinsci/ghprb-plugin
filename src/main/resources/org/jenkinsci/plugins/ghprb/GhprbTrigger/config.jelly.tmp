@@ -6,6 +6,15 @@
     <f:checkbox />
   </f:entry>
   <f:advanced>
+    <f:entry title="${%Shared secret}" field="secret">
+      <f:password />
+    </f:entry>
+    <f:entry title="${%Success message}" field="msgSuccess">
+      <f:textarea default="${descriptor.msgSuccess}"/>
+    </f:entry>
+    <f:entry title="${%Failure message}" field="msgFailure">
+      <f:textarea default="${descriptor.msgFailure}"/>
+    </f:entry>
 	<f:entry title="${%Trigger phrase}" field="triggerPhrase">
 	  <f:textbox />
 	</f:entry>

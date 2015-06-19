@@ -4,12 +4,16 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
+
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbCause;
 import org.jenkinsci.plugins.ghprb.GhprbPullRequest;
@@ -20,6 +24,7 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
@@ -33,35 +38,75 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     
     private final String commitStatusContext;
+    private final String triggeredStatus;
+    private final String startedStatus;
+    private final String statusUrl;
+    private final List<GhprbBuildResultMessage> completedStatus;
+    
+    public GhprbSimpleStatus() {
+        this(null, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
+    }
+    
+    public GhprbSimpleStatus(String commitStatusContext) {
+        this(commitStatusContext, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
+    }
     
     @DataBoundConstructor
-    public GhprbSimpleStatus(String commitStatusContext) {
+    public GhprbSimpleStatus(
+            String commitStatusContext, 
+            String statusUrl, 
+            String triggeredStatus, 
+            String startedStatus, 
+            List<GhprbBuildResultMessage> completedStatus
+            ) {
+        this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
+        this.triggeredStatus = triggeredStatus;
+        this.startedStatus = startedStatus;
+        this.completedStatus = completedStatus;
     }
     
     public String getCommitStatusContext() {
         return commitStatusContext == null ? "" : commitStatusContext;
     }
 
-    public void onBuildTriggered(GhprbPullRequest pr, GHRepository ghRepository) throws GhprbCommitStatusException {
+    public String getStartedStatus() {
+        return startedStatus == null ? "" : startedStatus;
+    }
+    
+    public String getTriggeredStatus() {
+        return triggeredStatus == null ? "" : triggeredStatus;
+    }
+
+    public List<GhprbBuildResultMessage> getCompletedStatus() {
+        return completedStatus == null ? new ArrayList<GhprbBuildResultMessage>(0) : completedStatus;
+    }
+    
+    public void onBuildTriggered(GhprbTrigger trigger, GhprbPullRequest pr, GHRepository ghRepository) throws GhprbCommitStatusException {
         StringBuilder sb = new StringBuilder();
         GHCommitState state = GHCommitState.PENDING;
         
-        String context = getCommitStatusContext();
-        if (StringUtils.isEmpty(context)) {
-            context = null;
-        }
-
-        sb.append("Build triggered.");
-
-        if (pr.isMergeable()) {
-            sb.append(" sha1 is merged.");
+        AbstractProject<?, ?> project = trigger.getActualProject();
+        
+        String context = Util.fixEmpty(commitStatusContext);
+        context = Ghprb.replaceMacros(project, context);
+        
+        if (!StringUtils.isEmpty(triggeredStatus)) {
+            sb.append(Ghprb.replaceMacros(project, triggeredStatus));
         } else {
-            sb.append(" sha1 is original commit.");
+            sb.append("Build triggered.");
+            if (pr.isMergeable()) {
+                sb.append(" sha1 is merged.");
+            } else {
+                sb.append(" sha1 is original commit.");
+            }
         }
+        
+        String url = Ghprb.replaceMacros(project, statusUrl);
+
         String message = sb.toString();
         try {
-            ghRepository.createCommitStatus(pr.getHead(), state, null, message, context);
+            ghRepository.createCommitStatus(pr.getHead(), state, url, message, context);
         } catch (IOException e) {
             throw new GhprbCommitStatusException(e, state, message, pr.getId());
         }
@@ -69,37 +114,46 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
     public void onBuildStart(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
         GhprbCause c = Ghprb.getCause(build);
-        String message = (c.isMerged() ? "Build started, sha1 is merged" : "Build started, sha1 is original commit.");
-        createCommitStatus(build, listener, message, repo, GHCommitState.PENDING);
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isEmpty(startedStatus)) {
+            sb.append("Build Started");
+            sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
+        } else {
+            sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
+        }
+        createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
     }
 
     public void onBuildComplete(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
+        
+        GHCommitState state = Ghprb.getState(build);
+
+        StringBuilder sb = new StringBuilder();
+
+        if (completedStatus == null || completedStatus.isEmpty()) {
+            for (GhprbBuildResultMessage buildStatus : completedStatus) {
+                sb.append(buildStatus.postBuildComment(build, listener));
+            }
+        } else {
+            sb.append("Build finished.");
+        }
+        
+        sb.append(" ");
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
         if (trigger == null) {
             listener.getLogger().println("Unable to get pull request builder trigger!!");
-        }
-        GHCommitState state = Ghprb.getState(build);
-        GhprbCause cause = Ghprb.getCause(build);
-
-        JobConfiguration jobConfiguration =
-            JobConfiguration.builder()
-                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
-                .build();
-
-        GhprbBuildManager buildManager =
-            GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
-        
-        StringBuilder replyMessage = new StringBuilder();
-        
-        if (cause.isMerged()) {
-            replyMessage.append("Merged build finished. ");
         } else {
-            replyMessage.append("Build finished. ");
+            JobConfiguration jobConfiguration =
+                JobConfiguration.builder()
+                    .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds())
+                    .build();
+
+            GhprbBuildManager buildManager =
+                GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
+            sb.append(buildManager.getOneLineTestResults());
         }
         
-        replyMessage.append(buildManager.getOneLineTestResults());
-        
-        createCommitStatus(build, listener, replyMessage.toString(), repo, state);
+        createCommitStatus(build, listener, sb.toString(), repo, state);
     }
 
     private void createCommitStatus(AbstractBuild<?, ?> build, TaskListener listener, String message, GHRepository repo, GHCommitState state) throws GhprbCommitStatusException {
@@ -107,7 +161,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         
         String sha1 = cause.getCommit();
         String url = Jenkins.getInstance().getRootUrl() + build.getUrl();
+        if (!StringUtils.isEmpty(statusUrl)) {
+            url = Ghprb.replaceMacros(build,  listener, statusUrl);
+        }
         String context = Util.fixEmpty(commitStatusContext);
+        context = Ghprb.replaceMacros(build, listener, context);
         
         listener.getLogger().println(String.format("Setting status of %s to %s with url %s and message: '%s'", sha1, state, url, message));
         if (context != null) {
@@ -132,17 +190,56 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
             return "Update commit status during build";
         }
         
-        public String getCommitContextDefault(String commitStatusContext){
-            String context = commitStatusContext;
-            if (StringUtils.isEmpty(commitStatusContext)) {
+        public String getTriggeredStatusDefault(String triggeredStatusLocal) {
+            String triggeredStatus = triggeredStatusLocal;
+            if (triggeredStatus == null) {
                 for(GhprbExtension extension : GhprbTrigger.getDscp().getExtensions()) {
                     if (extension instanceof GhprbSimpleStatus) {
-                        context = ((GhprbSimpleStatus) extension).getCommitStatusContext();
+                        triggeredStatus = ((GhprbSimpleStatus) extension).getTriggeredStatus();
                         break;
                     }
                 }
             }
-            return context;
+            return triggeredStatus;
+        }
+        
+        public String getStartedStatusDefault(String startedStatusLocal) {
+            String startedStatus = startedStatusLocal;
+            if (startedStatus == null) {
+                for(GhprbExtension extension : GhprbTrigger.getDscp().getExtensions()) {
+                    if (extension instanceof GhprbSimpleStatus) {
+                        startedStatus = ((GhprbSimpleStatus) extension).getStartedStatus();
+                        break;
+                    }
+                }
+            }
+            return startedStatus;
+        }
+        
+        public List<GhprbBuildResultMessage> getCompletedStatusList(List<GhprbBuildResultMessage> completedStatusLocal) {
+            List<GhprbBuildResultMessage> completedStatus = completedStatusLocal;
+            if (completedStatus == null) {
+                for(GhprbExtension extension : GhprbTrigger.getDscp().getExtensions()) {
+                    if (extension instanceof GhprbSimpleStatus) {
+                        completedStatus = ((GhprbSimpleStatus) extension).getCompletedStatus();
+                        break;
+                    }
+                }
+            }
+            return completedStatus;
+        }
+        
+        public String getCommitContextDefault(String commitStatusContextLocal){
+            String commitStatusContext = commitStatusContextLocal;
+            if (commitStatusContext == null) {
+                for(GhprbExtension extension : GhprbTrigger.getDscp().getExtensions()) {
+                    if (extension instanceof GhprbSimpleStatus) {
+                        commitStatusContext = ((GhprbSimpleStatus) extension).getCommitStatusContext();
+                        break;
+                    }
+                }
+            }
+            return commitStatusContext;
         }
     }
 

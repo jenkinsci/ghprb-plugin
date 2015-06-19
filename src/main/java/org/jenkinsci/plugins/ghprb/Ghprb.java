@@ -22,9 +22,9 @@ import hudson.model.Cause;
 import hudson.model.Item;
 import hudson.model.Result;
 import hudson.model.Saveable;
+import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.util.DescribableList;
-import hudson.util.LogTaskListener;
 import hudson.util.Secret;
 
 import org.apache.commons.collections.Predicate;
@@ -189,7 +189,7 @@ public class Ghprb {
         return trigger.getWhiteListTargetBranches();
     }
 
-    public static String replaceMacros(AbstractBuild<?, ?> build, String inputString) {
+    public static String replaceMacros(AbstractBuild<?, ?> build, TaskListener listener, String inputString) {
         String returnString = inputString;
         if (build != null && inputString != null) {
             try {
@@ -197,7 +197,7 @@ public class Ghprb {
 
                 messageEnvVars.putAll(build.getCharacteristicEnvVars());
                 messageEnvVars.putAll(build.getBuildVariables());
-                messageEnvVars.putAll(build.getEnvironment(new LogTaskListener(logger, Level.INFO)));
+                messageEnvVars.putAll(build.getEnvironment(listener));
 
                 returnString = Util.replaceMacro(inputString, messageEnvVars);
 
@@ -206,7 +206,24 @@ public class Ghprb {
             }
         }
         return returnString;
+    }
+    
 
+    public static String replaceMacros(AbstractProject<?, ?> project, String inputString) {
+        String returnString = inputString;
+        if (project != null && inputString != null) {
+            try {
+                Map<String, String> messageEnvVars = new HashMap<String, String>();
+
+                messageEnvVars.putAll(project.getCharacteristicEnvVars());
+
+                returnString = Util.replaceMacro(inputString, messageEnvVars);
+
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Couldn't replace macros in message: ", e);
+            }
+        }
+        return returnString;
     }
     
     public static GHCommitState getState(AbstractBuild<?, ?> build) {
@@ -391,9 +408,7 @@ public class Ghprb {
         specifications.add(new SchemeSpecification(serverUri.getScheme()));
         specifications.add(new PathSpecification(serverUri.getPath(), null, false));
         
-        
-        
-        Domain domain = new Domain(serverAPIUrl, "Auto generated credentials domain", specifications);
+        Domain domain = new Domain(serverUri.getHost(), "Auto generated credentials domain", specifications);
         CredentialsStore provider = new SystemCredentialsProvider.StoreImpl();
         provider.addDomain(domain, credentials);
         return credentials.getId();

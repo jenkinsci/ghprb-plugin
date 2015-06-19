@@ -1,5 +1,3 @@
-// Namespaces
-xml = namespace("http://www.w3.org/XML/1998/namespace")
 j = namespace("jelly:core")
 f = namespace("/lib/form")
 

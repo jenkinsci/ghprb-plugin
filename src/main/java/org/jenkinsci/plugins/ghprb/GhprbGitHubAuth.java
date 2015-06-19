@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.kohsuke.github.GHAuthorization;
+import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -23,6 +24,7 @@ import org.kohsuke.stapler.export.Exported;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -55,9 +57,16 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private final String credentialsId;
     private final String id;
     private final String description;
+    private final String secret;
 
     @DataBoundConstructor
-    public GhprbGitHubAuth(String serverAPIUrl, String credentialsId, String description, String id) {
+    public GhprbGitHubAuth(
+            String serverAPIUrl, 
+            String credentialsId, 
+            String description, 
+            String id,
+            String secret
+            ) {
         if (StringUtils.isEmpty(serverAPIUrl)) {
             serverAPIUrl = "https://api.github.com";
         }
@@ -67,8 +76,9 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             id = UUID.randomUUID().toString();
         }
         
-        this.id = id;
+        this.id = IdCredentials.Helpers.fixEmptyId(id);
         this.description = description;
+        this.secret = secret;
     }
 
     @Exported
@@ -89,6 +99,12 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     @Exported
     public String getId() {
         return id;
+    }
+    
+
+    @Exported
+    public String getSecret() {
+        return secret;
     }
     
     public GitHub getConnection(Item context) throws IOException {
@@ -168,22 +184,27 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 @QueryParameter("username") final String username, 
                 @QueryParameter("password") final String password) {
             try {
-                GitHub gh;
+
+                GitHubBuilder builder = new GitHubBuilder()
+                            .withEndpoint(serverAPIUrl)
+                            .withConnector(new HttpConnectorWithJenkinsProxy());
                 
                 if (StringUtils.isEmpty(credentialsId)) {
                     if (StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {
                         return FormValidation.error("Username and Password required");
                     }
-                    gh = GitHub.connectToEnterprise(serverAPIUrl, username, password);
+
+                    builder.withPassword(username, password);
                 } else {
                     StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
                     if (credentials instanceof StandardUsernamePasswordCredentials) {
                         StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
-                        gh = GitHub.connectToEnterprise(serverAPIUrl, upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
+                        builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
                     } else {
-                        return FormValidation.error("No credentials provided");
+                        return FormValidation.error("No username/password credentials provided");
                     }
                 }
+                GitHub gh = builder.build();
                 GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, 
                         GHAuthorization.REPO), "Jenkins GitHub Pull Request Builder", null);
                 String tokenId;
@@ -227,6 +248,33 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
 
+        public FormValidation doTestGithubAccess(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId) {
+            try {
+
+                GitHubBuilder builder = new GitHubBuilder()
+                            .withEndpoint(serverAPIUrl)
+                            .withConnector(new HttpConnectorWithJenkinsProxy());
+                
+                StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
+                if (credentials instanceof StandardUsernamePasswordCredentials) {
+                    StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
+                    builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
+                    
+                } else if (credentials instanceof StringCredentials) {
+                    StringCredentials tokenCredentials = (StringCredentials) credentials;
+                    builder.withOAuthToken(tokenCredentials.getSecret().getPlainText());
+                } else {
+                    return FormValidation.error("No credentials provided");
+                }
+                GitHub gh = builder.build();
+                GHMyself me = gh.getMyself();
+                return FormValidation.ok("Connected to " + serverAPIUrl + " as " + me.getName());
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to connect to GitHub API: " + ex);
+            }
+        }
     }
 
 }

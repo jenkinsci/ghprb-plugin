@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb.extensions.status;
 
 import org.jenkinsci.plugins.ghprb.GhprbPullRequest;
+import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHCommitState;
@@ -22,6 +23,8 @@ public class GhprbSimpleStatusTest {
     private GHRepository ghRepository;
     @Mock
     private GhprbPullRequest ghprbPullRequest;
+    @Mock
+    private GhprbTrigger trigger;
     
     @Test
     public void testMergedMessage() throws Exception {
@@ -30,7 +33,7 @@ public class GhprbSimpleStatusTest {
         given(ghprbPullRequest.isMergeable()).willReturn(true);
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
-        status.onBuildTriggered(ghprbPullRequest, ghRepository);
+        status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
         
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), isNull(String.class), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
@@ -47,7 +50,7 @@ public class GhprbSimpleStatusTest {
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
-        status.onBuildTriggered(ghprbPullRequest, ghRepository);
+        status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
         
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), isNull(String.class), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
@@ -64,7 +67,7 @@ public class GhprbSimpleStatusTest {
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus(""));
-        status.onBuildTriggered(ghprbPullRequest, ghRepository);
+        status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
         
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), isNull(String.class), eq(mergedMessage), isNull(String.class));
         verifyNoMoreInteractions(ghRepository);

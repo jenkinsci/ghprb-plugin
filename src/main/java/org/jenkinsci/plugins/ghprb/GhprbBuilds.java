@@ -41,7 +41,7 @@ public class GhprbBuilds {
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
             if (ext instanceof GhprbCommitStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onBuildTriggered(pr, repo.getGitHubRepo());
+                    ((GhprbCommitStatus) ext).onBuildTriggered(trigger, pr, repo.getGitHubRepo());
                 } catch (GhprbCommitStatusException e) {
                     repo.commentOnFailure(null, null, e);
                 }

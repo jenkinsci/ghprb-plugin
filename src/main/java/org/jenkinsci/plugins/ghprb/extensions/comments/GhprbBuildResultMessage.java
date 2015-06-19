@@ -46,7 +46,7 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
             if (StringUtils.isEmpty(buildMessage)) {
                 return "";
             }
-            String message = Ghprb.replaceMacros(build, buildMessage);
+            String message = Ghprb.replaceMacros(build, listener, buildMessage);
             // Only Append the build's custom message if it has been set.
             if (!StringUtils.isEmpty(message)) {
                 // When the msg is not empty, append a newline first, to seperate it from the rest of the String

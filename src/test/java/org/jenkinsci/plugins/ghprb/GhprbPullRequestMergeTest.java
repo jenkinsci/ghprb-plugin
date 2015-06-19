@@ -90,7 +90,7 @@ public class GhprbPullRequestMergeTest {
     private final String mergeComment = "merge";
 
     private final Integer pullId = 1;
-    
+
     private Map<String, Object> triggerValues;
 
     @Before
