@@ -321,7 +321,6 @@ public class GhprbPullRequest {
             } else if (accepted && helper.isWhitelisted(sender)) {
                 logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
-                triggered = true;
             }
         } else if (helper.isTriggerPhrase(body)) { // trigger phrase
             logger.log(Level.FINEST, "Trigger phrase");

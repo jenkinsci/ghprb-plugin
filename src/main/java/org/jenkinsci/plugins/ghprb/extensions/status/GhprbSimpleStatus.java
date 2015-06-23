@@ -66,6 +66,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         this.completedStatus = completedStatus;
     }
     
+    public String getStatusUrl() {
+        return statusUrl == null ? "" : statusUrl;
+    }
+    
     public String getCommitStatusContext() {
         return commitStatusContext == null ? "" : commitStatusContext;
     }
