@@ -66,6 +66,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         this.completedStatus = completedStatus;
     }
     
+    public String getStatusUrl() {
+        return statusUrl == null ? "" : statusUrl;
+    }
+    
     public String getCommitStatusContext() {
         return commitStatusContext == null ? "" : commitStatusContext;
     }
@@ -131,11 +135,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         StringBuilder sb = new StringBuilder();
 
         if (completedStatus == null || completedStatus.isEmpty()) {
+            sb.append("Build finished.");
+        } else {
             for (GhprbBuildResultMessage buildStatus : completedStatus) {
                 sb.append(buildStatus.postBuildComment(build, listener));
             }
-        } else {
-            sb.append("Build finished.");
         }
         
         sb.append(" ");

@@ -67,6 +67,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private List<GhprbBranch> whiteListTargetBranches;
     private transient Ghprb helper;
     private String project;
+    private AbstractProject<?, ?> _project;
     private GhprbGitHubAuth gitHubApiAuth;
     
     
@@ -146,6 +147,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
         // We should always start the trigger, and handle cases where we don't run in the run function.
         super.start(project, newInstance);
+        this._project = project;
         this.project = project.getFullName();
         
         if (project.isDisabled()) {
@@ -190,15 +192,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
 
-        if (helper == null) {
-            logger.log(Level.SEVERE, "Helper is null, unable to run trigger");
-            return;
-        }
-
-        if (helper.isProjectDisabled()) {
+        if ((helper != null && helper.isProjectDisabled()) || (_project != null && _project.isDisabled())) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
             return;
         }
+        
+        if (helper == null) {
+            logger.log(Level.SEVERE, "Helper is null and Project is not disabled, unable to run trigger");
+            return;
+        }
+
         
         logger.log(Level.FINE, "Running trigger for {0}", project);
         
