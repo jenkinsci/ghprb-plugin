@@ -8,6 +8,7 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainSpecification;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.domains.HostnamePortSpecification;
 import com.cloudbees.plugins.credentials.domains.HostnameSpecification;
 import com.cloudbees.plugins.credentials.domains.PathSpecification;
@@ -30,10 +31,10 @@ import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
+import org.codehaus.plexus.util.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
-import org.jenkinsci.plugins.gitclient.GitURIRequirementsBuilder;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHUser;
@@ -369,7 +370,7 @@ public class Ghprb {
     public static StandardCredentials lookupCredentials(Item project, String credentialId, String uri) {
         return (credentialId == null) ? null : CredentialsMatchers.firstOrNull(
                     CredentialsProvider.lookupCredentials(StandardCredentials.class, project, ACL.SYSTEM,
-                            GitURIRequirementsBuilder.fromUri(uri).build()),
+                            URIRequirementBuilder.fromUri(uri).build()),
                     CredentialsMatchers.withId(credentialId));
     }
     
@@ -406,6 +407,10 @@ public class Ghprb {
         }
         
         specifications.add(new SchemeSpecification(serverUri.getScheme()));
+        String path = serverUri.getPath();
+        if (StringUtils.isEmpty(path)) {
+            path = "/";
+        }
         specifications.add(new PathSpecification(serverUri.getPath(), null, false));
         
         Domain domain = new Domain(serverUri.getHost(), "Auto generated credentials domain", specifications);

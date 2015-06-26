@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHMyself;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -35,6 +36,7 @@ import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
 import com.cloudbees.plugins.credentials.domains.PathRequirement;
 import com.cloudbees.plugins.credentials.domains.SchemeRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.google.common.base.Joiner;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -247,26 +249,64 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             }
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
+        
+        public FormValidation doCheckRepoAccess(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("repo") final String repo) {
+            try {
+                GitHubBuilder builder = getBuilder(serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("No credentials ID provided!!");
+                }
+                GitHub gh = builder.build();
+                GHRepository repository = gh.getRepository(repo);
+                StringBuilder sb = new StringBuilder();
+                sb.append("User has access to: ");
+                List<String> permissions = new ArrayList<String>(3);
+                if (repository.hasAdminAccess()) {
+                    permissions.add("Admin");
+                }
+                if (repository.hasPushAccess()) {
+                    permissions.add("Push");
+                }
+                if (repository.hasPullAccess()) {
+                    permissions.add("Pull");
+                }
+                sb.append(Joiner.on(", ").join(permissions));
+                
+                return FormValidation.ok(sb.toString());
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to connect to GitHub API: " + ex);
+            }
+        }
+        
+        private GitHubBuilder getBuilder(String serverAPIUrl, String credentialsId) {
+            GitHubBuilder builder = new GitHubBuilder()
+                .withEndpoint(serverAPIUrl)
+                .withConnector(new HttpConnectorWithJenkinsProxy());
+
+            StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
+            if (credentials instanceof StandardUsernamePasswordCredentials) {
+                StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
+                builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
+                
+            } else if (credentials instanceof StringCredentials) {
+                StringCredentials tokenCredentials = (StringCredentials) credentials;
+                builder.withOAuthToken(tokenCredentials.getSecret().getPlainText());
+            } else {
+                return null;
+            }
+            return builder;
+        }
 
         public FormValidation doTestGithubAccess(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
                 @QueryParameter("credentialsId") final String credentialsId) {
             try {
-
-                GitHubBuilder builder = new GitHubBuilder()
-                            .withEndpoint(serverAPIUrl)
-                            .withConnector(new HttpConnectorWithJenkinsProxy());
-                
-                StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
-                if (credentials instanceof StandardUsernamePasswordCredentials) {
-                    StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
-                    builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
-                    
-                } else if (credentials instanceof StringCredentials) {
-                    StringCredentials tokenCredentials = (StringCredentials) credentials;
-                    builder.withOAuthToken(tokenCredentials.getSecret().getPlainText());
-                } else {
-                    return FormValidation.error("No credentials provided");
+                GitHubBuilder builder = getBuilder(serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("No credentials ID provided!!");
                 }
                 GitHub gh = builder.build();
                 GHMyself me = gh.getMyself();
