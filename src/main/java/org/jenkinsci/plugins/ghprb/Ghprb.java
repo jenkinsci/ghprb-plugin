@@ -8,11 +8,11 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainSpecification;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.domains.HostnamePortSpecification;
 import com.cloudbees.plugins.credentials.domains.HostnameSpecification;
 import com.cloudbees.plugins.credentials.domains.PathSpecification;
 import com.cloudbees.plugins.credentials.domains.SchemeSpecification;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
@@ -411,7 +411,7 @@ public class Ghprb {
         if (StringUtils.isEmpty(path)) {
             path = "/";
         }
-        specifications.add(new PathSpecification(serverUri.getPath(), null, false));
+        specifications.add(new PathSpecification(path, null, false));
         
         Domain domain = new Domain(serverUri.getHost(), "Auto generated credentials domain", specifications);
         CredentialsStore provider = new SystemCredentialsProvider.StoreImpl();
