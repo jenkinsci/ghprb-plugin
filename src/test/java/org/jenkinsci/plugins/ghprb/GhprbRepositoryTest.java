@@ -241,7 +241,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(3)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
         verify(ghPullRequest, times(1)).listCommits();
-        verify(ghPullRequest, times(2)).getBody();
+        verify(ghPullRequest, times(3)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -314,7 +314,7 @@ public class GhprbRepositoryTest {
 
         verify(ghPullRequest, times(1)).getComments();
         verify(ghPullRequest, times(1)).listCommits();
-        verify(ghPullRequest, times(2)).getBody();
+        verify(ghPullRequest, times(4)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -396,7 +396,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getComments();
         verify(ghPullRequest, times(2)).listCommits();
 
-        verify(ghPullRequest, times(2)).getBody();
+        verify(ghPullRequest, times(4)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(2)).isWhitelisted(eq(ghUser)); // Call to Github API
