@@ -1,21 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.lang.reflect.Field;
-
-import hudson.model.AbstractBuild;
-import hudson.model.FreeStyleBuild;
-import hudson.model.ItemGroup;
-import hudson.model.StreamBuildListener;
-import hudson.model.FreeStyleProject;
-import hudson.model.Run;
-import hudson.model.Result;
-
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.model.*;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger.DescriptorImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -23,27 +9,26 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.*;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitUser;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbPullRequestMergeTest {
@@ -98,7 +83,7 @@ public class GhprbPullRequestMergeTest {
         triggerValues = new HashMap<String, Object>(10);
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
-        
+
         GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(triggerValues));
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
@@ -291,13 +276,13 @@ public class GhprbPullRequestMergeTest {
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonTriggerPhrase);
-        assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        assertThat(merger.perform(build, null, listener)).isEqualTo(true);
 
         setupConditions(adminLogin, committerName, nonTriggerPhrase);
-        assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        assertThat(merger.perform(build, null, listener)).isEqualTo(true);
 
         setupConditions(nonAdminLogin, committerName, nonTriggerPhrase);
-        assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        assertThat(merger.perform(build, null, listener)).isEqualTo(true);
 
         setupConditions(adminLogin, nonCommitterName, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
