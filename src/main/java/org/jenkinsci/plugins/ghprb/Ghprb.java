@@ -21,6 +21,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.model.Result;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
@@ -46,6 +47,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import jenkins.model.Jenkins;
 
 /**
  * @author janinko
@@ -367,10 +370,26 @@ public class Ghprb {
         extensions.add(ext);
     }
 
-    public static StandardCredentials lookupCredentials(Item project, String credentialId, String uri) {
-        return (credentialId == null) ? null : CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class, project, ACL.SYSTEM,
-                            URIRequirementBuilder.fromUri(uri).build()),
+    public static StandardCredentials lookupCredentials(Item context, String credentialId, String uri) {
+        String contextName = "(Jenkins.instance)";
+        if (context != null) {
+            contextName = context.getFullName();
+        }
+        logger.log(Level.FINE, "Looking up credentials for {0}, using context {1} for url {2}", new Object[] { credentialId, contextName, uri });
+        
+        List<StandardCredentials> credentials;
+        
+        if (context == null) {
+            credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
+                    URIRequirementBuilder.fromUri(uri).build());
+        } else {
+            credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
+                    URIRequirementBuilder.fromUri(uri).build());
+        }
+        
+        logger.log(Level.FINE, "Found {0} credentials", new Object[]{credentials.size()});
+        
+        return (credentialId == null) ? null : CredentialsMatchers.firstOrNull(credentials,
                     CredentialsMatchers.withId(credentialId));
     }
     

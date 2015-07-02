@@ -130,21 +130,22 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         boolean merge = true;
+        String commentBody = cause.getCommentBody();
 
-        if (isOnlyAdminsMerge() && !helper.isAdmin(triggerSender)) {
+        if (isOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender) )) {
             merge = false;
             logger.println("Only admins can merge this pull request, " + triggerSender.getLogin() + " is not an admin.");
             commentOnRequest(String.format("Code not merged because %s is not in the Admin list.", triggerSender.getName()));
         }
 
-        if (isOnlyTriggerPhrase() && !helper.isTriggerPhrase(cause.getCommentBody())) {
+        if (isOnlyTriggerPhrase() && (commentBody == null || !helper.isTriggerPhrase(cause.getCommentBody()) )) {
             merge = false;
             logger.println("The comment does not contain the required trigger phrase.");
 
             commentOnRequest(String.format("Please comment with '%s' to automerge this request", trigger.getTriggerPhrase()));
         }
 
-        if (isDisallowOwnCode() && isOwnCode(pr, triggerSender)) {
+        if (isDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender) )) {
             merge = false;
             logger.println("The commentor is also one of the contributors.");
             commentOnRequest(String.format("Code not merged because %s has committed code in the request.", triggerSender.getName()));

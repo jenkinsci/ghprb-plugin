@@ -4,7 +4,6 @@ import static hudson.Util.fixEmpty;
 import static hudson.Util.fixEmptyAndTrim;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,10 +29,6 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
-import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
-import com.cloudbees.plugins.credentials.domains.PathRequirement;
-import com.cloudbees.plugins.credentials.domains.SchemeRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.base.Joiner;
 
@@ -112,7 +107,8 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         GitHubBuilder builder = new GitHubBuilder()
             .withEndpoint(serverAPIUrl)
             .withConnector(new HttpConnectorWithJenkinsProxy());
-        String contextName = context == null ? "(null)" : context.getFullDisplayName();
+        String contextName = context == null ? "(Jenkins.instance)" : context.getFullDisplayName();
+        
         if (StringUtils.isEmpty(credentialsId)) {
             logger.log(Level.WARNING, "credentialsId not set for context {0}, using anonymous connection", contextName);
             return builder;

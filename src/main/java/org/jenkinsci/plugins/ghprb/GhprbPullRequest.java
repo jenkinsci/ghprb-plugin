@@ -148,6 +148,37 @@ public class GhprbPullRequest {
             source = pr.getHead().getRef(); // If this instance was created before target was introduced (before v1.8), it can be null.
         }
 
+        updatePR(pr, author);
+        
+        checkSkipBuild(pr);
+        tryBuild(pr);
+    }
+
+    public void check(GHIssueComment comment) {
+        if (helper.isProjectDisabled()) {
+            logger.log(Level.FINE, "Project is disabled, ignoring comment");
+            return;
+        }
+        try {
+            checkComment(comment);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
+            return;
+        }
+        
+
+        GHPullRequest pr = null;
+        try {
+            pr = repo.getPullRequest(id);
+            updatePR(pr, comment.getUser());
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
+        }
+        checkSkipBuild(comment.getParent());
+        tryBuild(pr);
+    }
+    
+    private void updatePR(GHPullRequest pr, GHUser author) {
         if (isUpdated(pr)) {
             logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
 
@@ -162,38 +193,7 @@ public class GhprbPullRequest {
                         new Object[] { id, reponame }
                 );
             }
-            try {
-                updated = pr.getUpdatedAt();
-            } catch (IOException e) {
-                e.printStackTrace();
-                updated = new Date();
-            }
         }
-        checkSkipBuild(pr);
-        tryBuild(pr);
-    }
-
-    public void check(GHIssueComment comment) {
-        if (helper.isProjectDisabled()) {
-            logger.log(Level.FINE, "Project is disabled, ignoring comment");
-            return;
-        }
-        try {
-            checkComment(comment);
-            updated = comment.getUpdatedAt();
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
-            return;
-        }
-
-        GHPullRequest pr = null;
-        try {
-            pr = repo.getPullRequest(id);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
-        }
-        checkSkipBuild(comment.getParent());
-        tryBuild(pr);
     }
 
     public boolean isWhiteListedTargetBranch() {
@@ -216,12 +216,14 @@ public class GhprbPullRequest {
 
     private boolean isUpdated(GHPullRequest pr) {
         Date lastUpdated = new Date();
+        boolean ret = false;
         try {
             lastUpdated = pr.getUpdatedAt();
+            ret = updated.compareTo(lastUpdated) < 0;
+            updated = lastUpdated;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        boolean ret = updated.compareTo(lastUpdated) < 0;
         ret = ret || !pr.getHead().getSha().equals(head);
         return ret;
     }
