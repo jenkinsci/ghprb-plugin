@@ -179,7 +179,7 @@ public class GhprbPullRequest {
     }
     
     private void updatePR(GHPullRequest pr, GHUser author) {
-        if (isUpdated(pr)) {
+        if (pr != null && isUpdated(pr)) {
             logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
 
             // the title could have been updated since the original PR was opened
@@ -215,14 +215,17 @@ public class GhprbPullRequest {
     }
 
     private boolean isUpdated(GHPullRequest pr) {
+        if (pr == null) {
+            return false;
+        }
         Date lastUpdated = new Date();
         boolean ret = false;
         try {
             lastUpdated = pr.getUpdatedAt();
             ret = updated.compareTo(lastUpdated) < 0;
             updated = lastUpdated;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Unable to update last updated date", e);
         }
         ret = ret || !pr.getHead().getSha().equals(head);
         return ret;
