@@ -267,6 +267,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public AbstractProject<?, ?> getActualProject() {
+        
+        if (_project != null) {
+            return _project;
+        }
 
         @SuppressWarnings("rawtypes")
         List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
