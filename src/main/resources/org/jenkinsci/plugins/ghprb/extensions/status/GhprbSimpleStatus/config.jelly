@@ -11,7 +11,7 @@
     <f:entry title="${%Commit Status Build Started}" field="startedStatus">
     <f:textbox default="${descriptor.getStartedStatusDefault(instance.startedStatus)}" />
   </f:entry>
-  <f:entry title="${%Build Result Build Result}" field="completedStatus" >
+  <f:entry title="${%Commit Status Build Result}" field="completedStatus" >
     <f:repeatableProperty field="completedStatus" default="${descriptor.getCompletedStatusList(instance.completedStatus)}" />
   </f:entry>
 </j:jelly>

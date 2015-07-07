@@ -120,7 +120,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         GhprbCause c = Ghprb.getCause(build);
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(startedStatus)) {
-            sb.append("Build Started");
+            sb.append("Build started");
             sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
