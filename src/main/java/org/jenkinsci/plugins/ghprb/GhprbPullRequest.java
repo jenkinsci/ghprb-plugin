@@ -179,12 +179,13 @@ public class GhprbPullRequest {
     }
     
     private void updatePR(GHPullRequest pr, GHUser author) {
+        Date lastUpdateTime = updated;
         if (pr != null && isUpdated(pr)) {
             logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
 
             // the title could have been updated since the original PR was opened
             title = pr.getTitle();
-            int commentsChecked = checkComments(pr);
+            int commentsChecked = checkComments(pr, lastUpdateTime);
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
             if (!newCommit && commentsChecked == 0) {
@@ -346,11 +347,11 @@ public class GhprbPullRequest {
         }
     }
 
-    private int checkComments(GHPullRequest pr) {
+    private int checkComments(GHPullRequest pr, Date lastUpdatedTime) {
         int count = 0;
         try {
             for (GHIssueComment comment : pr.getComments()) {
-                if (updated.compareTo(comment.getUpdatedAt()) < 0) {
+                if (lastUpdatedTime.compareTo(comment.getUpdatedAt()) < 0) {
                     count++;
                     try {
                         checkComment(comment);
