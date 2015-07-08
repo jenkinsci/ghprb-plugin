@@ -68,7 +68,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private transient Ghprb helper;
     private String project;
     private AbstractProject<?, ?> _project;
-    private GhprbGitHubAuth gitHubApiAuth;
+    private String gitHubAuthId;
     
     
     private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
@@ -127,7 +127,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
-        this.gitHubApiAuth = getDescriptor().getGitHubAuth(gitHubAuthId);
+        this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         setExtensions(extensions);
         configVersion = 1;
@@ -136,7 +136,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     @Override
     public Object readResolve() {
         convertPropertiesToExtensions();
+        checkGitHubApiAuth();
         return this;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void checkGitHubApiAuth() {
+        if (gitHubApiAuth != null) {
+            gitHubAuthId = gitHubApiAuth.getId();
+            gitHubApiAuth = null;
+        }
     }
     
     public static DescriptorImpl getDscp() {
@@ -247,13 +256,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     
     
     public GhprbGitHubAuth getGitHubApiAuth() {
-        if (gitHubApiAuth == null) {
+        if (gitHubAuthId == null) {
             for (GhprbGitHubAuth auth: getDescriptor().getGithubAuth()){
-                gitHubApiAuth = auth;
-                break;
+                gitHubAuthId = auth.getId();
+                getDescriptor().save();
+                return auth;
             }
         }
-        return gitHubApiAuth;
+        return getDescriptor().getGitHubAuth(gitHubAuthId);
     }
     
 
@@ -263,7 +273,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return null;
         }
         
-        return gitHubApiAuth.getConnection(getActualProject());
+        return auth.getConnection(getActualProject());
     }
     
     public AbstractProject<?, ?> getActualProject() {
@@ -661,7 +671,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return (useDetailedComments != null && useDetailedComments);
         }
 
-        public ListBoxModel doFillGitHubAuthIdItems(@QueryParameter("gitHubAuth") String gitHubAuthId) {
+        public ListBoxModel doFillGitHubAuthIdItems(@QueryParameter("gitHubAuthId") String gitHubAuthId) {
             ListBoxModel model = new ListBoxModel();
             for (GhprbGitHubAuth auth : getGithubAuth()) {
                 String description = Util.fixNull(auth.getDescription());
