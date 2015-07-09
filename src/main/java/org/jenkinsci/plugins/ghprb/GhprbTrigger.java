@@ -237,6 +237,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
+        values.add(new StringParameterValue("ghprbTriggerLogin", cause.getTriggerSender().getLogin()));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
         values.add(pullIdPv);
         values.add(new StringParameterValue("ghprbTargetBranch", String.valueOf(cause.getTargetBranch())));
