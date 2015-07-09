@@ -451,6 +451,10 @@ public class GhprbPullRequest {
         return commitAuthor;
     }
 
+    public GHUser getPullRequestAuthor() {
+        return author;
+    }
+
     public GHPullRequest getPullRequest() {
         return pr;
     }
