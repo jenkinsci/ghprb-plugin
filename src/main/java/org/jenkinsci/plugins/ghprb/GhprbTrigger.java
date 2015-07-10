@@ -242,6 +242,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
         values.add(new StringParameterValue("ghprbTriggerAuthorLogin", triggerAuthorLogin));
+        values.add(new StringParameterValue("ghprbTriggerAuthorLoginMention", triggerAuthorLogin.isEmpty() ? "@"
+                + triggerAuthorLogin : ""));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
         values.add(pullIdPv);
         values.add(new StringParameterValue("ghprbTargetBranch", String.valueOf(cause.getTargetBranch())));
@@ -250,6 +252,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         // it's possible the GHUser doesn't have an associated email address
         values.add(new StringParameterValue("ghprbPullAuthorEmail", getString(cause.getAuthorEmail(), "")));
         values.add(new StringParameterValue("ghprbPullAuthorLogin", String.valueOf(cause.getPullRequestAuthor().getLogin())));
+        values.add(new StringParameterValue("ghprbPullAuthorLoginMention", "@" + cause.getPullRequestAuthor().getLogin()));
         values.add(new StringParameterValue("ghprbPullDescription", String.valueOf(cause.getShortDescription())));
         values.add(new StringParameterValue("ghprbPullTitle", String.valueOf(cause.getTitle())));
         values.add(new StringParameterValue("ghprbPullLink", String.valueOf(cause.getUrl())));
