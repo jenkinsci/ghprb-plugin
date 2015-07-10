@@ -30,6 +30,7 @@ public class GhprbWebHook {
         }
 
         GhprbRepository repo = trigger.getRepository();
+        String repoName = repo.getName();
 
         logger.log(Level.INFO, "Got payload event: {0}", event);
         try {
@@ -47,7 +48,7 @@ public class GhprbWebHook {
                 
                 if (matchRepo(repo, issueComment.getRepository())) {
                     logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", 
-                            new Object[] { issueComment.getComment(), repo.getName() }
+                            new Object[] { issueComment.getComment(), repoName }
                     );
                     repo.onIssueCommentHook(issueComment);
                 }
@@ -57,7 +58,7 @@ public class GhprbWebHook {
                         new StringReader(payload), 
                         GHEventPayload.PullRequest.class);
                 if (matchRepo(repo, pr.getPullRequest().getRepository())) {
-                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repo.getName(), pr.getNumber() });
+                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repoName, pr.getNumber() });
                     repo.onPullRequestHook(pr);
                 }
                 
@@ -102,7 +103,10 @@ public class GhprbWebHook {
     }
     
     private boolean matchRepo(GhprbRepository ghprbRepo, GHRepository ghRepo) {
-        return ghprbRepo.getName().equals(ghRepo.getFullName());
+        String jobRepoName = ghprbRepo.getName();
+        String hookRepoName = ghRepo.getFullName();
+        logger.log(Level.FINE, "Comparing repository names: {0} to {1}, case is ignored", new Object[]{jobRepoName, hookRepoName});
+        return jobRepoName.equalsIgnoreCase(hookRepoName);
     }
 
     public String getProjectName() {
