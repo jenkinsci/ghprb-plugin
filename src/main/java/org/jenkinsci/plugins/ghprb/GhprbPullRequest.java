@@ -183,6 +183,12 @@ public class GhprbPullRequest {
         if (pr != null && isUpdated(pr)) {
             logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
 
+            // the author of the PR could have been whitelisted since its creation
+            if (!accepted && helper.isWhitelisted(pr.getUser())) {
+                logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
+                accepted = true;
+            }
+            
             // the title could have been updated since the original PR was opened
             title = pr.getTitle();
             int commentsChecked = checkComments(pr, lastUpdateTime);
@@ -324,6 +330,7 @@ public class GhprbPullRequest {
             if (helper.isAdmin(sender)) {
                 logger.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
                 shouldRun = true;
+                triggered = true;
             } else if (accepted && helper.isWhitelisted(sender)) {
                 logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
