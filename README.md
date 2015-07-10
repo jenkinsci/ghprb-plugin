@@ -107,6 +107,10 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.24.x
+* Fixed issues with new credential implementation.
+* Fixed other issues.
+
 #### -> 1.24
 * Signature checking for webhooks
 * Added fields to status updates for custom messages and a custom URL
