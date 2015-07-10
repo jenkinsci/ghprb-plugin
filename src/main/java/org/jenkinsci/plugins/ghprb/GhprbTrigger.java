@@ -58,6 +58,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private final String orgslist;
     private final String cron;
     private final String triggerPhrase;
+    private final String buildDescTemplate;
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
@@ -113,6 +114,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String msgFailure, 
             String commitStatusContext,
             String gitHubAuthId,
+            String buildDescTemplate,
             List<GhprbExtension> extensions
             ) throws ANTLRException {
         super(cron);
@@ -129,6 +131,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
+        this.buildDescTemplate = buildDescTemplate;
         setExtensions(extensions);
         configVersion = 1;
     }
@@ -349,6 +352,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to save new whitelist", ex);
         }
+    }
+    
+    public String getBuildDescTemplate() {
+        return buildDescTemplate == null ? "" : buildDescTemplate;
     }
 
     public String getAdminlist() {
