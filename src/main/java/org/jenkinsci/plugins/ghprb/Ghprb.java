@@ -21,7 +21,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Item;
-import hudson.model.ItemGroup;
 import hudson.model.Result;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
@@ -57,15 +56,8 @@ public class Ghprb {
     private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
     private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
-    private final Set<String> admins;
-    private final Set<String> whitelisted;
-    private final Set<String> organisations;
-    private final String triggerPhrase;
     private final GhprbTrigger trigger;
     private final AbstractProject<?, ?> project;
-    private final Pattern retestPhrasePattern;
-    private final Pattern whitelistPhrasePattern;
-    private final Pattern oktotestPhrasePattern;
     private GhprbRepository repository;
     private GhprbBuilds builds;
 
@@ -85,17 +77,6 @@ public class Ghprb {
         final String repo = m.group(3);
 
         this.trigger = trigger;
-        this.admins = new HashSet<String>(Arrays.asList(trigger.getAdminlist().split("\\s+")));
-        this.admins.remove("");
-        this.whitelisted = new HashSet<String>(Arrays.asList(trigger.getWhitelist().split("\\s+")));
-        this.whitelisted.remove("");
-        this.organisations = new HashSet<String>(Arrays.asList(trigger.getOrgslist().split("\\s+")));
-        this.organisations.remove("");
-        this.triggerPhrase = trigger.getTriggerPhrase();
-
-        retestPhrasePattern = Pattern.compile(trigger.getDescriptor().getRetestPhrase());
-        whitelistPhrasePattern = Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
-        oktotestPhrasePattern = Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
 
         this.repository = new GhprbRepository(user, repo, this, pulls);
         this.builds = new GhprbBuilds(trigger, repository);
@@ -110,7 +91,6 @@ public class Ghprb {
 
     public void addWhitelist(String author) {
         logger.log(Level.INFO, "Adding {0} to whitelist", author);
-        whitelisted.add(author);
         trigger.addWhitelist(author);
     }
     
@@ -143,20 +123,60 @@ public class Ghprb {
         builds = null;
     }
 
+    // These used to be stored on the object in the constructor.
+    // But because the object is only instantiated once per PR, configuration would go stale.
+    // Some optimization could be done around re-compiling regex/hash sets, but beyond that we still have to re-pull the text.
+    private Pattern retestPhrasePattern() {
+        return Pattern.compile(trigger.getDescriptor().getRetestPhrase());
+    }
+
+    private Pattern whitelistPhrasePattern() {
+        return Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
+    }
+
+    private Pattern oktotestPhrasePattern() {
+        return Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
+    }
+
+    private String triggerPhrase() {
+        return trigger.getTriggerPhrase();
+    }
+
+    private HashSet<String> admins() {
+        HashSet<String> adminList;
+        adminList = new HashSet<String>(Arrays.asList(trigger.getAdminlist().split("\\s+")));
+        adminList.remove("");
+        return adminList;
+    }
+
+    private HashSet<String> whitelisted() {
+        HashSet<String> whitelistedList;
+        whitelistedList = new HashSet<String>(Arrays.asList(trigger.getWhitelist().split("\\s+")));
+        whitelistedList.remove("");
+        return whitelistedList;
+    }
+
+    private HashSet<String> organisations() {
+        HashSet<String> organisationsList;
+        organisationsList = new HashSet<String>(Arrays.asList(trigger.getOrgslist().split("\\s+")));
+        organisationsList.remove("");
+        return organisationsList;
+    }
+
     public boolean isRetestPhrase(String comment) {
-        return retestPhrasePattern.matcher(comment).matches();
+        return retestPhrasePattern().matcher(comment).matches();
     }
 
     public boolean isWhitelistPhrase(String comment) {
-        return whitelistPhrasePattern.matcher(comment).matches();
+        return whitelistPhrasePattern().matcher(comment).matches();
     }
 
     public boolean isOktotestPhrase(String comment) {
-        return oktotestPhrasePattern.matcher(comment).matches();
+        return oktotestPhrasePattern().matcher(comment).matches();
     }
 
     public boolean isTriggerPhrase(String comment) {
-        return !triggerPhrase.equals("") && comment != null && comment.contains(triggerPhrase);
+        return !triggerPhrase().equals("") && comment != null && comment.contains(triggerPhrase());
     }
 
     public boolean ifOnlyTriggerPhrase() {
@@ -165,13 +185,13 @@ public class Ghprb {
 
     public boolean isWhitelisted(GHUser user) {
         return trigger.getPermitAll()
-                || whitelisted.contains(user.getLogin())
-                || admins.contains(user.getLogin())
+                || whitelisted().contains(user.getLogin())
+                || admins().contains(user.getLogin())
                 || isInWhitelistedOrganisation(user);
     }
 
     public boolean isAdmin(GHUser user) {
-        return admins.contains(user.getLogin())
+        return admins().contains(user.getLogin())
                 || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
                         && isInWhitelistedOrganisation(user));
     }
@@ -181,7 +201,7 @@ public class Ghprb {
     }
 
     private boolean isInWhitelistedOrganisation(GHUser user) {
-        for (String organisation : organisations) {
+        for (String organisation : organisations()) {
             if (getGitHub().isUserMemberOfOrganization(organisation, user)) {
                 return true;
             }
