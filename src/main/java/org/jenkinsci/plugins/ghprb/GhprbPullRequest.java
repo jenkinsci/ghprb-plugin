@@ -330,7 +330,6 @@ public class GhprbPullRequest {
             if (helper.isAdmin(sender)) {
                 logger.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
                 shouldRun = true;
-                triggered = true;
             } else if (accepted && helper.isWhitelisted(sender)) {
                 logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
