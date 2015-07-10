@@ -167,7 +167,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
         if (project.getProperty(GithubProjectProperty.class) == null) {
-            logger.log(Level.INFO, "GitHub project not set up, cannot start ghprb trigger for job " + this.project);
+            logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + this.project);
             return;
         }
         try {
