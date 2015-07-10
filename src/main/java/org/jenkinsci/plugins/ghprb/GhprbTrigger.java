@@ -58,6 +58,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private final String orgslist;
     private final String cron;
     private final String triggerPhrase;
+    private final String buildDescTemplate;
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
@@ -68,7 +69,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private transient Ghprb helper;
     private String project;
     private AbstractProject<?, ?> _project;
-    private GhprbGitHubAuth gitHubApiAuth;
+    private String gitHubAuthId;
     
     
     private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
@@ -113,6 +114,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String msgFailure, 
             String commitStatusContext,
             String gitHubAuthId,
+            String buildDescTemplate,
             List<GhprbExtension> extensions
             ) throws ANTLRException {
         super(cron);
@@ -127,8 +129,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.whiteListTargetBranches = whiteListTargetBranches;
-        this.gitHubApiAuth = getDescriptor().getGitHubAuth(gitHubAuthId);
+        this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
+        this.buildDescTemplate = buildDescTemplate;
         setExtensions(extensions);
         configVersion = 1;
     }
@@ -136,7 +139,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     @Override
     public Object readResolve() {
         convertPropertiesToExtensions();
+        checkGitHubApiAuth();
         return this;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void checkGitHubApiAuth() {
+        if (gitHubApiAuth != null) {
+            gitHubAuthId = gitHubApiAuth.getId();
+            gitHubApiAuth = null;
+        }
     }
     
     public static DescriptorImpl getDscp() {
@@ -155,7 +167,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
         if (project.getProperty(GithubProjectProperty.class) == null) {
-            logger.log(Level.INFO, "GitHub project not set up, cannot start ghprb trigger for job " + this.project);
+            logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + this.project);
             return;
         }
         try {
@@ -193,7 +205,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
 
         if ((helper != null && helper.isProjectDisabled()) || (_project != null && _project.isDisabled())) {
-            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call");
+            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", this.project);
             return;
         }
         
@@ -247,13 +259,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     
     
     public GhprbGitHubAuth getGitHubApiAuth() {
-        if (gitHubApiAuth == null) {
+        if (gitHubAuthId == null) {
             for (GhprbGitHubAuth auth: getDescriptor().getGithubAuth()){
-                gitHubApiAuth = auth;
-                break;
+                gitHubAuthId = auth.getId();
+                getDescriptor().save();
+                return auth;
             }
         }
-        return gitHubApiAuth;
+        return getDescriptor().getGitHubAuth(gitHubAuthId);
     }
     
 
@@ -263,10 +276,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return null;
         }
         
-        return gitHubApiAuth.getConnection(getActualProject());
+        return auth.getConnection(getActualProject());
     }
     
     public AbstractProject<?, ?> getActualProject() {
+        
+        if (_project != null) {
+            return _project;
+        }
 
         @SuppressWarnings("rawtypes")
         List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
@@ -335,6 +352,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to save new whitelist", ex);
         }
+    }
+    
+    public String getBuildDescTemplate() {
+        return buildDescTemplate == null ? "" : buildDescTemplate;
     }
 
     public String getAdminlist() {
@@ -657,7 +678,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return (useDetailedComments != null && useDetailedComments);
         }
 
-        public ListBoxModel doFillGitHubAuthIdItems(@QueryParameter("gitHubAuth") String gitHubAuthId) {
+        public ListBoxModel doFillGitHubAuthIdItems(@QueryParameter("gitHubAuthId") String gitHubAuthId) {
             ListBoxModel model = new ListBoxModel();
             for (GhprbGitHubAuth auth : getGithubAuth()) {
                 String description = Util.fixNull(auth.getDescription());

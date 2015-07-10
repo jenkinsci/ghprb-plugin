@@ -148,27 +148,8 @@ public class GhprbPullRequest {
             source = pr.getHead().getRef(); // If this instance was created before target was introduced (before v1.8), it can be null.
         }
 
-        if (isUpdated(pr)) {
-            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
-
-            // the title could have been updated since the original PR was opened
-            title = pr.getTitle();
-            int commentsChecked = checkComments(pr);
-            boolean newCommit = checkCommit(pr.getHead().getSha());
-
-            if (!newCommit && commentsChecked == 0) {
-                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
-                        + "that may mean that commit status was updated.", 
-                        new Object[] { id, reponame }
-                );
-            }
-            try {
-                updated = pr.getUpdatedAt();
-            } catch (IOException e) {
-                e.printStackTrace();
-                updated = new Date();
-            }
-        }
+        updatePR(pr, author);
+        
         checkSkipBuild(pr);
         tryBuild(pr);
     }
@@ -180,20 +161,46 @@ public class GhprbPullRequest {
         }
         try {
             checkComment(comment);
-            updated = comment.getUpdatedAt();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
             return;
         }
+        
 
         GHPullRequest pr = null;
         try {
             pr = repo.getPullRequest(id);
+            updatePR(pr, comment.getUser());
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Couldn't get GHPullRequest for checking mergeable state");
         }
         checkSkipBuild(comment.getParent());
         tryBuild(pr);
+    }
+    
+    private void updatePR(GHPullRequest pr, GHUser author) {
+        Date lastUpdateTime = updated;
+        if (pr != null && isUpdated(pr)) {
+            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
+
+            // the author of the PR could have been whitelisted since its creation
+            if (!accepted && helper.isWhitelisted(pr.getUser())) {
+                logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
+                accepted = true;
+            }
+            
+            // the title could have been updated since the original PR was opened
+            title = pr.getTitle();
+            int commentsChecked = checkComments(pr, lastUpdateTime);
+            boolean newCommit = checkCommit(pr.getHead().getSha());
+
+            if (!newCommit && commentsChecked == 0) {
+                logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
+                        + "that may mean that commit status was updated.", 
+                        new Object[] { id, reponame }
+                );
+            }
+        }
     }
 
     public boolean isWhiteListedTargetBranch() {
@@ -215,13 +222,18 @@ public class GhprbPullRequest {
     }
 
     private boolean isUpdated(GHPullRequest pr) {
+        if (pr == null) {
+            return false;
+        }
         Date lastUpdated = new Date();
+        boolean ret = false;
         try {
             lastUpdated = pr.getUpdatedAt();
-        } catch (IOException e) {
-            e.printStackTrace();
+            ret = updated.compareTo(lastUpdated) < 0;
+            updated = lastUpdated;
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Unable to update last updated date", e);
         }
-        boolean ret = updated.compareTo(lastUpdated) < 0;
         ret = ret || !pr.getHead().getSha().equals(head);
         return ret;
     }
@@ -341,11 +353,11 @@ public class GhprbPullRequest {
         }
     }
 
-    private int checkComments(GHPullRequest pr) {
+    private int checkComments(GHPullRequest pr, Date lastUpdatedTime) {
         int count = 0;
         try {
             for (GHIssueComment comment : pr.getComments()) {
-                if (updated.compareTo(comment.getUpdatedAt()) < 0) {
+                if (lastUpdatedTime.compareTo(comment.getUpdatedAt()) < 0) {
                     count++;
                     try {
                         checkComment(comment);

@@ -19,8 +19,14 @@ f.entry(title:_("Credentials"), field:"credentialsId") {
     }""" /* workaround for JENKINS-19124 */)
 }
 
-f.entry(title:_("Test Credentials")) {
-    f.validateButton(title:_("Connect to API"), progress:_("Connecting..."), with:"serverAPIUrl,credentialsId", method:"testGithubAccess")
+f.advanced(title:_("Test Credentials")) {
+    f.entry(title:_("Test Credentials")) {
+        f.validateButton(title:_("Connect to API"), progress:_("Connecting..."), with:"serverAPIUrl,credentialsId", method:"testGithubAccess")
+        f.entry(title:_("Repository owner/name"), field:"repo") {
+            f.textbox()
+        }
+        f.validateButton(title:_("Check repo permissions"), progress:_("Connecting..."), with:"serverAPIUrl,credentialsId,repo", method:"checkRepoAccess")
+    }
 }
     
 f.advanced(title:_("Create API Token")) {
@@ -47,8 +53,6 @@ f.advanced(title:_("Auth ID")) {
 
 f.entry {
     div(align:"right") {
-    
-        input (type:"button", value:_("Add Server"), class:"repeatable-add show-if-last")
         input (type:"button", value:_("Delete Server"), class:"repeatable-delete")
     }
 }

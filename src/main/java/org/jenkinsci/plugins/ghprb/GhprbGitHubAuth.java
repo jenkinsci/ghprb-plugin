@@ -4,7 +4,6 @@ import static hudson.Util.fixEmpty;
 import static hudson.Util.fixEmptyAndTrim;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +14,7 @@ import java.util.logging.Logger;
 
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHMyself;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.stapler.AncestorInPath;
@@ -28,13 +28,9 @@ import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.HostnamePortRequirement;
-import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
-import com.cloudbees.plugins.credentials.domains.PathRequirement;
-import com.cloudbees.plugins.credentials.domains.SchemeRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.google.common.base.Joiner;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -106,29 +102,44 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     public String getSecret() {
         return secret;
     }
-    
+
+    private static GitHubBuilder getBuilder(Item context, String serverAPIUrl, String credentialsId) {
+        GitHubBuilder builder = new GitHubBuilder()
+            .withEndpoint(serverAPIUrl)
+            .withConnector(new HttpConnectorWithJenkinsProxy());
+        String contextName = context == null ? "(Jenkins.instance)" : context.getFullDisplayName();
+        
+        if (StringUtils.isEmpty(credentialsId)) {
+            logger.log(Level.WARNING, "credentialsId not set for context {0}, using anonymous connection", contextName);
+            return builder;
+        }
+
+        StandardCredentials credentials = Ghprb.lookupCredentials(context, credentialsId, serverAPIUrl);
+        if (credentials == null) {
+            logger.log(Level.SEVERE, "Failed to look up credentials for context {0} using id: {1}",
+                    new Object[] { contextName, credentialsId });
+        } else if (credentials instanceof StandardUsernamePasswordCredentials) {
+            logger.log(Level.FINEST, "Using username/password for context {0}", contextName);
+            StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
+            builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
+        } else if (credentials instanceof StringCredentials) {
+            logger.log(Level.FINEST, "Using OAuth token for context {0}", contextName);
+            StringCredentials tokenCredentials = (StringCredentials) credentials;
+            builder.withOAuthToken(tokenCredentials.getSecret().getPlainText());
+        } else {
+            logger.log(Level.SEVERE, "Unknown credential type for context {0} using id: {1}: {2}",
+                    new Object[] { contextName, credentialsId, credentials.getClass().getName() });
+            return null;
+        }
+        return builder;
+    }
+
     public GitHub getConnection(Item context) throws IOException {
         GitHub gh = null;
-        GitHubBuilder builder = new GitHubBuilder()
-                    .withEndpoint(serverAPIUrl)
-                    .withConnector(new HttpConnectorWithJenkinsProxy());
-        
-        if (!StringUtils.isEmpty(credentialsId)) {
-            StandardCredentials credentials = CredentialsMatchers
-                    .firstOrNull(
-                            CredentialsProvider.lookupCredentials(StandardCredentials.class, context,
-                                    ACL.SYSTEM, URIRequirementBuilder.fromUri(serverAPIUrl).build()),
-                                    CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
-            
-            if (credentials instanceof StringCredentials) {
-                String accessToken = ((StringCredentials) credentials).getSecret().getPlainText();
-                builder.withOAuthToken(accessToken);
-            } else if (credentials instanceof UsernamePasswordCredentials){
-                UsernamePasswordCredentials creds = (UsernamePasswordCredentials) credentials;
-                String username = creds.getUsername();
-                String password = creds.getPassword().getPlainText();
-                builder.withPassword(username, password);
-            }
+        GitHubBuilder builder = getBuilder(context, serverAPIUrl, credentialsId);
+        if (builder == null) {
+          logger.log(Level.SEVERE, "Unable to get builder using credentials: {0}", credentialsId);
+          return null;
         }
         try {
             gh = builder.build();
@@ -162,7 +173,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
          * @throws URISyntaxException 
          */
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl) throws URISyntaxException {
-            List<DomainRequirement> domainRequirements = getDomainReqs(serverAPIUrl);
+            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(serverAPIUrl).build();
             
             return new StandardListBoxModel()
                     .withEmptySelection()
@@ -220,24 +231,6 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             }
         }
         
-        private List<DomainRequirement> getDomainReqs(String serverAPIUrl) throws URISyntaxException {
-            List<DomainRequirement> requirements = new ArrayList<DomainRequirement>(2);
-            
-            URI serverUri = new URI(serverAPIUrl);
-            
-            if (serverUri.getPort() > 0) {
-                requirements.add(new HostnamePortRequirement(serverUri.getHost(), serverUri.getPort()));
-            } else {
-                requirements.add(new HostnameRequirement(serverUri.getHost()));
-            }
-            
-            requirements.add(new SchemeRequirement(serverUri.getScheme()));
-            if (!StringUtils.isEmpty(serverUri.getPath())) {
-                requirements.add(new PathRequirement(serverUri.getPath()));
-            }
-            return requirements;
-        }
-
         public FormValidation doCheckServerAPIUrl(@QueryParameter String value) {
             if ("https://api.github.com".equals(value)) {
                 return FormValidation.ok();
@@ -247,26 +240,45 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             }
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
-
+        
+        public FormValidation doCheckRepoAccess(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("repo") final String repo) {
+            try {
+                GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("Unable to look up GitHub credentials using ID: " + credentialsId + "!!");
+                }
+                GitHub gh = builder.build();
+                GHRepository repository = gh.getRepository(repo);
+                StringBuilder sb = new StringBuilder();
+                sb.append("User has access to: ");
+                List<String> permissions = new ArrayList<String>(3);
+                if (repository.hasAdminAccess()) {
+                    permissions.add("Admin");
+                }
+                if (repository.hasPushAccess()) {
+                    permissions.add("Push");
+                }
+                if (repository.hasPullAccess()) {
+                    permissions.add("Pull");
+                }
+                sb.append(Joiner.on(", ").join(permissions));
+                
+                return FormValidation.ok(sb.toString());
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to connect to GitHub API: " + ex);
+            }
+        }
+        
         public FormValidation doTestGithubAccess(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
                 @QueryParameter("credentialsId") final String credentialsId) {
             try {
-
-                GitHubBuilder builder = new GitHubBuilder()
-                            .withEndpoint(serverAPIUrl)
-                            .withConnector(new HttpConnectorWithJenkinsProxy());
-                
-                StandardCredentials credentials = Ghprb.lookupCredentials(null, credentialsId, serverAPIUrl);
-                if (credentials instanceof StandardUsernamePasswordCredentials) {
-                    StandardUsernamePasswordCredentials upCredentials = (StandardUsernamePasswordCredentials) credentials;
-                    builder.withPassword(upCredentials.getUsername(), upCredentials.getPassword().getPlainText());
-                    
-                } else if (credentials instanceof StringCredentials) {
-                    StringCredentials tokenCredentials = (StringCredentials) credentials;
-                    builder.withOAuthToken(tokenCredentials.getSecret().getPlainText());
-                } else {
-                    return FormValidation.error("No credentials provided");
+                GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("Unable to look up GitHub credentials using ID: " + credentialsId + "!!");
                 }
                 GitHub gh = builder.build();
                 GHMyself me = gh.getMyself();

@@ -268,13 +268,16 @@ public class GhprbRepositoryTest {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
 
-        mockComments("comment body");
         mockHeadAndBase();
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
+        
+        Date now = new Date();
+        Date tomorrow = new DateTime().plusDays(1).toDate();
+
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
-        given(ghPullRequest.getUpdatedAt()).willReturn(new Date()).willReturn(new DateTime().plusDays(1).toDate());
+        given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(now).willReturn(tomorrow);
         given(ghPullRequest.getNumber()).willReturn(100);
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
@@ -291,6 +294,8 @@ public class GhprbRepositoryTest {
 
         // WHEN
         ghprbRepository.check(); // PR was created
+        
+        mockComments("comment body", tomorrow);
         ghprbRepository.check(); // PR was updated
 
         // THEN
@@ -310,7 +315,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getHtmlUrl();
-        verify(ghPullRequest, times(4)).getUpdatedAt();
+        verify(ghPullRequest, times(3)).getUpdatedAt();
 
         verify(ghPullRequest, times(1)).getComments();
         verify(ghPullRequest, times(1)).listCommits();
@@ -345,14 +350,15 @@ public class GhprbRepositoryTest {
     public void testCheckMethodWhenPrWasUpdatedWithRetestPhrase() throws IOException {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
+        Date now = new Date();
+        Date tomorrow = new DateTime().plusDays(1).toDate();
 
-        mockComments("test this please");
         mockHeadAndBase();
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
-        given(ghPullRequest.getUpdatedAt()).willReturn(new Date()).willReturn(new Date()).willReturn(new DateTime().plusDays(1).toDate());
+        given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(now).willReturn(tomorrow);
         given(ghPullRequest.getNumber()).willReturn(100);
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
@@ -370,6 +376,8 @@ public class GhprbRepositoryTest {
 
         // WHEN
         ghprbRepository.check(); // PR was created
+        
+        mockComments("test this please", tomorrow);
         ghprbRepository.check(); // PR was updated
 
         // THEN
@@ -390,7 +398,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(8)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
-        verify(ghPullRequest, times(4)).getUpdatedAt();
+        verify(ghPullRequest, times(3)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
 
         verify(ghPullRequest, times(1)).getComments();
@@ -419,9 +427,9 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(builds);
     }
 
-    private void mockComments(String commentBody) throws IOException {
+    private void mockComments(String commentBody, Date updated) throws IOException {
         GHIssueComment comment = mock(GHIssueComment.class);
-        given(comment.getUpdatedAt()).willReturn(new DateTime().plusDays(3).toDate());
+        given(comment.getUpdatedAt()).willReturn(updated);
         given(comment.getUser()).willReturn(ghUser);
         given(comment.getBody()).willReturn(commentBody);
         List<GHIssueComment> comments = new ArrayList<GHIssueComment>();
