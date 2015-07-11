@@ -107,6 +107,13 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.25
+* Fix condition where admin can't run tests #60 JENKINS-25572, JENKINS-25574, JENKINS-25603
+* Check for when webhook encoding is null and default to UTF-8
+* Add configurable build message #36
+* NullPointerException in GhprbTrigger.run() jankinko/ghprb#256
+* Webhook repo checking now case insensitive #141
+
 #### -> 1.24.x
 * Fixed issues with new credential implementation.
 * Fixed other issues.

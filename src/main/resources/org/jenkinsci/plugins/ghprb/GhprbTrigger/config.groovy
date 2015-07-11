@@ -42,6 +42,9 @@ f.advanced() {
   f.entry(field: "permitAll", title: "Build every pull request automatically without asking (Dangerous!).") {
     f.checkbox() 
   }
+  f.entry(field: "buildDescTemplate", title: _("Build description template")) {
+      f.textarea()
+  }
   f.entry(field: "whiteListTargetBranches", title: _("Whitelist Target Branches:")) {
     f.repeatable(field: "whiteListTargetBranches", minimum: "1", add: "Add Branch") {
       table(width: "100%") {

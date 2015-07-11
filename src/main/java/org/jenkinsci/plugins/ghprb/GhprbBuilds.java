@@ -1,10 +1,12 @@
 package org.jenkinsci.plugins.ghprb;
 
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
@@ -16,6 +18,8 @@ import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +56,7 @@ public class GhprbBuilds {
             logger.log(Level.SEVERE, "Job did not start");
         }
     }
+
 
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
         PrintStream logger = listener.getLogger();
@@ -111,12 +116,29 @@ public class GhprbBuilds {
                 }
             }
         }
+        
         try {
-            build.setDescription("<a title=\"" + c.getTitle() + "\" href=\"" + c.getUrl() + "\">PR #" + c.getPullID() + "</a>: " + c.getAbbreviatedTitle());
+            String template = trigger.getBuildDescTemplate();
+            if (StringUtils.isEmpty(template)) {
+                template = "<a title=\"$title\" href=\"$url\">PR #$pullId</a>: $abbrTitle";
+            }
+            Map<String, String> vars = getVariables(c);
+            template = Util.replaceMacro(template, vars);
+            template = Ghprb.replaceMacros(build, listener, template);
+            build.setDescription(template);
         } catch (IOException ex) {
-            logger.println("Can't update build description");
+            logger.print("Can't update build description");
             ex.printStackTrace(logger);
         }
+    }
+
+    public Map<String, String> getVariables(GhprbCause c) {
+      Map<String, String> vars = new HashMap<String, String>();
+      vars.put("title", c.getTitle());
+      vars.put("url", c.getUrl().toString());
+      vars.put("pullId", Integer.toString(c.getPullID()));
+      vars.put("abbrTitle", c.getAbbreviatedTitle());
+      return vars;
     }
 
     public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
