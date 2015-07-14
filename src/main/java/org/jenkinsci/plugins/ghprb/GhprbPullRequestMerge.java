@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.concurrent.ConcurrentMap;
 
-import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.GHRef;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitUser;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -33,18 +35,28 @@ public class GhprbPullRequestMerge extends Recorder {
 
     private PrintStream logger;
 
-    private final boolean onlyAdminsMerge;
-    private final boolean disallowOwnCode;
-    private boolean onlyTriggerPhrase;
-    private String mergeComment;
+    private final Boolean onlyAdminsMerge;
+    private final Boolean disallowOwnCode;
+    private final Boolean onlyTriggerPhrase;
+    private final String mergeComment;
+    private final Boolean failOnNonMerge;
+    private final Boolean deleteOnMerge;
 
     @DataBoundConstructor
-    public GhprbPullRequestMerge(String mergeComment, boolean onlyTriggerPhrase, boolean onlyAdminsMerge, boolean disallowOwnCode) {
+    public GhprbPullRequestMerge(
+            String mergeComment, 
+            boolean onlyTriggerPhrase, 
+            boolean onlyAdminsMerge, 
+            boolean disallowOwnCode,
+            boolean failOnNonMerge,
+            boolean deleteOnMerge) {
 
         this.mergeComment = mergeComment;
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.onlyAdminsMerge = onlyAdminsMerge;
         this.disallowOwnCode = disallowOwnCode;
+        this.failOnNonMerge = failOnNonMerge;
+        this.deleteOnMerge = deleteOnMerge;
     }
 
     public String getMergeComment() {
@@ -52,15 +64,25 @@ public class GhprbPullRequestMerge extends Recorder {
     }
 
     public boolean isOnlyTriggerPhrase() {
-        return onlyTriggerPhrase;
+        return onlyTriggerPhrase == null ? false : onlyTriggerPhrase;
     }
 
     public boolean isOnlyAdminsMerge() {
-        return onlyAdminsMerge;
+        return onlyAdminsMerge == null ? false : onlyAdminsMerge;
     }
 
     public boolean isDisallowOwnCode() {
-        return disallowOwnCode;
+        return disallowOwnCode == null ? false : disallowOwnCode;
+    }
+    
+
+    public boolean isFailOnNonMerge() {
+        return failOnNonMerge == null ? false : failOnNonMerge;
+    }
+    
+
+    public boolean isDeleteOnMerge() {
+        return deleteOnMerge == null ? false : deleteOnMerge;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -105,19 +127,11 @@ public class GhprbPullRequestMerge extends Recorder {
             return false;
         }
 
-        Boolean isMergeable = cause.isMerged();
-
         if (helper == null) {
             helper = new Ghprb(project, trigger, pulls);
             helper.init();
         }
 
-        if (isMergeable == null || !isMergeable) {
-            logger.println("Pull request cannot be automerged.");
-            commentOnRequest("Pull request is not mergeable.");
-            listener.finished(Result.FAILURE);
-            return false;
-        }
 
         GHUser triggerSender = cause.getTriggerSender();
 
@@ -151,12 +165,21 @@ public class GhprbPullRequestMerge extends Recorder {
             commentOnRequest(String.format("Code not merged because %s has committed code in the request.", triggerSender.getName()));
         }
 
+        Boolean isMergeable = cause.isMerged();
+
+        if (isMergeable == null || !isMergeable) {
+            logger.println("Pull request cannot be automerged.");
+            commentOnRequest("Pull request is not mergeable.");
+            listener.finished(Result.FAILURE);
+            return false;
+        }
+
         if (merge) {
             logger.println("Merging the pull request");
 
             pr.merge(getMergeComment());
             logger.println("Pull request successfully merged");
-            // deleteBranch(); //TODO: Update so it also deletes the branch being pulled from. probably make it an option.
+            deleteBranch(build, launcher, listener);
         }
 
         if (merge) {
@@ -167,14 +190,20 @@ public class GhprbPullRequestMerge extends Recorder {
         return merge;
     }
 
-    private void deleteBranch() {
+    private void deleteBranch(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
+        if (!deleteOnMerge){
+            return;
+        }
         String branchName = pr.getHead().getRef();
         try {
-            GHBranch branch = pr.getRepository().getBranches().get(branchName);
+            GHRepository repo = pr.getRepository();
+            GHRef ref = repo.getRef("heads/" + branchName);
+            ref.delete();
+            listener.getLogger().println("Deleted branch " + branchName);
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            listener.getLogger().println("Unable to delete branch " + branchName);
+            e.printStackTrace(listener.getLogger());
         }
     }
 
@@ -187,14 +216,29 @@ public class GhprbPullRequestMerge extends Recorder {
         }
     }
 
-    private boolean isOwnCode(GHPullRequest pr, GHUser committer) {
+    private boolean isOwnCode(GHPullRequest pr, GHUser commentor) {
         try {
-            String commentorName = committer.getName();
+            String commentorName = commentor.getName();
+            String commentorEmail = commentor.getEmail();
+            String commentorLogin = commentor.getLogin();
+            
+            GHUser prUser = pr.getUser();
+            if (prUser != null && prUser.getLogin().equals(commentorLogin)) {
+                return true;
+            }
+            
             for (GHPullRequestCommitDetail detail : pr.listCommits()) {
                 Commit commit = detail.getCommit();
-                String committerName = commit.getCommitter().getName();
+                GitUser committer = commit.getCommitter();
+                String committerName = committer.getName();
+                String committerEmail = committer.getEmail();
+                
+                boolean isSame = false;
+                
+                isSame |= commentorName.equals(committerName);
+                isSame |= commentorEmail.equals(committerEmail);
 
-                if (committerName.equalsIgnoreCase(commentorName)) {
+                if (isSame) {
                     return true;
                 }
             }
