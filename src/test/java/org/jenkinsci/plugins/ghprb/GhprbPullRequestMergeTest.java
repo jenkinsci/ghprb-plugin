@@ -64,6 +64,8 @@ public class GhprbPullRequestMergeTest {
     @Mock
     private GHUser triggerSender;
     @Mock
+    private GHUser prCreator;
+    @Mock
     private GhprbCause cause;
     @Mock
     private Ghprb helper;
@@ -158,11 +160,14 @@ public class GhprbPullRequestMergeTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void setupConditions(String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
+    private void setupConditions(String prUserLogin, String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
         given(triggerSender.getLogin()).willReturn(triggerLogin);
         given(triggerSender.getName()).willReturn(committerName);
         given(triggerSender.getEmail()).willReturn(committerEmail);
         given(committer.getName()).willReturn(this.committerName);
+        
+        given(prCreator.getLogin()).willReturn(prUserLogin);
+        given(pr.getUser()).willReturn(prCreator);
 
         PagedIterator<GHPullRequestCommitDetail> itr = Mockito.mock(PagedIterator.class);
         PagedIterable<GHPullRequestCommitDetail> pagedItr = Mockito.mock(PagedIterable.class);
@@ -181,6 +186,10 @@ public class GhprbPullRequestMergeTest {
         given(commit.getCommitter()).willReturn(committer);
 
         given(cause.getCommentBody()).willReturn(comment);
+    }
+    
+    private void setupConditions(String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
+        setupConditions(nonCommitterName, triggerLogin, committerName, committerEmail, comment);
     }
     
     private GhprbPullRequestMerge setupMerger(
@@ -301,29 +310,33 @@ public class GhprbPullRequestMergeTest {
 
         GhprbPullRequestMerge merger = setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode);
 
-        setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
+        setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
+        setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
+        setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
+        setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
+        setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
+        setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
+        setupConditions(nonAdminLogin, nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
+        assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        
+        setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
 
-        setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
+        setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        
     }
 
 }

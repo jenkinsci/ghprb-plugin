@@ -182,16 +182,16 @@ public class GhprbPullRequestMerge extends Recorder {
             deleteBranch(build, launcher, listener);
         }
 
-        if (merge) {
-            listener.finished(Result.SUCCESS);
-        } else {
+        if (!merge && isFailOnNonMerge()) {
             listener.finished(Result.FAILURE);
+        } else {
+            listener.finished(Result.SUCCESS);
         }
         return merge;
     }
 
     private void deleteBranch(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
-        if (!deleteOnMerge){
+        if (!isDeleteOnMerge()){
             return;
         }
         String branchName = pr.getHead().getRef();
@@ -223,7 +223,7 @@ public class GhprbPullRequestMerge extends Recorder {
             String commentorLogin = commentor.getLogin();
             
             GHUser prUser = pr.getUser();
-            if (prUser != null && prUser.getLogin().equals(commentorLogin)) {
+            if (prUser.getLogin().equals(commentorLogin)) {
                 return true;
             }
             
@@ -235,12 +235,10 @@ public class GhprbPullRequestMerge extends Recorder {
                 
                 boolean isSame = false;
                 
-                isSame |= commentorName.equals(committerName);
-                isSame |= commentorEmail.equals(committerEmail);
+                isSame |= commentorName != null && commentorName.equals(committerName);
+                isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
 
-                if (isSame) {
-                    return true;
-                }
+                return isSame;
             }
         } catch (IOException e) {
             logger.println("Unable to get committer name");
