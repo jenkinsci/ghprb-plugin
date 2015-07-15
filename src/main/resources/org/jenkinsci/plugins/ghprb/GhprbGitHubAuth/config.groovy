@@ -20,12 +20,46 @@ f.entry(title:_("Credentials"), field:"credentialsId") {
 }
 
 f.advanced(title:_("Test Credentials")) {
-    f.entry(title:_("Test Credentials")) {
-        f.validateButton(title:_("Connect to API"), progress:_("Connecting..."), with:"serverAPIUrl,credentialsId", method:"testGithubAccess")
-        f.entry(title:_("Repository owner/name"), field:"repo") {
+    f.optionalBlock(title:_("Test basic connection to GitHub")) {
+        f.entry() {
+            f.validateButton(title:_("Connect to API"), progress:_("Connecting..."), with:"serverAPIUrl,credentialsId", method:"testGithubAccess")
+        }
+    }
+    
+    f.entry(title:_("Repository owner/name"), field:"repo") {
+        f.textbox()
+    }
+    f.optionalBlock(title:_("Test Permissions to a Repository")) {
+        f.entry() {
+            f.validateButton(title:_("Check repo permissions"), progress:_("Checking..."), with:"serverAPIUrl,credentialsId,repo", method:"checkRepoAccess")
+        }
+    }
+    f.optionalBlock(title:_("Test adding comment to Pull Request")) {
+        f.entry(title:_("Issue ID"), field:"issueId") {
+            f.number()
+        }
+        f.entry(title:_("Comment to post"), field:"message1") {
             f.textbox()
         }
-        f.validateButton(title:_("Check repo permissions"), progress:_("Connecting..."), with:"serverAPIUrl,credentialsId,repo", method:"checkRepoAccess")
+        f.validateButton(title:_("Comment to issue"), progress:_("Commenting..."), with:"serverAPIUrl,credentialsId,repo,issueId,message1", method:"testComment")
+    }
+    f.optionalBlock(title:_("Test updating commit status")) {
+        f.entry(title:_("Commit SHA"), field:"sha1") {
+            f.textbox()
+        }
+        f.entry(title:_("Commit State"), field:"state") {
+            f.select()
+        }
+        f.entry(title:_("Status url"), field:"url") {
+            f.textbox()
+        }
+        f.entry(title:_("Message to post"), field:"message2") {
+            f.textbox()
+        }
+        f.entry(title:_("Context for the status"), field:"context") {
+            f.textbox()
+        }
+        f.validateButton(title:_("Update status"), progress:_("Updating..."), with:"serverAPIUrl,credentialsId,repo,sha1,state,url,message2,context", method:"testUpdateStatus")
     }
 }
     

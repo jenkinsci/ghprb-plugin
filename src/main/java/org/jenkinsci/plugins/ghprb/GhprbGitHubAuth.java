@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.kohsuke.github.GHAuthorization;
+import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -244,7 +246,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         public FormValidation doCheckRepoAccess(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
                 @QueryParameter("credentialsId") final String credentialsId,
-                @QueryParameter("repo") final String repo) {
+                @QueryParameter("repo1") final String repo) {
             try {
                 GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
                 if (builder == null) {
@@ -282,11 +284,77 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 }
                 GitHub gh = builder.build();
                 GHMyself me = gh.getMyself();
-                return FormValidation.ok("Connected to " + serverAPIUrl + " as " + me.getName());
+                String name = me.getName();
+                String email = me.getEmail();
+                String login = me.getLogin();
+                
+                String comment = String.format("Connected to %s as %s (%s) login: %s", serverAPIUrl, name, email, login);
+                return FormValidation.ok(comment);
             } catch (Exception ex) {
                 return FormValidation.error("Unable to connect to GitHub API: " + ex);
             }
         }
+        
+
+        public FormValidation doTestComment(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("repo2") final String repoName,
+                @QueryParameter("issueId") final int issueId,
+                @QueryParameter("message1") final String comment) {
+            try {
+                GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("Unable to look up GitHub credentials using ID: " + credentialsId + "!!");
+                }
+                GitHub gh = builder.build();
+                GHRepository repo = gh.getRepository(repoName);
+                GHIssue issue = repo.getIssue(issueId);
+                issue.comment(comment);
+                
+                return FormValidation.ok("Issued comment to issue: " + issue.getHtmlUrl());
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to issue comment: " + ex);
+            }
+        }
+        
+        public FormValidation doTestUpdateStatus(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("repo3") final String repoName,
+                @QueryParameter("sha1") final String sha1,
+                @QueryParameter("state") final GHCommitState state,
+                @QueryParameter("url") final String url,
+                @QueryParameter("message2") final String message,
+                @QueryParameter("context") final String context) {
+            try {
+                GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("Unable to look up GitHub credentials using ID: " + credentialsId + "!!");
+                }
+                GitHub gh = builder.build();
+                GHRepository repo = gh.getRepository(repoName);
+                repo.createCommitStatus(sha1, state, url, message, context);
+                return FormValidation.ok("Updated status of: " + sha1);
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to update status: " + ex);
+            }
+        }
+
+        public ListBoxModel doFillStateItems(@QueryParameter("state") String state) {
+            ListBoxModel items = new ListBoxModel();
+            for (GHCommitState commitState : GHCommitState.values()) {
+
+                items.add(commitState.toString(), commitState.toString());
+                if (state.equals(commitState.toString())) {
+                    items.get(items.size() - 1).selected = true;
+                }
+            }
+
+            return items;
+        }
     }
+    
+    
 
 }
