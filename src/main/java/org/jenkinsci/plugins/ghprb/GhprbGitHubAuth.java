@@ -246,7 +246,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         public FormValidation doCheckRepoAccess(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
                 @QueryParameter("credentialsId") final String credentialsId,
-                @QueryParameter("repo1") final String repo) {
+                @QueryParameter("repo") final String repo) {
             try {
                 GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
                 if (builder == null) {
@@ -299,7 +299,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         public FormValidation doTestComment(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
                 @QueryParameter("credentialsId") final String credentialsId,
-                @QueryParameter("repo2") final String repoName,
+                @QueryParameter("repo") final String repoName,
                 @QueryParameter("issueId") final int issueId,
                 @QueryParameter("message1") final String comment) {
             try {
@@ -321,7 +321,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         public FormValidation doTestUpdateStatus(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
                 @QueryParameter("credentialsId") final String credentialsId,
-                @QueryParameter("repo3") final String repoName,
+                @QueryParameter("repo") final String repoName,
                 @QueryParameter("sha1") final String sha1,
                 @QueryParameter("state") final GHCommitState state,
                 @QueryParameter("url") final String url,
