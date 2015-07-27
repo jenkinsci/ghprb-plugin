@@ -228,6 +228,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         values.add(new StringParameterValue("ghprbActualCommit", cause.getCommit()));
         String triggerAuthor = "";
         String triggerAuthorEmail = "";
+        String triggerAuthorLogin = "";
 
         try {
             triggerAuthor = getString(cause.getTriggerSender().getName(), "");
@@ -235,11 +236,17 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         try {
             triggerAuthorEmail = getString(cause.getTriggerSender().getEmail(), "");
         } catch (Exception e) {}
+        try {
+            triggerAuthorLogin = getString(cause.getTriggerSender().getLogin(), "");
+        } catch (Exception e) {}
 
         setCommitAuthor(cause, values);
 
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
         values.add(new StringParameterValue("ghprbTriggerAuthorEmail", triggerAuthorEmail));
+        values.add(new StringParameterValue("ghprbTriggerAuthorLogin", triggerAuthorLogin));
+        values.add(new StringParameterValue("ghprbTriggerAuthorLoginMention", !triggerAuthorLogin.isEmpty() ? "@"
+                + triggerAuthorLogin : ""));
         final StringParameterValue pullIdPv = new StringParameterValue("ghprbPullId", String.valueOf(cause.getPullID()));
         values.add(pullIdPv);
         values.add(new StringParameterValue("ghprbTargetBranch", String.valueOf(cause.getTargetBranch())));
@@ -247,6 +254,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         values.add(new StringParameterValue("GIT_BRANCH", String.valueOf(cause.getSourceBranch())));
         // it's possible the GHUser doesn't have an associated email address
         values.add(new StringParameterValue("ghprbPullAuthorEmail", getString(cause.getAuthorEmail(), "")));
+        values.add(new StringParameterValue("ghprbPullAuthorLogin", String.valueOf(cause.getPullRequestAuthor().getLogin())));
+        values.add(new StringParameterValue("ghprbPullAuthorLoginMention", "@" + cause.getPullRequestAuthor().getLogin()));
         values.add(new StringParameterValue("ghprbPullDescription", String.valueOf(cause.getShortDescription())));
         values.add(new StringParameterValue("ghprbPullTitle", String.valueOf(cause.getTitle())));
         values.add(new StringParameterValue("ghprbPullLink", String.valueOf(cause.getUrl())));
