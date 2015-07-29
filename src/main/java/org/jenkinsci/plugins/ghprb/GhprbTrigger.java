@@ -237,8 +237,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         } catch (Exception e) {}
 
         setCommitAuthor(cause, values);
-
-        values.add(new StringParameterValue("ghprbTriggerCommentParam", cause.getCommentBody().replace(this.getTriggerPhrase(), "").trim()));
+        
+        String triggerPhraseStr = "";
+        if (this.triggerPhrase != null) {
+            triggerPhraseStr = this.triggerPhrase;
+        }
+        String param = "";
+        if (cause.getCommentBody() != null) {
+            param = cause.getCommentBody().replace(triggerPhraseStr, "").trim();
+        }
+        values.add(new StringParameterValue("ghprbTriggerCommentParam", param));
         values.add(new StringParameterValue("ghprbTriggerComment", cause.getCommentBody()));
         
         values.add(new StringParameterValue("ghprbTriggerAuthor", triggerAuthor));
