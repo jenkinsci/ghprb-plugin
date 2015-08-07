@@ -3,10 +3,12 @@ package org.jenkinsci.plugins.ghprb;
 import com.google.common.base.Joiner;
 
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 
@@ -36,6 +38,7 @@ public class GhprbPullRequest {
     private String title;
     private Date updated;
     private String head;
+    private String authorRepoGitUrl;
     private boolean mergeable;
     private String reponame;
     private String target;
@@ -63,12 +66,17 @@ public class GhprbPullRequest {
             e.printStackTrace();
             updated = new Date();
         }
-        head = pr.getHead().getSha();
+        GHCommitPointer commitPointer = pr.getHead();
+		head = commitPointer.getSha();
         title = pr.getTitle();
         author = pr.getUser();
+        GHRepository repository = commitPointer.getRepository();
+        if (repository != null) {
+            authorRepoGitUrl = repository.gitHttpTransportUrl();
+        }
         reponame = repo.getName();
         target = pr.getBase().getRef();
-        source = pr.getHead().getRef();
+        source = commitPointer.getRef();
         url = pr.getHtmlUrl();
         this.pr = pr;
         obtainAuthorEmail(pr);
@@ -422,6 +430,10 @@ public class GhprbPullRequest {
 
     public String getHead() {
         return head;
+    }
+
+    public String getAuthorRepoGitUrl() {
+        return authorRepoGitUrl;
     }
 
     public boolean isMergeable() {

@@ -23,6 +23,7 @@ public class GhprbCause extends Cause {
     private final GHUser triggerSender;
     private final String commentBody;
     private final GitUser commitAuthor;
+    private final String authorRepoGitUrl;
 
     public GhprbCause(String commit, 
             int pullID, 
@@ -34,7 +35,8 @@ public class GhprbCause extends Cause {
             URL url, 
             GHUser triggerSender, 
             String commentBody,
-            GitUser commitAuthor) {
+            GitUser commitAuthor,
+            String authorRepoGitUrl) {
 
         this.commit = commit;
         this.pullID = pullID;
@@ -48,6 +50,7 @@ public class GhprbCause extends Cause {
         this.triggerSender = triggerSender;
         this.commentBody = commentBody;
         this.commitAuthor = commitAuthor;
+        this.authorRepoGitUrl = authorRepoGitUrl;
     }
 
     @Override
@@ -113,4 +116,7 @@ public class GhprbCause extends Cause {
         return commitAuthor;
     }
 
+    public String getAuthorRepoGitUrl() {
+        return authorRepoGitUrl;
+    }
 }

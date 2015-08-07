@@ -235,7 +235,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getTitle();
         verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(8)).getHead();
+        verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
@@ -311,7 +311,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getTitle();
         verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(8)).getHead();
+        verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getHtmlUrl();
@@ -395,7 +395,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getTitle();
         verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(8)).getHead();
+        verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(3)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
