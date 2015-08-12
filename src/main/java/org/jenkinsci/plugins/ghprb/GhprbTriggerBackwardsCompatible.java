@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -23,6 +24,7 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     public abstract DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions();
     
 
+    protected String triggerPhrase;
     protected Integer configVersion;
 
     public GhprbTriggerBackwardsCompatible(String cron) throws ANTLRException {
@@ -41,17 +43,22 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     @Deprecated
     protected transient GhprbGitHubAuth gitHubApiAuth;
     
+
+    
     
     protected void convertPropertiesToExtensions() {
         if (configVersion == null) {
             configVersion = 0;
+        }
+        if (configVersion <= 2 && !StringUtils.isEmpty(triggerPhrase)) {
+            triggerPhrase = Pattern.quote(triggerPhrase);
         }
         
         checkCommentsFile();
         checkBuildStatusMessages();
         checkCommitStatusContext();
         
-        configVersion = 2;
+        configVersion = 3;
     }
     
     private void checkBuildStatusMessages() {

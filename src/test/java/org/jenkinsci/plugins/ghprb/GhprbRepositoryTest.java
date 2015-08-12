@@ -179,12 +179,12 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getBase();
         verify(ghPullRequest, times(2)).getNumber();
         verify(ghPullRequest, times(1)).getUpdatedAt();
-        verify(ghPullRequest, times(1)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper).ifOnlyTriggerPhrase();
         verify(helper).getWhiteListTargetBranches();
         verify(helper, times(3)).isProjectDisabled();
+        verify(helper).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -241,7 +241,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(3)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
         verify(ghPullRequest, times(1)).listCommits();
-        verify(ghPullRequest, times(2)).getBody();
+        verify(ghPullRequest, times(1)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -249,6 +249,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(5)).isProjectDisabled();
+        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -333,6 +334,7 @@ public class GhprbRepositoryTest {
         verify(helper).isRetestPhrase(eq("comment body"));
         verify(helper).isTriggerPhrase(eq("comment body"));
         verify(helper, times(6)).isProjectDisabled();
+        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -417,6 +419,7 @@ public class GhprbRepositoryTest {
         verify(helper).isRetestPhrase(eq("test this please"));
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(6)).isProjectDisabled();
+        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
