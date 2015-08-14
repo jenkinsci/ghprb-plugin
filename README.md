@@ -107,6 +107,12 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.27
+* Trigger is now a regex term
+* Phrases are no matched agains multiple lines properly
+* All regex patterns use ignore case and dotall
+* Added variables to the parameters
+
 #### -> 1.26
 * Extend the checking for own code.
 * Fail build only when desired if we can't merge the build.
