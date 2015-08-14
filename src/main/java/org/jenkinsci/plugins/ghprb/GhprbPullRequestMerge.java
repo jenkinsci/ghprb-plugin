@@ -112,7 +112,7 @@ public class GhprbPullRequestMerge extends Recorder {
         if (trigger == null)
             return false;
 
-        cause = getCause(build);
+        cause = Ghprb.getCause(build);
         if (cause == null) {
             return true;
         }
@@ -245,13 +245,6 @@ public class GhprbPullRequestMerge extends Recorder {
             e.printStackTrace(logger);
         }
         return false;
-    }
-
-    private GhprbCause getCause(AbstractBuild<?, ?> build) {
-        Cause cause = build.getCause(GhprbCause.class);
-        if (cause == null || (!(cause instanceof GhprbCause)))
-            return null;
-        return (GhprbCause) cause;
     }
 
     @Extension(ordinal = -1)

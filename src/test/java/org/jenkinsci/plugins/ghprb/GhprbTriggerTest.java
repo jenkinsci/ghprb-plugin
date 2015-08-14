@@ -5,10 +5,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,36 +28,92 @@ public class GhprbTriggerTest {
 
     @Mock
     private GhprbPullRequest pr;
+    
+    @Mock 
+    private Ghprb helper;
 
     @Test
     public void testCheckSkipBuild() throws Exception {
         GHIssue issue = mock(GHIssue.class);
-
-        String[] comments = { "Some dumb comment\r\nThat shouldn't match", "[skip ci]" };
-        String[] phraseArray = { "\\[skip\\W+ci\\]", "skip ci" };
-
+        
+        boolean skipBuild = false;
+        boolean build = true;
+        
+        String nonMatch = "Some dumb comment\r\nThat shouldn't match";
+        String multiLine = "This is a multiline skip\r\n[skip ci]";
+        String justSkipCi = "skip ci";
+        String fullSkipCi = "[skip ci]";
+        
+        Map<String, Map<String, Boolean>> stringsToTest = new HashMap<String, Map<String, Boolean>>(10);
+        
+        Map<String, Boolean> comment = new HashMap<String, Boolean>(5);
+        comment.put(nonMatch, build);
+        comment.put(multiLine, skipBuild);
+        comment.put(justSkipCi, build);
+        comment.put(fullSkipCi, skipBuild);
+        stringsToTest.put(".*\\[skip\\W+ci\\].*", comment);
+        
+        comment = new HashMap<String, Boolean>(5);
+        comment.put(nonMatch, build);
+        comment.put(multiLine, build);
+        comment.put(justSkipCi, build);
+        comment.put(fullSkipCi, skipBuild);
+        stringsToTest.put("\\[skip ci\\]", comment);
+        
+        comment = new HashMap<String, Boolean>(5);
+        comment.put(nonMatch, build);
+        comment.put(multiLine, skipBuild);
+        comment.put(justSkipCi, skipBuild);
+        comment.put(fullSkipCi, skipBuild);
+        stringsToTest.put("\\[skip ci\\]\n.*\\[skip\\W+ci\\].*\nskip ci", comment);
+        
         Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild", GHIssue.class);
         checkSkip.setAccessible(true);
 
         Field shouldRun = GhprbPullRequest.class.getDeclaredField("shouldRun");
         shouldRun.setAccessible(true);
+        
+        Field prHelper = GhprbPullRequest.class.getDeclaredField("helper");
+        prHelper.setAccessible(true);
+        prHelper.set(pr, helper);
 
-        for (String phraseString : phraseArray) {
-            for (String comment : comments) {
+        for (Entry<String, Map<String, Boolean>> skipMap : stringsToTest.entrySet()) {
+            String skipPhrases = skipMap.getKey();
 
-                Set<String> phrases = new HashSet<String>(Arrays.asList(phraseString.split("[\\r\\n]+")));
-                given(issue.getBody()).willReturn(comment);
-                given(pr.getSkipBuildPhrases()).willReturn(phrases);
-                boolean isMatch = false;
-                for (String phrase : phrases) {
-                    isMatch = Pattern.matches(phrase, comment);
-                    if (isMatch) {
+            Set<String> phrases = new HashSet<String>(Arrays.asList(skipPhrases.split("[\\r\\n]+")));
+
+            given(helper.getSkipBuildPhrases()).willReturn(phrases);
+            
+            for (Entry<String, Boolean> skipResults : skipMap.getValue().entrySet()) {
+                String nextComment = skipResults.getKey();
+                Boolean shouldBuild = skipResults.getValue();
+                
+                given(issue.getBody()).willReturn(nextComment);
+                String skipPhrase = "";
+                
+                for (String skipBuildPhrase : phrases) {
+                    skipBuildPhrase = skipBuildPhrase.trim();
+                    Pattern skipBuildPhrasePattern = Ghprb.compilePattern(skipBuildPhrase);
+                   
+                    if (skipBuildPhrasePattern.matcher(nextComment).matches()) {
+                        skipPhrase = skipBuildPhrase;
                         break;
                     }
                 }
+                
+                given(helper.checkSkipBuild(issue)).willReturn(skipPhrase);
+                
                 shouldRun.set(pr, true);
                 checkSkip.invoke(pr, issue);
-                assertThat(shouldRun.get(pr)).isEqualTo(!isMatch);
+                String errorMessage = String.format("Comment does %scontain skip phrase \n(\n%s\n)\n[\n%s\n]", shouldBuild ? "not ": "", nextComment, skipPhrases);
+                
+                if (shouldBuild) {
+                    assertThat(skipPhrase).overridingErrorMessage(errorMessage).isEmpty();
+                } else {
+                    assertThat(skipPhrase).overridingErrorMessage(errorMessage).isNotEmpty();
+                }
+                
+                assertThat(shouldRun.get(pr)).overridingErrorMessage(errorMessage).isEqualTo(shouldBuild);
 
             }
         }
