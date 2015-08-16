@@ -143,38 +143,55 @@ public class GhprbPullRequestMerge extends Recorder {
             return false;
         }
 
-        boolean merge = true;
+        boolean intendToMerge = false, commentTrigger = false;
+        boolean canMerge = true;
         String commentBody = cause.getCommentBody();
 
-        if (isOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender) )) {
-            merge = false;
-            logger.println("Only admins can merge this pull request, " + triggerSender.getLogin() + " is not an admin.");
-            commentOnRequest(String.format("Code not merged because %s is not in the Admin list.", triggerSender.getName()));
+        if (isOnlyTriggerPhrase()) {
+            // If merge can only be triggered by a comment and there is a
+            // comment
+            if (commentBody == null || !helper.isTriggerPhrase(commentBody)) {
+                logger.println("The comment does not contain the required trigger phrase.");
+            } else {
+                intendToMerge = true;
+                commentTrigger = true;
+            }
+        } else {
+            intendToMerge = true;
         }
 
-        if (isOnlyTriggerPhrase() && (commentBody == null || !helper.isTriggerPhrase(cause.getCommentBody()) )) {
-            merge = false;
-            logger.println("The comment does not contain the required trigger phrase.");
-
-            commentOnRequest(String.format("Please comment with '%s' to automerge this request", trigger.getTriggerPhrase()));
+        // If there is no intention to merge there is no point checking
+        if (intendToMerge && isOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender))) {
+            canMerge = false;
+            logger.println("Only admins can merge this pull request, "
+                    + (triggerSender != null ? triggerSender.getLogin() + " is not an admin"
+                            : " and build was triggered via automation") + ".");
+            if (commentTrigger && triggerSender != null) {
+                commentOnRequest(String.format("Code not merged because %s is not in the Admin list.", triggerSender.getName()));
+            }
         }
 
-        if (isDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender) )) {
-            merge = false;
-            logger.println("The commentor is also one of the contributors.");
-            commentOnRequest(String.format("Code not merged because %s has committed code in the request.", triggerSender.getName()));
+        // If there is no intention to merge there is no point checking
+        if (intendToMerge && isDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender))) {
+            canMerge = false;
+            if (commentTrigger && triggerSender != null) {
+                logger.println("The commentor is also one of the contributors.");
+                commentOnRequest(String.format("Code not merged because %s has committed code in the request.",
+                        triggerSender.getName()));
+            }
         }
 
         Boolean isMergeable = cause.isMerged();
 
-        if (isMergeable == null || !isMergeable) {
+        // The build should not fail if no merge is expected
+        if (intendToMerge && canMerge && (isMergeable == null || !isMergeable)) {
             logger.println("Pull request cannot be automerged.");
             commentOnRequest("Pull request is not mergeable.");
             listener.finished(Result.FAILURE);
             return false;
         }
 
-        if (merge) {
+        if (intendToMerge && canMerge) {
             logger.println("Merging the pull request");
 
             pr.merge(getMergeComment());
@@ -182,12 +199,13 @@ public class GhprbPullRequestMerge extends Recorder {
             deleteBranch(build, launcher, listener);
         }
 
-        if (!merge && isFailOnNonMerge()) {
+        // We should only fail the build if the trigger phrase is NOT used
+        if (intendToMerge && !canMerge && isFailOnNonMerge()) {
             listener.finished(Result.FAILURE);
         } else {
             listener.finished(Result.SUCCESS);
         }
-        return merge;
+        return canMerge;
     }
 
     private void deleteBranch(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
