@@ -37,34 +37,38 @@ public class GhprbPullRequestMerge extends Recorder {
 
     private final Boolean onlyAdminsMerge;
     private final Boolean disallowOwnCode;
-    private final Boolean onlyTriggerPhrase;
     private final String mergeComment;
     private final Boolean failOnNonMerge;
     private final Boolean deleteOnMerge;
 
     @DataBoundConstructor
     public GhprbPullRequestMerge(
-            String mergeComment, 
-            boolean onlyTriggerPhrase, 
+            String mergeComment,
             boolean onlyAdminsMerge, 
             boolean disallowOwnCode,
             boolean failOnNonMerge,
             boolean deleteOnMerge) {
 
         this.mergeComment = mergeComment;
-        this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.onlyAdminsMerge = onlyAdminsMerge;
         this.disallowOwnCode = disallowOwnCode;
         this.failOnNonMerge = failOnNonMerge;
         this.deleteOnMerge = deleteOnMerge;
     }
 
-    public String getMergeComment() {
-        return mergeComment;
+    public GhprbPullRequestMerge(
+            String mergeComment,
+            boolean onlyTriggerPhrase,
+            boolean onlyAdminsMerge,
+            boolean disallowOwnCode,
+            boolean failOnNonMerge,
+            boolean deleteOnMerge) {
+
+        this(mergeComment, onlyAdminsMerge, disallowOwnCode, failOnNonMerge, deleteOnMerge);
     }
 
-    public boolean isOnlyTriggerPhrase() {
-        return onlyTriggerPhrase == null ? false : onlyTriggerPhrase;
+    public String getMergeComment() {
+        return mergeComment;
     }
 
     public boolean isOnlyAdminsMerge() {
@@ -137,26 +141,22 @@ public class GhprbPullRequestMerge extends Recorder {
 
         // ignore comments from bot user, this fixes an issue where the bot would auto-merge
         // a PR when the 'request for testing' phrase contains the PR merge trigger phrase and
-        // the bot is a member of a whitelisted organisation
+        // the bot is a member of a whitelisted organization
         if (helper.isBotUser(triggerSender)) {
             logger.println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
             return false;
         }
 
-        boolean intendToMerge = false, commentTrigger = false;
+        boolean intendToMerge = false;
         boolean canMerge = true;
         String commentBody = cause.getCommentBody();
 
-        if (isOnlyTriggerPhrase()) {
-            // If merge can only be triggered by a comment and there is a
-            // comment
-            if (commentBody == null || !helper.isTriggerPhrase(commentBody)) {
-                logger.println("The comment does not contain the required trigger phrase.");
-            } else {
-                intendToMerge = true;
-                commentTrigger = true;
-            }
-        } else {
+        // If merge can only be triggered by a comment and there is a
+        // comment
+        if (commentBody == null || !helper.isTriggerPhrase(commentBody)) {
+            logger.println("The comment does not contain the required trigger phrase.");
+        }
+        else {
             intendToMerge = true;
         }
 
@@ -166,18 +166,19 @@ public class GhprbPullRequestMerge extends Recorder {
             logger.println("Only admins can merge this pull request, "
                     + (triggerSender != null ? triggerSender.getLogin() + " is not an admin"
                             : " and build was triggered via automation") + ".");
-            if (commentTrigger && triggerSender != null) {
-                commentOnRequest(String.format("Code not merged because %s is not in the Admin list.", triggerSender.getName()));
+            if (triggerSender != null) {
+                commentOnRequest(String.format("Code not merged because @%s (%s) is not in the Admin list.",
+                        triggerSender.getLogin(), triggerSender.getName()));
             }
         }
 
         // If there is no intention to merge there is no point checking
         if (intendToMerge && isDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender))) {
             canMerge = false;
-            if (commentTrigger && triggerSender != null) {
+            if (triggerSender != null) {
                 logger.println("The commentor is also one of the contributors.");
-                commentOnRequest(String.format("Code not merged because %s has committed code in the request.",
-                        triggerSender.getName()));
+                commentOnRequest(String.format("Code not merged because @%s (%s) has committed code in the request.",
+                        triggerSender.getLogin(), triggerSender.getName()));
             }
         }
 
@@ -199,7 +200,7 @@ public class GhprbPullRequestMerge extends Recorder {
             deleteBranch(build, launcher, listener);
         }
 
-        // We should only fail the build if the trigger phrase is NOT used
+        // We should only fail the build if there is an intent to merge
         if (intendToMerge && !canMerge && isFailOnNonMerge()) {
             listener.finished(Result.FAILURE);
         } else {

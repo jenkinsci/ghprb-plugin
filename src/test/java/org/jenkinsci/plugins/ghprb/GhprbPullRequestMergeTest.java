@@ -44,6 +44,8 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbPullRequestMergeTest {
@@ -210,6 +212,7 @@ public class GhprbPullRequestMergeTest {
 
         merger.setHelper(helper);
 
+        Mockito.reset(pr);
         return merger;
     }
 
@@ -230,27 +233,35 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(2)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(2)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(4)).merge(mergeComment);
     }
 
     @Test
@@ -264,9 +275,11 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        verify(pr, times(1)).merge(mergeComment);
     }
 
     @Test
@@ -280,9 +293,11 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(1)).merge(mergeComment);
     }
 
     @Test
@@ -296,9 +311,11 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        verify(pr, times(1)).merge(mergeComment);
     }
 
     @Test
@@ -312,30 +329,39 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(0)).merge(mergeComment);
         
         setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);
+        verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
+        verify(pr, times(1)).merge(mergeComment);
         
     }
 
