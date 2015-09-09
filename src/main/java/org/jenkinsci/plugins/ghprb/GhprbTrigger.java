@@ -7,6 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.matrix.MatrixProject;
 import hudson.model.*;
 import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
