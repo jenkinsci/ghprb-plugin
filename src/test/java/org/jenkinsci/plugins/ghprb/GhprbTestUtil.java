@@ -37,6 +37,7 @@ import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.spy;
 
 public class GhprbTestUtil {
 
@@ -369,7 +370,7 @@ public class GhprbTestUtil {
             defaults.put(next.getKey(), next.getValue());
         }
         
-        GhprbTrigger trigger = req.bindJSON(GhprbTrigger.class, defaults);
+        GhprbTrigger trigger = spy(req.bindJSON(GhprbTrigger.class, defaults));
         
         return trigger;
     }

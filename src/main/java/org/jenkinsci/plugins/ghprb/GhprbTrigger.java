@@ -91,7 +91,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                                             );
         
         // Now make sure we have at least one of the types we need one of.
-        Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(), GhprbCommitStatus.class);
+        Ghprb.addIfMissing(this.extensions, Ghprb.getGlobal(GhprbSimpleStatus.class), GhprbCommitStatus.class);
     }
 
     @DataBoundConstructor

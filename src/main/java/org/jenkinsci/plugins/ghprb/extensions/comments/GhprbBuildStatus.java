@@ -7,6 +7,7 @@ import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
+import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -35,6 +36,8 @@ public class GhprbBuildStatus extends GhprbExtension implements GhprbCommentAppe
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
         
+        List<GhprbBuildResultMessage> messages = getDescriptor().getMessagesDefault(this);
+        
         for (GhprbBuildResultMessage messager: messages) {
             msg.append(messager.postBuildComment(build, listener));
         }
@@ -53,21 +56,9 @@ public class GhprbBuildStatus extends GhprbExtension implements GhprbCommentAppe
         public String getDisplayName() {
             return "Build Status Messages";
         }
-        
 
-        public List<GhprbBuildResultMessage> getMessageList(List<GhprbBuildResultMessage> messages) {
-            List<GhprbBuildResultMessage> newMessages = new ArrayList<GhprbBuildResultMessage>(10);
-            if (messages != null){
-                newMessages.addAll(messages);
-            } else {
-                for(GhprbExtension extension : GhprbTrigger.getDscp().getExtensions()) {
-                    if (extension instanceof GhprbBuildStatus) {
-                        newMessages.addAll(((GhprbBuildStatus)extension).getMessages());
-                    }
-                }
-            }
-            return newMessages;
+        public List<GhprbBuildResultMessage> getMessagesDefault(GhprbBuildStatus local) {
+            return Ghprb.getDefaultValue(local, GhprbBuildStatus.class, "getMessages");
         }
-        
     }
 }
