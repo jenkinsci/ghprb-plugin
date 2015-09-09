@@ -51,7 +51,12 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     }
 
     @DataBoundConstructor
-    public GhprbSimpleStatus(String commitStatusContext, String statusUrl, String triggeredStatus, String startedStatus, List<GhprbBuildResultMessage> completedStatus) {
+    public GhprbSimpleStatus(
+            String commitStatusContext, 
+            String statusUrl, 
+            String triggeredStatus, 
+            String startedStatus, 
+            List<GhprbBuildResultMessage> completedStatus) {
         this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
         this.triggeredStatus = triggeredStatus;
