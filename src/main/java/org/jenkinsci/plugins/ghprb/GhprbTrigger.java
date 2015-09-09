@@ -7,6 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.matrix.MatrixProject;
 import hudson.model.*;
 import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
@@ -326,17 +327,18 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * Find the previous BuildData for the given pull request number; this may return null
      */
     private BuildData findPreviousBuildForPullId(StringParameterValue pullIdPv) {
+        // Don't add the Action if it's a matrix job.
+        // This is suboptimal, but necessary until we find a way to determine if the build we're about to start is
+        // the root build or one of the leaves.
+        if (job instanceof MatrixProject) {
+            return null;
+        }
+
         // find the previous build for this particular pull request, it may not be the last build
         for (Run<?, ?> r : job.getBuilds()) {
             ParametersAction pa = r.getAction(ParametersAction.class);
-            if (pa != null) {
-                for (ParameterValue pv : pa.getParameters()) {
-                    if (pv.equals(pullIdPv)) {
-                        for (BuildData bd : r.getActions(BuildData.class)) {
-                            return bd;
-                        }
-                    }
-                }
+            if (pa != null && pa.getParameters().contains(pullIdPv)) {
+                return r.getAction(BuildData.class);
             }
         }
         return null;
