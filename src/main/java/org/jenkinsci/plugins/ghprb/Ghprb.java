@@ -256,11 +256,7 @@ public class Ghprb {
         String returnString = inputString;
         if (build != null && inputString != null) {
             try {
-                Map<String, String> messageEnvVars = new HashMap<String, String>();
-
-                messageEnvVars.putAll(build.getCharacteristicEnvVars());
-                messageEnvVars.putAll(build.getBuildVariables());
-                messageEnvVars.putAll(build.getEnvironment(listener));
+                Map<String, String> messageEnvVars = getEnvVars(build, listener);
 
                 returnString = Util.replaceMacro(inputString, messageEnvVars);
 
@@ -269,6 +265,20 @@ public class Ghprb {
             }
         }
         return returnString;
+    }
+    
+    public static Map<String, String> getEnvVars(AbstractBuild<?, ?> build, TaskListener listener) {
+        Map<String, String> messageEnvVars = new HashMap<String, String>();
+        if (build != null) {
+                messageEnvVars.putAll(build.getCharacteristicEnvVars());
+                messageEnvVars.putAll(build.getBuildVariables());
+                try {
+                    messageEnvVars.putAll(build.getEnvironment(listener));
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Couldn't get Env Variables: ", e);
+                }
+        }
+        return messageEnvVars;
     }
     
 

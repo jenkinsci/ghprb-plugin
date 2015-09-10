@@ -1,8 +1,13 @@
 package org.jenkinsci.plugins.ghprb;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
+import hudson.model.Environment;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 
@@ -14,21 +19,27 @@ public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
 
     @Override
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
-        final Optional<GhprbTrigger> trigger = findTrigger(build);
-        if (trigger.isPresent()) {
-            trigger.get().getBuilds().onStarted(build, listener);
+        GhprbTrigger trigger = Ghprb.extractTrigger(build);
+        if (trigger != null) {
+            trigger.getBuilds().onStarted(build, listener);
         }
     }
 
     @Override
     public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
-        final Optional<GhprbTrigger> trigger = findTrigger(build);
-        if (trigger.isPresent()) {
-            trigger.get().getBuilds().onCompleted(build, listener);
+        GhprbTrigger trigger = Ghprb.extractTrigger(build);
+        if (trigger != null) {
+            trigger.getBuilds().onCompleted(build, listener);
         }
     }
 
-    private static Optional<GhprbTrigger> findTrigger(AbstractBuild<?, ?> build) {
-        return Optional.fromNullable(Ghprb.extractTrigger(build));
+    @Override
+    public Environment setUpEnvironment(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException, Run.RunnerAbortedException {
+        GhprbTrigger trigger = Ghprb.extractTrigger(build);
+        if (trigger != null) {
+            trigger.getBuilds().onEnvironmentSetup(build, launcher, listener);
+        }
+
+        return new hudson.model.Environment(){};
     }
 }

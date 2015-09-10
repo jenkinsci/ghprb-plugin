@@ -1,7 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
+import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
@@ -11,6 +13,7 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.upstream.GhprbCustomStatusRepoPasser;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -45,7 +48,7 @@ public class GhprbBuilds {
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
             if (ext instanceof GhprbCommitStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onBuildTriggered(trigger, pr, repo.getGitHubRepo());
+                    ((GhprbCommitStatus) ext).onBuildTriggered(trigger.getActualProject(), pr.getHead(), pr.isMergeable(), pr.getId(), repo.getGitHubRepo());
                 } catch (GhprbCommitStatusException e) {
                     repo.commentOnFailure(null, null, e);
                 }
@@ -210,6 +213,20 @@ public class GhprbBuilds {
         if (msg.length() > 0) {
             listener.getLogger().println(msg);
             repo.addComment(c.getPullID(), msg.toString(), build, listener);
+        }
+    }
+
+    public void onEnvironmentSetup(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
+        logger.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
+
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
+            if (ext instanceof GhprbCommitStatus) {
+                try {
+                    ((GhprbCommitStatus) ext).onEnvironmentSetup(build, listener, repo.getGitHubRepo());
+                } catch (GhprbCommitStatusException e) {
+                    repo.commentOnFailure(build, listener, e);
+                }
+            }
         }
     }
 
