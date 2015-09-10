@@ -93,7 +93,7 @@ public class GhprbRootActionTest {
     public void testUrlEncoded() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
-        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(null));
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
@@ -133,7 +133,7 @@ public class GhprbRootActionTest {
     public void disabledJobsDontBuild() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("disabledJobsDontBuild");
-        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(null));
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));

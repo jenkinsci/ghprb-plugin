@@ -496,4 +496,53 @@ public class Ghprb {
         provider.addDomain(domain, credentials);
         return credentials.getId();
     }
+    
+    public static <T extends GhprbExtension> T getGlobal(Class<T> clazz) {
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+
+        copyExtensions.addAll(GhprbTrigger.DESCRIPTOR.getExtensions());
+        
+        filterList(copyExtensions, InstanceofPredicate.getInstance(clazz));
+        
+        return copyExtensions.get(clazz);
+    }
+    
+    
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static <T> T getDefaultValue(Object local, Class globalClass, String methodName) {
+        T toReturn = null;
+        Object global = getGlobal(globalClass);
+        if (local == null && global == null) {
+            return null;
+        }
+        try {
+            
+            if (local == null) {
+                return (T) global.getClass().getMethod(methodName).invoke(global);
+            } else if (global == null) {
+                return (T) local.getClass().getMethod(methodName).invoke(local);
+            }
+            
+            T localValue = (T) local.getClass().getMethod(methodName).invoke(local);
+            T globalValue = (T) global.getClass().getMethod(methodName).invoke(global);
+
+
+            if (localValue instanceof String) {
+                if (StringUtils.isEmpty((String) localValue)) {
+                    return globalValue;
+                }
+            } else if (localValue instanceof List) {
+                if (((List) localValue).isEmpty()) {
+                    return globalValue;
+                }
+            }
+
+            return localValue;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return toReturn;
+    }
 }

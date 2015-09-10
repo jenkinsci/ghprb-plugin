@@ -1,9 +1,13 @@
 package org.jenkinsci.plugins.ghprb.extensions.status;
 
 import org.jenkinsci.plugins.ghprb.GhprbPullRequest;
+import org.jenkinsci.plugins.ghprb.GhprbTestUtil;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.mockito.Mock;
@@ -19,12 +23,21 @@ import static org.mockito.BDDMockito.given;
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbSimpleStatusTest {
 
+    @Rule
+    public JenkinsRule jenkinsRule = new JenkinsRule();
+    
     @Mock
     private GHRepository ghRepository;
     @Mock
     private GhprbPullRequest ghprbPullRequest;
-    @Mock
+
     private GhprbTrigger trigger;
+    
+
+    @Before
+    public void setUp() throws Exception {
+        trigger = GhprbTestUtil.getTrigger(null);
+    }
     
     @Test
     public void testMergedMessage() throws Exception {
@@ -35,7 +48,7 @@ public class GhprbSimpleStatusTest {
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
         status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
         
-        verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), isNull(String.class), eq(mergedMessage), eq("default"));
+        verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghprbPullRequest).getHead();
@@ -52,7 +65,7 @@ public class GhprbSimpleStatusTest {
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
         status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
         
-        verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), isNull(String.class), eq(mergedMessage), eq("default"));
+        verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghprbPullRequest).getHead();
@@ -69,7 +82,7 @@ public class GhprbSimpleStatusTest {
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus(""));
         status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
         
-        verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), isNull(String.class), eq(mergedMessage), isNull(String.class));
+        verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), isNull(String.class));
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghprbPullRequest).getHead();

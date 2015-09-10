@@ -48,7 +48,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.reset;
@@ -102,7 +101,7 @@ public class GhprbRepositoryTest {
     @SuppressWarnings("unused")
     public void setUp() throws Exception {
         AbstractProject<?, ?> project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
-        trigger = spy(GhprbTestUtil.getTrigger(null));
+        trigger = GhprbTestUtil.getTrigger(null);
         doReturn(mock(QueueTaskFuture.class)).when(trigger).startJob(any(GhprbCause.class), any(GhprbRepository.class));
         initGHPRWithTestData();
 
@@ -118,9 +117,13 @@ public class GhprbRepositoryTest {
     }
     
     
-    private void addSimpleStatus() throws IOException {
+    private void addSimpleStatus() {
         GhprbSimpleStatus status = new GhprbSimpleStatus("default");
-        trigger.getExtensions().remove(GhprbSimpleStatus.class);
+        try {
+            trigger.getExtensions().remove(GhprbSimpleStatus.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         trigger.getExtensions().add(status);
     }
 
@@ -229,7 +232,7 @@ public class GhprbRepositoryTest {
         /** GH PR verifications */
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
-        verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
@@ -306,7 +309,7 @@ public class GhprbRepositoryTest {
         /** GH PR verifications */
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
-        verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
@@ -391,7 +394,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(builds);
         
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
-        verify(ghRepository, times(2)).createCommitStatus(eq("head sha"), eq(PENDING), isNull(String.class), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(2)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
