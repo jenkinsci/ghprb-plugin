@@ -112,7 +112,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
 
         @Override
         public String getDisplayName() {
-            return "Set GitHub commit status with custom context and message (Must configure upstream job using GHPRB)";
+            return "Set GitHub commit status with custom context and message (Must configure upstream job using GHPRB trigger)";
         }
     }
 

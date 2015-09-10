@@ -10,11 +10,14 @@ import hudson.model.listeners.RunListener;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
+import org.jenkinsci.plugins.ghprb.GhprbGitHubAuth;
+import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +37,6 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
     
     private GhprbSimpleStatus statusUpdater;
     
-    private String upstreamJob = "";
     private GHRepository repo;
 
     // Gets all the custom env vars needed to send information to GitHub
@@ -65,9 +67,19 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
 
         statusUpdater = new GhprbSimpleStatus(envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), statusMessages);
 
-        upstreamJob = envVars.get("ghprbTriggerJob");
-        repo = GhprbUpstreamStatusRepoPasser.getRepo(upstreamJob);
-        return true;
+        String credentialsId = envVars.get("ghprbCredentialsId");
+        String repoName = envVars.get("ghprbGhRepository");
+        
+        GhprbGitHubAuth auth = GhprbTrigger.getDscp().getGitHubAuth(credentialsId);
+        try {
+            GitHub gh = auth.getConnection(build.getProject());
+            repo = gh.getRepository(repoName);
+            return true;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unable to connect to GitHub repo", e);
+            return false;
+        }
+        
     }
 
     // Sets the status as pending when the job starts and then calls the createCommitStatus method to send it to GitHub

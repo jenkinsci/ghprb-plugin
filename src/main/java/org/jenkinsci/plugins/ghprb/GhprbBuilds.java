@@ -13,7 +13,6 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.upstream.GhprbCustomStatusRepoPasser;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -59,9 +58,8 @@ public class GhprbBuilds {
             logger.log(Level.SEVERE, "Job did not start");
         }
     }
-
+    
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
-        GhprbCustomStatusRepoPasser.addRepo(build.getFullDisplayName(), repo.getGitHubRepo());
         PrintStream logger = listener.getLogger();
         GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
