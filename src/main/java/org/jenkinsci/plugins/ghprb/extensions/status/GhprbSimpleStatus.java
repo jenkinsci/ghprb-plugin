@@ -109,6 +109,9 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         }
 
         String url = Ghprb.replaceMacros(project, statusUrl);
+        if (statusUrl.equals("--none--")) {
+            url = "";
+        }
 
         String message = sb.toString();
         try {
@@ -169,7 +172,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
         String sha1 = cause.getCommit();
         String url = Jenkins.getInstance().getRootUrl() + build.getUrl();
-        if (statusUrl == "--none--") {
+        if (statusUrl.equals("--none--")) {
             url = "";
         } else if (!StringUtils.isEmpty(statusUrl)) {
             url = Ghprb.replaceMacros(build, listener, statusUrl);
