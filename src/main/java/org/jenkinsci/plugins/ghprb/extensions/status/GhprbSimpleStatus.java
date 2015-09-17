@@ -86,9 +86,15 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
     public void onBuildTriggered(GhprbTrigger trigger, GhprbPullRequest pr, GHRepository ghRepository) throws GhprbCommitStatusException {
         String triggeredStatus = getDescriptor().getTriggeredStatusDefault(this);
+
+        // check if we even need to update
+        if (triggeredStatus.equals("--none--")) {
+            return;
+        }
+
         String statusUrl = getDescriptor().getStatusUrlDefault(this);
         String commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
-        
+
         StringBuilder sb = new StringBuilder();
         GHCommitState state = GHCommitState.PENDING;
 
@@ -123,7 +129,12 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
     public void onBuildStart(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
-        
+
+        // check if we even need to update
+        if (startedStatus.equals("--none--")) {
+            return;
+        }
+
         GhprbCause c = Ghprb.getCause(build);
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(startedStatus)) {
@@ -147,6 +158,9 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         } else {
             for (GhprbBuildResultMessage buildStatus : completedStatus) {
                 sb.append(buildStatus.postBuildComment(build, listener));
+            }
+            if (sb.toString().equals("--none--")) {
+                return;
             }
         }
 

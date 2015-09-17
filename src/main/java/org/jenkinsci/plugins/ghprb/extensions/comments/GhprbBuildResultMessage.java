@@ -44,7 +44,9 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
         if (state == result) {
             buildMessage = message;
             if (StringUtils.isEmpty(buildMessage)) {
-                return "";
+                return ""; // will use default
+            } else if (buildMessage.equals("--none--")) {
+                return buildMessage; // will skip update
             }
             String message = Ghprb.replaceMacros(build, listener, buildMessage);
             // Only Append the build's custom message if it has been set.
