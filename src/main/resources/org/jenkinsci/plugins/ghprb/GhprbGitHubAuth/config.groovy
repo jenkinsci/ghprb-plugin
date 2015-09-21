@@ -12,7 +12,7 @@ f.entry(title:_("Shared secret"), field:"secret") {
 f.entry(title:_("Credentials"), field:"credentialsId") {
     c.select(onchange="""{
             var self = this.targetElement ? this.targetElement : this;
-            var r = findPreviousFormItem(self,'serverAPIUrl');
+            var r = findPreviousFormItem(self,'serverAPIUrl','credentialsId');
             r.onchange(r);
             self = null;
             r = null;

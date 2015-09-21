@@ -24,6 +24,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
 
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.IdCredentials;
@@ -174,20 +175,30 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
          * @return list box model.
          * @throws URISyntaxException 
          */
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl) throws URISyntaxException {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl, @QueryParameter String credentialsId) throws URISyntaxException {
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(serverAPIUrl).build();
             
+            List<CredentialsMatcher> matchers = new ArrayList<CredentialsMatcher>(3);
+            if (!StringUtils.isEmpty(credentialsId)) {
+                matchers.add(0, CredentialsMatchers.withId(credentialsId));
+            }
+
+            matchers.add(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
+            matchers.add(CredentialsMatchers.instanceOf(StringCredentials.class));
+            
+            List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(
+                    StandardCredentials.class,
+                    context,
+                    ACL.SYSTEM,
+                    domainRequirements
+                ); 
+            
             return new StandardListBoxModel()
-                    .withEmptySelection()
                     .withMatching(
                             CredentialsMatchers.anyOf(
-                            CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
-                            CredentialsMatchers.instanceOf(StringCredentials.class)),
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            domainRequirements)
-                            );
+                                matchers.toArray(new CredentialsMatcher[0])),
+                                credentials
+                    );
         }
         
 
