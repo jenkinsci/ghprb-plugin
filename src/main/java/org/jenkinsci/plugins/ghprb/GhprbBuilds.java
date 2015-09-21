@@ -57,7 +57,6 @@ public class GhprbBuilds {
         }
     }
 
-
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
         PrintStream logger = listener.getLogger();
         GhprbCause c = Ghprb.getCause(build);
@@ -88,20 +87,20 @@ public class GhprbBuilds {
                     isMerged = false;
                 }
             }
-            
+
             if (isMerged) {
                 logger.println("PR has already been merged, builds using the merged sha1 will fail!!!");
             } else if (isMergeable == null) {
                 logger.println("PR merge status couldn't be retrieved, maybe GitHub hasn't settled yet");
             } else if (isMergeable != c.isMerged()) {
                 logger.println("!!! PR mergeability status has changed !!!  ");
-                 if (isMergeable) {
+                if (isMergeable) {
                     logger.println("PR now has NO merge conflicts");
                 } else if (!isMergeable) {
                     logger.println("PR now has merge conflicts!");
                 }
             }
-            
+
         } catch (Exception e) {
             logger.print("Unable to query GitHub for status of PullRequest");
             e.printStackTrace(logger);
@@ -116,7 +115,7 @@ public class GhprbBuilds {
                 }
             }
         }
-        
+
         try {
             String template = trigger.getBuildDescTemplate();
             if (StringUtils.isEmpty(template)) {
@@ -133,12 +132,16 @@ public class GhprbBuilds {
     }
 
     public Map<String, String> getVariables(GhprbCause c) {
-      Map<String, String> vars = new HashMap<String, String>();
-      vars.put("title", c.getTitle());
-      vars.put("url", c.getUrl().toString());
-      vars.put("pullId", Integer.toString(c.getPullID()));
-      vars.put("abbrTitle", c.getAbbreviatedTitle());
-      return vars;
+        Map<String, String> vars = new HashMap<String, String>();
+        vars.put("title", c.getTitle());
+        if (c.getUrl() != null) {
+            vars.put("url", c.getUrl().toString());
+        } else {
+            vars.put("url", "");
+        }
+        vars.put("pullId", Integer.toString(c.getPullID()));
+        vars.put("abbrTitle", c.getAbbreviatedTitle());
+        return vars;
     }
 
     public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {

@@ -12,10 +12,11 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppender, GhprbGlobalExtension {
+public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppender, GhprbProjectExtension, GhprbGlobalExtension {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -36,7 +37,7 @@ public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppende
         StringBuilder msg = new StringBuilder();
         GHCommitState state = Ghprb.getState(build);
 
-        int numLines = getLogExcerptLines();
+        int numLines = getDescriptor().getLogExcerptLinesDefault(this);
         
         if (state != GHCommitState.SUCCESS && numLines > 0) {
             // on failure, append an excerpt of the build log
@@ -73,6 +74,14 @@ public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppende
         @Override
         public String getDisplayName() {
             return "Append portion of build log";
+        }
+        
+        public Integer getLogExcerptLinesDefault(GhprbBuildLog local) {
+            Integer lines = Ghprb.getDefaultValue(local, GhprbBuildLog.class, "getLogExcerptLines");
+            if (lines == null) {
+                lines = 0;
+            }
+            return lines;
         }
     }
 

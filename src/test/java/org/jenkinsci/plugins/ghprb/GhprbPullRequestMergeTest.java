@@ -104,7 +104,7 @@ public class GhprbPullRequestMergeTest {
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
         
-        GhprbTrigger trigger = spy(GhprbTestUtil.getTrigger(triggerValues));
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
         pulls.put(pullId, pullRequest);
