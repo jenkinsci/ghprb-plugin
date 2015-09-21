@@ -58,6 +58,7 @@ public class GhprbBuilds {
     }
 
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
+        GhprbCustomStatusRepoPasser.addRepo(build.getFullDisplayName(), repo.getGitHubRepo());
         PrintStream logger = listener.getLogger();
         GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
