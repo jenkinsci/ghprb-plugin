@@ -21,7 +21,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.BuildListener;
-import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -54,17 +53,6 @@ public class GhprbPullRequestMerge extends Recorder {
         this.disallowOwnCode = disallowOwnCode;
         this.failOnNonMerge = failOnNonMerge;
         this.deleteOnMerge = deleteOnMerge;
-    }
-
-    public GhprbPullRequestMerge(
-            String mergeComment,
-            boolean onlyTriggerPhrase,
-            boolean onlyAdminsMerge,
-            boolean disallowOwnCode,
-            boolean failOnNonMerge,
-            boolean deleteOnMerge) {
-
-        this(mergeComment, onlyAdminsMerge, disallowOwnCode, failOnNonMerge, deleteOnMerge);
     }
 
     public String getMergeComment() {
@@ -243,6 +231,7 @@ public class GhprbPullRequestMerge extends Recorder {
             
             GHUser prUser = pr.getUser();
             if (prUser.getLogin().equals(commentorLogin)) {
+                logger.println(commentorName + " (" + commentorLogin + ")  has commits in PR[" + pr.getId() + "] that is to be merged");
                 return true;
             }
             
@@ -257,6 +246,7 @@ public class GhprbPullRequestMerge extends Recorder {
                 isSame |= commentorName != null && commentorName.equals(committerName);
                 isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
 
+                logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getId() + "] that is to be merged");
                 return isSame;
             }
         } catch (IOException e) {
