@@ -2,9 +2,6 @@
 	<f:entry title="Merge comment" field="mergeComment">
 		<f:textarea />
 	</f:entry>
-	<f:entry title="Only merge on trigger phrase" field="onlyTriggerPhrase"> 
-		<f:checkbox />
-	</f:entry>	
 	<f:entry title="Only Admin can merge code" field="onlyAdminsMerge">
 		<f:checkbox />
 	</f:entry>
