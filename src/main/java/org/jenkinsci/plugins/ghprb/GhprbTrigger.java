@@ -7,6 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.matrix.MatrixProject;
 import hudson.model.*;
 import hudson.model.AbstractProject;
 import hudson.model.queue.QueueTaskFuture;
@@ -251,15 +252,19 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         values.add(new StringParameterValue("ghprbTargetBranch", String.valueOf(cause.getTargetBranch())));
         values.add(new StringParameterValue("ghprbSourceBranch", String.valueOf(cause.getSourceBranch())));
         values.add(new StringParameterValue("GIT_BRANCH", String.valueOf(cause.getSourceBranch())));
+        
         // it's possible the GHUser doesn't have an associated email address
         values.add(new StringParameterValue("ghprbPullAuthorEmail", getString(cause.getAuthorEmail(), "")));
         values.add(new StringParameterValue("ghprbPullAuthorLogin", String.valueOf(cause.getPullRequestAuthor().getLogin())));
         values.add(new StringParameterValue("ghprbPullAuthorLoginMention", "@" + cause.getPullRequestAuthor().getLogin()));
-        values.add(new StringParameterValue("ghprbPullDescription", String.valueOf(cause.getShortDescription())));
+        
+        values.add(new StringParameterValue("ghprbPullDescription", String.valueOf(cause.getShortDescription()).replace("\n", "\\n")));
         values.add(new StringParameterValue("ghprbPullTitle", String.valueOf(cause.getTitle())));
         values.add(new StringParameterValue("ghprbPullLink", String.valueOf(cause.getUrl())));
-        values.add(new StringParameterValue("ghprbPullLongDescription", String.valueOf(cause.getDescription())));
-        values.add(new StringParameterValue("ghprbCommentBody", String.valueOf(cause.getCommentBody())));
+        values.add(new StringParameterValue("ghprbPullLongDescription", String.valueOf(cause.getDescription()).replace("\n", "\\n")));
+        
+        values.add(new StringParameterValue("ghprbCommentBody", String.valueOf(cause.getCommentBody()).replace("\n", "\\n")));
+        
         values.add(new StringParameterValue("ghprbGhRepository", repo.getName()));
         values.add(new StringParameterValue("ghprbCredentialsId", this.getGitHubApiAuth().getCredentialsId()));
 
@@ -328,17 +333,18 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * Find the previous BuildData for the given pull request number; this may return null
      */
     private BuildData findPreviousBuildForPullId(StringParameterValue pullIdPv) {
+        // Don't add the Action if it's a matrix job.
+        // This is suboptimal, but necessary until we find a way to determine if the build we're about to start is
+        // the root build or one of the leaves.
+        if (job instanceof MatrixProject) {
+            return null;
+        }
+
         // find the previous build for this particular pull request, it may not be the last build
         for (Run<?, ?> r : job.getBuilds()) {
             ParametersAction pa = r.getAction(ParametersAction.class);
-            if (pa != null) {
-                for (ParameterValue pv : pa.getParameters()) {
-                    if (pv.equals(pullIdPv)) {
-                        for (BuildData bd : r.getActions(BuildData.class)) {
-                            return bd;
-                        }
-                    }
-                }
+            if (pa != null && pa.getParameters().contains(pullIdPv)) {
+                return r.getAction(BuildData.class);
             }
         }
         return null;
