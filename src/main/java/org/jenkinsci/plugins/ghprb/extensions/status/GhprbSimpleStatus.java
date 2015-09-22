@@ -111,7 +111,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         }
 
         String url = Ghprb.replaceMacros(project, statusUrl);
-        if (statusUrl.equals("--none--")) {
+        if ("--none--".equals(statusUrl) || statusUrl == null) {
             url = "";
         }
 
@@ -190,7 +190,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             url = envVars.get("JOB_URL");
         }
         
-        if (statusUrl.equals("--none--")) {
+        if ("--none--".equals(statusUrl) || statusUrl == null) {
             url = "";
         } else if (!StringUtils.isEmpty(statusUrl)) {
             url = Ghprb.replaceMacros(build,  listener, statusUrl);
