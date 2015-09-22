@@ -84,12 +84,17 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     }
 
 public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, boolean isMergeable, int prId, GHRepository ghRepository) throws GhprbCommitStatusException {
-    StringBuilder sb = new StringBuilder();
-    GHCommitState state = GHCommitState.PENDING;
+        StringBuilder sb = new StringBuilder();
+        GHCommitState state = GHCommitState.PENDING;
         String triggeredStatus = getDescriptor().getTriggeredStatusDefault(this);
+
+        // check if we even need to update
+        if (triggeredStatus.equals("--none--")) {
+            return;
+        }
+
         String statusUrl = getDescriptor().getStatusUrlDefault(this);
         String commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
-        
 
         String context = Util.fixEmpty(commitStatusContext);
         context = Ghprb.replaceMacros(project, context);
@@ -106,6 +111,9 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         }
 
         String url = Ghprb.replaceMacros(project, statusUrl);
+        if (statusUrl.equals("--none--")) {
+            url = "";
+        }
 
         String message = sb.toString();
         try {
@@ -121,7 +129,12 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
 
     public void onBuildStart(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
-        
+
+        // check if we even need to update
+        if (startedStatus.equals("--none--")) {
+            return;
+        }
+
         GhprbCause c = Ghprb.getCause(build);
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(startedStatus)) {
@@ -145,6 +158,9 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         } else {
             for (GhprbBuildResultMessage buildStatus : completedStatus) {
                 sb.append(buildStatus.postBuildComment(build, listener));
+            }
+            if (sb.toString().equals("--none--")) {
+                return;
             }
         }
 
