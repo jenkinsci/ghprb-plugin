@@ -107,6 +107,16 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.28
+* Fixed [JENKINS-29850] Add author github repo URL
+* Fixed NPE and other errors in merge logic
+* Removed only trigger phrase, trigger is expected always now
+* Fixed [JENKINS-30115] Downstream jobs can now attach GitHub status messages
+* Fixed SHA1 for Matrix builds
+* Global defaults are now used if the local value isn't set.
+* Fixed issues with CSR protection
+* Commit updates can be skipped all together or individual steps can be skipped using --none--
+
 #### -> 1.27
 * Trigger is now a regex term
 * Phrases are no matched agains multiple lines properly
