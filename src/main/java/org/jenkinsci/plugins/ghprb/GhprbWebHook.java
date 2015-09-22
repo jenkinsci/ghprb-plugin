@@ -25,9 +25,6 @@ public class GhprbWebHook {
     }
     
     public void handleWebHook(String event, String payload, String body, String signature) {
-        if (!checkSignature(body, signature, trigger.getGitHubApiAuth().getSecret())){
-            return;
-        }
 
         GhprbRepository repo = trigger.getRepository();
         String repoName = repo.getName();
@@ -47,6 +44,10 @@ public class GhprbWebHook {
                 }
                 
                 if (matchRepo(repo, issueComment.getRepository())) {
+                    if (!checkSignature(body, signature, trigger.getGitHubApiAuth().getSecret())){
+                        return;
+                    }
+
                     logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", 
                             new Object[] { issueComment.getComment(), repoName }
                     );
@@ -58,6 +59,10 @@ public class GhprbWebHook {
                         new StringReader(payload), 
                         GHEventPayload.PullRequest.class);
                 if (matchRepo(repo, pr.getPullRequest().getRepository())) {
+                    if (!checkSignature(body, signature, trigger.getGitHubApiAuth().getSecret())){
+                        return;
+                    }
+
                     logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repoName, pr.getNumber() });
                     repo.onPullRequestHook(pr);
                 }
