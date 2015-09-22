@@ -10,7 +10,7 @@
 
     <artifactId>ghprb</artifactId>
     <name>GitHub Pull Request Builder</name>
-    <version>1.26-SNAPSHOT</version>
+    <version>1.28-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <url>https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin</url>
@@ -49,6 +49,11 @@
             <groupId>com.coravy.hudson.plugins.github</groupId>
             <artifactId>github</artifactId>
             <version>1.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-project</artifactId>
+            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>

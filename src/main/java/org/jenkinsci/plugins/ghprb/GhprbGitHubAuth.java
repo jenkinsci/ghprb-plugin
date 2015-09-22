@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.kohsuke.github.GHAuthorization;
+import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -22,6 +24,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
 
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.IdCredentials;
@@ -172,20 +175,30 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
          * @return list box model.
          * @throws URISyntaxException 
          */
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl) throws URISyntaxException {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl, @QueryParameter String credentialsId) throws URISyntaxException {
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(serverAPIUrl).build();
             
+            List<CredentialsMatcher> matchers = new ArrayList<CredentialsMatcher>(3);
+            if (!StringUtils.isEmpty(credentialsId)) {
+                matchers.add(0, CredentialsMatchers.withId(credentialsId));
+            }
+
+            matchers.add(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
+            matchers.add(CredentialsMatchers.instanceOf(StringCredentials.class));
+            
+            List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(
+                    StandardCredentials.class,
+                    context,
+                    ACL.SYSTEM,
+                    domainRequirements
+                ); 
+            
             return new StandardListBoxModel()
-                    .withEmptySelection()
                     .withMatching(
                             CredentialsMatchers.anyOf(
-                            CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class),
-                            CredentialsMatchers.instanceOf(StringCredentials.class)),
-                    CredentialsProvider.lookupCredentials(StandardCredentials.class,
-                            context,
-                            ACL.SYSTEM,
-                            domainRequirements)
-                            );
+                                matchers.toArray(new CredentialsMatcher[0])),
+                                credentials
+                    );
         }
         
 
@@ -282,11 +295,77 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 }
                 GitHub gh = builder.build();
                 GHMyself me = gh.getMyself();
-                return FormValidation.ok("Connected to " + serverAPIUrl + " as " + me.getName());
+                String name = me.getName();
+                String email = me.getEmail();
+                String login = me.getLogin();
+                
+                String comment = String.format("Connected to %s as %s (%s) login: %s", serverAPIUrl, name, email, login);
+                return FormValidation.ok(comment);
             } catch (Exception ex) {
                 return FormValidation.error("Unable to connect to GitHub API: " + ex);
             }
         }
+        
+
+        public FormValidation doTestComment(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("repo") final String repoName,
+                @QueryParameter("issueId") final int issueId,
+                @QueryParameter("message1") final String comment) {
+            try {
+                GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("Unable to look up GitHub credentials using ID: " + credentialsId + "!!");
+                }
+                GitHub gh = builder.build();
+                GHRepository repo = gh.getRepository(repoName);
+                GHIssue issue = repo.getIssue(issueId);
+                issue.comment(comment);
+                
+                return FormValidation.ok("Issued comment to issue: " + issue.getHtmlUrl());
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to issue comment: " + ex);
+            }
+        }
+        
+        public FormValidation doTestUpdateStatus(
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("repo") final String repoName,
+                @QueryParameter("sha1") final String sha1,
+                @QueryParameter("state") final GHCommitState state,
+                @QueryParameter("url") final String url,
+                @QueryParameter("message2") final String message,
+                @QueryParameter("context") final String context) {
+            try {
+                GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
+                if (builder == null) {
+                    return FormValidation.error("Unable to look up GitHub credentials using ID: " + credentialsId + "!!");
+                }
+                GitHub gh = builder.build();
+                GHRepository repo = gh.getRepository(repoName);
+                repo.createCommitStatus(sha1, state, url, message, context);
+                return FormValidation.ok("Updated status of: " + sha1);
+            } catch (Exception ex) {
+                return FormValidation.error("Unable to update status: " + ex);
+            }
+        }
+
+        public ListBoxModel doFillStateItems(@QueryParameter("state") String state) {
+            ListBoxModel items = new ListBoxModel();
+            for (GHCommitState commitState : GHCommitState.values()) {
+
+                items.add(commitState.toString(), commitState.toString());
+                if (state.equals(commitState.toString())) {
+                    items.get(items.size() - 1).selected = true;
+                }
+            }
+
+            return items;
+        }
     }
+    
+    
 
 }

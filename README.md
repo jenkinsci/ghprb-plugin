@@ -107,6 +107,17 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.27
+* Trigger is now a regex term
+* Phrases are no matched agains multiple lines properly
+* All regex patterns use ignore case and dotall
+* Added variables to the parameters
+
+#### -> 1.26
+* Extend the checking for own code.
+* Fail build only when desired if we can't merge the build.
+* Add option to delete branch when merge succeeds.
+
 #### -> 1.25
 * Fix condition where admin can't run tests #60 JENKINS-25572, JENKINS-25574, JENKINS-25603
 * Check for when webhook encoding is null and default to UTF-8

@@ -23,6 +23,8 @@ public class GhprbCause extends Cause {
     private final GHUser triggerSender;
     private final String commentBody;
     private final GitUser commitAuthor;
+    private final GHUser pullRequestAuthor;
+    private final String description;
 
     public GhprbCause(String commit, 
             int pullID, 
@@ -34,7 +36,9 @@ public class GhprbCause extends Cause {
             URL url, 
             GHUser triggerSender, 
             String commentBody,
-            GitUser commitAuthor) {
+            GitUser commitAuthor,
+            GHUser pullRequestAuthor,
+            String description) {
 
         this.commit = commit;
         this.pullID = pullID;
@@ -44,12 +48,14 @@ public class GhprbCause extends Cause {
         this.authorEmail = authorEmail;
         this.title = title;
         this.url = url;
+        this.description = description;
 
         this.triggerSender = triggerSender;
         this.commentBody = commentBody;
         this.commitAuthor = commitAuthor;
+        this.pullRequestAuthor = pullRequestAuthor;
     }
-
+    
     @Override
     public String getShortDescription() {
         return "GitHub pull request #" + pullID + " of commit " + commit + (merged ? ", no merge conflicts." : ", has merge conflicts.");
@@ -91,6 +97,10 @@ public class GhprbCause extends Cause {
         return commentBody;
     }
 
+    public GHUser getPullRequestAuthor() {
+        return pullRequestAuthor;
+    }
+
     /**
      * Returns the title of the cause, not null.
      * 
@@ -111,6 +121,10 @@ public class GhprbCause extends Cause {
 
     public GitUser getCommitAuthor() {
         return commitAuthor;
+    }
+    
+    public String getDescription() {
+        return description;
     }
 
 }

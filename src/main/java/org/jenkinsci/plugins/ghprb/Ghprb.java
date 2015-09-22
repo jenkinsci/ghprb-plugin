@@ -37,6 +37,7 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHUser;
 
 import java.net.URI;
@@ -122,24 +123,62 @@ public class Ghprb {
         repository = null;
         builds = null;
     }
+    
+    public static Pattern compilePattern(String regex) {
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    }
 
     // These used to be stored on the object in the constructor.
     // But because the object is only instantiated once per PR, configuration would go stale.
     // Some optimization could be done around re-compiling regex/hash sets, but beyond that we still have to re-pull the text.
     private Pattern retestPhrasePattern() {
-        return Pattern.compile(trigger.getDescriptor().getRetestPhrase());
+        return compilePattern(trigger.getDescriptor().getRetestPhrase());
     }
+    
+    /**
+     * Returns skip build phrases from Jenkins global configuration
+     * 
+     * @return
+     */
+    public Set<String> getSkipBuildPhrases() {
+        return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
+    }
+    
+    /**
+     * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
+     * 
+     * @param issue
+     */
+    public String checkSkipBuild(GHIssue issue) {
+        // check for skip build phrase.
+        String pullRequestBody = issue.getBody();
+        if (StringUtils.isNotBlank(pullRequestBody)) {
+            pullRequestBody = pullRequestBody.trim();
+            Set<String> skipBuildPhrases = getSkipBuildPhrases();
+            skipBuildPhrases.remove("");
 
+            for (String skipBuildPhrase : skipBuildPhrases) {
+                skipBuildPhrase = skipBuildPhrase.trim();
+                Pattern skipBuildPhrasePattern = compilePattern(skipBuildPhrase);
+               
+                if (skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+                    return skipBuildPhrase;
+                }
+            }
+        }
+        return null;
+    }
+    
     private Pattern whitelistPhrasePattern() {
-        return Pattern.compile(trigger.getDescriptor().getWhitelistPhrase());
+        return compilePattern(trigger.getDescriptor().getWhitelistPhrase());
     }
 
     private Pattern oktotestPhrasePattern() {
-        return Pattern.compile(trigger.getDescriptor().getOkToTestPhrase());
+        return compilePattern(trigger.getDescriptor().getOkToTestPhrase());
     }
 
-    private String triggerPhrase() {
-        return trigger.getTriggerPhrase();
+    private Pattern triggerPhrase() {
+        return compilePattern(trigger.getTriggerPhrase());
     }
 
     private HashSet<String> admins() {
@@ -176,7 +215,7 @@ public class Ghprb {
     }
 
     public boolean isTriggerPhrase(String comment) {
-        return !triggerPhrase().equals("") && comment != null && comment.contains(triggerPhrase());
+        return triggerPhrase().matcher(comment).matches();
     }
 
     public boolean ifOnlyTriggerPhrase() {
@@ -456,5 +495,54 @@ public class Ghprb {
         CredentialsStore provider = new SystemCredentialsProvider.StoreImpl();
         provider.addDomain(domain, credentials);
         return credentials.getId();
+    }
+    
+    public static <T extends GhprbExtension> T getGlobal(Class<T> clazz) {
+        DescribableList<GhprbExtension, GhprbExtensionDescriptor> copyExtensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
+
+        copyExtensions.addAll(GhprbTrigger.DESCRIPTOR.getExtensions());
+        
+        filterList(copyExtensions, InstanceofPredicate.getInstance(clazz));
+        
+        return copyExtensions.get(clazz);
+    }
+    
+    
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static <T> T getDefaultValue(Object local, Class globalClass, String methodName) {
+        T toReturn = null;
+        Object global = getGlobal(globalClass);
+        if (local == null && global == null) {
+            return null;
+        }
+        try {
+            
+            if (local == null) {
+                return (T) global.getClass().getMethod(methodName).invoke(global);
+            } else if (global == null) {
+                return (T) local.getClass().getMethod(methodName).invoke(local);
+            }
+            
+            T localValue = (T) local.getClass().getMethod(methodName).invoke(local);
+            T globalValue = (T) global.getClass().getMethod(methodName).invoke(global);
+
+
+            if (localValue instanceof String) {
+                if (StringUtils.isEmpty((String) localValue)) {
+                    return globalValue;
+                }
+            } else if (localValue instanceof List) {
+                if (((List) localValue).isEmpty()) {
+                    return globalValue;
+                }
+            }
+
+            return localValue;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return toReturn;
     }
 }

@@ -12,14 +12,10 @@ import org.kohsuke.github.GitUser;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 /**
  * Maintains state about a Pull Request for a particular Jenkins job. This is what understands the current state of a PR for a particular job.
@@ -42,6 +38,7 @@ public class GhprbPullRequest {
     private String source;
     private String authorEmail;
     private URL url;
+    private String description;
 
     private GHUser triggerSender;
     private GitUser commitAuthor;
@@ -55,7 +52,7 @@ public class GhprbPullRequest {
 
     private String commentBody;
 
-    GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
+    public GhprbPullRequest(GHPullRequest pr, Ghprb helper, GhprbRepository repo) {
         id = pr.getNumber();
         try {
             updated = pr.getUpdatedAt();
@@ -75,6 +72,7 @@ public class GhprbPullRequest {
 
         this.helper = helper;
         this.repo = repo;
+        this.description = pr.getBody();
 
         if (helper.isWhitelisted(author)) {
             accepted = true;
@@ -98,40 +96,6 @@ public class GhprbPullRequest {
     }
 
     /**
-     * Returns skip build phrases from Jenkins global configuration
-     * 
-     * @return
-     */
-    public Set<String> getSkipBuildPhrases() {
-        return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
-    }
-
-    /**
-     * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
-     * 
-     * @param issue
-     */
-    private void checkSkipBuild(GHIssue issue) {
-        // check for skip build phrase.
-        String pullRequestBody = issue.getBody();
-        if (StringUtils.isNotBlank(pullRequestBody)) {
-            pullRequestBody = pullRequestBody.trim();
-            Set<String> skipBuildPhrases = getSkipBuildPhrases();
-            skipBuildPhrases.remove("");
-
-            for (String skipBuildPhrase : skipBuildPhrases) {
-                skipBuildPhrase = skipBuildPhrase.trim();
-                Pattern skipBuildPhrasePattern = Pattern.compile(skipBuildPhrase, Pattern.CASE_INSENSITIVE);
-                if (skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
-                    logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
-                    shouldRun = false;
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
      * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers a build if necessary.
      *
      * @param pr
@@ -149,9 +113,17 @@ public class GhprbPullRequest {
         }
 
         updatePR(pr, author);
-        
+
         checkSkipBuild(pr);
         tryBuild(pr);
+    }
+    
+    private void checkSkipBuild(GHIssue issue) {
+        String skipBuildPhrase = helper.checkSkipBuild(issue);
+        if (!StringUtils.isEmpty(skipBuildPhrase)) {
+            logger.log(Level.INFO, "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.", skipBuildPhrase);
+            shouldRun = false;
+        }
     }
 
     public void check(GHIssueComment comment) {
@@ -189,8 +161,9 @@ public class GhprbPullRequest {
                 accepted = true;
             }
             
-            // the title could have been updated since the original PR was opened
+            // the title or description could have been updated since the original PR was opened
             title = pr.getTitle();
+            description = pr.getBody();
             int commentsChecked = checkComments(pr, lastUpdateTime);
             boolean newCommit = checkCommit(pr.getHead().getSha());
 
@@ -457,7 +430,15 @@ public class GhprbPullRequest {
         return commitAuthor;
     }
 
+    public GHUser getPullRequestAuthor() {
+        return author;
+    }
+
     public GHPullRequest getPullRequest() {
         return pr;
+    }
+    
+    public String getDescription() {
+        return description;
     }
 }
