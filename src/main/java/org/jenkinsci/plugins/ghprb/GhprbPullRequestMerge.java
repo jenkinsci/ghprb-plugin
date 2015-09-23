@@ -109,15 +109,7 @@ public class GhprbPullRequestMerge extends Recorder {
             return true;
         }
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getFullName());
-
-        pr = pulls.get(cause.getPullID()).getPullRequest();
-
-        if (pr == null) {
-            logger.println("Pull request is null for ID: " + cause.getPullID());
-            logger.println("" + pulls.toString());
-            return false;
-        }
+        pr = trigger.getRepository().getPullRequest(cause.getPullID());
 
         if (helper == null) {
             helper = new Ghprb(project, trigger, pulls);
