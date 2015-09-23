@@ -122,9 +122,10 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             throw new GhprbCommitStatusException(e, state, message, prId);
         }
     }
-    
+
     public void onEnvironmentSetup(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
-        createCommitStatus(build, listener, "Build has started, please wait for results...", repo, GHCommitState.PENDING);
+        // no need to create a commit here -- the onBuildStart() event will fire
+        // soon and will respect's the user's settings for startedStatus.
     }
 
     public void onBuildStart(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
