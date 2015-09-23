@@ -89,7 +89,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
         }
         
 
-        logger.log(Level.INFO, "Got payload event: {0}", event);
+        logger.log(Level.FINE, "Got payload event: {0}", event);
         
         try {
             GitHub gh = GitHub.connectAnonymously();
