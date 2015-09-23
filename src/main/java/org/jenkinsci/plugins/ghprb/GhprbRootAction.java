@@ -10,6 +10,9 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
+import org.kohsuke.github.GHEventPayload;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -84,15 +87,52 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     new Object[] { type });
             return;
         }
-
-        for (GhprbWebHook webHook : getWebHooks()) {
-            try {
-                webHook.handleWebHook(event, payload, body, signature);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
-            }
-        }
         
+
+        logger.log(Level.INFO, "Got payload event: {0}", event);
+        
+        try {
+            GitHub gh = GitHub.connectAnonymously();
+            
+            if ("issue_comment".equals(event)) {
+                GHEventPayload.IssueComment issueComment = gh.parseEventPayload(
+                        new StringReader(payload), 
+                        GHEventPayload.IssueComment.class);
+                GHIssueState state = issueComment.getIssue().getState();
+                if (state == GHIssueState.CLOSED) {
+                    logger.log(Level.INFO, "Skip comment on closed PR");
+                    return;
+                }
+                
+
+                for (GhprbWebHook webHook : getWebHooks()) {
+                    try {
+                        webHook.handleComment(issueComment, body, signature);
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+                    }
+                }
+                
+
+            } else if ("pull_request".equals(event)) {
+                GHEventPayload.PullRequest pr = gh.parseEventPayload(
+                        new StringReader(payload), 
+                        GHEventPayload.PullRequest.class);
+
+                for (GhprbWebHook webHook : getWebHooks()) {
+                    try {
+                        webHook.handlePR(pr, body, signature);
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+                    }
+                }
+            } else {
+                logger.log(Level.WARNING, "Request not known");
+            }
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
     }
 
     private String extractRequestBody(StaplerRequest req) {
