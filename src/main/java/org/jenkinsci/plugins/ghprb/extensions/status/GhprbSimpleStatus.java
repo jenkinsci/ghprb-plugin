@@ -89,7 +89,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         String triggeredStatus = getDescriptor().getTriggeredStatusDefault(this);
 
         // check if we even need to update
-        if (triggeredStatus.equals("--none--")) {
+        if (triggeredStatus != null && triggeredStatus.equals("--none--")) {
             return;
         }
 
@@ -131,7 +131,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
 
         // check if we even need to update
-        if (startedStatus.equals("--none--")) {
+        if (startedStatus != null && startedStatus.equals("--none--")) {
             return;
         }
 
