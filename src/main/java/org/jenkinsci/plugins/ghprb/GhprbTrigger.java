@@ -290,10 +290,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public GitHub getGitHub() throws IOException {
         GhprbGitHubAuth auth = getGitHubApiAuth();
-        if (auth == null) {
-            return null;
-        }
-        
         return auth.getConnection(getActualProject());
     }
     
