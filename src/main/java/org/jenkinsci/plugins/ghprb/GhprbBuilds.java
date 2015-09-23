@@ -215,6 +215,11 @@ public class GhprbBuilds {
     }
 
     public void onEnvironmentSetup(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
+        GhprbCause c = Ghprb.getCause(build);
+        if (c == null) {
+            return;
+        }
+
         logger.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
