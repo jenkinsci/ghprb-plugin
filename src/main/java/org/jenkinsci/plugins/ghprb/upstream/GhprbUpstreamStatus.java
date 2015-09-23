@@ -32,10 +32,10 @@ public class GhprbUpstreamStatus extends BuildWrapper {
     @Override
     public void makeBuildVariables(@SuppressWarnings("rawtypes") AbstractBuild build, Map<String,String> variables){
         variables.put("ghprbUpstreamStatus", "true");
-        variables.put("ghprbCommitStatusContext", commitStatusContext);
-        variables.put("ghprbTriggeredStatus", triggeredStatus);
-        variables.put("ghprbStartedStatus", startedStatus);
-        variables.put("ghprbStatusUrl", statusUrl);
+        variables.put("ghprbCommitStatusContext", getCommitStatusContext());
+        variables.put("ghprbTriggeredStatus", getTriggeredStatus());
+        variables.put("ghprbStartedStatus", getStartedStatus());
+        variables.put("ghprbStatusUrl", getStatusUrl());
         
         Map<GHCommitState, StringBuilder> statusMessages = new HashMap<GHCommitState, StringBuilder>(5);
         
