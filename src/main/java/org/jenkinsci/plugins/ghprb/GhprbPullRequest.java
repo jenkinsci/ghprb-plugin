@@ -8,7 +8,6 @@ import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
-import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 
@@ -27,31 +26,35 @@ import java.util.logging.Logger;
 public class GhprbPullRequest {
 
     private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
+    
+    @Deprecated @SuppressWarnings("unused") private transient GHUser author;
+    @Deprecated @SuppressWarnings("unused") private transient String title;
+    @Deprecated @SuppressWarnings("unused") private transient String reponame;
+    @Deprecated @SuppressWarnings("unused") private transient String authorEmail;
+    @Deprecated @SuppressWarnings("unused") private transient URL url;
+    @Deprecated @SuppressWarnings("unused") private transient String description;
 
     private final int id;
-    private final GHUser author;
-    private final GHPullRequest pr;
-    private String title;
-    private Date updated;
-    private String head;
-    private String authorRepoGitUrl;
-    private boolean mergeable;
-    private String reponame;
+   
+    private Date updated; // Needed to track when the PR was updated
     private String target;
     private String source;
-    private String authorEmail;
-    private URL url;
-    private String description;
+    private String head;
+    
+    private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
 
-    private GHUser triggerSender;
-    private GitUser commitAuthor;
 
-    private boolean shouldRun = false;
-    private boolean accepted = false;
-    private boolean triggered = false;
+    private transient String authorRepoGitUrl; // Can be refreshed as needed.
+    private transient Ghprb helper; // will be refreshed each time GhprbRepository.init() is called
+    private transient GhprbRepository repo; // will be refreshed each time GhprbRepository.init() is called
+    private transient GHPullRequest pr; // will be refreshed each time GhprbRepository.init() is called
 
-    private transient Ghprb helper;
-    private transient GhprbRepository repo;
+    private transient GHUser triggerSender; // Only needed for a single build
+    private transient GitUser commitAuthor; // Only needed for a single build
+    
+    private transient boolean shouldRun = false; // Declares if we should run the build this time.
+    private transient boolean triggered = false; // Only lets us know if the trigger phrase was used for this run
+    private transient boolean mergeable = false; // Only works as an easy way to pass the value around for the start of this build
 
     private String commentBody;
 
@@ -63,26 +66,25 @@ public class GhprbPullRequest {
             e.printStackTrace();
             updated = new Date();
         }
-        GHCommitPointer commitPointer = pr.getHead();
-		head = commitPointer.getSha();
-        title = pr.getTitle();
-        author = pr.getUser();
-        GHRepository repository = commitPointer.getRepository();
-        if (repository != null) {
-            authorRepoGitUrl = repository.gitHttpTransportUrl();
-        }
-        reponame = repo.getName();
+        GHCommitPointer prHead = pr.getHead();
+        head = prHead.getSha();
+        source = prHead.getRef();
         target = pr.getBase().getRef();
-        source = commitPointer.getRef();
-        url = pr.getHtmlUrl();
+        
         this.pr = pr;
-        obtainAuthorEmail(pr);
 
         this.helper = helper;
         this.repo = repo;
-        this.description = pr.getBody();
+        
+        GHUser author = pr.getUser();
+        String reponame = repo.getName();
+        
 
-        if (helper.isWhitelisted(author)) {
+        if (prHead != null && prHead.getRepository() != null) {
+            authorRepoGitUrl = prHead.getRepository().gitHttpTransportUrl();
+        }
+
+        if (helper.isWhitelisted(getPullRequestAuthor())) {
             accepted = true;
             shouldRun = true;
         } else {
@@ -91,15 +93,19 @@ public class GhprbPullRequest {
         }
 
         logger.log(Level.INFO, "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}", 
-                new Object[] { id, reponame, author.getLogin(), authorEmail, updated, head }
+                new Object[] { id, reponame, author.getLogin(), getAuthorEmail(), updated, prHead.getRef() }
         );
     }
 
-    public void init(Ghprb helper, GhprbRepository repo) {
+    public void init(Ghprb helper, GhprbRepository repo) throws IOException {
         this.helper = helper;
         this.repo = repo;
-        if (reponame == null) {
-            reponame = repo.getName(); // If this instance was created before v1.8, it can be null.
+        pr = repo.getPullRequest(id);
+        
+        GHCommitPointer prHead = pr.getHead();
+
+        if (prHead != null && prHead.getRepository() != null) {
+            authorRepoGitUrl = prHead.getRepository().gitHttpTransportUrl();
         }
     }
 
@@ -113,14 +119,8 @@ public class GhprbPullRequest {
             logger.log(Level.FINE, "Project is disabled, ignoring pull request");
             return;
         }
-        if (target == null) {
-            target = pr.getBase().getRef(); // If this instance was created before target was introduced (before v1.8), it can be null.
-        }
-        if (source == null) {
-            source = pr.getHead().getRef(); // If this instance was created before target was introduced (before v1.8), it can be null.
-        }
 
-        updatePR(pr, author);
+        updatePR(pr, pr.getUser());
 
         checkSkipBuild(pr);
         tryBuild(pr);
@@ -158,10 +158,11 @@ public class GhprbPullRequest {
         tryBuild(pr);
     }
     
-    private void updatePR(GHPullRequest pr, GHUser author) {
+    private void updatePR(GHPullRequest pr, GHUser user) {
+        
         Date lastUpdateTime = updated;
         if (pr != null && isUpdated(pr)) {
-            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, reponame, updated, author });
+            logger.log(Level.INFO, "Pull request #{0} was updated on {1} at {2} by {3}", new Object[] { id, repo.getName(), updated, user });
 
             // the author of the PR could have been whitelisted since its creation
             if (!accepted && helper.isWhitelisted(pr.getUser())) {
@@ -169,16 +170,13 @@ public class GhprbPullRequest {
                 accepted = true;
             }
             
-            // the title or description could have been updated since the original PR was opened
-            title = pr.getTitle();
-            description = pr.getBody();
             int commentsChecked = checkComments(pr, lastUpdateTime);
-            boolean newCommit = checkCommit(pr.getHead().getSha());
+            boolean newCommit = checkCommit(pr.getHead());
 
             if (!newCommit && commentsChecked == 0) {
                 logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
                         + "that may mean that commit status was updated.", 
-                        new Object[] { id, reponame }
+                        new Object[] { id, repo.getName() }
                 );
             }
         }
@@ -190,6 +188,8 @@ public class GhprbPullRequest {
             // no branches in white list means we should test all
             return true;
         }
+        
+        String target = getTarget();
         for (GhprbBranch b : branches) {
             if (b.matches(target)) {
                 // the target branch is in the whitelist!
@@ -235,12 +235,6 @@ public class GhprbPullRequest {
         if (shouldRun) {
             logger.log(Level.FINEST, "Running the build");
 
-            if (authorEmail == null) {
-                // If this instance was create before authorEmail was introduced (before v1.10), it can be null.
-                obtainAuthorEmail(pr);
-                logger.log(Level.FINEST, "Author email was not set, trying to set it to {0}", authorEmail);
-            }
-
             if (pr != null) {
                 logger.log(Level.FINEST, "PR is not null, checking if mergable");
                 checkMergeable(pr);
@@ -270,12 +264,12 @@ public class GhprbPullRequest {
     }
 
     // returns false if no new commit
-    private boolean checkCommit(String sha) {
-        if (head.equals(sha)) {
+    private boolean checkCommit(GHCommitPointer sha) {
+        if (head.equals(sha.getSha())) {
             return false;
         }
-        logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[] { head, sha });
-        head = sha;
+        logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[] { head, sha.getSha() });
+        head = sha.getSha();
         if (accepted) {
             shouldRun = true;
         }
@@ -285,6 +279,7 @@ public class GhprbPullRequest {
     private void checkComment(GHIssueComment comment) throws IOException {
         GHUser sender = comment.getUser();
         String body = comment.getBody();
+        GHUser author = pr.getUser();
 
         // Disabled until more advanced configs get set up
         // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
@@ -353,7 +348,7 @@ public class GhprbPullRequest {
         return count;
     }
 
-    private void checkMergeable(GHPullRequest pr) {
+    public boolean checkMergeable(GHPullRequest pr) {
         try {
             int r = 5;
             Boolean isMergeable = pr.getMergeable();
@@ -368,17 +363,9 @@ public class GhprbPullRequest {
             }
             mergeable = isMergeable != null && isMergeable;
         } catch (IOException e) {
-            mergeable = false;
             logger.log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
         }
-    }
-
-    private void obtainAuthorEmail(GHPullRequest pr) {
-        try {
-            authorEmail = pr.getUser().getEmail();
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Couldn't obtain author email.", e);
-        }
+        return mergeable;
     }
 
     @Override
@@ -396,7 +383,7 @@ public class GhprbPullRequest {
         hash = 89 * hash + this.id;
         return hash;
     }
-
+    
     public int getId() {
         return id;
     }
@@ -422,11 +409,16 @@ public class GhprbPullRequest {
     }
 
     public String getAuthorEmail() {
-        return authorEmail;
+        try {
+            return pr.getUser().getEmail();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to fetch author info for " + id);
+        }
+        return "";
     }
 
     public String getTitle() {
-        return title;
+        return pr.getTitle();
     }
 
     /**
@@ -435,15 +427,15 @@ public class GhprbPullRequest {
      * @return the Github Pull Request URL
      */
     public URL getUrl() {
-        return url;
+        return pr.getHtmlUrl();
     }
-
+    
     public GitUser getCommitAuthor() {
         return commitAuthor;
     }
 
     public GHUser getPullRequestAuthor() {
-        return author;
+        return pr.getUser();
     }
 
     public GHPullRequest getPullRequest() {
@@ -451,6 +443,6 @@ public class GhprbPullRequest {
     }
     
     public String getDescription() {
-        return description;
+        return pr.getBody();
     }
 }

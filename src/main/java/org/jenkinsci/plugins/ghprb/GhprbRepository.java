@@ -32,21 +32,16 @@ public class GhprbRepository {
     private static final EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
     private final String reponame;
-    private final ConcurrentMap<Integer, GhprbPullRequest> pulls;
 
     private GHRepository ghRepository;
     private Ghprb helper;
 
-    public GhprbRepository(String user, String repository, Ghprb helper, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
+    public GhprbRepository(String user, String repository, Ghprb helper) {
         this.reponame = user + "/" + repository;
         this.helper = helper;
-        this.pulls = pulls;
     }
 
     public void init() {
-        for (GhprbPullRequest pull : pulls.values()) {
-            pull.init(helper, this);
-        }
         // make the initial check call to populate our data structures
         initGhRepository();
     }
@@ -101,6 +96,9 @@ public class GhprbRepository {
             logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
+        
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        
         Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
         for (GHPullRequest pr : openPulls) {
@@ -115,6 +113,7 @@ public class GhprbRepository {
             check(pr);
             closedPulls.remove(pr.getNumber());
         }
+        
 
         // remove closed pulls so we don't check them again
         for (Integer id : closedPulls) {
@@ -123,6 +122,8 @@ public class GhprbRepository {
     }
 
     private void check(GHPullRequest pr) {
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        
         final Integer id = pr.getNumber();
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
@@ -264,6 +265,8 @@ public class GhprbRepository {
             return;
         }
 
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
             pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
@@ -274,6 +277,9 @@ public class GhprbRepository {
     }
 
     void onPullRequestHook(PullRequest pr) {
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        
         if ("closed".equals(pr.getAction())) {
             pulls.remove(pr.getNumber());
         } else if (helper.isProjectDisabled()) {
