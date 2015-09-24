@@ -154,6 +154,27 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public static DescriptorImpl getDscp() {
         return DESCRIPTOR;
     }
+    
+    /**
+     * Save any updates that may have been made inside the plugin that would affect the config.xml
+     */
+    public void save() {
+        if (_project != null) {
+            String xmlConfig = "";
+            try {
+                xmlConfig = _project.getConfigFile().asString();
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Unable to save load config file", e);
+            } 
+            if (!xmlConfig.contains("<config>" + configVersion)) {
+                try {
+                    _project.save();
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Unable to save config updates", e);
+                }
+            }
+        }
+    }
 
     @Override
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
@@ -161,6 +182,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         super.start(project, newInstance);
         this._project = project;
         this.project = project.getFullName();
+        
+        save();
         
         if (project.isDisabled()) {
             logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + this.project);
@@ -180,6 +203,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", 
                 new String[] { this.project, String.valueOf(newInstance) });
         helper.init();
+
     }
 
     Ghprb createGhprb(AbstractProject<?, ?> project) {

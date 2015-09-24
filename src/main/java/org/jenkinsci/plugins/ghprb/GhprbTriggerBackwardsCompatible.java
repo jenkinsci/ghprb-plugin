@@ -50,7 +50,7 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
         if (configVersion == null) {
             configVersion = 0;
         }
-        if (configVersion <= 2 && !StringUtils.isEmpty(triggerPhrase)) {
+        if (configVersion < 3 && !StringUtils.isEmpty(triggerPhrase)) {
             triggerPhrase = Pattern.quote(triggerPhrase);
         }
         
