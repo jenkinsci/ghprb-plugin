@@ -21,6 +21,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
@@ -38,6 +40,7 @@ import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class GhprbTestUtil {
 
@@ -371,6 +374,10 @@ public class GhprbTestUtil {
         }
         
         GhprbTrigger trigger = spy(req.bindJSON(GhprbTrigger.class, defaults));
+        
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
+        Mockito.doReturn(pulls).when(trigger).getPulls();
         
         return trigger;
     }

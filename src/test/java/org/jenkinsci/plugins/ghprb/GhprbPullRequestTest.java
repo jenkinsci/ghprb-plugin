@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.ghprb;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHCommitPointer;
@@ -7,6 +8,7 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -34,6 +36,16 @@ public class GhprbPullRequestTest {
     private Ghprb helper;
     @Mock
     private GhprbRepository repo;
+    @Mock
+    private GHCommitPointer head;
+    @Mock
+    private GhprbRepository ghprbRepository;
+    
+    @Before
+    public void setup() throws IOException {
+        given(ghprbRepository.getPullRequest(10)).willReturn(pr);
+        given(pr.getHead()).willReturn(head);
+    }
 
     @Test
     public void testConstructorWhenAuthorIsWhitelisted() throws IOException {
@@ -41,6 +53,7 @@ public class GhprbPullRequestTest {
         GHUser ghUser = mock(GHUser.class);
         GHCommitPointer head = mock(GHCommitPointer.class);
         GHCommitPointer base = mock(GHCommitPointer.class);
+        
         given(head.getSha()).willReturn("some sha");
         given(base.getRef()).willReturn("some ref");
 
@@ -96,15 +109,15 @@ public class GhprbPullRequestTest {
         // Mocks for Ghprb
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        GhprbRepository ghprbRepository = mock(GhprbRepository.class);
+        GhprbPullRequest ghprbPullRequest = Mockito.spy(new GhprbPullRequest(pr, helper, repo));
         given(ghprbRepository.getName()).willReturn("name");
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
 
         // THEN
-        verify(ghprbRepository, times(1)).getName();
+        verify(ghprbRepository, times(1)).getPullRequest(10);
+        verify(pr, times(2)).getHead();
 
     }
 
@@ -134,7 +147,6 @@ public class GhprbPullRequestTest {
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
         GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        GhprbRepository ghprbRepository = mock(GhprbRepository.class);
         given(ghprbRepository.getName()).willReturn("name");
 
         // WHEN
@@ -170,7 +182,6 @@ public class GhprbPullRequestTest {
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
         GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        GhprbRepository ghprbRepository = mock(GhprbRepository.class);
         given(ghprbRepository.getName()).willReturn("name");
 
         // WHEN
@@ -210,7 +221,6 @@ public class GhprbPullRequestTest {
         given(helper.isWhitelisted(ghUser)).willReturn(true);
 
         GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        GhprbRepository ghprbRepository = mock(GhprbRepository.class);
         given(ghprbRepository.getName()).willReturn("name");
 
         // WHEN
