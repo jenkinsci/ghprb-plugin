@@ -40,8 +40,20 @@ public class GhprbBuilds {
 
     public void build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getSource(), pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(), triggerSender, commentBody,
-                pr.getCommitAuthor(), pr.getPullRequestAuthor(), pr.getDescription(), pr.getAuthorRepoGitUrl());
+        GhprbCause cause = new GhprbCause(pr.getHead(), 
+                pr.getId(), 
+                pr.isMergeable(), 
+                pr.getTarget(), 
+                pr.getSource(), 
+                pr.getAuthorEmail(), 
+                pr.getTitle(), 
+                pr.getUrl(), 
+                triggerSender, 
+                commentBody,
+                pr.getCommitAuthor(), 
+                pr.getPullRequestAuthor(), 
+                pr.getDescription(), 
+                pr.getAuthorRepoGitUrl());
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
             if (ext instanceof GhprbCommitStatus) {

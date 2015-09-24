@@ -207,7 +207,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     Ghprb createGhprb(AbstractProject<?, ?> project) {
-        return new Ghprb(project, this, getDescriptor().getPullRequests(project.getFullName()));
+        return new Ghprb(project, this);
+    }
+    
+    public ConcurrentMap<Integer, GhprbPullRequest> getPulls() {
+        return getDescriptor().getPullRequests(_project.getFullName());
     }
 
     @Override
@@ -733,21 +737,21 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
 
-//        public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
-//            ConcurrentMap<Integer, GhprbPullRequest> ret;
-//            if (jobs.containsKey(projectName)) {
-//                Map<Integer, GhprbPullRequest> map = jobs.get(projectName);
-//                if (!(map instanceof ConcurrentMap)) {
-//                    map = new ConcurrentHashMap<Integer, GhprbPullRequest>(map);
-//                }
-//                jobs.put(projectName, (ConcurrentMap<Integer, GhprbPullRequest>) map);
-//                ret = (ConcurrentMap<Integer, GhprbPullRequest>) map;
-//            } else {
-//                ret = new ConcurrentHashMap<Integer, GhprbPullRequest>();
-//                jobs.put(projectName, ret);
-//            }
-//            return ret;
-//        }
+        public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
+            ConcurrentMap<Integer, GhprbPullRequest> ret;
+            if (jobs.containsKey(projectName)) {
+                Map<Integer, GhprbPullRequest> map = jobs.get(projectName);
+                if (!(map instanceof ConcurrentMap)) {
+                    map = new ConcurrentHashMap<Integer, GhprbPullRequest>(map);
+                }
+                jobs.put(projectName, (ConcurrentMap<Integer, GhprbPullRequest>) map);
+                ret = (ConcurrentMap<Integer, GhprbPullRequest>) map;
+            } else {
+                ret = new ConcurrentHashMap<Integer, GhprbPullRequest>();
+                jobs.put(projectName, ret);
+            }
+            return ret;
+        }
 
         public List<GhprbBranch> getWhiteListTargetBranches() {
             return whiteListTargetBranches;
@@ -845,5 +849,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
     }
+
 
 }
