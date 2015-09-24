@@ -31,7 +31,7 @@ import hudson.util.FormValidation;
 
 public class GhprbPullRequestMerge extends Recorder {
 
-    private PrintStream logger;
+    private transient PrintStream logger;
 
     private final Boolean onlyAdminsMerge;
     private final Boolean disallowOwnCode;
