@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.concurrent.ConcurrentMap;
 
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHPullRequest;
@@ -109,18 +108,10 @@ public class GhprbPullRequestMerge extends Recorder {
             return true;
         }
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getFullName());
-
-        pr = pulls.get(cause.getPullID()).getPullRequest();
-
-        if (pr == null) {
-            logger.println("Pull request is null for ID: " + cause.getPullID());
-            logger.println("" + pulls.toString());
-            return false;
-        }
+        pr = trigger.getRepository().getPullRequest(cause.getPullID());
 
         if (helper == null) {
-            helper = new Ghprb(project, trigger, pulls);
+            helper = new Ghprb(project, trigger);
             helper.init();
         }
 
@@ -264,7 +255,7 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         @Override
-        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+        public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
             return true;
         }
 
