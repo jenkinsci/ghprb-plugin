@@ -383,7 +383,7 @@ public class GhprbPullRequest {
         hash = 89 * hash + this.id;
         return hash;
     }
-    
+
     public int getId() {
         return id;
     }
@@ -429,7 +429,7 @@ public class GhprbPullRequest {
     public URL getUrl() {
         return pr.getHtmlUrl();
     }
-    
+
     public GitUser getCommitAuthor() {
         return commitAuthor;
     }
