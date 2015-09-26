@@ -219,31 +219,31 @@ public class GhprbPullRequestMerge extends Recorder {
             String commentorName = commentor.getName();
             String commentorEmail = commentor.getEmail();
             String commentorLogin = commentor.getLogin();
-            
-			GHUser prUser = pr.getUser();
-			if (prUser.getLogin().equals(commentorLogin)) {
-				logger.println(commentorName + " (" + commentorLogin + ")  is attempting to commi own PR["
-						+ pr.getNumber() + "]");
-				return true;
-			}
 
-			for (GHPullRequestCommitDetail detail : pr.listCommits()) {
-				Commit commit = detail.getCommit();
-				GitUser committer = commit.getCommitter();
-				String committerName = committer.getName();
-				String committerEmail = committer.getEmail();
+            GHUser prUser = pr.getUser();
+            if (prUser.getLogin().equals(commentorLogin)) {
+                logger.println(commentorName + " (" + commentorLogin + ")  is attempting to commi own PR["
+                        + pr.getNumber() + "]");
+                return true;
+            }
 
-				boolean isSame = false;
+            for (GHPullRequestCommitDetail detail : pr.listCommits()) {
+                Commit commit = detail.getCommit();
+                GitUser committer = commit.getCommitter();
+                String committerName = committer.getName();
+                String committerEmail = committer.getEmail();
 
-				isSame |= commentorName != null && commentorName.equals(committerName);
-				isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
+                boolean isSame = false;
 
-				if (isSame) {
-					logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber()
-							+ "] that is to be merged");
-					return isSame;
-				}
-			}
+                isSame |= commentorName != null && commentorName.equals(committerName);
+                isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
+
+                if (isSame) {
+                    logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber()
+                            + "] that is to be merged");
+                    return isSame;
+                }
+            }
         } catch (IOException e) {
             logger.println("Unable to get committer name");
             e.printStackTrace(logger);
