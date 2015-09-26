@@ -503,9 +503,15 @@ public class GhprbRepositoryTest {
         String actualSignature = createSHA1Signature(actualSecret, body);
         String fakeSignature = createSHA1Signature("abc", body);
         
+        GhprbGitHubAuth ghAuth = Mockito.mock(GhprbGitHubAuth.class);
+        doReturn(ghAuth).when(trigger).getGitHubApiAuth();
+        
         Assert.assertFalse(actualSignature.equals(fakeSignature));
-        Assert.assertTrue(GhprbWebHook.checkSignature(body, actualSignature, actualSecret));
-        Assert.assertFalse(GhprbWebHook.checkSignature(body, fakeSignature, actualSecret));
+        
+        given(ghAuth.getSecret()).willReturn(actualSecret);
+        
+        Assert.assertTrue(trigger.getWebHook().checkSignature(body, actualSignature));
+        Assert.assertFalse(trigger.getWebHook().checkSignature(body, fakeSignature));
     }
 
     private String createSHA1Signature(String secret, String body) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {

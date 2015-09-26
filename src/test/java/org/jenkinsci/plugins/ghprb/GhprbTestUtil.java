@@ -346,6 +346,11 @@ public class GhprbTestUtil {
                 null);
     }
     
+
+    public static GhprbTrigger getTrigger() throws Exception {
+        return getTrigger(null);
+    }
+    
     public static GhprbTrigger getTrigger(Map<String, Object> values) throws Exception {
         setupReq();
         if (values == null) {

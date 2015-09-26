@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,9 +9,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.github.GHEventPayload;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHEventPayload.IssueComment;
+import org.kohsuke.github.GHEventPayload.PullRequest;
 import org.kohsuke.github.GitHub;
 
 public class GhprbWebHook {
@@ -24,58 +22,39 @@ public class GhprbWebHook {
         this.trigger = trigger;
     }
     
-    public void handleWebHook(String event, String payload, String body, String signature) {
-
-        GhprbRepository repo = trigger.getRepository();
-        String repoName = repo.getName();
-
-        logger.log(Level.INFO, "Got payload event: {0}", event);
-        try {
-            GitHub gh = trigger.getGitHub();
-            
-            if ("issue_comment".equals(event)) {
-                GHEventPayload.IssueComment issueComment = gh.parseEventPayload(
-                        new StringReader(payload), 
-                        GHEventPayload.IssueComment.class);
-                GHIssueState state = issueComment.getIssue().getState();
-                if (state == GHIssueState.CLOSED) {
-                    logger.log(Level.INFO, "Skip comment on closed PR");
-                    return;
-                }
-                
-                if (matchRepo(repo, issueComment.getRepository())) {
-                    if (!checkSignature(body, signature, trigger.getGitHubApiAuth().getSecret())){
-                        return;
-                    }
-
-                    logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", 
-                            new Object[] { issueComment.getComment(), repoName }
-                    );
-                    repo.onIssueCommentHook(issueComment);
-                }
-
-            } else if ("pull_request".equals(event)) {
-                GHEventPayload.PullRequest pr = gh.parseEventPayload(
-                        new StringReader(payload), 
-                        GHEventPayload.PullRequest.class);
-                if (matchRepo(repo, pr.getPullRequest().getRepository())) {
-                    if (!checkSignature(body, signature, trigger.getGitHubApiAuth().getSecret())){
-                        return;
-                    }
-
-                    logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repoName, pr.getNumber() });
-                    repo.onPullRequestHook(pr);
-                }
-                
-            } else {
-                logger.log(Level.WARNING, "Request not known");
-            }
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to parse github hook payload for " + trigger.getProject(), ex);
-        }
+    public GitHub getGitHub() throws IOException {
+        return trigger.getGitHub();
     }
-    
-    public static boolean checkSignature(String body, String signature, String secret) {
+
+    public boolean matchRepo(String hookRepoName) {
+        GhprbRepository ghprbRepo = trigger.getRepository();
+        String jobRepoName = ghprbRepo.getName();
+        logger.log(Level.FINE, "Comparing repository names: {0} to {1}, case is ignored", new Object[] { jobRepoName, hookRepoName });
+        return jobRepoName.equalsIgnoreCase(hookRepoName);
+    }
+
+    public String getProjectName() {
+        return trigger.getActualProject().getFullName();
+    }
+
+    public void handleComment(IssueComment issueComment) throws IOException {
+        GhprbRepository repo = trigger.getRepository();
+        
+        logger.log(Level.INFO, "Checking comment on PR #{0} for job {1}", new Object[] {issueComment.getIssue().getNumber(), getProjectName()});
+
+        repo.onIssueCommentHook(issueComment);
+    }
+
+    public void handlePR(PullRequest pr) {
+        GhprbRepository repo = trigger.getRepository();
+
+        logger.log(Level.INFO, "Checking PR #{0} for job {1}", new Object[] {pr.getNumber(), getProjectName()});
+
+        repo.onPullRequestHook(pr);
+    }
+
+    public boolean checkSignature(String body, String signature) {
+        String secret = trigger.getGitHubApiAuth().getSecret();
         if (StringUtils.isEmpty(secret)) {
             return true;
         }
@@ -105,17 +84,6 @@ public class GhprbWebHook {
 
         logger.log(Level.INFO, "Signatures checking OK");
         return true;
-    }
-    
-    private boolean matchRepo(GhprbRepository ghprbRepo, GHRepository ghRepo) {
-        String jobRepoName = ghprbRepo.getName();
-        String hookRepoName = ghRepo.getFullName();
-        logger.log(Level.FINE, "Comparing repository names: {0} to {1}, case is ignored", new Object[]{jobRepoName, hookRepoName});
-        return jobRepoName.equalsIgnoreCase(hookRepoName);
-    }
-
-    public String getProjectName() {
-        return trigger.getProject();
     }
 
 }

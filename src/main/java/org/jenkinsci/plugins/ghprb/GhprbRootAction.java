@@ -10,6 +10,10 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
+import org.kohsuke.github.GHEventPayload.IssueComment;
+import org.kohsuke.github.GHEventPayload.PullRequest;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -85,14 +89,67 @@ public class GhprbRootAction implements UnprotectedRootAction {
             return;
         }
 
-        for (GhprbWebHook webHook : getWebHooks()) {
-            try {
-                webHook.handleWebHook(event, payload, body, signature);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
-            }
-        }
+        logger.log(Level.FINE, "Got payload event: {0}", event);
         
+        try {
+            GitHub gh = GitHub.connectAnonymously();
+            
+            if ("issue_comment".equals(event)) {
+                IssueComment issueComment = getIssueComment(payload, gh);
+                GHIssueState state = issueComment.getIssue().getState();
+                if (state == GHIssueState.CLOSED) {
+                    logger.log(Level.INFO, "Skip comment on closed PR");
+                    return;
+                }
+                
+                String repoName = issueComment.getRepository().getFullName();
+
+                logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] { issueComment.getComment(), repoName });
+
+                for (GhprbWebHook webHook : getWebHooks()) {
+                    try {
+                        if (webHook.matchRepo(repoName) && webHook.checkSignature(body, signature)) {
+                            IssueComment authedComment = getIssueComment(payload, webHook.getGitHub());
+                            webHook.handleComment(authedComment);
+                        }
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+                    }
+                }
+
+            } else if ("pull_request".equals(event)) {
+                PullRequest pr = getPullRequest(payload, gh);
+                String repoName = pr.getRepository().getFullName();
+
+                logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repoName, pr.getNumber() });
+
+                for (GhprbWebHook webHook : getWebHooks()) {
+                    try {
+                        if (webHook.matchRepo(repoName) && webHook.checkSignature(body, signature)) {
+                            PullRequest authedPr = getPullRequest(payload, webHook.getGitHub());
+                            webHook.handlePR(authedPr);
+                        }
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+                    }
+                }
+            } else {
+                logger.log(Level.WARNING, "Request not known");
+            }
+
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to connect to GitHub anonymously", e);
+        }
+    }
+    
+    private PullRequest getPullRequest(String payload, GitHub gh) throws IOException {
+        PullRequest pr = gh.parseEventPayload(new StringReader(payload), PullRequest.class);
+        return pr;
+    }
+    
+    private IssueComment getIssueComment(String payload, GitHub gh) throws IOException {
+        IssueComment issueComment = gh.parseEventPayload(new StringReader(payload), IssueComment.class);
+        return issueComment;
     }
 
     private String extractRequestBody(StaplerRequest req) {
