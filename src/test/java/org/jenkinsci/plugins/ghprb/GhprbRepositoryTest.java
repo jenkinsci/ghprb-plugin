@@ -134,6 +134,7 @@ public class GhprbRepositoryTest {
         given(gt.getRateLimit()).willThrow(new FileNotFoundException());
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
 
         mockHeadAndBase();
         mockCommitList();
@@ -157,6 +158,7 @@ public class GhprbRepositoryTest {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
 
         mockHeadAndBase();
         mockCommitList();
@@ -216,7 +218,9 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
         given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
-
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        
         given(ghUser.getEmail()).willReturn("email");
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
@@ -227,7 +231,6 @@ public class GhprbRepositoryTest {
         ghprbRepository.check();
 
         // THEN
-
         verifyGetGithub(1);
         verifyNoMoreInteractions(gt);
 
@@ -284,6 +287,7 @@ public class GhprbRepositoryTest {
 
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
         given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(now).willReturn(tomorrow);
         given(ghPullRequest.getNumber()).willReturn(100);
         given(ghPullRequest.getMergeable()).willReturn(true);
@@ -291,7 +295,9 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
         given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
-
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
 
@@ -367,6 +373,7 @@ public class GhprbRepositoryTest {
         GhprbBuilds builds = mockBuilds();
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
         given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(now).willReturn(tomorrow);
         given(ghPullRequest.getNumber()).willReturn(100);
         given(ghPullRequest.getMergeable()).willReturn(true);
@@ -374,7 +381,9 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
         given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
-
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
 
@@ -470,6 +479,7 @@ public class GhprbRepositoryTest {
         // GIVEN
         List<GHPullRequest> ghPullRequests = new ArrayList<GHPullRequest>();
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
 
         // WHEN
         ghprbRepository.check();
