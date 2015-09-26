@@ -448,13 +448,8 @@ public class Ghprb {
         
         List<StandardCredentials> credentials;
         
-        if (context == null) {
-            credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
-                    URIRequirementBuilder.fromUri(uri).build());
-        } else {
-            credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
-                    URIRequirementBuilder.fromUri(uri).build());
-        }
+        credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (Item) null, ACL.SYSTEM,
+                URIRequirementBuilder.fromUri(uri).build());
         
         logger.log(Level.FINE, "Found {0} credentials", new Object[]{credentials.size()});
         
