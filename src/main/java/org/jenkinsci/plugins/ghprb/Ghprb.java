@@ -42,7 +42,6 @@ import org.kohsuke.github.GHUser;
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;

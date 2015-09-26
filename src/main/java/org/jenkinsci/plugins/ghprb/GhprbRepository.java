@@ -110,7 +110,12 @@ public class GhprbRepository {
                     return;
                 }
             }
-            check(pr);
+            try {
+                check(pr);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+                return;
+            }
             closedPulls.remove(pr.getNumber());
         }
         
@@ -121,13 +126,14 @@ public class GhprbRepository {
         }
     }
 
-    private void check(GHPullRequest pr) {
+    private void check(GHPullRequest pr) throws IOException {
         ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
-        
+
         final Integer id = pr.getNumber();
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
             pull = pulls.get(id);
+            pull.init(helper, this);
         } else {
             pulls.putIfAbsent(id, new GhprbPullRequest(pr, helper, this));
             pull = pulls.get(id);
@@ -260,7 +266,8 @@ public class GhprbRepository {
             return;
         }
         int id = issueComment.getIssue().getNumber();
-        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}",
+                new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
@@ -271,15 +278,17 @@ public class GhprbRepository {
         if (pull == null) {
             pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
             pulls.put(id, pull);
+        } else {
+            pull.init(helper, this);
         }
         pull.check(issueComment.getComment());
         GhprbTrigger.getDscp().save();
     }
 
-    void onPullRequestHook(PullRequest pr) {
+    void onPullRequestHook(PullRequest pr) throws IOException {
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
-        
+
         if ("closed".equals(pr.getAction())) {
             pulls.remove(pr.getNumber());
         } else if (helper.isProjectDisabled()) {
@@ -289,6 +298,8 @@ public class GhprbRepository {
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
                 pull = pulls.get(pr.getNumber());
+            } else {
+                pull.init(helper, this);
             }
             pull.check(pr.getPullRequest());
         } else if ("synchronize".equals(pr.getAction())) {
@@ -296,6 +307,8 @@ public class GhprbRepository {
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
                 pull = pulls.get(pr.getNumber());
+            } else {
+                pull.init(helper, this);
             }
             if (pull == null) {
                 logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
