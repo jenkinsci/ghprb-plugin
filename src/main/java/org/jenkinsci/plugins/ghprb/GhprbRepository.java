@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +45,15 @@ public class GhprbRepository {
     public void init() {
         // make the initial check call to populate our data structures
         initGhRepository();
+        for (Entry<Integer, GhprbPullRequest> next : helper.getTrigger().getPulls().entrySet()) {
+            GhprbPullRequest pull = next.getValue();
+            try {
+                pull.init(helper, this);
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Unable to initialize pull request #{0} for repo {1}, job {2}", new Object[]{next.getKey(), reponame, helper.getTrigger().getActualProject().getFullName()});
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean initGhRepository() {
@@ -133,7 +143,6 @@ public class GhprbRepository {
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
             pull = pulls.get(id);
-            pull.init(helper, this);
         } else {
             pulls.putIfAbsent(id, new GhprbPullRequest(pr, helper, this));
             pull = pulls.get(id);
@@ -278,8 +287,6 @@ public class GhprbRepository {
         if (pull == null) {
             pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
             pulls.put(id, pull);
-        } else {
-            pull.init(helper, this);
         }
         pull.check(issueComment.getComment());
         GhprbTrigger.getDscp().save();
@@ -298,8 +305,6 @@ public class GhprbRepository {
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
                 pull = pulls.get(pr.getNumber());
-            } else {
-                pull.init(helper, this);
             }
             pull.check(pr.getPullRequest());
         } else if ("synchronize".equals(pr.getAction())) {
@@ -307,8 +312,6 @@ public class GhprbRepository {
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
                 pull = pulls.get(pr.getNumber());
-            } else {
-                pull.init(helper, this);
             }
             if (pull == null) {
                 logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
