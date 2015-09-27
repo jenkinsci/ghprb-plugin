@@ -97,7 +97,9 @@ public class GhprbRootActionTest {
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
+        given(ghPullRequest.getId()).willReturn(1);
         given(ghPullRequest.getNumber()).willReturn(1);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
@@ -137,7 +139,9 @@ public class GhprbRootActionTest {
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
+        given(ghPullRequest.getId()).willReturn(1);
         given(ghPullRequest.getNumber()).willReturn(1);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);

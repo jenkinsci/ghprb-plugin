@@ -32,21 +32,16 @@ public class GhprbRepository {
     private static final EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
     private final String reponame;
-    private final ConcurrentMap<Integer, GhprbPullRequest> pulls;
 
     private GHRepository ghRepository;
     private Ghprb helper;
 
-    public GhprbRepository(String user, String repository, Ghprb helper, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
+    public GhprbRepository(String user, String repository, Ghprb helper) {
         this.reponame = user + "/" + repository;
         this.helper = helper;
-        this.pulls = pulls;
     }
 
     public void init() {
-        for (GhprbPullRequest pull : pulls.values()) {
-            pull.init(helper, this);
-        }
         // make the initial check call to populate our data structures
         initGhRepository();
     }
@@ -101,6 +96,9 @@ public class GhprbRepository {
             logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
+        
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        
         Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
         for (GHPullRequest pr : openPulls) {
@@ -112,9 +110,15 @@ public class GhprbRepository {
                     return;
                 }
             }
-            check(pr);
+            try {
+                check(pr);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+                return;
+            }
             closedPulls.remove(pr.getNumber());
         }
+        
 
         // remove closed pulls so we don't check them again
         for (Integer id : closedPulls) {
@@ -122,11 +126,14 @@ public class GhprbRepository {
         }
     }
 
-    private void check(GHPullRequest pr) {
+    private void check(GHPullRequest pr) throws IOException {
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+
         final Integer id = pr.getNumber();
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
             pull = pulls.get(id);
+            pull.init(helper, this);
         } else {
             pulls.putIfAbsent(id, new GhprbPullRequest(pr, helper, this));
             pull = pulls.get(id);
@@ -259,21 +266,29 @@ public class GhprbRepository {
             return;
         }
         int id = issueComment.getIssue().getNumber();
-        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}",
+                new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
 
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
             pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
             pulls.put(id, pull);
+        } else {
+            pull.init(helper, this);
         }
         pull.check(issueComment.getComment());
         GhprbTrigger.getDscp().save();
     }
 
-    void onPullRequestHook(PullRequest pr) {
+    void onPullRequestHook(PullRequest pr) throws IOException {
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+
         if ("closed".equals(pr.getAction())) {
             pulls.remove(pr.getNumber());
         } else if (helper.isProjectDisabled()) {
@@ -283,6 +298,8 @@ public class GhprbRepository {
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
                 pull = pulls.get(pr.getNumber());
+            } else {
+                pull.init(helper, this);
             }
             pull.check(pr.getPullRequest());
         } else if ("synchronize".equals(pr.getAction())) {
@@ -290,6 +307,8 @@ public class GhprbRepository {
             if (pull == null) {
                 pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
                 pull = pulls.get(pr.getNumber());
+            } else {
+                pull.init(helper, this);
             }
             if (pull == null) {
                 logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
