@@ -42,7 +42,6 @@ import org.kohsuke.github.GHUser;
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -62,7 +61,7 @@ public class Ghprb {
     private GhprbRepository repository;
     private GhprbBuilds builds;
 
-    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
+    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger) {
         this.project = project;
 
         final GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
@@ -79,7 +78,7 @@ public class Ghprb {
 
         this.trigger = trigger;
 
-        this.repository = new GhprbRepository(user, repo, this, pulls);
+        this.repository = new GhprbRepository(user, repo, this);
         this.builds = new GhprbBuilds(trigger, repository);
     }
 

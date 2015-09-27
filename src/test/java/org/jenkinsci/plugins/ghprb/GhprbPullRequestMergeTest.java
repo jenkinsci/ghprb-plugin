@@ -26,6 +26,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 import org.kohsuke.github.PagedIterable;
@@ -73,6 +74,8 @@ public class GhprbPullRequestMergeTest {
     private Ghprb helper;
     @Mock
     private GhprbRepository repo;
+    @Mock
+    private GHRepository ghRepo;
 
     @Mock
     private StreamBuildListener listener;
@@ -109,10 +112,16 @@ public class GhprbPullRequestMergeTest {
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
+        
         pulls.put(pullId, pullRequest);
         Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>(1);
         jobs.put("project", pulls);
 
+        Mockito.doReturn(pulls).when(trigger).getPulls();
+        Mockito.doReturn(repo).when(trigger).getRepository();
+        Mockito.doReturn(pr).when(repo).getPullRequest(pullId);
+        
+        
         GithubProjectProperty projectProperty = new GithubProjectProperty("https://github.com/jenkinsci/ghprb-plugin");
         DescriptorImpl descriptor = trigger.getDescriptor();
 
@@ -150,7 +159,8 @@ public class GhprbPullRequestMergeTest {
         jobsField.setAccessible(true);
         jobsField.set(descriptor, jobs);
 
-        helper = spy(new Ghprb(project, trigger, pulls));
+        helper = spy(new Ghprb(project, trigger));
+        given(trigger.getPulls()).willReturn(pulls);
         trigger.setHelper(helper);
         given(helper.getRepository()).willReturn(repo);
         given(helper.isBotUser(any(GHUser.class))).willReturn(false);

@@ -45,7 +45,7 @@ public class GhprbWebHook {
         repo.onIssueCommentHook(issueComment);
     }
 
-    public void handlePR(PullRequest pr) {
+    public void handlePR(PullRequest pr) throws IOException {
         GhprbRepository repo = trigger.getRepository();
 
         logger.log(Level.INFO, "Checking PR #{0} for job {1}", new Object[] {pr.getNumber(), getProjectName()});
