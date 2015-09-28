@@ -66,6 +66,9 @@ public class GhprbRootActionTest {
     private StaplerRequest req;
 
     private BufferedReader br;
+    
+
+    private final int prId = 1;
 
     @Before
     public void setup() throws Exception {
@@ -97,9 +100,9 @@ public class GhprbRootActionTest {
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
-        given(ghPullRequest.getId()).willReturn(1);
-        given(ghPullRequest.getNumber()).willReturn(1);
-        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        given(ghPullRequest.getId()).willReturn(prId);
+        given(ghPullRequest.getNumber()).willReturn(prId);
+        given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
@@ -139,9 +142,9 @@ public class GhprbRootActionTest {
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
-        given(ghPullRequest.getId()).willReturn(1);
-        given(ghPullRequest.getNumber()).willReturn(1);
-        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        given(ghPullRequest.getId()).willReturn(prId);
+        given(ghPullRequest.getNumber()).willReturn(prId);
+        given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
         Ghprb ghprb = spy(trigger.createGhprb(project));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
