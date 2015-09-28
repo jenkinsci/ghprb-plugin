@@ -42,7 +42,6 @@ import org.kohsuke.github.GHUser;
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -62,7 +61,7 @@ public class Ghprb {
     private GhprbRepository repository;
     private GhprbBuilds builds;
 
-    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
+    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger) {
         this.project = project;
 
         final GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
@@ -79,7 +78,7 @@ public class Ghprb {
 
         this.trigger = trigger;
 
-        this.repository = new GhprbRepository(user, repo, this, pulls);
+        this.repository = new GhprbRepository(user, repo, this);
         this.builds = new GhprbBuilds(trigger, repository);
     }
 
@@ -256,11 +255,7 @@ public class Ghprb {
         String returnString = inputString;
         if (build != null && inputString != null) {
             try {
-                Map<String, String> messageEnvVars = new HashMap<String, String>();
-
-                messageEnvVars.putAll(build.getCharacteristicEnvVars());
-                messageEnvVars.putAll(build.getBuildVariables());
-                messageEnvVars.putAll(build.getEnvironment(listener));
+                Map<String, String> messageEnvVars = getEnvVars(build, listener);
 
                 returnString = Util.replaceMacro(inputString, messageEnvVars);
 
@@ -269,6 +264,20 @@ public class Ghprb {
             }
         }
         return returnString;
+    }
+    
+    public static Map<String, String> getEnvVars(AbstractBuild<?, ?> build, TaskListener listener) {
+        Map<String, String> messageEnvVars = new HashMap<String, String>();
+        if (build != null) {
+                messageEnvVars.putAll(build.getCharacteristicEnvVars());
+                messageEnvVars.putAll(build.getBuildVariables());
+                try {
+                    messageEnvVars.putAll(build.getEnvironment(listener));
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Couldn't get Env Variables: ", e);
+                }
+        }
+        return messageEnvVars;
     }
     
 
@@ -438,13 +447,10 @@ public class Ghprb {
         
         List<StandardCredentials> credentials;
         
-        if (context == null) {
-            credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM,
-                    URIRequirementBuilder.fromUri(uri).build());
-        } else {
-            credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, context, ACL.SYSTEM,
-                    URIRequirementBuilder.fromUri(uri).build());
-        }
+        logger.log(Level.FINE, "Using null context because of issues not getting all credentias");
+        
+        credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (Item) null, ACL.SYSTEM,
+                URIRequirementBuilder.fromUri(uri).build());
         
         logger.log(Level.FINE, "Found {0} credentials", new Object[]{credentials.size()});
         

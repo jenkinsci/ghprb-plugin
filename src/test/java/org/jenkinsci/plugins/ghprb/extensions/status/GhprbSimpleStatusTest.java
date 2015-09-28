@@ -46,13 +46,11 @@ public class GhprbSimpleStatusTest {
         given(ghprbPullRequest.isMergeable()).willReturn(true);
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
-        status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
+        status.onBuildTriggered(trigger.getActualProject(), "sha", true, 1, ghRepository);
         
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
 
-        verify(ghprbPullRequest).getHead();
-        verify(ghprbPullRequest).isMergeable();
         verifyNoMoreInteractions(ghprbPullRequest);
     }
     
@@ -63,13 +61,11 @@ public class GhprbSimpleStatusTest {
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
-        status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
+        status.onBuildTriggered(trigger.getActualProject(), "sha", false, 1, ghRepository);
         
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
 
-        verify(ghprbPullRequest).getHead();
-        verify(ghprbPullRequest).isMergeable();
         verifyNoMoreInteractions(ghprbPullRequest);
     }
     
@@ -80,13 +76,11 @@ public class GhprbSimpleStatusTest {
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus(""));
-        status.onBuildTriggered(trigger, ghprbPullRequest, ghRepository);
+        status.onBuildTriggered(trigger.getActualProject(), "sha", false, 1, ghRepository);
         
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), isNull(String.class));
         verifyNoMoreInteractions(ghRepository);
 
-        verify(ghprbPullRequest).getHead();
-        verify(ghprbPullRequest).isMergeable();
         verifyNoMoreInteractions(ghprbPullRequest);
     }
 }

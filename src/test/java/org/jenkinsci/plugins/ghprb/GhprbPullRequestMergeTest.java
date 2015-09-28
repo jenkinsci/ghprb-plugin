@@ -26,6 +26,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 import org.kohsuke.github.PagedIterable;
@@ -73,6 +74,8 @@ public class GhprbPullRequestMergeTest {
     private Ghprb helper;
     @Mock
     private GhprbRepository repo;
+    @Mock
+    private GHRepository ghRepo;
 
     @Mock
     private StreamBuildListener listener;
@@ -109,10 +112,16 @@ public class GhprbPullRequestMergeTest {
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
+        
         pulls.put(pullId, pullRequest);
         Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>(1);
         jobs.put("project", pulls);
 
+        Mockito.doReturn(pulls).when(trigger).getPulls();
+        Mockito.doReturn(repo).when(trigger).getRepository();
+        Mockito.doReturn(pr).when(repo).getPullRequest(pullId);
+        
+        
         GithubProjectProperty projectProperty = new GithubProjectProperty("https://github.com/jenkinsci/ghprb-plugin");
         DescriptorImpl descriptor = trigger.getDescriptor();
 
@@ -150,7 +159,8 @@ public class GhprbPullRequestMergeTest {
         jobsField.setAccessible(true);
         jobsField.set(descriptor, jobs);
 
-        helper = spy(new Ghprb(project, trigger, pulls));
+        helper = spy(new Ghprb(project, trigger));
+        given(trigger.getPulls()).willReturn(pulls);
         trigger.setHelper(helper);
         given(helper.getRepository()).willReturn(repo);
         given(helper.isBotUser(any(GHUser.class))).willReturn(false);
@@ -195,7 +205,6 @@ public class GhprbPullRequestMergeTest {
     }
     
     private GhprbPullRequestMerge setupMerger(
-            boolean onlyTriggerPhrase, 
             boolean onlyAdminsMerge, 
             boolean disallowOwnCode,
             boolean failOnNonMerge,
@@ -204,7 +213,6 @@ public class GhprbPullRequestMergeTest {
 
         GhprbPullRequestMerge merger = spy(new GhprbPullRequestMerge(
                 mergeComment, 
-                onlyTriggerPhrase, 
                 onlyAdminsMerge, 
                 disallowOwnCode,
                 failOnNonMerge,
@@ -216,20 +224,19 @@ public class GhprbPullRequestMergeTest {
         return merger;
     }
 
-    private GhprbPullRequestMerge setupMerger(boolean onlyTriggerPhrase, 
+    private GhprbPullRequestMerge setupMerger(
             boolean onlyAdminsMerge, 
             boolean disallowOwnCode) {
-        return setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode, false, false);
+        return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false);
     }
 
     @Test
     public void testApproveMerge() throws Exception {
 
-        boolean onlyTriggerPhrase = false;
         boolean onlyAdminsMerge = false;
         boolean disallowOwnCode = false;
 
-        GhprbPullRequestMerge merger = setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode);
+        GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
@@ -267,11 +274,10 @@ public class GhprbPullRequestMergeTest {
     @Test
     public void testAdminMerge() throws Exception {
 
-        boolean onlyTriggerPhrase = false;
         boolean onlyAdminsMerge = true;
         boolean disallowOwnCode = false;
 
-        GhprbPullRequestMerge merger = setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode);
+        GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
@@ -285,11 +291,10 @@ public class GhprbPullRequestMergeTest {
     @Test
     public void testTriggerMerge() throws Exception {
 
-        boolean onlyTriggerPhrase = true;
         boolean onlyAdminsMerge = false;
         boolean disallowOwnCode = false;
 
-        GhprbPullRequestMerge merger = setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode);
+        GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
@@ -303,11 +308,10 @@ public class GhprbPullRequestMergeTest {
     @Test
     public void testOwnCodeMerge() throws Exception {
 
-        boolean onlyTriggerPhrase = false;
         boolean onlyAdminsMerge = false;
         boolean disallowOwnCode = true;
 
-        GhprbPullRequestMerge merger = setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode);
+        GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(true);
@@ -321,11 +325,10 @@ public class GhprbPullRequestMergeTest {
     @Test
     public void testDenyMerge() throws Exception {
 
-        boolean onlyTriggerPhrase = true;
         boolean onlyAdminsMerge = true;
         boolean disallowOwnCode = true;
 
-        GhprbPullRequestMerge merger = setupMerger(onlyTriggerPhrase, onlyAdminsMerge, disallowOwnCode);
+        GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         assertThat(merger.perform(build, null, listener)).isEqualTo(false);

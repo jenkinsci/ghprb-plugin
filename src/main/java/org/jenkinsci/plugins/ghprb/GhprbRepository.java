@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,23 +33,27 @@ public class GhprbRepository {
     private static final EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
     private final String reponame;
-    private final ConcurrentMap<Integer, GhprbPullRequest> pulls;
 
     private GHRepository ghRepository;
     private Ghprb helper;
 
-    public GhprbRepository(String user, String repository, Ghprb helper, ConcurrentMap<Integer, GhprbPullRequest> pulls) {
+    public GhprbRepository(String user, String repository, Ghprb helper) {
         this.reponame = user + "/" + repository;
         this.helper = helper;
-        this.pulls = pulls;
     }
 
     public void init() {
-        for (GhprbPullRequest pull : pulls.values()) {
-            pull.init(helper, this);
-        }
         // make the initial check call to populate our data structures
         initGhRepository();
+        for (Entry<Integer, GhprbPullRequest> next : helper.getTrigger().getPulls().entrySet()) {
+            GhprbPullRequest pull = next.getValue();
+            try {
+                pull.init(helper, this);
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Unable to initialize pull request #{0} for repo {1}, job {2}", new Object[]{next.getKey(), reponame, helper.getTrigger().getActualProject().getFullName()});
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean initGhRepository() {
@@ -101,6 +106,9 @@ public class GhprbRepository {
             logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
+        
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        
         Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
         for (GHPullRequest pr : openPulls) {
@@ -112,9 +120,15 @@ public class GhprbRepository {
                     return;
                 }
             }
-            check(pr);
+            try {
+                check(pr);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
+                return;
+            }
             closedPulls.remove(pr.getNumber());
         }
+        
 
         // remove closed pulls so we don't check them again
         for (Integer id : closedPulls) {
@@ -122,7 +136,9 @@ public class GhprbRepository {
         }
     }
 
-    private void check(GHPullRequest pr) {
+    private void check(GHPullRequest pr) throws IOException {
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+
         final Integer id = pr.getNumber();
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
@@ -259,10 +275,13 @@ public class GhprbRepository {
             return;
         }
         int id = issueComment.getIssue().getNumber();
-        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}",
+                new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
 
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
@@ -273,7 +292,10 @@ public class GhprbRepository {
         GhprbTrigger.getDscp().save();
     }
 
-    void onPullRequestHook(PullRequest pr) {
+    void onPullRequestHook(PullRequest pr) throws IOException {
+
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+
         if ("closed".equals(pr.getAction())) {
             pulls.remove(pr.getNumber());
         } else if (helper.isProjectDisabled()) {
