@@ -107,6 +107,11 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.29
+* Reduced the size of the plugin .xml file drastically.
+* Fixed issues with persistance store credentials.
+* Reduced the noise caused by webhook logic, and reduced amount of work for webhooks
+
 #### -> 1.28
 * Fixed [JENKINS-29850] Add author github repo URL
 * Fixed NPE and other errors in merge logic
