@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,8 +40,20 @@ public class GhprbBuilds {
 
     public void build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
 
-        GhprbCause cause = new GhprbCause(pr.getHead(), pr.getId(), pr.isMergeable(), pr.getTarget(), pr.getSource(), pr.getAuthorEmail(), pr.getTitle(), pr.getUrl(), triggerSender, commentBody,
-                pr.getCommitAuthor(), pr.getPullRequestAuthor(), pr.getDescription(), pr.getAuthorRepoGitUrl());
+        GhprbCause cause = new GhprbCause(pr.getHead(), 
+                pr.getId(), 
+                pr.isMergeable(), 
+                pr.getTarget(), 
+                pr.getSource(), 
+                pr.getAuthorEmail(), 
+                pr.getTitle(), 
+                pr.getUrl(), 
+                triggerSender, 
+                commentBody,
+                pr.getCommitAuthor(), 
+                pr.getPullRequestAuthor(), 
+                pr.getDescription(), 
+                pr.getAuthorRepoGitUrl());
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
             if (ext instanceof GhprbCommitStatus) {
@@ -68,11 +79,8 @@ public class GhprbBuilds {
 
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(build.getProject().getFullName());
-
-        GHPullRequest pr = pulls.get(c.getPullID()).getPullRequest();
-
         try {
+            GHPullRequest pr = trigger.getRepository().getPullRequest(c.getPullID());
             int counter = 0;
             // If the PR is being resolved by GitHub then getMergeable will return null
             Boolean isMergeable = pr.getMergeable();

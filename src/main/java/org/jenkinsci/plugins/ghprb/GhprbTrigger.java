@@ -207,7 +207,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     Ghprb createGhprb(AbstractProject<?, ?> project) {
-        return new Ghprb(project, this, getDescriptor().getPullRequests(project.getFullName()));
+        return new Ghprb(project, this);
+    }
+    
+    public ConcurrentMap<Integer, GhprbPullRequest> getPulls() {
+        return getDescriptor().getPullRequests(_project.getFullName());
     }
 
     @Override
@@ -845,5 +849,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
     }
+
 
 }

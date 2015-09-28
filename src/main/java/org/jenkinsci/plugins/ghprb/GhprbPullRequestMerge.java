@@ -2,14 +2,17 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.concurrent.ConcurrentMap;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
-import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
 import org.kohsuke.github.GHRef;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitUser;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -20,10 +23,10 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -109,18 +112,10 @@ public class GhprbPullRequestMerge extends Recorder {
             return true;
         }
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getDescriptor().getPullRequests(project.getFullName());
-
-        pr = pulls.get(cause.getPullID()).getPullRequest();
-
-        if (pr == null) {
-            logger.println("Pull request is null for ID: " + cause.getPullID());
-            logger.println("" + pulls.toString());
-            return false;
-        }
+        pr = trigger.getRepository().getPullRequest(cause.getPullID());
 
         if (helper == null) {
-            helper = new Ghprb(project, trigger, pulls);
+            helper = new Ghprb(project, trigger);
             helper.init();
         }
 
@@ -183,6 +178,17 @@ public class GhprbPullRequestMerge extends Recorder {
         if (intendToMerge && canMerge) {
             logger.println("Merging the pull request");
 
+			try {
+				Field ghRootField = GHIssue.class.getDeclaredField("root");
+				ghRootField.setAccessible(true);
+				Object ghRoot = ghRootField.get(pr);
+				Method anonMethod = GitHub.class.getMethod("isAnonymous");
+				anonMethod.setAccessible(true);
+				Boolean isAnonymous = (Boolean) (anonMethod.invoke(ghRoot));
+				logger.println("Merging PR[" + pr + "] is anonymous: " + isAnonymous);
+			} catch (Exception e) {
+				e.printStackTrace(logger);
+			}
             pr.merge(getMergeComment());
             logger.println("Pull request successfully merged");
             deleteBranch(build, launcher, listener);
@@ -228,26 +234,30 @@ public class GhprbPullRequestMerge extends Recorder {
             String commentorName = commentor.getName();
             String commentorEmail = commentor.getEmail();
             String commentorLogin = commentor.getLogin();
-            
+
             GHUser prUser = pr.getUser();
             if (prUser.getLogin().equals(commentorLogin)) {
-                logger.println(commentorName + " (" + commentorLogin + ")  has commits in PR[" + pr.getId() + "] that is to be merged");
+                logger.println(commentorName + " (" + commentorLogin + ")  has submitted the PR[" + pr.getNumber()
+                        + pr.getNumber() + "] that is to be merged");
                 return true;
             }
-            
+
             for (GHPullRequestCommitDetail detail : pr.listCommits()) {
                 Commit commit = detail.getCommit();
                 GitUser committer = commit.getCommitter();
                 String committerName = committer.getName();
                 String committerEmail = committer.getEmail();
-                
+
                 boolean isSame = false;
-                
+
                 isSame |= commentorName != null && commentorName.equals(committerName);
                 isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
 
-                logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getId() + "] that is to be merged");
-                return isSame;
+                if (isSame) {
+                    logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber()
+                            + "] that is to be merged");
+                    return isSame;
+                }
             }
         } catch (IOException e) {
             logger.println("Unable to get committer name");
@@ -264,7 +274,7 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         @Override
-        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+        public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
             return true;
         }
 
