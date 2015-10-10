@@ -20,7 +20,7 @@ public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
     @Override
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
-        if (trigger != null) {
+        if (trigger != null && trigger.getBuilds() != null) {
             trigger.getBuilds().onStarted(build, listener);
         }
     }
@@ -28,7 +28,7 @@ public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
     @Override
     public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
-        if (trigger != null) {
+        if (trigger != null && trigger.getBuilds() != null) {
             trigger.getBuilds().onCompleted(build, listener);
         }
     }
@@ -36,7 +36,7 @@ public class GhprbBuildListener extends RunListener<AbstractBuild<?, ?>> {
     @Override
     public Environment setUpEnvironment(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException, Run.RunnerAbortedException {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
-        if (trigger != null) {
+        if (trigger != null && trigger.getBuilds() != null) {
             trigger.getBuilds().onEnvironmentSetup(build, launcher, listener);
         }
 
