@@ -133,7 +133,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.buildDescTemplate = buildDescTemplate;
         setExtensions(extensions);
-        configVersion = 1;
+        configVersion = latestVersion;
     }
 
     @Override
