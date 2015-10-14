@@ -13,6 +13,8 @@ import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
 import org.kohsuke.github.GitHub;
 
+import hudson.model.AbstractProject;
+
 public class GhprbWebHook {
     private static final Logger logger = Logger.getLogger(GhprbWebHook.class.getName());
     
@@ -34,7 +36,16 @@ public class GhprbWebHook {
     }
 
     public String getProjectName() {
-        return trigger.getActualProject().getFullName();
+        AbstractProject<?, ?> actualProject = trigger.getActualProject();
+        // If there was an error in the trigger configuration, getActualProject() could return null.
+        // Avoid the NullPointerException and return null in that case since this method is used
+        // in some catches designed to handle malformed triggers/webhooks.
+        if (actualProject != null) {
+            return actualProject.getFullName();
+        }
+        else {
+            return null;
+        }
     }
 
     public void handleComment(IssueComment issueComment) throws IOException {
