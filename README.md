@@ -107,6 +107,10 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.29.1
+* Fix NPE for triggers without a project
+* Add back default URL if env variables are missing
+
 #### -> 1.29
 * Reduced the size of the plugin .xml file drastically.
 * Fixed issues with persistance store credentials.
