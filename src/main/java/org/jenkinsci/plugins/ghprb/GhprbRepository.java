@@ -261,8 +261,8 @@ public class GhprbRepository {
         }
     }
 
-    private static String getHookUrl() {
-        String baseUrl = helper.getTrigger().getGitHubApiAuth().getJenkinsURL();
+    private String getHookUrl() {
+        String baseUrl = helper.getTrigger().getGitHubApiAuth().getJenkinsUrl();
         if (baseUrl == null) {
           baseUrl = Jenkins.getInstance().getRootUrl();
         }
