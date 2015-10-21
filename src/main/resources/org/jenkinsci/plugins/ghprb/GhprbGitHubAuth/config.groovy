@@ -5,7 +5,7 @@ f.entry(title:_("GitHub Server API URL"), field:"serverAPIUrl") {
     f.textbox()
 }
 
-ff.entry(title:_("Jenkins URL override"), field:"jenkinsUrl") {
+f.entry(title:_("Jenkins URL override"), field:"jenkinsUrl") {
     f.textbox()
 }
 
