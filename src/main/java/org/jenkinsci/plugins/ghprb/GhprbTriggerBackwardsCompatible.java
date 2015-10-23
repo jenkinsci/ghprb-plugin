@@ -23,6 +23,8 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     
     public abstract DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions();
     
+    protected final int latestVersion = 3;
+    
 
     protected String triggerPhrase;
     protected Integer configVersion;
@@ -58,7 +60,7 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
         checkBuildStatusMessages();
         checkCommitStatusContext();
         
-        configVersion = 3;
+        configVersion = latestVersion;
     }
     
     private void checkBuildStatusMessages() {

@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
+import hudson.model.AbstractProject;
+
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,7 +36,12 @@ public class GhprbWebHook {
     }
 
     public String getProjectName() {
-        return trigger.getActualProject().getFullName();
+        AbstractProject<?, ?> project = trigger.getActualProject();
+        if (project != null) {
+            return project.getFullName();
+        } else {
+            return "NOT STARTED";
+        }
     }
 
     public void handleComment(IssueComment issueComment) throws IOException {
