@@ -251,14 +251,22 @@ public class GhprbRepository {
                 return true;
             }
             Map<String, String> config = new HashMap<String, String>();
+            String secret = getSecret();
             config.put("url", new URL(getHookUrl()).toExternalForm());
             config.put("insecure_ssl", "1");
+            if (secret != "") {
+             config.put("secret",secret);
+            }
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
             return true;
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
             return false;
         }
+    }
+
+    private String getSecret() {
+        return helper.getTrigger().getGitHubApiAuth().getSecret();
     }
 
     private static String getHookUrl() {
