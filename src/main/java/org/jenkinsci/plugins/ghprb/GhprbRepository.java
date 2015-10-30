@@ -44,7 +44,12 @@ public class GhprbRepository {
 
     public void init() {
         // make the initial check call to populate our data structures
-        initGhRepository();
+        if (!initGhRepository()) {
+            // We could have hit the rate limit while initializing.  If we
+            // continue, then we will loop back around and attempt to re-init.
+            return;
+        }
+        
         for (Entry<Integer, GhprbPullRequest> next : helper.getTrigger().getPulls().entrySet()) {
             GhprbPullRequest pull = next.getValue();
             try {
