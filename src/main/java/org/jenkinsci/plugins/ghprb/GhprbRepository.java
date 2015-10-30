@@ -274,8 +274,12 @@ public class GhprbRepository {
         return helper.getTrigger().getGitHubApiAuth().getSecret();
     }
 
-    private static String getHookUrl() {
-        return Jenkins.getInstance().getRootUrl() + GhprbRootAction.URL + "/";
+    private String getHookUrl() {
+        String baseUrl = helper.getTrigger().getGitHubApiAuth().getJenkinsUrl();
+        if (baseUrl == null) {
+          baseUrl = Jenkins.getInstance().getRootUrl();
+        }
+        return baseUrl + GhprbRootAction.URL + "/";
     }
 
     public GHPullRequest getPullRequest(int id) throws IOException {
