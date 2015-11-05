@@ -44,7 +44,12 @@ public class GhprbRepository {
 
     public void init() {
         // make the initial check call to populate our data structures
-        initGhRepository();
+        if (!initGhRepository()) {
+            // We could have hit the rate limit while initializing.  If we
+            // continue, then we will loop back around and attempt to re-init.
+            return;
+        }
+        
         for (Entry<Integer, GhprbPullRequest> next : helper.getTrigger().getPulls().entrySet()) {
             GhprbPullRequest pull = next.getValue();
             try {
@@ -251,8 +256,12 @@ public class GhprbRepository {
                 return true;
             }
             Map<String, String> config = new HashMap<String, String>();
+            String secret = getSecret();
             config.put("url", new URL(getHookUrl()).toExternalForm());
             config.put("insecure_ssl", "1");
+            if (secret != "") {
+             config.put("secret",secret);
+            }
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
             return true;
         } catch (IOException ex) {
@@ -261,8 +270,16 @@ public class GhprbRepository {
         }
     }
 
-    private static String getHookUrl() {
-        return Jenkins.getInstance().getRootUrl() + GhprbRootAction.URL + "/";
+    private String getSecret() {
+        return helper.getTrigger().getGitHubApiAuth().getSecret();
+    }
+
+    private String getHookUrl() {
+        String baseUrl = helper.getTrigger().getGitHubApiAuth().getJenkinsUrl();
+        if (baseUrl == null) {
+          baseUrl = Jenkins.getInstance().getRootUrl();
+        }
+        return baseUrl + GhprbRootAction.URL + "/";
     }
 
     public GHPullRequest getPullRequest(int id) throws IOException {

@@ -62,6 +62,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 
 ### Credentials
 * If you are using Enterprise GitHub set the server api URL in ``GitHub server api URL``. Otherwise leave there ``https://api.github.com``.
+* Set the Jenkins URL if you need to override the default (e.g. it's behind a firewall)
 * A GitHub API token or username password can be used for access to the GitHub API
 * To setup credentials for a given GitHub Server API URL:
   * Click Add next to the ``Credentials`` drop down
@@ -106,6 +107,15 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 
 ### Updates
+
+#### -> 1.29.4
+* Add secret when auto creating the web hook
+* Accomodate Jenkins being behind a firewall
+* Fix for recursive repo initializations.
+
+#### -> 1.29.1
+* Fix NPE for triggers without a project
+* Add back default URL if env variables are missing
 
 #### -> 1.29
 * Reduced the size of the plugin .xml file drastically.

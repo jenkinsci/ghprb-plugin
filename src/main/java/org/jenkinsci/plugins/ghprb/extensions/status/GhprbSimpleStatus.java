@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jenkins.model.Jenkins;
+
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbCause;
@@ -89,7 +91,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         String triggeredStatus = getDescriptor().getTriggeredStatusDefault(this);
 
         // check if we even need to update
-        if (triggeredStatus != null && triggeredStatus.equals("--none--")) {
+        if (StringUtils.equals(triggeredStatus, "--none--")) {
             return;
         }
 
@@ -111,7 +113,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         }
 
         String url = Ghprb.replaceMacros(project, statusUrl);
-        if ("--none--".equals(statusUrl) || statusUrl == null) {
+        if (StringUtils.equals( statusUrl, "--none--")) {
             url = "";
         }
 
@@ -132,7 +134,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
 
         // check if we even need to update
-        if (startedStatus != null && startedStatus.equals("--none--")) {
+        if (StringUtils.equals(startedStatus, "--none--")) {
             return;
         }
 
@@ -160,7 +162,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             for (GhprbBuildResultMessage buildStatus : completedStatus) {
                 sb.append(buildStatus.postBuildComment(build, listener));
             }
-            if (sb.toString().equals("--none--")) {
+            if (StringUtils.equals(sb.toString(), "--none--")) {
                 return;
             }
         }
@@ -190,8 +192,11 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         if (StringUtils.isEmpty(url)) {
             url = envVars.get("JOB_URL");
         }
+        if (StringUtils.isEmpty(url)) {
+            url = Jenkins.getInstance().getRootUrl() + build.getUrl();
+        }
         
-        if ("--none--".equals(statusUrl) || statusUrl == null) {
+        if (StringUtils.equals(statusUrl, "--none--")) {
             url = "";
         } else if (!StringUtils.isEmpty(statusUrl)) {
             url = Ghprb.replaceMacros(build,  listener, statusUrl);
