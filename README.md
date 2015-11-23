@@ -108,6 +108,9 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.29.5 
+* Merge #232 fixes erronius no test cases found
+
 #### -> 1.29.4
 * Add secret when auto creating the web hook
 * Accomodate Jenkins being behind a firewall
