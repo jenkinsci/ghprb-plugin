@@ -631,6 +631,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
             try {
                 extensions.rebuildHetero(req, formData, getGlobalExtensionDescriptors(), "extensions");
+                // Now make sure we have at least one of the types we need one of.
+                Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(), GhprbCommitStatus.class);
             } catch (IOException e) {
                 e.printStackTrace();
             }
