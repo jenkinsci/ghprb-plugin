@@ -5,6 +5,10 @@ f.entry(title:_("GitHub Server API URL"), field:"serverAPIUrl") {
     f.textbox()
 }
 
+f.entry(title:_("Jenkins URL override"), field:"jenkinsUrl") {
+    f.textbox()
+}
+
 f.entry(title:_("Shared secret"), field:"secret") {
     f.password()
 }

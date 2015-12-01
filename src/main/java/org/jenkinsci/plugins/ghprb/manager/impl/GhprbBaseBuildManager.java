@@ -12,8 +12,8 @@ import jenkins.model.Jenkins;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.junit.TestResult;
-import hudson.tasks.junit.TestResultAction;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction.ChildReport;
@@ -172,7 +172,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
     public String getOneLineTestResults() {
 
-        TestResultAction testResultAction = build.getAction(TestResultAction.class);
+        AbstractTestResultAction testResultAction = build.getAction(AbstractTestResultAction.class);
 
         if (testResultAction == null) {
             return "No test results found.";

@@ -53,6 +53,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     private final String serverAPIUrl;
+    private final String jenkinsUrl;
     private final String credentialsId;
     private final String id;
     private final String description;
@@ -61,6 +62,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     @DataBoundConstructor
     public GhprbGitHubAuth(
             String serverAPIUrl, 
+            String jenkinsUrl, 
             String credentialsId, 
             String description, 
             String id,
@@ -70,6 +72,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             serverAPIUrl = "https://api.github.com";
         }
         this.serverAPIUrl = fixEmptyAndTrim(serverAPIUrl);
+        this.jenkinsUrl = fixEmptyAndTrim(jenkinsUrl);
         this.credentialsId = fixEmpty(credentialsId);
         if (StringUtils.isEmpty(id)) {
             id = UUID.randomUUID().toString();
@@ -83,6 +86,11 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     @Exported
     public String getServerAPIUrl() {
         return serverAPIUrl;
+    }
+
+    @Exported
+    public String getJenkinsUrl() {
+        return jenkinsUrl;
     }
 
     @Exported
