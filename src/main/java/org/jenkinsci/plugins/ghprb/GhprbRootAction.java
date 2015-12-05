@@ -59,18 +59,20 @@ public class GhprbRootAction implements UnprotectedRootAction {
         String payload = null;
         String body = null;
 
-        if ("application/json".equals(type)) {
+        if (type.startsWith("application/json")) {
             body = extractRequestBody(req);
             if (body == null) {
                 logger.log(Level.SEVERE, "Can't get request body for application/json.");
+                resp.setStatus(StaplerResponse.SC_BAD_REQUEST);
                 return;
             }
             payload = body;
-        } else if ("application/x-www-form-urlencoded".equals(type)) {
+        } else if (type.startsWith("application/x-www-form-urlencoded")) {
             body = extractRequestBody(req);
             if (body == null || body.length() <= 8) {
                 logger.log(Level.SEVERE, "Request doesn't contain payload. "
                         + "You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                resp.setStatus(StaplerResponse.SC_BAD_REQUEST);
                 return;
             }
             try {
@@ -78,6 +80,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 payload = URLDecoder.decode(body.substring(8), encoding != null ? encoding : "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 logger.log(Level.SEVERE, "Error while trying to decode the payload");
+                resp.setStatus(StaplerResponse.SC_BAD_REQUEST);
                 return;
             }
         }
@@ -86,6 +89,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
             logger.log(Level.SEVERE, "Payload is null, maybe content type ''{0}'' is not supported by this plugin. "
                     + "Please use 'application/json' or 'application/x-www-form-urlencoded'",
                     new Object[] { type });
+            resp.setStatus(StaplerResponse.SC_UNSUPPORTED_MEDIA_TYPE);
             return;
         }
 
