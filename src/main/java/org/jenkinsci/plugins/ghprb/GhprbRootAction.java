@@ -83,7 +83,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
         }
 
         if (payload == null) {
-            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. "
+            logger.log(Level.SEVERE, "Payload is null, maybe content type ''{0}'' is not supported by this plugin. "
                     + "Please use 'application/json' or 'application/x-www-form-urlencoded'",
                     new Object[] { type });
             return;
