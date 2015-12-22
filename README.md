@@ -108,6 +108,12 @@ If you want to manually build the job, in the job setting check ``This build is 
 
 ### Updates
 
+#### -> 1.29.7
+* Remove quoting of trigger phrase
+* Merged #242 replaces newline and quoted quotes
+* Merged #229 Add job dsl
+* Merged #238 Update github-api version
+
 #### -> 1.29.5 
 * Merge #232 fixes erroneous no test cases found
 

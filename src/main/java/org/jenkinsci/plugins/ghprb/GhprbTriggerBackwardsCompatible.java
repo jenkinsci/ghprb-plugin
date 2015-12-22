@@ -52,9 +52,6 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
         if (configVersion == null) {
             configVersion = 0;
         }
-        if (configVersion < 3 && !StringUtils.isEmpty(triggerPhrase)) {
-            triggerPhrase = Pattern.quote(triggerPhrase);
-        }
         
         checkCommentsFile();
         checkBuildStatusMessages();
