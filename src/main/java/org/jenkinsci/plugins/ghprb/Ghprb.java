@@ -447,7 +447,7 @@ public class Ghprb {
         
         List<StandardCredentials> credentials;
         
-        logger.log(Level.FINE, "Using null context because of issues not getting all credentias");
+        logger.log(Level.FINE, "Using null context because of issues not getting all credentials");
         
         credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (Item) null, ACL.SYSTEM,
                 URIRequirementBuilder.fromUri(uri).build());

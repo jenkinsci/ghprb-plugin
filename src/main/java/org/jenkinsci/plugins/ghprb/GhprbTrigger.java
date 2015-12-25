@@ -19,6 +19,7 @@ import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -34,6 +35,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
@@ -205,6 +208,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         helper.init();
 
     }
+    
+    
 
     Ghprb createGhprb(AbstractProject<?, ?> project) {
         return new Ghprb(project, this);
@@ -317,7 +322,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         return getDescriptor().getGitHubAuth(gitHubAuthId);
     }
-    
 
     public GitHub getGitHub() throws IOException {
         GhprbGitHubAuth auth = getGitHubApiAuth();
@@ -330,6 +334,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return _project;
         }
 
+        logger.log(Level.WARNING, String.format("Using inefficient method to get AbstractProject from %s", this.project));
         @SuppressWarnings("rawtypes")
         List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
         
@@ -479,9 +484,18 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return whiteListTargetBranches;
     }
 
-    public GhprbWebHook getWebHook() {
-        GhprbWebHook webHook = new GhprbWebHook(this);
-        return webHook;
+    // Returns true if the trigger's project matches hookRepoName
+    public boolean matchRepo(String hookRepoName) {
+        GhprbRepository ghprbRepo = this.getRepository();
+        
+        // getRepository could return null above if the project was disabled.
+        if (ghprbRepo == null) {
+            return false;
+        }
+        
+        String jobRepoName = ghprbRepo.getName();
+        logger.log(Level.FINE, "Comparing repository names: {0} to {1}, case is ignored", new Object[] { jobRepoName, hookRepoName });
+        return jobRepoName.equalsIgnoreCase(hookRepoName);
     }
 
     @Override
@@ -493,18 +507,21 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     void setHelper(Ghprb helper) {
         this.helper = helper;
     }
+    
+    // Returns true if the trigger was started.
+    private boolean getTriggerWasStarted() {
+        return helper != null;
+    }
 
     public GhprbBuilds getBuilds() {
-        if (helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
+        if (!getTriggerWasStarted()) {
             return null;
         }
         return helper.getBuilds();
     }
 
     public GhprbRepository getRepository() {
-        if (helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
+        if (!getTriggerWasStarted()) {
             return null;
         }
         return helper.getRepository();
