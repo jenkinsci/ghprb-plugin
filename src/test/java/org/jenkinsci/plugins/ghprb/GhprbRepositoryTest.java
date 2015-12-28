@@ -529,8 +529,8 @@ public class GhprbRepositoryTest {
         
         given(ghAuth.getSecret()).willReturn(actualSecret);
         
-        Assert.assertTrue(trigger.checkSignature(body, actualSignature));
-        Assert.assertFalse(trigger.checkSignature(body, fakeSignature));
+        Assert.assertTrue(trigger.getGitHubApiAuth().checkSignature(body, actualSignature));
+        Assert.assertFalse(trigger.getGitHubApiAuth().checkSignature(body, fakeSignature));
     }
 
     private String createSHA1Signature(String secret, String body) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
