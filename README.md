@@ -105,6 +105,64 @@ Make sure you **DON'T** have ``Prune remote branches before build`` advanced opt
 #### Parameterized Builds
 If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1`` with a default value of ``master``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
 
+### Job DSL Support
+
+Since the plugin contains an extension for the Job DSL plugin to add DSL syntax for configuring the build trigger and
+the pull request merger post-build action.
+
+Here is an example showing all DSL syntax elements:
+
+```groovy
+job('example') {
+    scm {
+        git {
+            remote {
+                github('test-owner/test-project')
+                refspec('+refs/pull/*:refs/remotes/origin/pr/*')
+            }
+            branch('${sha1}')
+        }
+    }
+    triggers {
+        githubPullRequest {
+            admin('user_1')
+            admins(['user_2', 'user_3'])
+            userWhitelist('you@you.com')
+            userWhitelist(['me@me.com', 'they@they.com'])
+            orgWhitelist('my_github_org')
+            orgWhitelist(['your_github_org', 'another_org'])
+            cron('H/5 * * * *')
+            triggerPhrase('OK to test')
+            onlyTriggerPhrase()
+            useGitHubHooks()
+            permitAll()
+            autoCloseFailedPullRequests()
+            allowMembersOfWhitelistedOrgsAsAdmin()
+            extensions {
+                commitStatus {
+                    context('deploy to staging site')
+                    triggeredStatus('starting deployment to staging site...')
+                    startedStatus('deploying to staging site...')
+                    statusUrl('http://mystatussite.com/prs')
+                    completedStatus('SUCCESS', 'All is well')
+                    completedStatus('FAILURE', 'Something went wrong. Investigate!')
+                    completedStatus('PENDING', 'still in progress...')
+                    completedStatus('ERROR', 'Something went really wrong. Investigate!')
+                }
+            }
+        }
+    }
+    publishers {
+        mergeGithubPullRequest {
+            mergeComment('merged by Jenkins')
+            onlyAdminsMerge()
+            disallowOwnCode()
+            failOnNonMerge()
+            deleteOnMerge()
+        }
+    }
+}
+```
 
 ### Updates
 

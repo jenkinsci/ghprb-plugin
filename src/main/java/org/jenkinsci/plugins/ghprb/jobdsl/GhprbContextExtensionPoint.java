@@ -3,10 +3,12 @@ package org.jenkinsci.plugins.ghprb.jobdsl;
 import antlr.ANTLRException;
 import com.google.common.base.Joiner;
 import hudson.Extension;
+import javaposse.jobdsl.dsl.helpers.publisher.PublisherContext;
 import javaposse.jobdsl.dsl.helpers.triggers.TriggerContext;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import javaposse.jobdsl.plugin.DslExtensionMethod;
 import org.jenkinsci.plugins.ghprb.GhprbBranch;
+import org.jenkinsci.plugins.ghprb.GhprbPullRequestMerge;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 
 import java.util.ArrayList;
@@ -37,6 +39,20 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 null,
                 null,
                 context.extensionContext.extensions
+        );
+    }
+
+    @DslExtensionMethod(context = PublisherContext.class)
+    public Object mergeGithubPullRequest(Runnable closure) {
+        GhprbPullRequestMergeContext context = new GhprbPullRequestMergeContext();
+        executeInContext(closure, context);
+
+        return new GhprbPullRequestMerge(
+                context.mergeComment,
+                context.onlyAdminsMerge,
+                context.disallowOwnCode,
+                context.failOnNonMerge,
+                context.deleteOnMerge
         );
     }
 }
