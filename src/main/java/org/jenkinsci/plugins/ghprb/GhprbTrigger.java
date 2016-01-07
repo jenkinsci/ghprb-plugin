@@ -8,8 +8,15 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
-import hudson.model.*;
 import hudson.model.AbstractProject;
+import hudson.model.Item;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Run;
+import hudson.model.Saveable;
+import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 import hudson.triggers.TriggerDescriptor;
@@ -30,6 +37,8 @@ import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GHEventPayload.IssueComment;
+import org.kohsuke.github.GHEventPayload.PullRequest;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -37,14 +46,15 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import jenkins.model.Jenkins;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -66,10 +76,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
-    private transient Ghprb helper;
-    private String project;
-    private AbstractProject<?, ?> _project;
     private String gitHubAuthId;
+    
+
+    private transient Ghprb helper;
     
     
     private DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP);
@@ -159,16 +169,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * Save any updates that may have been made inside the plugin that would affect the config.xml
      */
     public void save() {
-        if (_project != null) {
+        if (super.job != null) {
             String xmlConfig = "";
             try {
-                xmlConfig = _project.getConfigFile().asString();
+                xmlConfig = super.job.getConfigFile().asString();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Unable to save load config file", e);
             } 
             if (!xmlConfig.contains("<config>" + configVersion)) {
                 try {
-                    _project.save();
+                    super.job.save();
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, "Unable to save config updates", e);
                 }
@@ -180,43 +190,40 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
         // We should always start the trigger, and handle cases where we don't run in the run function.
         super.start(project, newInstance);
-        this._project = project;
-        this.project = project.getFullName();
         
         save();
         
+        String name = project.getFullName();
+        
         if (project.isDisabled()) {
-            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + this.project);
+            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
             return;
         }
         if (project.getProperty(GithubProjectProperty.class) == null) {
-            logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + this.project);
+            logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + name);
             return;
         }
         try {
-            helper = createGhprb(project);
+            helper = new Ghprb(this);
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Can't start ghprb trigger", ex);
             return;
         }
 
         logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", 
-                new String[] { this.project, String.valueOf(newInstance) });
+                new String[] { name, String.valueOf(newInstance) });
         helper.init();
 
     }
 
-    Ghprb createGhprb(AbstractProject<?, ?> project) {
-        return new Ghprb(project, this);
-    }
-    
     public ConcurrentMap<Integer, GhprbPullRequest> getPulls() {
-        return getDescriptor().getPullRequests(_project.getFullName());
+        return getDescriptor().getPullRequests(super.job.getFullName());
     }
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "Stopping the ghprb trigger for project {0}", this.project);
+        String name = super.job != null ? super.job.getFullName(): "NOT STARTED";
+        logger.log(Level.INFO, "Stopping the ghprb trigger for project {0}", name);
         if (helper != null) {
             helper.stop();
             helper = null;
@@ -232,18 +239,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
 
-        if ((helper != null && helper.isProjectDisabled()) || (_project != null && _project.isDisabled())) {
-            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", this.project);
-            return;
-        }
-        
-        if (helper == null) {
-            logger.log(Level.SEVERE, "Helper is null and Project is not disabled, unable to run trigger");
+        if (!isActive()) {
             return;
         }
 
         
-        logger.log(Level.FINE, "Running trigger for {0}", project);
+        logger.log(Level.FINE, "Running trigger for {0}", super.job.getFullName());
         
         helper.run();
         getDescriptor().save();
@@ -325,20 +326,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public AbstractProject<?, ?> getActualProject() {
-        
-        if (_project != null) {
-            return _project;
-        }
-
-        @SuppressWarnings("rawtypes")
-        List<AbstractProject> projects = Jenkins.getInstance().getAllItems(AbstractProject.class);
-        
-        for (AbstractProject<?, ?> project : projects) {
-            if (project.getFullName().equals(this.project)) {
-                return project;
-            }
-        }
-        return null;
+        return super.job;
     }
 
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
@@ -433,10 +421,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return cron;
     }
 
-    public String getProject() {
-        return project;
-    }
-
     public String getTriggerPhrase() {
         if (triggerPhrase == null) {
             return "";
@@ -479,11 +463,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return whiteListTargetBranches;
     }
 
-    public GhprbWebHook getWebHook() {
-        GhprbWebHook webHook = new GhprbWebHook(this);
-        return webHook;
-    }
-
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -495,20 +474,69 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public GhprbBuilds getBuilds() {
-        if (helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
-            return null;
-        }
-        return helper.getBuilds();
+        return isActive() ? helper.getBuilds() : null;
     }
 
-    public GhprbRepository getRepository() {
-        if (helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", this.project);
-            return null;
+    public boolean isActive() {
+        String name = super.job != null ? super.job.getFullName() : "NOT STARTED";
+        boolean isActive = true;
+        if (super.job == null) {
+            logger.log(Level.FINE, "Project was never set, start was never run");
+            isActive = false;
+        } else if ((helper != null && helper.isProjectDisabled()) || (super.job != null && super.job.isDisabled())) {
+            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
+            isActive = false;
+        } else if (helper == null) {
+            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", name);
+            isActive = false;
         }
-        return helper.getRepository();
+        
+        return isActive;
     }
+    
+    public GhprbRepository getRepository() {
+        return isActive() ? helper.getRepository() : null;
+    }
+    
+    public String getProjectName() {
+        String projectName = super.job == null ? "NOT_STARTED" : super.job.getFullName();
+        return projectName;
+    }
+    
+    public boolean matchRepo(String hookRepoName) {
+        if (!isActive()) {
+            return false;
+        }
+        String repo = getRepository().getName();
+        
+        logger.log(Level.FINE, "Comparing repository names: {0} to {1}, case is ignored", new Object[] { repo, hookRepoName });
+        return repo.equalsIgnoreCase(hookRepoName);
+    }
+    
+    public boolean matchSignature(String body, String signature) {
+        if (!isActive()) {
+            return false;
+        }
+        GhprbGitHubAuth auth = getGitHubApiAuth();
+        return auth == null ? false : auth.checkSignature(body, signature);
+    }
+    
+    public void handleComment(IssueComment issueComment) throws IOException {
+        GhprbRepository repo = getRepository();
+        
+        logger.log(Level.INFO, "Checking comment on PR #{0} for job {1}", new Object[] {issueComment.getIssue().getNumber(), getProjectName()});
+
+        repo.onIssueCommentHook(issueComment);
+    }
+
+    public void handlePR(PullRequest pr) throws IOException {
+        GhprbRepository repo = getRepository();
+
+        logger.log(Level.INFO, "Checking PR #{0} for job {1}", new Object[] {pr.getNumber(), getProjectName()});
+
+        repo.onPullRequestHook(pr);
+    }
+
 
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash

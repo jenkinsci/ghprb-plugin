@@ -97,13 +97,15 @@ public class GhprbRootActionTest {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        doReturn(project).when(trigger).getActualProject();
+        
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getId()).willReturn(prId);
         given(ghPullRequest.getNumber()).willReturn(prId);
         given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
-        Ghprb ghprb = spy(trigger.createGhprb(project));
+        Ghprb ghprb = spy(new Ghprb(trigger));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
         trigger.setHelper(ghprb);
@@ -139,13 +141,15 @@ public class GhprbRootActionTest {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("disabledJobsDontBuild");
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        doReturn(project).when(trigger).getActualProject();
+        
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getId()).willReturn(prId);
         given(ghPullRequest.getNumber()).willReturn(prId);
         given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
-        Ghprb ghprb = spy(trigger.createGhprb(project));
+        Ghprb ghprb = spy(new Ghprb(trigger));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
         trigger.setHelper(ghprb);
