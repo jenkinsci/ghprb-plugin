@@ -166,6 +166,9 @@ job('example') {
 
 ### Updates
 
+#### -> 1.29.8
+* Merged #246 adding job dsl features and updating docs
+
 #### -> 1.29.7
 * Remove quoting of trigger phrase
 * Merged #242 replaces newline and quoted quotes
