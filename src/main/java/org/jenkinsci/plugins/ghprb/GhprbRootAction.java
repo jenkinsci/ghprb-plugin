@@ -22,15 +22,17 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
@@ -109,33 +111,90 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 String repoName = issueComment.getRepository().getFullName();
 
                 logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] { issueComment.getComment(), repoName });
-
-                for (GhprbWebHook webHook : getWebHooks()) {
-                    try {
-                        if (webHook.matchRepo(repoName) && webHook.checkSignature(body, signature)) {
-                            IssueComment authedComment = getIssueComment(payload, webHook.getGitHub());
-                            webHook.handleComment(authedComment);
+                
+                // Switch over to the system security context so that we can iterate through all the projects.
+                // Switch back to the current authentication context when done.
+                Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+                SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
+                
+                try {
+                    // Loop through all the jobs and get a pull request trigger for each one
+                    for (AbstractProject<?, ?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)) {
+                        // Attempt to find the trigger
+                        GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
+                        if (trigger == null) {
+                            continue;
                         }
-                    } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+
+                        try {
+                            // Check the applicability of this trigger to the repo that sent the messsage
+                            if (!trigger.matchRepo(repoName)) {
+                                continue;
+                            }
+
+                            // Check the signature
+                            if (!trigger.getGitHubApiAuth().checkSignature(body, signature)) {
+                                continue;
+                            }
+
+                            // Attempt to apply the trigger to the comment
+                            IssueComment authedComment = getIssueComment(payload, trigger.getGitHub());
+                            logger.log(Level.INFO, "Checking comment on PR #{0} for job {1}", new Object[] {issueComment.getIssue().getNumber(), 
+                                trigger.getActualProject()});
+                            trigger.getRepository().onIssueCommentHook(authedComment);
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE, "Unable to process web hook for: " + (trigger.getActualProject() != null ? trigger.getActualProject() : "NOT STARTED"), e);
+                        }
                     }
                 }
-
+                finally {
+                    // Restore authentication
+                    SecurityContextHolder.getContext().setAuthentication(currentAuth);
+                }
             } else if ("pull_request".equals(event)) {
                 PullRequest pr = getPullRequest(payload, gh);
                 String repoName = pr.getRepository().getFullName();
 
                 logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repoName, pr.getNumber() });
 
-                for (GhprbWebHook webHook : getWebHooks()) {
-                    try {
-                        if (webHook.matchRepo(repoName) && webHook.checkSignature(body, signature)) {
-                            PullRequest authedPr = getPullRequest(payload, webHook.getGitHub());
-                            webHook.handlePR(authedPr);
+                // Switch over to the system security context so that we can iterate through all the projects.
+                // Switch back to the current authentication context when done.
+                Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+                SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
+        
+                try {
+                    // Loop through all the jobs and get a pull request trigger for each one
+                    for (AbstractProject<?, ?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)) {
+                        // Attempt to find the trigger
+                        GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
+
+                        if (trigger == null) {
+                            continue;
                         }
-                    } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+
+                        try {
+                            // Check the applicability of this trigger to the repo that sent the messsage
+                            if (!trigger.matchRepo(repoName)) {
+                                continue;
+                            }
+
+                            // Check the signature
+                            if (!trigger.getGitHubApiAuth().checkSignature(body, signature)) {
+                                continue;
+                            }
+
+                            // Attempt to apply the trigger to the comment
+                            PullRequest authedPr = getPullRequest(payload, trigger.getGitHub());
+                            logger.log(Level.INFO, "Checking PR #{0} for job {1}", new Object[] {pr.getNumber(), trigger.getActualProject()});
+                            trigger.getRepository().onPullRequestHook(authedPr);
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE, "Unable to process web hook for: " + (trigger.getActualProject() != null ? trigger.getActualProject() : "NOT STARTED"), e);
+                        }
                     }
+                }
+                finally {
+                    // Restore authentication
+                    SecurityContextHolder.getContext().setAuthentication(currentAuth);
                 }
             } else {
                 logger.log(Level.WARNING, "Request not known");
@@ -168,33 +227,6 @@ public class GhprbRootAction implements UnprotectedRootAction {
             IOUtils.closeQuietly(br);
         }
         return body;
-    }
-
-    
-    private Set<GhprbWebHook> getWebHooks() {
-        final Set<GhprbWebHook> webHooks = new HashSet<GhprbWebHook>();
-
-        // We need this to get access to list of repositories
-        Authentication old = SecurityContextHolder.getContext().getAuthentication();
-        SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-
-        try {
-            for (AbstractProject<?, ?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)) {
-                GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
-                if (trigger == null || trigger.getWebHook() == null) {
-                    continue;
-                }
-                webHooks.add(trigger.getWebHook());
-            }
-        } finally {
-            SecurityContextHolder.getContext().setAuthentication(old);
-        }
-
-        if (webHooks.size() == 0) {
-            logger.log(Level.WARNING, "No projects found using GitHub pull request trigger");
-        }
-
-        return webHooks;
     }
 
     @Extension
