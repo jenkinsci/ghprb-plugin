@@ -102,5 +102,10 @@ public class GhprbIT extends GhprbITBaseTestCase {
         
         Mockito.verify(ghRepository, Mockito.times(0)).createCommitStatus(any(String.class), any(GHCommitState.class), any(String.class), any(String.class));
     }
+    
+    @Test
+    public void triggerIsRemovedFromListWhenProjectChanges() {
+        
+    }
 
 }

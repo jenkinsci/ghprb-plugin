@@ -3,12 +3,8 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.UnprotectedRootAction;
-import hudson.security.ACL;
 import hudson.security.csrf.CrumbExclusion;
-import jenkins.model.Jenkins;
 
-import org.acegisecurity.Authentication;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
@@ -165,28 +161,19 @@ public class GhprbRootAction implements UnprotectedRootAction {
     }
 
     private Set<GhprbTrigger> getTriggers(String repoName, String body, String signature) {
-        final Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>(5);
-        // We need this to get access to list of repositories
-        Authentication old = SecurityContextHolder.getContext().getAuthentication();
-        SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-
-        try {
-            for (AbstractProject<?, ?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)) {
-                GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
-                if (trigger == null || !(trigger.matchRepo(repoName) && trigger.matchSignature(body, signature))) {
-                    continue;
+        Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>();
+        
+        Set<AbstractProject<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
+        if (projects != null) {
+            for (AbstractProject<?, ?> project : projects) {
+                GhprbTrigger trigger = Ghprb.extractTrigger(project);
+                if (trigger.matchSignature(body, signature)) {
+                    triggers.add(trigger);
                 }
-                triggers.add(trigger);
             }
-        } finally {
-            SecurityContextHolder.getContext().setAuthentication(old);
         }
-
-        if (triggers.isEmpty()) {
-            logger.log(Level.WARNING, "No projects found using GitHub pull request trigger");
-        }
-
         return triggers;
+        
     }
 
     @Extension

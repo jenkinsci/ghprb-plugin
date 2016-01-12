@@ -96,8 +96,9 @@ public class GhprbRootActionTest {
     public void testUrlEncoded() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger();
         doReturn(project).when(trigger).getActualProject();
+        doReturn(true).when(trigger).getUseGitHubHooks();
         
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
@@ -116,7 +117,7 @@ public class GhprbRootActionTest {
 
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
-        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(0);
 
 		doReturn(gitHub).when(trigger).getGitHub();
 
@@ -133,7 +134,7 @@ public class GhprbRootActionTest {
         ra.doIndex(req, null);
         GhprbTestUtil.waitForBuildsToFinish(project);
 
-        assertThat(project.getBuilds().toArray().length).isEqualTo(2);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
     
     @Test

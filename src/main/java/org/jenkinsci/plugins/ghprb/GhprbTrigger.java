@@ -47,9 +47,12 @@ import javax.servlet.ServletException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
@@ -106,7 +109,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     @DataBoundConstructor
-
     public GhprbTrigger(String adminlist,
             String whitelist,
             String orgslist,
@@ -213,7 +215,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", 
                 new String[] { name, String.valueOf(newInstance) });
         helper.init();
-
+        
+        if (getUseGitHubHooks()) {
+            DESCRIPTOR.addRepoTrigger(getRepository().getName(), super.job);
+        }
     }
 
     public ConcurrentMap<Integer, GhprbPullRequest> getPulls() {
@@ -225,6 +230,13 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         String name = super.job != null ? super.job.getFullName(): "NOT STARTED";
         logger.log(Level.INFO, "Stopping the ghprb trigger for project {0}", name);
         if (helper != null) {
+            GhprbRepository repository = getRepository();
+            if (repository != null) {
+                String repo = repository.getName();
+                if (!StringUtils.isEmpty(repo)) {
+                    DESCRIPTOR.removeRepoTrigger(repo, super.job);
+                }
+            }
             helper.stop();
             helper = null;
         }
@@ -503,16 +515,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return projectName;
     }
     
-    public boolean matchRepo(String hookRepoName) {
-        if (!isActive()) {
-            return false;
-        }
-        String repo = getRepository().getName();
-        
-        logger.log(Level.FINE, "Comparing repository names: {0} to {1}, case is ignored", new Object[] { repo, hookRepoName });
-        return repo.equalsIgnoreCase(hookRepoName);
-    }
-    
+
     public boolean matchSignature(String body, String signature) {
         if (!isActive()) {
             return false;
@@ -605,6 +608,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         // map of jobs (by their fullName) and their map of pull requests
         private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
         
+        /**
+         *  map of jobs (by the repo name);  No need to keep the projects from shutdown to startup.
+         *  New triggers will register here, and ones that are stopping will remove themselves.
+         */
+        private transient Map<String, Set<AbstractProject<?, ?>>> repoJobs;
+        
         public List<GhprbExtensionDescriptor> getExtensionDescriptors() {
             return GhprbExtensionDescriptor.allProject();
         }
@@ -625,6 +634,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         public DescriptorImpl() {
             load();
             readBackFromLegacy();
+            if (repoJobs == null) {
+                repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>();
+            }
             if (jobs == null) {
                 jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>();
             }
@@ -784,6 +796,34 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                 jobs.put(projectName, ret);
             }
             return ret;
+        }
+        
+        private void addRepoTrigger(String repo, AbstractProject<?, ?> project) {
+            if (project == null) {
+                return;
+            }
+            
+            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+            if (projects == null) {
+                projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>());
+                repoJobs.put(repo, projects);
+            }
+            
+            projects.add(project);
+        }
+        
+        private void removeRepoTrigger(String repo, AbstractProject<?, ?> project) {
+            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+            if (project != null && projects != null) {
+                projects.remove(project);
+            }
+        }
+        
+        public Set<AbstractProject<?, ?>> getRepoTriggers(String repo) {
+            if (repoJobs == null) {
+                repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>(5);
+            }
+            return repoJobs.get(repo);
         }
 
         public List<GhprbBranch> getWhiteListTargetBranches() {
