@@ -84,18 +84,11 @@ public class GhprbBuilds {
             int counter = 0;
             // If the PR is being resolved by GitHub then getMergeable will return null
             Boolean isMergeable = pr.getMergeable();
-            Boolean isMerged = pr.isMerged();
-            // Not sure if isMerged can return null, but adding if just in case
-            if (isMerged == null) {
-                isMerged = false;
-            }
+            boolean isMerged = pr.isMerged();
             while (isMergeable == null && !isMerged && counter++ < 60) {
                 Thread.sleep(1000);
                 isMergeable = pr.getMergeable();
                 isMerged = pr.isMerged();
-                if (isMerged == null) {
-                    isMerged = false;
-                }
             }
 
             if (isMerged) {

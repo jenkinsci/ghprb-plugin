@@ -47,8 +47,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jenkins.model.Jenkins;
-
 /**
  * @author janinko
  */
@@ -57,14 +55,12 @@ public class Ghprb {
     private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
 
     private final GhprbTrigger trigger;
-    private final AbstractProject<?, ?> project;
     private GhprbRepository repository;
     private GhprbBuilds builds;
 
-    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger) {
-        this.project = project;
+    public Ghprb(GhprbTrigger trigger) {
 
-        final GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
+        final GithubProjectProperty ghpp = trigger.getActualProject().getProperty(GithubProjectProperty.class);
         if (ghpp == null || ghpp.getProjectUrl() == null) {
             throw new IllegalStateException("A GitHub project url is required.");
         }
@@ -95,7 +91,7 @@ public class Ghprb {
     }
     
     public boolean isProjectDisabled() {
-        return project.isDisabled();
+        return trigger.getActualProject().isDisabled();
     }
 
     public GhprbBuilds getBuilds() {
@@ -115,7 +111,7 @@ public class Ghprb {
     }
 
     void run() {
-        repository.check();
+        getRepository().check();
     }
 
     void stop() {

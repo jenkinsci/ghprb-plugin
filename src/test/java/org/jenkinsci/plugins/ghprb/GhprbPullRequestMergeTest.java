@@ -117,6 +117,7 @@ public class GhprbPullRequestMergeTest {
         Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>(1);
         jobs.put("project", pulls);
 
+        Mockito.doReturn(project).when(trigger).getActualProject();
         Mockito.doReturn(pulls).when(trigger).getPulls();
         Mockito.doReturn(repo).when(trigger).getRepository();
         Mockito.doReturn(pr).when(repo).getPullRequest(pullId);
@@ -159,7 +160,7 @@ public class GhprbPullRequestMergeTest {
         jobsField.setAccessible(true);
         jobsField.set(descriptor, jobs);
 
-        helper = spy(new Ghprb(project, trigger));
+        helper = spy(new Ghprb(trigger));
         given(trigger.getPulls()).willReturn(pulls);
         trigger.setHelper(helper);
         given(helper.getRepository()).willReturn(repo);

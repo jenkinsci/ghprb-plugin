@@ -326,7 +326,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getTitle();
         verify(ghPullRequest, times(8)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(5)).getHead();
+        verify(ghPullRequest, times(6)).getHead();
         verify(ghPullRequest, times(1)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getHtmlUrl();
@@ -416,7 +416,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getTitle();
         verify(ghPullRequest, times(10)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(5)).getHead();
+        verify(ghPullRequest, times(6)).getHead();
         verify(ghPullRequest, times(1)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(3)).getUpdatedAt();
@@ -522,15 +522,16 @@ public class GhprbRepositoryTest {
         String actualSignature = createSHA1Signature(actualSecret, body);
         String fakeSignature = createSHA1Signature("abc", body);
         
-        GhprbGitHubAuth ghAuth = Mockito.mock(GhprbGitHubAuth.class);
+        GhprbGitHubAuth ghAuth = Mockito.spy(new GhprbGitHubAuth("", "", "", "", "", actualSecret));
+        doReturn(true).when(trigger).isActive();
+        
         doReturn(ghAuth).when(trigger).getGitHubApiAuth();
         
         Assert.assertFalse(actualSignature.equals(fakeSignature));
+        Assert.assertTrue(actualSecret.equals(ghAuth.getSecret()));
         
-        given(ghAuth.getSecret()).willReturn(actualSecret);
-        
-        Assert.assertTrue(trigger.getWebHook().checkSignature(body, actualSignature));
-        Assert.assertFalse(trigger.getWebHook().checkSignature(body, fakeSignature));
+        Assert.assertTrue(trigger.matchSignature(body, actualSignature));
+        Assert.assertFalse(trigger.matchSignature(body, fakeSignature));
     }
 
     private String createSHA1Signature(String secret, String body) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {

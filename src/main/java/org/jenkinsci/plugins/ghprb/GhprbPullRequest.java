@@ -215,7 +215,9 @@ public class GhprbPullRequest {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Unable to update last updated date", e);
         }
-        ret = ret || !pr.getHead().getSha().equals(head);
+        GHCommitPointer pointer = pr.getHead();
+        String pointerSha = pointer.getSha();
+        ret = ret || !pointerSha.equals(head);
         return ret;
     }
 

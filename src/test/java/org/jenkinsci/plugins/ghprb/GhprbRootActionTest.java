@@ -96,14 +96,17 @@ public class GhprbRootActionTest {
     public void testUrlEncoded() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger();
+        doReturn(project).when(trigger).getActualProject();
+        doReturn(true).when(trigger).getUseGitHubHooks();
+        
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getId()).willReturn(prId);
         given(ghPullRequest.getNumber()).willReturn(prId);
         given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
-        Ghprb ghprb = spy(trigger.createGhprb(project));
+        Ghprb ghprb = spy(new Ghprb(trigger));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
         trigger.setHelper(ghprb);
@@ -114,7 +117,7 @@ public class GhprbRootActionTest {
 
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
-        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(0);
 
 		doReturn(gitHub).when(trigger).getGitHub();
 
@@ -131,7 +134,7 @@ public class GhprbRootActionTest {
         ra.doIndex(req, null);
         GhprbTestUtil.waitForBuildsToFinish(project);
 
-        assertThat(project.getBuilds().toArray().length).isEqualTo(2);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
     
     @Test
@@ -139,13 +142,15 @@ public class GhprbRootActionTest {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("disabledJobsDontBuild");
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
+        doReturn(project).when(trigger).getActualProject();
+        
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         given(ghPullRequest.getId()).willReturn(prId);
         given(ghPullRequest.getNumber()).willReturn(prId);
         given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
-        Ghprb ghprb = spy(trigger.createGhprb(project));
+        Ghprb ghprb = spy(new Ghprb(trigger));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
         trigger.setHelper(ghprb);

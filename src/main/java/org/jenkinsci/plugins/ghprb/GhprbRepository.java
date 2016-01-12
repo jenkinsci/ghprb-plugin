@@ -218,7 +218,9 @@ public class GhprbRepository {
         }
 
         try {
-            getGitHubRepo().getPullRequest(id).comment(comment);
+            GHRepository repo = getGitHubRepo();
+            GHPullRequest pr = repo.getPullRequest(id);
+            pr.comment(comment);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
         }
@@ -226,7 +228,9 @@ public class GhprbRepository {
 
     public void closePullRequest(int id) {
         try {
-            getGitHubRepo().getPullRequest(id).close();
+            GHRepository repo = getGitHubRepo();
+            GHPullRequest pr = repo.getPullRequest(id);
+            pr.close();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
         }
