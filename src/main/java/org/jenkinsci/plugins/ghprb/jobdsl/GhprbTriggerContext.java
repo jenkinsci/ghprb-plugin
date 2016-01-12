@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.ghprb.jobdsl;
 
 import javaposse.jobdsl.dsl.Context;
-import javaposse.jobdsl.dsl.helpers.triggers.GitHubPullRequestBuilderExtensionContext;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
+import org.jenkinsci.plugins.ghprb.GhprbBranch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,7 @@ class GhprbTriggerContext implements Context {
     List<String> admins = new ArrayList<String>();
     List<String> userWhitelist = new ArrayList<String>();
     List<String> orgWhitelist = new ArrayList<String>();
+    List<GhprbBranch> whiteListTargetBranches = new ArrayList<GhprbBranch>();
     String cron = "H/5 * * * *";
     String triggerPhrase;
     boolean onlyTriggerPhrase;
@@ -18,6 +19,7 @@ class GhprbTriggerContext implements Context {
     boolean permitAll;
     boolean autoCloseFailedPullRequests;
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
+    boolean displayBuildErrorsOnDownstreamBuilds;
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
 
     /**
@@ -65,6 +67,23 @@ class GhprbTriggerContext implements Context {
     public void orgWhitelist(Iterable<String> organizations) {
         for (String organization : organizations) {
             orgWhitelist(organization);
+        }
+    }
+
+
+    /**
+     * Add branch names whose they are considered whitelisted for this specific job
+     */
+    public void whiteListTargetBranch(String branch) {
+        whiteListTargetBranches.add(new GhprbBranch(branch));
+    }
+
+    /**
+     * Add branch names whose they are considered whitelisted for this specific job
+     */
+    public void whiteListTargetBranches(Iterable<String> branches) {
+        for (String branch : branches) {
+            whiteListTargetBranches.add(new GhprbBranch(branch));
         }
     }
 
@@ -150,6 +169,20 @@ class GhprbTriggerContext implements Context {
      */
     public void allowMembersOfWhitelistedOrgsAsAdmin() {
         allowMembersOfWhitelistedOrgsAsAdmin(true);
+    }
+
+    /**
+     * Allow this upstream job to get commit statuses from downstream builds
+     */
+    public void displayBuildErrorsOnDownstreamBuilds(boolean displayBuildErrorsOnDownstreamBuilds) {
+        this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
+    }
+
+    /**
+     * Allow this upstream job to get commit statuses from downstream builds
+     */
+    public void displayBuildErrorsOnDownstreamBuilds() {
+        displayBuildErrorsOnDownstreamBuilds(true);
     }
 
     /**
