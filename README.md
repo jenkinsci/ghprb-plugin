@@ -110,10 +110,13 @@ If you want to manually build the job, in the job setting check ``This build is 
 Since the plugin contains an extension for the Job DSL plugin to add DSL syntax for configuring the build trigger and
 the pull request merger post-build action.
 
+It is also possible to set Downstream job commit statuses when `displayBuildErrorsOnDownstreamBuilds()` is set in the
+upstream job's triggers and downstreamCommitStatus block is included in the downstream job's wrappers.
+
 Here is an example showing all DSL syntax elements:
 
 ```groovy
-job('example') {
+job('upstreamJob') {
     scm {
         git {
             remote {
@@ -123,6 +126,7 @@ job('example') {
             branch('${sha1}')
         }
     }
+
     triggers {
         githubPullRequest {
             admin('user_1')
@@ -137,6 +141,8 @@ job('example') {
             useGitHubHooks()
             permitAll()
             autoCloseFailedPullRequests()
+            displayBuildErrorsOnDownstreamBuilds()
+            whiteListTargetBranches(['master','test', 'test2'])
             allowMembersOfWhitelistedOrgsAsAdmin()
             extensions {
                 commitStatus {
@@ -159,6 +165,20 @@ job('example') {
             disallowOwnCode()
             failOnNonMerge()
             deleteOnMerge()
+        }
+    }
+}
+
+job('downstreamJob') {
+    wrappers {
+        downstreamCommitStatus {
+            context('CONTEXT NAME')
+            triggeredStatus("The job has triggered")
+            startedStatus("The job has started")
+            statusUrl()
+            completedStatus('SUCCESS', "The job has passed")
+            completedStatus('FAILURE', "The job has failed")
+            completedStatus('ERROR', "The job has resulted in an error")
         }
     }
 }

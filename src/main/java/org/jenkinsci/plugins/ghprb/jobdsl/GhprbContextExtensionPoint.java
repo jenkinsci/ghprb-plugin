@@ -5,11 +5,13 @@ import com.google.common.base.Joiner;
 import hudson.Extension;
 import javaposse.jobdsl.dsl.helpers.publisher.PublisherContext;
 import javaposse.jobdsl.dsl.helpers.triggers.TriggerContext;
+import javaposse.jobdsl.dsl.helpers.wrapper.WrapperContext;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import javaposse.jobdsl.plugin.DslExtensionMethod;
 import org.jenkinsci.plugins.ghprb.GhprbBranch;
 import org.jenkinsci.plugins.ghprb.GhprbPullRequestMerge;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
+import org.jenkinsci.plugins.ghprb.upstream.GhprbUpstreamStatus;
 
 import java.util.ArrayList;
 
@@ -29,9 +31,9 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 context.useGitHubHooks,
                 context.permitAll,
                 context.autoCloseFailedPullRequests,
+                context.displayBuildErrorsOnDownstreamBuilds,
                 null,
-                null,
-                new ArrayList<GhprbBranch>(),
+                context.whiteListTargetBranches,
                 context.allowMembersOfWhitelistedOrgsAsAdmin,
                 null,
                 null,
@@ -53,6 +55,20 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 context.disallowOwnCode,
                 context.failOnNonMerge,
                 context.deleteOnMerge
+        );
+    }
+
+    @DslExtensionMethod(context = WrapperContext.class)
+    public Object downstreamCommitStatus(Runnable closure) {
+        GhprbUpstreamStatusContext context = new GhprbUpstreamStatusContext();
+        executeInContext(closure, context);
+
+        return new GhprbUpstreamStatus(
+                context.context,
+                context.statusUrl,
+                context.triggeredStatus,
+                context.startedStatus,
+                context.completedStatus
         );
     }
 }
