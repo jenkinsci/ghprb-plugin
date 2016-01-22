@@ -116,8 +116,7 @@ public class GhprbPullRequestTest {
         ghprbPullRequest.init(helper, ghprbRepository);
 
         // THEN
-        verify(ghprbRepository, times(1)).getPullRequest(10);
-        verify(pr, times(2)).getHead();
+        verify(pr, times(1)).getHead();
 
     }
 
@@ -188,7 +187,7 @@ public class GhprbPullRequestTest {
         ghprbPullRequest.init(helper, ghprbRepository);
 
         // THEN
-        assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isNull();
+        assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isEqualTo("");
     }
 
     @Test

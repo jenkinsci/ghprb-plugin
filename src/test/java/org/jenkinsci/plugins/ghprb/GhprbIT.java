@@ -69,6 +69,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
     public void shouldBuildTriggersOnUpdatingRetestMessagePR() throws Exception {
         // GIVEN
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
         
         given(comment.getBody()).willReturn("retest this please");
         given(comment.getUpdatedAt()).willReturn(new DateTime().plusDays(1).toDate());

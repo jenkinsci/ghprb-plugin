@@ -3,8 +3,11 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.UnprotectedRootAction;
+import hudson.security.ACL;
 import hudson.security.csrf.CrumbExclusion;
 
+import org.acegisecurity.Authentication;
+import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
@@ -102,7 +105,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
                 String repoName = issueComment.getRepository().getFullName();
 
-                logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] { issueComment.getComment(), repoName });
+                logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] { issueComment.getComment().getBody(), repoName });
 
                 for (GhprbTrigger trigger : getTriggers(repoName, body, signature)) {
                     try {
@@ -162,6 +165,10 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
     private Set<GhprbTrigger> getTriggers(String repoName, String body, String signature) {
         Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>();
+
+        // We need this to get access to list of repositories
+        Authentication old = SecurityContextHolder.getContext().getAuthentication();
+        SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
         
         Set<AbstractProject<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
         if (projects != null) {
@@ -172,6 +179,9 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 }
             }
         }
+
+        SecurityContextHolder.getContext().setAuthentication(old);
+        
         return triggers;
         
     }

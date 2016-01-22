@@ -1,7 +1,5 @@
 package org.jenkinsci.plugins.ghprb;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
@@ -35,102 +33,98 @@ public class GhprbRepository {
     private final String reponame;
 
     private GHRepository ghRepository;
-    private Ghprb helper;
+    private GhprbTrigger trigger;
 
-    public GhprbRepository(String user, String repository, Ghprb helper) {
+    public GhprbRepository(String user, String repository, GhprbTrigger trigger) {
         this.reponame = user + "/" + repository;
-        this.helper = helper;
+        this.trigger = trigger;
     }
 
     public void init() {
         // make the initial check call to populate our data structures
-        if (!initGhRepository()) {
-            // We could have hit the rate limit while initializing.  If we
-            // continue, then we will loop back around and attempt to re-init.
-            return;
-        }
+        initGhRepository();
         
-        for (Entry<Integer, GhprbPullRequest> next : helper.getTrigger().getPulls().entrySet()) {
+        for (Entry<Integer, GhprbPullRequest> next : trigger.getPulls().entrySet()) {
             GhprbPullRequest pull = next.getValue();
-            try {
-                pull.init(helper, this);
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Unable to initialize pull request #{0} for repo {1}, job {2}", new Object[]{next.getKey(), reponame, helper.getTrigger().getActualProject().getFullName()});
-                e.printStackTrace();
-            }
+            pull.init(trigger.getHelper(), this);
         }
     }
 
     private boolean initGhRepository() {
+        if (ghRepository != null) {
+            return true;
+        }
+        
         GitHub gitHub = null;
+        
         try {
-            GhprbGitHub repo = helper.getGitHub();
-            if (repo == null) {
-                return false;
-            }
-            gitHub = repo.get();
-            if (gitHub == null) {
-                logger.log(Level.SEVERE, "No connection returned to GitHub server!");
-                return false;
-            }
-            if (gitHub.getRateLimit().remaining == 0) {
-                return false;
-            }
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.INFO, "Rate limit API not found.");
+            gitHub = trigger.getGitHub();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error while accessing rate limit API", ex);
             return false;
         }
+        
+        if (gitHub == null) {
+            logger.log(Level.SEVERE, "No connection returned to GitHub server!");
+            return false;
+        }
 
-        if (ghRepository == null) {
-            try {
-                ghRepository = gitHub.getRepository(reponame);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not retrieve GitHub repository named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+        try {
+            if (gitHub.getRateLimit().remaining == 0) {
+                logger.log(Level.INFO, "Exceeded rate limit for repository");
                 return false;
             }
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.INFO, "Rate limit API not found.");
+            return false;
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error while accessing rate limit API", ex);
+            return false;
+        }
+        
+
+        try {
+            ghRepository = gitHub.getRepository(reponame);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Could not retrieve GitHub repository named " + reponame + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+            return false;
         }
         return true;
     }
 
     public void check() {
-        if (!initGhRepository()) {
+        
+        if (!trigger.isActive()) {
+            logger.log(Level.FINE, "Project is not active, not checking github state");
             return;
         }
-
-        if (helper.isProjectDisabled()) {
-            logger.log(Level.FINE, "Project is disabled, not checking github state");
+        
+        if (!initGhRepository()) {
             return;
         }
 
         List<GHPullRequest> openPulls;
         try {
-            openPulls = ghRepository.getPullRequests(GHIssueState.OPEN);
+            openPulls = getGitHubRepo().getPullRequests(GHIssueState.OPEN);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
         
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
         
         Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
         for (GHPullRequest pr : openPulls) {
-            if (pr.getHead() == null) {
+            if (pr.getHead() == null) { // Not sure if we need this, but leaving it for now.
                 try {
-                    pr = ghRepository.getPullRequest(pr.getNumber());
+                    pr = getGitHubRepo().getPullRequest(pr.getNumber());
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
                     return;
                 }
             }
-            try {
-                check(pr);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
-                return;
-            }
+            check(pr);
             closedPulls.remove(pr.getNumber());
         }
         
@@ -141,15 +135,15 @@ public class GhprbRepository {
         }
     }
 
-    private void check(GHPullRequest pr) throws IOException {
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+    private void check(GHPullRequest pr) {
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
 
         final Integer id = pr.getNumber();
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
             pull = pulls.get(id);
         } else {
-            pulls.putIfAbsent(id, new GhprbPullRequest(pr, helper, this));
+            pulls.putIfAbsent(id, new GhprbPullRequest(pr, trigger.getHelper(), this));
             pull = pulls.get(id);
         }
         pull.check(pr);
@@ -275,11 +269,11 @@ public class GhprbRepository {
     }
 
     private String getSecret() {
-        return helper.getTrigger().getGitHubApiAuth().getSecret();
+        return trigger.getGitHubApiAuth().getSecret();
     }
 
     private String getHookUrl() {
-        String baseUrl = helper.getTrigger().getGitHubApiAuth().getJenkinsUrl();
+        String baseUrl = trigger.getGitHubApiAuth().getJenkinsUrl();
         if (baseUrl == null) {
           baseUrl = Jenkins.getInstance().getRootUrl();
         }
@@ -291,7 +285,7 @@ public class GhprbRepository {
     }
 
     void onIssueCommentHook(IssueComment issueComment) throws IOException {
-        if (helper.isProjectDisabled()) {
+        if (!trigger.isActive()) {
             logger.log(Level.FINE, "Not checking comments since build is disabled");
             return;
         }
@@ -302,11 +296,13 @@ public class GhprbRepository {
             return;
         }
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
 
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
-            pull = new GhprbPullRequest(getGitHubRepo().getPullRequest(id), helper, this);
+            GHRepository repo = getGitHubRepo();
+            GHPullRequest pr = repo.getPullRequest(id);
+            pull = new GhprbPullRequest(pr, trigger.getHelper(), this);
             pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
@@ -314,45 +310,43 @@ public class GhprbRepository {
     }
 
     void onPullRequestHook(PullRequest pr) throws IOException {
+        GHPullRequest ghpr = pr.getPullRequest();
+        int number = pr.getNumber();
+        String action = pr.getAction();
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = helper.getTrigger().getPulls();
+        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
 
-        if ("closed".equals(pr.getAction())) {
-            pulls.remove(pr.getNumber());
-        } else if (helper.isProjectDisabled()) {
+        if ("closed".equals(action)) {
+            pulls.remove(number);
+        } else if (!trigger.isActive()) {
             logger.log(Level.FINE, "Not processing Pull request since the build is disabled");
-        } else if ("opened".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
-            GhprbPullRequest pull = pulls.get(pr.getNumber());
+        } else if ("opened".equals(action) || "reopened".equals(action)) {
+            GhprbPullRequest pull = pulls.get(number);
             if (pull == null) {
-                pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
-                pull = pulls.get(pr.getNumber());
+                pulls.putIfAbsent(number, new GhprbPullRequest(ghpr, trigger.getHelper(), this));
+                pull = pulls.get(number);
             }
-            pull.check(pr.getPullRequest());
-        } else if ("synchronize".equals(pr.getAction())) {
-            GhprbPullRequest pull = pulls.get(pr.getNumber());
+            pull.check(ghpr);
+        } else if ("synchronize".equals(action)) {
+            GhprbPullRequest pull = pulls.get(number);
             if (pull == null) {
-                pulls.putIfAbsent(pr.getNumber(), new GhprbPullRequest(pr.getPullRequest(), helper, this));
-                pull = pulls.get(pr.getNumber());
+                pulls.putIfAbsent(number, new GhprbPullRequest(ghpr, trigger.getHelper(), this));
+                pull = pulls.get(number);
             }
             if (pull == null) {
-                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", pr.getNumber());
+                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", number);
                 return;
             }
-            pull.check(pr.getPullRequest());
+            pull.check(ghpr);
         } else {
-            logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
+            logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", action);
         }
         GhprbTrigger.getDscp().save();
     }
 
-    @VisibleForTesting
-    void setHelper(Ghprb helper) {
-        this.helper = helper;
-    }
-
     public GHRepository getGitHubRepo() {
         if (ghRepository == null) {
-            init();
+            initGhRepository();
         }
         return ghRepository;
     }

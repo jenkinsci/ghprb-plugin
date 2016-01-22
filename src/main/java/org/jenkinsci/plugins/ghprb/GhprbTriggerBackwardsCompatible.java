@@ -43,6 +43,10 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected transient String commitStatusContext;
     @Deprecated
     protected transient GhprbGitHubAuth gitHubApiAuth;
+    @Deprecated
+    protected transient String project;
+    @Deprecated
+    protected transient AbstractProject<?, ?> _project;
     
 
     

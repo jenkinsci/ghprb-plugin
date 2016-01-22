@@ -62,6 +62,8 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private final String id;
     private final String description;
     private final String secret;
+    
+    private transient GitHub gh;
 
     @DataBoundConstructor
     public GhprbGitHubAuth(
@@ -181,18 +183,23 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         }
         return builder;
     }
-
-    public GitHub getConnection(Item context) throws IOException {
-        GitHub gh = null;
+    
+    private void buildConnection(Item context) {
         GitHubBuilder builder = getBuilder(context, serverAPIUrl, credentialsId);
         if (builder == null) {
           logger.log(Level.SEVERE, "Unable to get builder using credentials: {0}", credentialsId);
-          return null;
+          return;
         }
         try {
             gh = builder.build();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to connect using credentials: " + credentialsId, e);
+        }
+    }
+
+    public GitHub getConnection(Item context) throws IOException {
+        if (gh == null) {
+            buildConnection(context);
         }
         
         return gh;

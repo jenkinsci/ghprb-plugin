@@ -57,6 +57,8 @@ public class Ghprb {
     private final GhprbTrigger trigger;
     private GhprbRepository repository;
     private GhprbBuilds builds;
+    
+    private transient GhprbGitHub github;
 
     public Ghprb(GhprbTrigger trigger) {
 
@@ -74,7 +76,7 @@ public class Ghprb {
 
         this.trigger = trigger;
 
-        this.repository = new GhprbRepository(user, repo, this);
+        this.repository = new GhprbRepository(user, repo, trigger);
         this.builds = new GhprbBuilds(trigger, repository);
     }
 
@@ -107,7 +109,10 @@ public class Ghprb {
     }
 
     public GhprbGitHub getGitHub() {
-        return new GhprbGitHub(trigger);
+        if (github == null) {
+            github = new GhprbGitHub(trigger);
+        }
+        return github;
     }
 
     void run() {

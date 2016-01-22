@@ -447,6 +447,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public Boolean getUseGitHubHooks() {
         return useGitHubHooks != null && useGitHubHooks;
     }
+    
+    public Ghprb getHelper() {
+        return helper;
+    }
 
     public Boolean getPermitAll() {
         return permitAll != null && permitAll;
@@ -799,22 +803,29 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
         private void addRepoTrigger(String repo, AbstractProject<?, ?> project) {
-            if (project == null) {
+            if (project == null || StringUtils.isEmpty(repo)) {
                 return;
             }
+            logger.log(Level.FINE, "Adding [{0}] to webhooks repo [{1}]", new Object[]{project.getFullName(), repo});
             
-            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
-            if (projects == null) {
-                projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>());
-                repoJobs.put(repo, projects);
+            synchronized (repoJobs) {
+                Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+                if (projects == null) {
+                    logger.log(Level.FINE, "No other projects found, creating new repo set");
+                    projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>());
+                    repoJobs.put(repo, projects);
+                } else {
+                    logger.log(Level.FINE, "Adding project to current repo set, length: {0}", new Object[]{projects.size()});
+                }
+                
+                projects.add(project);
             }
-            
-            projects.add(project);
         }
         
         private void removeRepoTrigger(String repo, AbstractProject<?, ?> project) {
             Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
             if (project != null && projects != null) {
+                logger.log(Level.FINE, "Removing [{0}] from webhooks repo [{1}]", new Object[]{repo, project.getFullName()});
                 projects.remove(project);
             }
         }
@@ -823,7 +834,18 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (repoJobs == null) {
                 repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>(5);
             }
-            return repoJobs.get(repo);
+            logger.log(Level.FINE, "Retrieving triggers for repo [{0}]", new Object[]{repo});
+            
+            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+            if (projects != null) {
+                for (AbstractProject<?, ?> project : projects) {
+                    logger.log(Level.FINE, "Found project [{0}] for webhook repo [{0}]", new Object[]{project.getFullName(), repo});
+                }
+            } else {
+                projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>(0));
+            }
+            
+            return projects;
         }
 
         public List<GhprbBranch> getWhiteListTargetBranches() {

@@ -140,7 +140,7 @@ public class GhprbPullRequestMergeTest {
         given(build.getResult()).willReturn(Result.SUCCESS);
         given(build.getParent()).willCallRealMethod();
 
-        given(pullRequest.getPullRequest()).willReturn(pr);
+        given(pullRequest.getPullRequest(Mockito.anyBoolean())).willReturn(pr);
 
         given(cause.getPullID()).willReturn(pullId);
         given(cause.isMerged()).willReturn(true);
