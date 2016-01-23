@@ -44,7 +44,7 @@ public class GhprbRepository {
         // make the initial check call to populate our data structures
         initGhRepository();
         
-        for (Entry<Integer, GhprbPullRequest> next : trigger.getPulls().entrySet()) {
+        for (Entry<Integer, GhprbPullRequest> next : trigger.getPullRequests().entrySet()) {
             GhprbPullRequest pull = next.getValue();
             pull.init(trigger.getHelper(), this);
         }
@@ -111,7 +111,7 @@ public class GhprbRepository {
             return;
         }
         
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
+        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
         
         Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
 
@@ -133,20 +133,22 @@ public class GhprbRepository {
         for (Integer id : closedPulls) {
             pulls.remove(id);
         }
+        trigger.save();
     }
 
     private void check(GHPullRequest pr) {
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
+        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
 
         final Integer id = pr.getNumber();
         GhprbPullRequest pull;
         if (pulls.containsKey(id)) {
             pull = pulls.get(id);
         } else {
-            pulls.putIfAbsent(id, new GhprbPullRequest(pr, trigger.getHelper(), this));
+            pulls.put(id, new GhprbPullRequest(pr, trigger.getHelper(), this));
             pull = pulls.get(id);
         }
         pull.check(pr);
+        trigger.save();
     }
 
     public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
@@ -296,7 +298,7 @@ public class GhprbRepository {
             return;
         }
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
+        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
 
         GhprbPullRequest pull = pulls.get(id);
         if (pull == null) {
@@ -306,7 +308,7 @@ public class GhprbRepository {
             pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
-        GhprbTrigger.getDscp().save();
+        trigger.save();
     }
 
     void onPullRequestHook(PullRequest pr) throws IOException {
@@ -314,36 +316,24 @@ public class GhprbRepository {
         int number = pr.getNumber();
         String action = pr.getAction();
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = trigger.getPulls();
+        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
 
         if ("closed".equals(action)) {
             pulls.remove(number);
         } else if (!trigger.isActive()) {
             logger.log(Level.FINE, "Not processing Pull request since the build is disabled");
-        } else if ("opened".equals(action) || "reopened".equals(action)) {
+        } else if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
             GhprbPullRequest pull = pulls.get(number);
             if (pull == null) {
-                pulls.putIfAbsent(number, new GhprbPullRequest(ghpr, trigger.getHelper(), this));
-                pull = pulls.get(number);
-            }
-            pull.check(ghpr);
-        } else if ("synchronize".equals(action)) {
-            GhprbPullRequest pull = pulls.get(number);
-            if (pull == null) {
-                pulls.putIfAbsent(number, new GhprbPullRequest(ghpr, trigger.getHelper(), this));
-                pull = pulls.get(number);
-            }
-            if (pull == null) {
-                logger.log(Level.SEVERE, "Pull Request #{0} doesn''t exist", number);
-                return;
+                pull = new GhprbPullRequest(ghpr, trigger.getHelper(), this);
+                pulls.put(number, pull);
             }
             pull.check(ghpr);
         } else {
             logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", action);
         }
-        GhprbTrigger.getDscp().save();
     }
-
+    
     public GHRepository getGitHubRepo() {
         if (ghRepository == null) {
             initGhRepository();

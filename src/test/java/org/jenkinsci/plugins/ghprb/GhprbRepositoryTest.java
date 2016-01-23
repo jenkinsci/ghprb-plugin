@@ -560,7 +560,7 @@ public class GhprbRepositoryTest {
         ghprbRepository = new GhprbRepository(TEST_USER_NAME, TEST_REPO_NAME, trigger);
         ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository);
         
-        given(trigger.getPulls()).willReturn(pulls);
+        given(trigger.getPullRequests()).willReturn(pulls);
 
         // Reset mocks not to mix init data invocations with tests
         reset(ghPullRequest, ghUser, helper, head, base);
