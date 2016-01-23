@@ -30,13 +30,14 @@ public class GhprbPullRequest {
     @Deprecated @SuppressWarnings("unused") private transient GHUser author;
     @Deprecated @SuppressWarnings("unused") private transient String title;
     @Deprecated @SuppressWarnings("unused") private transient String reponame;
-    @Deprecated @SuppressWarnings("unused") private transient String authorEmail;
     @Deprecated @SuppressWarnings("unused") private transient URL url;
     @Deprecated @SuppressWarnings("unused") private transient String description;
     @Deprecated @SuppressWarnings("unused") private transient String target;
     @Deprecated @SuppressWarnings("unused") private transient String source;
     @Deprecated @SuppressWarnings("unused") private transient String authorRepoGitUrl;
 
+
+    private transient String authorEmail;
     private transient Ghprb helper; // will be refreshed each time GhprbRepository.init() is called
     private transient GhprbRepository repo; // will be refreshed each time GhprbRepository.init() is called
     
@@ -426,6 +427,10 @@ public class GhprbPullRequest {
         return mergeable;
     }
 
+    /**
+     * Base and Ref are part of the PullRequest object
+     * @return
+     */
     public String getTarget() {
         try {
             return getPullRequest(false).getBase().getRef();
@@ -434,6 +439,10 @@ public class GhprbPullRequest {
         }
     }
 
+    /**
+     * Head and Ref are part of the PullRequest object
+     * @return
+     */
     public String getSource() {
         try {
             return getPullRequest(false).getHead().getRef();
@@ -442,15 +451,11 @@ public class GhprbPullRequest {
         }
     }
 
-    public String getAuthorEmail() {
-        try {
-            return getPullRequest(false).getUser().getEmail();
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to fetch author info for " + id);
-        }
-        return "";
-    }
 
+    /**
+     * Title is part of the PullRequest object
+     * @return
+     */
     public String getTitle() {
         try {
             return getPullRequest(false).getTitle();
@@ -461,30 +466,19 @@ public class GhprbPullRequest {
 
     /**
      * Returns the URL to the Github Pull Request.
+     * This URL is part of the pull request object
      *
      * @return the Github Pull Request URL
-     * @throws IOException 
      */
     public URL getUrl() throws IOException {
         return getPullRequest(false).getHtmlUrl();
     }
-
-    public GitUser getCommitAuthor() {
-        return commitAuthor;
-    }
-
-    public GHUser getPullRequestAuthor() throws IOException {
-        return getPullRequest(false).getUser();
-    }
     
 
-    public GHPullRequest getPullRequest(boolean force) throws IOException {
-        if (this.pr == null || force) {
-            this.pr = repo.getPullRequest(this.id);
-        }
-        return pr;
-    }
-    
+    /**
+     * The description body is part of the PullRequest object
+     * @return
+     */
     public String getDescription() {
         try {
             return getPullRequest(false).getBody();
@@ -492,4 +486,49 @@ public class GhprbPullRequest {
             return "UNKNOWN";
         }
     }
+
+    public GitUser getCommitAuthor() {
+        return commitAuthor;
+    }
+
+    /**
+     * Author is part of the PullRequest Object
+     * @return
+     * @throws IOException
+     */
+    public GHUser getPullRequestAuthor() throws IOException {
+        return getPullRequest(false).getUser();
+    }
+    
+    /**
+     * Get the PullRequest object for this PR
+     * @param force - forces the code to go get the PullRequest from GitHub now
+     * @return
+     * @throws IOException
+     */
+    public GHPullRequest getPullRequest(boolean force) throws IOException {
+        if (this.pr == null || force) {
+            this.pr = repo.getPullRequest(this.id);
+        }
+        return pr;
+    }
+    
+
+    /**
+     * Email address is collected from GitHub as extra information, so lets cache it.
+     * @return
+     */
+    public String getAuthorEmail() {
+        if (StringUtils.isEmpty(authorEmail)) {
+            try {
+                GHUser user = getPullRequestAuthor();
+                authorEmail = user.getEmail();
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Unable to fetch author info for " + id);
+            }
+        }
+        authorEmail = StringUtils.isEmpty(authorEmail) ? "" : authorEmail;
+        return authorEmail;
+    }
+    
 }
