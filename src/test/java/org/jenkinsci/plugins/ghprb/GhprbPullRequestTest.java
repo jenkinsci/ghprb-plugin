@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.ghprb;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +18,7 @@ import java.util.Date;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -37,43 +39,53 @@ public class GhprbPullRequestTest {
     @Mock
     private GhprbRepository repo;
     @Mock
-    private GHCommitPointer head;
+    private GHCommitPointer head, base;
     @Mock
     private GhprbRepository ghprbRepository;
+    @Mock
+    private GHUser ghUser;
+    @Mock
+    private GhprbBuilds builds;
     
     @Before
     public void setup() throws IOException {
-        given(ghprbRepository.getPullRequest(10)).willReturn(pr);
-        given(pr.getHead()).willReturn(head);
-    }
-
-    @Test
-    public void testConstructorWhenAuthorIsWhitelisted() throws IOException {
-        // GIVEN
-        GHUser ghUser = mock(GHUser.class);
-        GHCommitPointer head = mock(GHCommitPointer.class);
-        GHCommitPointer base = mock(GHCommitPointer.class);
-        
         given(head.getSha()).willReturn("some sha");
         given(base.getRef()).willReturn("some ref");
 
         // Mocks for GHPullRequest
         given(pr.getNumber()).willReturn(10);
+        given(pr.getCreatedAt()).willReturn(new Date());
         given(pr.getUpdatedAt()).willReturn(new Date());
         given(pr.getTitle()).willReturn("title");
         given(pr.getHead()).willReturn(head);
         given(pr.getBase()).willReturn(base);
-        given(pr.getUser()).willReturn(ghUser);
+        
         given(ghUser.getEmail()).willReturn("email");
-
+        
+        given(ghprbRepository.getPullRequest(10)).willReturn(pr);
+        given(ghprbRepository.getName()).willReturn("name");
+        
+        given(pr.getHead()).willReturn(head);
+        given(pr.getUser()).willReturn(ghUser);
+        
+        // Mocks for Ghprb
+        given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getBuilds()).willReturn(builds);
+        
+        doNothing().when(builds).build(any(GhprbPullRequest.class), any(GHUser.class), anyString());
+        
         // Mocks for GhprbRepository
         given(repo.getName()).willReturn("repoName");
 
-        // Mocks for Ghprb
-        given(helper.isWhitelisted(ghUser)).willReturn(true);
+        // Mocks for GhprbRepository
+        doNothing().when(repo).addComment(Mockito.anyInt(), anyString());
+    }
+
+    @Test
+    public void testConstructorWhenAuthorIsWhitelisted() throws IOException {
 
         // WHEN
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
 
         // THEN
         assertThat(ghprbPullRequest.getId()).isEqualTo(10);
@@ -86,102 +98,45 @@ public class GhprbPullRequestTest {
 
     @Test
     public void testInitRepoNameNull() throws IOException {
-        // GIVEN
-        GHUser ghUser = mock(GHUser.class);
-        GHCommitPointer head = mock(GHCommitPointer.class);
-        GHCommitPointer base = mock(GHCommitPointer.class);
 
-        // Mocks for GHPullRequest
-        given(pr.getNumber()).willReturn(10);
-        given(pr.getUpdatedAt()).willReturn(new Date());
-        given(pr.getTitle()).willReturn("title");
-        given(pr.getHead()).willReturn(head);
-        given(pr.getBase()).willReturn(base);
-        given(head.getSha()).willReturn("some sha");
-        given(base.getRef()).willReturn("some ref");
-        given(pr.getUser()).willReturn(ghUser);
-        given(ghUser.getEmail()).willReturn("email");
-
-        // Mocks for GhprbRepository
         given(repo.getName()).willReturn(null);
-        doNothing().when(repo).addComment(eq(10), anyString());
 
-        // Mocks for Ghprb
-        given(helper.isWhitelisted(ghUser)).willReturn(true);
-
-        GhprbPullRequest ghprbPullRequest = Mockito.spy(new GhprbPullRequest(pr, helper, repo));
-        given(ghprbRepository.getName()).willReturn("name");
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
 
         // THEN
         verify(pr, times(1)).getHead();
+        verify(pr, times(1)).getNumber();
+        verify(pr, times(1)).getUpdatedAt();
+        verify(pr, times(3)).getUser();
+        Mockito.verifyNoMoreInteractions(pr);
 
     }
 
     @Test
     public void testInitRepoNameNotNull() throws IOException {
-        // GIVEN
-        GHUser ghUser = mock(GHUser.class);
-        GHCommitPointer head = mock(GHCommitPointer.class);
-        GHCommitPointer base = mock(GHCommitPointer.class);
-
-        // Mocks for GHPullRequest
-        given(pr.getNumber()).willReturn(10);
-        given(pr.getUpdatedAt()).willReturn(new Date());
-        given(pr.getTitle()).willReturn("title");
-        given(pr.getHead()).willReturn(head);
-        given(pr.getBase()).willReturn(base);
-        given(head.getSha()).willReturn("some sha");
-        given(base.getRef()).willReturn("some ref");
-        given(pr.getUser()).willReturn(ghUser);
-        given(ghUser.getEmail()).willReturn("email");
 
         // Mocks for GhprbRepository
         given(repo.getName()).willReturn("name");
         doNothing().when(repo).addComment(eq(10), anyString());
 
-        // Mocks for Ghprb
-        given(helper.isWhitelisted(ghUser)).willReturn(true);
-
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        given(ghprbRepository.getName()).willReturn("name");
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
 
         // THEN
         verify(ghprbRepository, never()).getName();
+        Mockito.verifyNoMoreInteractions(ghprbRepository);
     }
 
     @Test
     public void authorRepoGitUrlShouldBeNullWhenNoRepository() throws Exception {
         // GIVEN
-        GHUser ghUser = mock(GHUser.class);
-        GHCommitPointer head = mock(GHCommitPointer.class);
-        GHCommitPointer base = mock(GHCommitPointer.class);
 
-        // Mocks for GHPullRequest
-        given(pr.getNumber()).willReturn(10);
-        given(pr.getUpdatedAt()).willReturn(new Date());
-        given(pr.getTitle()).willReturn("title");
-        given(pr.getHead()).willReturn(head);
-        given(pr.getBase()).willReturn(base);
-        given(head.getSha()).willReturn("some sha");
-        given(base.getRef()).willReturn("some ref");
-        given(pr.getUser()).willReturn(ghUser);
-        given(ghUser.getEmail()).willReturn("email");
-
-        // Mocks for GhprbRepository
-        given(repo.getName()).willReturn("name");
-        doNothing().when(repo).addComment(eq(10), anyString());
-
-        // Mocks for Ghprb
-        given(helper.isWhitelisted(ghUser)).willReturn(true);
-
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        given(ghprbRepository.getName()).willReturn("name");
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
@@ -193,39 +148,40 @@ public class GhprbPullRequestTest {
     @Test
     public void authorRepoGitUrlShouldBeSetWhenRepository() throws Exception {
         // GIVEN
-        GHUser ghUser = mock(GHUser.class);
-        GHCommitPointer head = mock(GHCommitPointer.class);
-        GHCommitPointer base = mock(GHCommitPointer.class);
-        GHRepository repository = mock(GHRepository.class);
-
-        // Mocks for GHPullRequest
-        given(pr.getNumber()).willReturn(10);
-        given(pr.getUpdatedAt()).willReturn(new Date());
-        given(pr.getTitle()).willReturn("title");
-        given(pr.getHead()).willReturn(head);
-        given(pr.getBase()).willReturn(base);
-        given(head.getSha()).willReturn("some sha");
-        given(base.getRef()).willReturn("some ref");
-        given(pr.getUser()).willReturn(ghUser);
-        given(ghUser.getEmail()).willReturn("email");
-        given(head.getRepository()).willReturn(repository);
         String expectedAuthorRepoGitUrl = "https://github.com/jenkinsci/ghprb-plugin";
+        GHRepository repository = mock(GHRepository.class);
         given(repository.gitHttpTransportUrl()).willReturn(expectedAuthorRepoGitUrl);
 
-        // Mocks for GhprbRepository
-        given(repo.getName()).willReturn("name");
-        doNothing().when(repo).addComment(eq(10), anyString());
+        given(head.getRepository()).willReturn(repository);
 
-        // Mocks for Ghprb
-        given(helper.isWhitelisted(ghUser)).willReturn(true);
-
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
-        given(ghprbRepository.getName()).willReturn("name");
-
-        // WHEN
-        ghprbPullRequest.init(helper, ghprbRepository);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
 
         // THEN
         assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isEqualTo(expectedAuthorRepoGitUrl);
+    }
+    
+    @Test
+    public void pullRequestIsMarkedAsChanged() throws Exception {
+        GhprbPullRequest pull = new GhprbPullRequest(pr, helper, repo, true);
+        pull.save();
+        assertThat(pull.isChanged() == false);
+        
+        given(pr.getUpdatedAt()).willReturn(new DateTime().plusHours(2).toDate());
+        pull.check(pr);
+        assertThat(pull.isChanged() == true);
+        
+    }
+    
+    @Test
+    public void pullRequestIsNotMarkedAsChanged() throws Exception {
+        GhprbPullRequest pull = new GhprbPullRequest(pr, helper, repo, true);
+        pull.save();
+        assertThat(pull.isChanged() == false);
+        
+        pull.check(pr);
+        pull.check(pr);
+        pull.check(pr);
+        assertThat(pull.isChanged() == false);
+        
     }
 }

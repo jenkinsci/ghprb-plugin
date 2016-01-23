@@ -18,7 +18,6 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -124,7 +123,7 @@ public class GhprbRepository {
                     return;
                 }
             }
-            check(pr);
+            check(pr, true);
             closedPulls.remove(pr.getNumber());
         }
         
@@ -136,7 +135,7 @@ public class GhprbRepository {
         trigger.save();
     }
 
-    private void check(GHPullRequest pr) {
+    private void check(GHPullRequest pr, boolean isNew) {
         Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
 
         final Integer id = pr.getNumber();
@@ -144,8 +143,8 @@ public class GhprbRepository {
         if (pulls.containsKey(id)) {
             pull = pulls.get(id);
         } else {
-            pulls.put(id, new GhprbPullRequest(pr, trigger.getHelper(), this));
-            pull = pulls.get(id);
+            pull = new GhprbPullRequest(pr, trigger.getHelper(), this, isNew);
+            pulls.put(id, pull);
         }
         pull.check(pr);
         trigger.save();
@@ -304,7 +303,7 @@ public class GhprbRepository {
         if (pull == null) {
             GHRepository repo = getGitHubRepo();
             GHPullRequest pr = repo.getPullRequest(id);
-            pull = new GhprbPullRequest(pr, trigger.getHelper(), this);
+            pull = new GhprbPullRequest(pr, trigger.getHelper(), this, false);
             pulls.put(id, pull);
         }
         pull.check(issueComment.getComment());
@@ -325,7 +324,7 @@ public class GhprbRepository {
         } else if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
             GhprbPullRequest pull = pulls.get(number);
             if (pull == null) {
-                pull = new GhprbPullRequest(ghpr, trigger.getHelper(), this);
+                pull = new GhprbPullRequest(ghpr, trigger.getHelper(), this, "opened".equals(action));
                 pulls.put(number, pull);
             }
             pull.check(ghpr);

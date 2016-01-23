@@ -174,7 +174,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * Save any updates that may have been made inside the plugin that would affect the config.xml
      */
     public void save() {
-        if (super.job == null) {
+        if (super.job == null || pullRequests == null) {
+            return;
+        }
+        boolean save = false;
+        for (GhprbPullRequest pr : pullRequests.values()) {
+            if (save || pr.isChanged()) {
+                pr.save();
+            }
+        }
+        if (!save) {
             return;
         }
         try {
