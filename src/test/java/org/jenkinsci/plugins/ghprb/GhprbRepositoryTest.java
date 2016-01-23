@@ -242,7 +242,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(7)).getUser();
+        verify(ghPullRequest, times(6)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(1)).getBase();
@@ -262,7 +262,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
-        verify(ghUser, times(2)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verifyNoMoreInteractions(ghUser);
     }
@@ -323,7 +323,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(7)).getUser();
+        verify(ghPullRequest, times(6)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(8)).getHead();
         verify(ghPullRequest, times(1)).getBase();
@@ -351,7 +351,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
-        verify(ghUser, times(2)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verify(ghUser, times(1)).getName();
         verifyNoMoreInteractions(ghUser);
@@ -413,7 +413,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
-        verify(ghPullRequest, times(9)).getUser();
+        verify(ghPullRequest, times(7)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(10)).getHead();
         verify(ghPullRequest, times(2)).getBase();
@@ -441,7 +441,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
-        verify(ghUser, times(3)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verify(ghUser, times(1)).getName();
         verifyNoMoreInteractions(ghUser);
