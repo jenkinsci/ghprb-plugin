@@ -178,6 +178,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         boolean save = false;
         for (GhprbPullRequest pr : pullRequests.values()) {
             if (save || pr.isChanged()) {
+                save = true;
                 pr.save();
             }
         }
@@ -185,6 +186,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
         try {
+            logger.log(Level.FINEST, "Saving config update for job");
             super.job.save();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to save config updates", e);
