@@ -20,6 +20,7 @@ import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -39,6 +40,16 @@ public class GhprbBuilds {
     }
 
     public void build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
+        
+        URL url = null;
+        GHUser prAuthor = null;
+        
+        try {
+            url = pr.getUrl();
+            prAuthor = pr.getPullRequestAuthor();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to get PR author or PR URL", e);
+        }
 
         GhprbCause cause = new GhprbCause(pr.getHead(), 
                 pr.getId(), 
@@ -47,11 +58,11 @@ public class GhprbBuilds {
                 pr.getSource(), 
                 pr.getAuthorEmail(), 
                 pr.getTitle(), 
-                pr.getUrl(), 
+                url, 
                 triggerSender, 
                 commentBody,
                 pr.getCommitAuthor(), 
-                pr.getPullRequestAuthor(), 
+                prAuthor, 
                 pr.getDescription(), 
                 pr.getAuthorRepoGitUrl());
 

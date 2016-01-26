@@ -42,10 +42,7 @@ public abstract class GhprbITBaseTestCase {
     @Mock
     protected GHUser ghUser;
     @Mock
-    protected GitHub gitHub;
-    @Mock
     protected Ghprb helper;
-    
     
     protected GhprbBuilds builds;
     
@@ -60,9 +57,8 @@ public abstract class GhprbITBaseTestCase {
         
         trigger = GhprbTestUtil.getTrigger(triggerConfig);
         
-        given(ghprbGitHub.get()).willReturn(gitHub);
+        GitHub gitHub = trigger.getGitHub();
         
-        given(gitHub.getRateLimit()).willReturn(ghRateLimit);
         given(gitHub.getRepository(anyString())).willReturn(ghRepository);
         
         given(ghPullRequest.getHead()).willReturn(commitPointer);
@@ -77,6 +73,7 @@ public abstract class GhprbITBaseTestCase {
         
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(newArrayList(ghPullRequest)).willReturn(newArrayList(ghPullRequest));
+        given(ghRepository.getPullRequest(Mockito.anyInt())).willReturn(ghPullRequest);
 
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");
@@ -86,7 +83,7 @@ public abstract class GhprbITBaseTestCase {
         GhprbTestUtil.mockCommitList(ghPullRequest);
         
 
-        GhprbRepository repo = Mockito.spy(new GhprbRepository("user", "dropwizard", helper));
+        GhprbRepository repo = Mockito.spy(new GhprbRepository("user", "dropwizard", trigger));
         Mockito.doReturn(ghRepository).when(repo).getGitHubRepo();
         Mockito.doNothing().when(repo).addComment(Mockito.anyInt(), Mockito.anyString(), any(AbstractBuild.class), any(TaskListener.class));
         

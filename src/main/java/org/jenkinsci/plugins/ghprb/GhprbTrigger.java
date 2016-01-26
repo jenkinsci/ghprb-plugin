@@ -48,13 +48,11 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -127,7 +125,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String commitStatusContext,
             String gitHubAuthId,
             String buildDescTemplate,
-            List<GhprbExtension> extensions
+            List<GhprbExtension> extensions,
+            Map<Integer, GhprbPullRequest> pullRequests
             ) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -146,6 +145,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.buildDescTemplate = buildDescTemplate;
         setExtensions(extensions);
         configVersion = latestVersion;
+        this.pullRequests = pullRequests;
     }
 
     @Override
@@ -154,6 +154,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         checkGitHubApiAuth();
         return this;
     }
+    
 
     @SuppressWarnings("deprecation")
     private void checkGitHubApiAuth() {
@@ -171,20 +172,24 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * Save any updates that may have been made inside the plugin that would affect the config.xml
      */
     public void save() {
-        if (super.job != null) {
-            String xmlConfig = "";
-            try {
-                xmlConfig = super.job.getConfigFile().asString();
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Unable to save load config file", e);
-            } 
-            if (!xmlConfig.contains("<config>" + configVersion)) {
-                try {
-                    super.job.save();
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Unable to save config updates", e);
-                }
+        if (super.job == null || pullRequests == null) {
+            return;
+        }
+        boolean save = false;
+        for (GhprbPullRequest pr : pullRequests.values()) {
+            if (save || pr.isChanged()) {
+                save = true;
+                pr.save();
             }
+        }
+        if (!save) {
+            return;
+        }
+        try {
+            logger.log(Level.FINEST, "Saving config update for job");
+            super.job.save();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to save config updates", e);
         }
     }
 
@@ -192,6 +197,20 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public void start(AbstractProject<?, ?> project, boolean newInstance) {
         // We should always start the trigger, and handle cases where we don't run in the run function.
         super.start(project, newInstance);
+        
+        try {
+            Map<Integer, GhprbPullRequest> prs = getDescriptor().getPullRequests(project.getFullName());
+            if (prs != null) {
+                prs = new ConcurrentHashMap<Integer, GhprbPullRequest>(prs);
+                if (pullRequests == null) {
+                    pullRequests = prs;
+                } else {
+                    pullRequests.putAll(prs);
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unable to transfer map of pull requests", e);
+        }
         
         save();
         
@@ -220,9 +239,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             DESCRIPTOR.addRepoTrigger(getRepository().getName(), super.job);
         }
     }
+    
+    private Map<Integer, GhprbPullRequest> pullRequests;
 
-    public ConcurrentMap<Integer, GhprbPullRequest> getPulls() {
-        return getDescriptor().getPullRequests(super.job.getFullName());
+    public Map<Integer, GhprbPullRequest> getPullRequests() {
+        if (pullRequests == null) {
+            pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
+        }
+        return pullRequests;
     }
 
     @Override
@@ -255,11 +279,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
 
-        
         logger.log(Level.FINE, "Running trigger for {0}", super.job.getFullName());
         
         helper.run();
-        getDescriptor().save();
+        save();
     }
 
     public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
@@ -447,6 +470,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public Boolean getUseGitHubHooks() {
         return useGitHubHooks != null && useGitHubHooks;
     }
+    
+    public Ghprb getHelper() {
+        return helper;
+    }
 
     public Boolean getPermitAll() {
         return permitAll != null && permitAll;
@@ -606,7 +633,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private String requestForTestingPhrase;
 
         // map of jobs (by their fullName) and their map of pull requests
-        private Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
+        private transient Map<String, Map<Integer, GhprbPullRequest>> jobs;
         
         /**
          *  map of jobs (by the repo name);  No need to keep the projects from shutdown to startup.
@@ -637,10 +664,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (repoJobs == null) {
                 repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>();
             }
-            if (jobs == null) {
-                jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>();
-            }
-//            save();
+            save();
         }
 
         @Override
@@ -782,39 +806,39 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
 
-        public ConcurrentMap<Integer, GhprbPullRequest> getPullRequests(String projectName) {
-            ConcurrentMap<Integer, GhprbPullRequest> ret;
-            if (jobs.containsKey(projectName)) {
-                Map<Integer, GhprbPullRequest> map = jobs.get(projectName);
-                if (!(map instanceof ConcurrentMap)) {
-                    map = new ConcurrentHashMap<Integer, GhprbPullRequest>(map);
-                }
-                jobs.put(projectName, (ConcurrentMap<Integer, GhprbPullRequest>) map);
-                ret = (ConcurrentMap<Integer, GhprbPullRequest>) map;
-            } else {
-                ret = new ConcurrentHashMap<Integer, GhprbPullRequest>();
-                jobs.put(projectName, ret);
+        public Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {
+            Map<Integer, GhprbPullRequest> ret = null;
+            if (jobs != null && jobs.containsKey(projectName)) {
+                ret = jobs.get(projectName);
+                jobs.remove(projectName);
             }
             return ret;
         }
         
         private void addRepoTrigger(String repo, AbstractProject<?, ?> project) {
-            if (project == null) {
+            if (project == null || StringUtils.isEmpty(repo)) {
                 return;
             }
+            logger.log(Level.FINE, "Adding [{0}] to webhooks repo [{1}]", new Object[]{project.getFullName(), repo});
             
-            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
-            if (projects == null) {
-                projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>());
-                repoJobs.put(repo, projects);
+            synchronized (repoJobs) {
+                Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+                if (projects == null) {
+                    logger.log(Level.FINE, "No other projects found, creating new repo set");
+                    projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>());
+                    repoJobs.put(repo, projects);
+                } else {
+                    logger.log(Level.FINE, "Adding project to current repo set, length: {0}", new Object[]{projects.size()});
+                }
+                
+                projects.add(project);
             }
-            
-            projects.add(project);
         }
         
         private void removeRepoTrigger(String repo, AbstractProject<?, ?> project) {
             Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
             if (project != null && projects != null) {
+                logger.log(Level.FINE, "Removing [{0}] from webhooks repo [{1}]", new Object[]{repo, project.getFullName()});
                 projects.remove(project);
             }
         }
@@ -823,7 +847,18 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (repoJobs == null) {
                 repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>(5);
             }
-            return repoJobs.get(repo);
+            logger.log(Level.FINE, "Retrieving triggers for repo [{0}]", new Object[]{repo});
+            
+            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+            if (projects != null) {
+                for (AbstractProject<?, ?> project : projects) {
+                    logger.log(Level.FINE, "Found project [{0}] for webhook repo [{0}]", new Object[]{project.getFullName(), repo});
+                }
+            } else {
+                projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>(0));
+            }
+            
+            return projects;
         }
 
         public List<GhprbBranch> getWhiteListTargetBranches() {

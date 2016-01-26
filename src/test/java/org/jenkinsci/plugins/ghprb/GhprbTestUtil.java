@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentMap;
 import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRateLimit;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
 import org.kohsuke.stapler.BindInterceptor;
@@ -40,7 +42,6 @@ import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 public class GhprbTestUtil {
 
@@ -380,9 +381,15 @@ public class GhprbTestUtil {
         
         GhprbTrigger trigger = spy(req.bindJSON(GhprbTrigger.class, defaults));
         
+        GHRateLimit limit = new GHRateLimit();
+        limit.remaining = INITIAL_RATE_LIMIT;
+        
+        GitHub github = Mockito.mock(GitHub.class);
+        given(github.getRateLimit()).willReturn(limit);
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
-        Mockito.doReturn(pulls).when(trigger).getPulls();
+        Mockito.doReturn(pulls).when(trigger).getPullRequests();
+        Mockito.doReturn(github).when(trigger).getGitHub();
         
         return trigger;
     }

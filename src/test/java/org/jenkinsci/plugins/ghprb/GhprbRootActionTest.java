@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.net.URLEncoder;
 
@@ -17,13 +18,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitPointer;
+import org.kohsuke.github.GHEventPayload.IssueComment;
+import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.StaplerRequest;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
@@ -54,10 +57,6 @@ public class GhprbRootActionTest {
     @Mock
     protected GHUser ghUser;
     
-    protected GitHub gitHub;
-    // Stubs
-    protected GHRateLimit ghRateLimit = new GHRateLimit();
-
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
@@ -67,15 +66,17 @@ public class GhprbRootActionTest {
 
     private BufferedReader br;
     
+    private GhprbTrigger trigger;
+    
 
     private final int prId = 1;
 
     @Before
     public void setup() throws Exception {
-        gitHub = spy(GitHub.connectAnonymously());
-        given(ghprbGitHub.get()).willReturn(gitHub);
-        given(gitHub.getRateLimit()).willReturn(ghRateLimit);
-        doReturn(ghRepository).when(gitHub).getRepository(anyString());
+        trigger = GhprbTestUtil.getTrigger();
+        GitHub gitHub = trigger.getGitHub();
+        
+        given(gitHub.getRepository(anyString())).willReturn(ghRepository);
         given(commitPointer.getRef()).willReturn("ref");
         given(ghRepository.getName()).willReturn("dropwizard");
 
@@ -86,8 +87,8 @@ public class GhprbRootActionTest {
         given(ghPullRequest.getUser()).willReturn(ghUser);
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");
+        given(ghUser.getName()).willReturn("User");
 
-        ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
 
         GhprbTestUtil.mockCommitList(ghPullRequest);
     }
@@ -96,7 +97,7 @@ public class GhprbRootActionTest {
     public void testUrlEncoded() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger();
+        
         doReturn(project).when(trigger).getActualProject();
         doReturn(true).when(trigger).getUseGitHubHooks();
         
@@ -108,9 +109,11 @@ public class GhprbRootActionTest {
         given(ghRepository.getPullRequest(prId)).willReturn(ghPullRequest);
         Ghprb ghprb = spy(new Ghprb(trigger));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
+        doReturn(true).when(ghprb).isAdmin(Mockito.any(GHUser.class));
+        
         trigger.start(project, true);
         trigger.setHelper(ghprb);
-        ghprb.getRepository().setHelper(ghprb);
+        
         project.addTrigger(trigger);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
@@ -119,16 +122,30 @@ public class GhprbRootActionTest {
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(0);
 
-		doReturn(gitHub).when(trigger).getGitHub();
-
         BufferedReader br = new BufferedReader(new StringReader(
                 "payload=" + URLEncoder.encode(GhprbTestUtil.PAYLOAD, "UTF-8")));
+        
+
 
         given(req.getContentType()).willReturn("application/x-www-form-urlencoded");
         given(req.getParameter("payload")).willReturn(GhprbTestUtil.PAYLOAD);
         given(req.getHeader("X-GitHub-Event")).willReturn("issue_comment");
         given(req.getReader()).willReturn(br);
         given(req.getCharacterEncoding()).willReturn("UTF-8");
+
+
+        StringReader brTest = new StringReader(GhprbTestUtil.PAYLOAD);
+        
+        IssueComment issueComment = spy(GitHub.connectAnonymously().parseEventPayload(brTest, IssueComment.class));
+        brTest.close();
+        
+        GHIssueComment ghIssueComment = spy(issueComment.getComment());
+        
+        Mockito.when(issueComment.getComment()).thenReturn(ghIssueComment);
+        Mockito.when(ghIssueComment.getUser()).thenReturn(ghUser);
+        
+        
+        given(trigger.getGitHub().parseEventPayload(Mockito.any(Reader.class), Mockito.eq(IssueComment.class))).willReturn(issueComment);
 
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
@@ -141,7 +158,6 @@ public class GhprbRootActionTest {
     public void disabledJobsDontBuild() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("disabledJobsDontBuild");
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
         doReturn(project).when(trigger).getActualProject();
         
         given(commitPointer.getSha()).willReturn("sha1");
@@ -154,7 +170,7 @@ public class GhprbRootActionTest {
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         trigger.start(project, true);
         trigger.setHelper(ghprb);
-        ghprb.getRepository().setHelper(ghprb);
+
         project.addTrigger(trigger);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
@@ -164,8 +180,6 @@ public class GhprbRootActionTest {
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
         
         project.disable();
-
-		doReturn(gitHub).when(trigger).getGitHub();
 
         BufferedReader br = new BufferedReader(new StringReader(
                 "payload=" + URLEncoder.encode(GhprbTestUtil.PAYLOAD, "UTF-8")));
