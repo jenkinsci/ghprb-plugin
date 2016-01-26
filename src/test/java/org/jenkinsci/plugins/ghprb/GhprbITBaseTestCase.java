@@ -73,6 +73,7 @@ public abstract class GhprbITBaseTestCase {
         
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(newArrayList(ghPullRequest)).willReturn(newArrayList(ghPullRequest));
+        given(ghRepository.getPullRequest(Mockito.anyInt())).willReturn(ghPullRequest);
 
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");

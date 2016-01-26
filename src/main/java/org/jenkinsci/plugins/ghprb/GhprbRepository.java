@@ -136,17 +136,13 @@ public class GhprbRepository {
     }
 
     private void check(GHPullRequest pr, boolean isNew) {
-        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
-
-        final Integer id = pr.getNumber();
-        GhprbPullRequest pull;
-        if (pulls.containsKey(id)) {
-            pull = pulls.get(id);
-        } else {
-            pull = new GhprbPullRequest(pr, trigger.getHelper(), this, isNew);
-            pulls.put(id, pull);
+        int number = pr.getNumber();
+        try {
+            GhprbPullRequest pull = getPullRequest(null, isNew, number);
+            pull.check(pr);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to check pr: " + number, e);
         }
-        pull.check(pr);
         trigger.save();
     }
 
@@ -290,24 +286,37 @@ public class GhprbRepository {
             logger.log(Level.FINE, "Not checking comments since build is disabled");
             return;
         }
-        int id = issueComment.getIssue().getNumber();
+        int number = issueComment.getIssue().getNumber();
         logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}",
-                new Object[] { id, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
+                new Object[] { number, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
+        
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
 
-        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
-
-        GhprbPullRequest pull = pulls.get(id);
-        if (pull == null) {
-            GHRepository repo = getGitHubRepo();
-            GHPullRequest pr = repo.getPullRequest(id);
-            pull = new GhprbPullRequest(pr, trigger.getHelper(), this, false);
-            pulls.put(id, pull);
-        }
+        GhprbPullRequest pull = getPullRequest(null, false, number);
         pull.check(issueComment.getComment());
         trigger.save();
+    }
+    
+    private GhprbPullRequest getPullRequest(GHPullRequest ghpr, Boolean isNew, Integer number) throws IOException {
+        Map<Integer, GhprbPullRequest> prs = trigger.getPullRequests();
+        if (number == null) {
+            number = ghpr.getNumber();
+        }
+        synchronized (prs) {
+            GhprbPullRequest pr = prs.get(number);
+            if (pr == null) {
+                if (ghpr == null) {
+                    GHRepository repo = getGitHubRepo();
+                    ghpr = repo.getPullRequest(number);
+                }
+                pr = new GhprbPullRequest(ghpr, trigger.getHelper(), this, isNew);
+                prs.put(number, pr);
+            }
+            
+            return pr;
+        }
     }
 
     void onPullRequestHook(PullRequest pr) throws IOException {
@@ -322,11 +331,7 @@ public class GhprbRepository {
         } else if (!trigger.isActive()) {
             logger.log(Level.FINE, "Not processing Pull request since the build is disabled");
         } else if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
-            GhprbPullRequest pull = pulls.get(number);
-            if (pull == null) {
-                pull = new GhprbPullRequest(ghpr, trigger.getHelper(), this, "opened".equals(action));
-                pulls.put(number, pull);
-            }
+            GhprbPullRequest pull = getPullRequest(ghpr, false, number);
             pull.check(ghpr);
         } else {
             logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", action);

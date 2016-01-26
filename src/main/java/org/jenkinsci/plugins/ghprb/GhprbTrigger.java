@@ -48,13 +48,11 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -201,7 +199,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         try {
             Map<Integer, GhprbPullRequest> prs = getDescriptor().getPullRequests(project.getFullName());
             if (prs != null) {
-                prs = new HashMap<Integer, GhprbPullRequest>(prs);
+                prs = new ConcurrentHashMap<Integer, GhprbPullRequest>(prs);
                 if (pullRequests == null) {
                     pullRequests = prs;
                 } else {
@@ -244,7 +242,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public Map<Integer, GhprbPullRequest> getPullRequests() {
         if (pullRequests == null) {
-            pullRequests = new HashMap<Integer, GhprbPullRequest>();
+            pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         }
         return pullRequests;
     }
@@ -633,7 +631,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private String requestForTestingPhrase;
 
         // map of jobs (by their fullName) and their map of pull requests
-        private transient Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs;
+        private transient Map<String, Map<Integer, GhprbPullRequest>> jobs;
         
         /**
          *  map of jobs (by the repo name);  No need to keep the projects from shutdown to startup.
@@ -664,10 +662,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (repoJobs == null) {
                 repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>();
             }
-//            if (jobs == null) {
-//                jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>();
-//            }
-//            save();
+            save();
         }
 
         @Override
@@ -811,7 +806,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {
             Map<Integer, GhprbPullRequest> ret = null;
-            if (jobs.containsKey(projectName)) {
+            if (jobs != null && jobs.containsKey(projectName)) {
                 ret = jobs.get(projectName);
                 jobs.remove(projectName);
             }
