@@ -186,6 +186,15 @@ job('downstreamJob') {
 
 ### Updates
 
+#### -> 1.30
+* Merged #253, cleaning up code.
+* WebHooks are refactored to be closer to the variables it depends on
+* PR data is now local per job instead of global
+* The config.xml is only saved when there is a change to a PR the job is watching
+* GitHub connections are now shared.
+* Shouldn't run into rate limits on startup
+* Pull Requests are only updated when the trigger runs, instead of on startup.
+
 #### -> 1.29.8
 * Merged #246 adding job dsl features and updating docs
 
