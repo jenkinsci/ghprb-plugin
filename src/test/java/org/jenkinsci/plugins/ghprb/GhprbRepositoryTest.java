@@ -239,15 +239,17 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(7)).getUser();
+        verify(ghPullRequest, times(6)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(1)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
-        verify(ghPullRequest, times(3)).getUpdatedAt();
+        verify(ghPullRequest, times(2)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
@@ -262,7 +264,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
-        verify(ghUser, times(2)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verifyNoMoreInteractions(ghUser);
     }
@@ -283,13 +285,13 @@ public class GhprbRepositoryTest {
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
         
-        Date now = new Date();
+        Date later = new DateTime().plusHours(3).toDate();
         Date tomorrow = new DateTime().plusDays(1).toDate();
 
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
 
-        given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(now).willReturn(tomorrow);
+        given(ghPullRequest.getUpdatedAt()).willReturn(later).willReturn(tomorrow);
         given(ghPullRequest.getNumber()).willReturn(100);
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
@@ -320,18 +322,20 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(7)).getUser();
+        verify(ghPullRequest, times(6)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
-        verify(ghPullRequest, times(8)).getHead();
+        verify(ghPullRequest, times(9)).getHead();
         verify(ghPullRequest, times(1)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getHtmlUrl();
-        verify(ghPullRequest, times(3)).getUpdatedAt();
+        verify(ghPullRequest, times(2)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getCreatedAt();
 
-        verify(ghPullRequest, times(1)).getComments();
+        verify(ghPullRequest, times(2)).getComments();
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
@@ -351,13 +355,15 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
-        verify(ghUser, times(2)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verify(ghUser, times(1)).getName();
         verifyNoMoreInteractions(ghUser);
     }
 
-    private List<GHPullRequest> createListWithMockPR() {
+    private List<GHPullRequest> createListWithMockPR() throws IOException {
+
+        given(ghPullRequest.getCreatedAt()).willReturn(new Date());
         List<GHPullRequest> ghPullRequests = new ArrayList<GHPullRequest>();
         ghPullRequests.add(ghPullRequest);
         return ghPullRequests;
@@ -374,9 +380,7 @@ public class GhprbRepositoryTest {
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
 
-        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
-
-        given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(now).willReturn(tomorrow);
+        given(ghPullRequest.getUpdatedAt()).willReturn(now).willReturn(tomorrow);
         given(ghPullRequest.getNumber()).willReturn(100);
         given(ghPullRequest.getMergeable()).willReturn(true);
         given(ghPullRequest.getTitle()).willReturn("title");
@@ -385,6 +389,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
         given(ghPullRequest.getId()).willReturn(100);
         given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
         
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
@@ -410,15 +415,17 @@ public class GhprbRepositoryTest {
         
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
-        verify(ghPullRequest, times(9)).getUser();
+        verify(ghPullRequest, times(7)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(10)).getHead();
         verify(ghPullRequest, times(2)).getBase();
         verify(ghPullRequest, times(5)).getNumber();
-        verify(ghPullRequest, times(3)).getUpdatedAt();
+        verify(ghPullRequest, times(2)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(2)).getHtmlUrl();
 
         verify(ghPullRequest, times(1)).getId();
@@ -441,7 +448,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
-        verify(ghUser, times(3)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verify(ghUser, times(1)).getName();
         verifyNoMoreInteractions(ghUser);
@@ -558,9 +565,9 @@ public class GhprbRepositoryTest {
 
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         ghprbRepository = new GhprbRepository(TEST_USER_NAME, TEST_REPO_NAME, trigger);
-        ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository);
+        ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository, false);
         
-        given(trigger.getPulls()).willReturn(pulls);
+        given(trigger.getPullRequests()).willReturn(pulls);
 
         // Reset mocks not to mix init data invocations with tests
         reset(ghPullRequest, ghUser, helper, head, base);

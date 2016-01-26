@@ -198,11 +198,13 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     }
 
     public GitHub getConnection(Item context) throws IOException {
-        if (gh == null) {
-            buildConnection(context);
+        synchronized (credentialsId) {
+            if (gh == null) {
+                buildConnection(context);
+            }
+            
+            return gh;
         }
-        
-        return gh;
     }
 
     @Override

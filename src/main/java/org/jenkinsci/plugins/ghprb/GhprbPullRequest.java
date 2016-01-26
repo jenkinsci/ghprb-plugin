@@ -56,9 +56,26 @@ public class GhprbPullRequest {
     private Date updated; // Needed to track when the PR was updated
     private String head;
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
+    private Boolean changed = true; // Keep track for when the job config needs to be saved again.
 
+
+    private void setUpdated(Date lastUpdateTime) {
+        updated = lastUpdateTime;
+        changed = true;
+    }
     
-    public GhprbPullRequest(GHPullRequest pr, Ghprb ghprb, GhprbRepository repo) {
+    private void setHead(String newHead) {
+        this.head = StringUtils.isEmpty(newHead) ? head : newHead;
+        changed = true;
+    }
+    
+    private void setAccepted(boolean shouldRun) {
+        accepted = true;
+        this.shouldRun = shouldRun;
+        changed = true;
+    }
+    
+    public GhprbPullRequest(GHPullRequest pr, Ghprb ghprb, GhprbRepository repo, boolean isNew) {
         id = pr.getNumber();
         this.pr = pr;
         
@@ -67,14 +84,18 @@ public class GhprbPullRequest {
         this.repo = repo;
         
         try {
-            updated = pr.getUpdatedAt();
+            if (isNew) {
+                setUpdated(pr.getCreatedAt());
+            } else {
+                setUpdated(pr.getUpdatedAt());
+            }
         } catch (IOException e) {
             logger.log(Level.WARNING, "Unable to get date for new PR", e);
-            updated = new Date();
+            setUpdated(new Date());
         }
         
         GHCommitPointer prHead = pr.getHead();
-        head = prHead.getSha();
+        setHead(prHead.getSha());
         
         
         GHUser author = pr.getUser();
@@ -83,8 +104,7 @@ public class GhprbPullRequest {
 
         try {
             if (ghprb.isWhitelisted(getPullRequestAuthor())) {
-                accepted = true;
-                shouldRun = true;
+                setAccepted(true);
             } else {
                 logger.log(Level.INFO, "Author of #{0} {1} on {2} not in whitelist!", new Object[] { id, author.getLogin(), reponame });
                 repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
@@ -167,6 +187,7 @@ public class GhprbPullRequest {
         tryBuild();
     }
     
+    
     private void updatePR(GHPullRequest pr, GHUser user) {
         this.pr = pr;
         
@@ -177,7 +198,7 @@ public class GhprbPullRequest {
             // the author of the PR could have been whitelisted since its creation
             if (!accepted && helper.isWhitelisted(pr.getUser())) {
                 logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
-                accepted = true;
+                setAccepted(false);
             }
             
             int commentsChecked = checkComments(pr, lastUpdateTime);
@@ -218,13 +239,13 @@ public class GhprbPullRequest {
         try {
             lastUpdated = pr.getUpdatedAt();
             ret = updated.compareTo(lastUpdated) < 0;
-            updated = lastUpdated;
+            setUpdated(lastUpdated);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Unable to update last updated date", e);
         }
         GHCommitPointer pointer = pr.getHead();
         String pointerSha = pointer.getSha();
-        ret = ret || !pointerSha.equals(head);
+        ret |= !pointerSha.equals(head);
         return ret;
     }
 
@@ -270,7 +291,8 @@ public class GhprbPullRequest {
     }
 
     private void build() {
-        helper.getBuilds().build(this, triggerSender, commentBody);
+        GhprbBuilds builder = helper.getBuilds();
+        builder.build(this, triggerSender, commentBody);
     }
 
     // returns false if no new commit
@@ -279,7 +301,7 @@ public class GhprbPullRequest {
             return false;
         }
         logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[] { head, sha.getSha() });
-        head = sha.getSha();
+        setHead(sha.getSha());
         if (accepted) {
             shouldRun = true;
         }
@@ -308,12 +330,10 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
                 helper.addWhitelist(author.getLogin());
             }
-            accepted = true;
-            shouldRun = true;
+            setAccepted(true);
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) { // ok to test
             logger.log(Level.FINEST, "Admin {0} gave OK to test", sender);
-            accepted = true;
-            shouldRun = true;
+            setAccepted(true);
         } else if (helper.isRetestPhrase(body)) { // test this please
             logger.log(Level.FINEST, "Retest phrase");
             if (helper.isAdmin(sender)) {
@@ -530,5 +550,12 @@ public class GhprbPullRequest {
         authorEmail = StringUtils.isEmpty(authorEmail) ? "" : authorEmail;
         return authorEmail;
     }
+
+    public boolean isChanged() {
+        return changed == null ? false : changed;
+    }
     
+    public void save() {
+        changed = false;
+    }
 }
