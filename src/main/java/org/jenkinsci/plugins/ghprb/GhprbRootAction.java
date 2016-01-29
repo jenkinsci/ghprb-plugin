@@ -102,6 +102,11 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     logger.log(Level.INFO, "Skip comment on closed PR");
                     return;
                 }
+                
+                if (!issueComment.getIssue().isPullRequest()) {
+                    logger.log(Level.INFO, "Skip comment on Issue");
+                    return;
+                }
 
                 String repoName = issueComment.getRepository().getFullName();
 
