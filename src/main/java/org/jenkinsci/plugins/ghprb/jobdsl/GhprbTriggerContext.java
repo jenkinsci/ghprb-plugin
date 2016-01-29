@@ -3,9 +3,12 @@ package org.jenkinsci.plugins.ghprb.jobdsl;
 import javaposse.jobdsl.dsl.Context;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import org.jenkinsci.plugins.ghprb.GhprbBranch;
+import org.jenkinsci.plugins.ghprb.GhprbPullRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 class GhprbTriggerContext implements Context {
     List<String> admins = new ArrayList<String>();
@@ -21,6 +24,7 @@ class GhprbTriggerContext implements Context {
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
     boolean displayBuildErrorsOnDownstreamBuilds;
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
+    Map<Integer, GhprbPullRequest> pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
 
     /**
      * Adds admins for this job.
