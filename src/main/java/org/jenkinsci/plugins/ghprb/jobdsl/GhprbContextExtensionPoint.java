@@ -8,12 +8,10 @@ import javaposse.jobdsl.dsl.helpers.triggers.TriggerContext;
 import javaposse.jobdsl.dsl.helpers.wrapper.WrapperContext;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import javaposse.jobdsl.plugin.DslExtensionMethod;
-import org.jenkinsci.plugins.ghprb.GhprbBranch;
 import org.jenkinsci.plugins.ghprb.GhprbPullRequestMerge;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.upstream.GhprbUpstreamStatus;
 
-import java.util.ArrayList;
 
 @Extension(optional = true)
 public class GhprbContextExtensionPoint extends ContextExtensionPoint {
@@ -40,8 +38,7 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 null,
                 null,
                 null,
-                context.extensionContext.extensions,
-                null
+                context.extensionContext.extensions
         );
     }
 

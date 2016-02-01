@@ -26,7 +26,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 
 import java.io.FileNotFoundException;
@@ -64,8 +67,7 @@ import static org.mockito.Mockito.doReturn;
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbRepositoryTest {
 
-    private static final String TEST_USER_NAME = "test-user";
-    private static final String TEST_REPO_NAME = "test-repo";
+    private static final String TEST_REPO_NAME = "test-user/test-repo";
     private static final Date UPDATE_DATE = new Date();
     private static final String msg = "Build triggered. sha1 is merged.";
 
@@ -104,8 +106,13 @@ public class GhprbRepositoryTest {
         trigger.setHelper(helper);
         gt = trigger.getGitHub();
         
+        pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
+        
         doReturn(mock(QueueTaskFuture.class)).when(trigger).startJob(any(GhprbCause.class), any(GhprbRepository.class));
+        doReturn(ghprbRepository).when(trigger).getRepository();
         initGHPRWithTestData();
+        
+        given(ghPullRequest.getUser()).willReturn(ghUser);
 
         // Mock github API
         given(helper.getGitHub()).willReturn(gitHub);
@@ -159,14 +166,16 @@ public class GhprbRepositoryTest {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
-        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+        given(ghRepository.getPullRequest(Mockito.anyInt())).willReturn(ghPullRequest);
 
+        doReturn(ghRepository).when(ghprbRepository).getGitHubRepo();
         mockHeadAndBase();
         mockCommitList();
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(true);
 
         pulls.put(1, ghprbPullRequest);
+        ghprbRepository.addPullRequests(pulls);
 
         given(ghPullRequest.getUpdatedAt()).willReturn(UPDATE_DATE);
         given(ghPullRequest.getNumber()).willReturn(1);
@@ -186,7 +195,6 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getNumber();
         verify(ghPullRequest, times(1)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUser();
-        verify(ghPullRequest, times(1)).getId();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper).ifOnlyTriggerPhrase();
@@ -563,12 +571,12 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getHead()).willReturn(head);
         given(head.getSha()).willReturn("head sha");
 
-        pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
-        ghprbRepository = new GhprbRepository(TEST_USER_NAME, TEST_REPO_NAME, trigger);
+        ghprbRepository = spy(new GhprbRepository(TEST_REPO_NAME, trigger));
+        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString());
+        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        
         ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository, false);
         
-        given(trigger.getPullRequests()).willReturn(pulls);
-
         // Reset mocks not to mix init data invocations with tests
         reset(ghPullRequest, ghUser, helper, head, base);
     }
