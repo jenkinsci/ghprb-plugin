@@ -24,6 +24,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -101,9 +103,11 @@ public class GhprbRepositoryTest {
     @Before
     public void setUp() throws Exception {
         AbstractProject<?, ?> project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
+        project.addProperty(new GithubProjectProperty("https://github.com/" + TEST_REPO_NAME));
         trigger = GhprbTestUtil.getTrigger(null);
         trigger.start(project, true);
         trigger.setHelper(helper);
+        
         gt = trigger.getGitHub();
         
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
@@ -501,7 +505,7 @@ public class GhprbRepositoryTest {
 
         // WHEN
         ghprbRepository.check();
-        verify(helper).isProjectDisabled();
+        verify(trigger).isActive();
 
         // THEN
         verifyGetGithub(2, 1);
@@ -520,7 +524,7 @@ public class GhprbRepositoryTest {
         ghprbRepository.check();
 
         // THEN
-        verify(trigger, times(2)).getGitHub();
+        verify(trigger, times(1)).getGitHub();
         verify(gt, only()).getRateLimit();
         verifyZeroInteractions(ghRepository);
         verifyZeroInteractions(gitHub);

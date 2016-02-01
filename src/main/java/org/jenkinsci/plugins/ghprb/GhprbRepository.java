@@ -387,9 +387,8 @@ public class GhprbRepository implements Saveable{
         XmlFile xml = getConfigXml(trigger.getActualProject());
         if(xml.exists()){
             xml.unmarshal(this);
-        } else {
-            save();
         }
+        save();
     }
 
     public void save() throws IOException {

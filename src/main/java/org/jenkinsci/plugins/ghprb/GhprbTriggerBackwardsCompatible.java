@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -47,6 +48,8 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected transient String project;
     @Deprecated
     protected transient AbstractProject<?, ?> _project;
+    @Deprecated
+    protected transient Map<Integer, GhprbPullRequest> pullRequests;
     
 
     

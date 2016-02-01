@@ -168,7 +168,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public static DescriptorImpl getDscp() {
         return DESCRIPTOR;
     }
-    
+
+    @SuppressWarnings("deprecation")
     private void initState() throws IOException {
 
         final GithubProjectProperty ghpp = super.job.getProperty(GithubProjectProperty.class);
@@ -183,6 +184,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         final String reponame = m.group(2);
 
         this.repository = new GhprbRepository(reponame, this);
+        this.repository.load();
         
         Map<Integer, GhprbPullRequest> pulls = this.pullRequests;
         this.pullRequests = null;
@@ -203,8 +205,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
         if (pulls != null) {
             this.repository.addPullRequests(pulls);
-        } else {
-            this.repository.load();
+            this.repository.save();
         }
         this.builds = new GhprbBuilds(this, repository);
 
@@ -246,14 +247,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
     }
     
-    private Map<Integer, GhprbPullRequest> pullRequests;
-
-    public Map<Integer, GhprbPullRequest> getPullRequests() {
-        if (pullRequests == null) {
-            pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
-        }
-        return pullRequests;
-    }
 
     @Override
     public void stop() {
@@ -472,6 +465,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public Ghprb getHelper() {
+        if (helper == null) {
+            helper = new Ghprb(this);
+        }
         return helper;
     }
 
@@ -532,11 +528,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         if (super.job == null) {
             logger.log(Level.FINE, "Project was never set, start was never run");
             isActive = false;
-        } else if ((helper != null && helper.isProjectDisabled()) || (super.job != null && super.job.isDisabled())) {
+        } else if (super.job.isDisabled()) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
             isActive = false;
-        } else if (helper == null) {
-            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - helper is null", name);
+        } else if (getRepository() == null) {
+            logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - repository is null", name);
             isActive = false;
         }
         
@@ -544,7 +540,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public GhprbRepository getRepository() {
-        if (this.repository == null && this.isActive()) {
+        if (this.repository == null && super.job != null && !super.job.isDisabled()) {
             try {
                 this.initState();
             } catch (IOException e) {

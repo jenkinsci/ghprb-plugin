@@ -64,7 +64,7 @@ public class Ghprb {
     }
     
     public boolean isProjectDisabled() {
-        return trigger.getActualProject().isDisabled();
+        return !trigger.isActive();
     }
 
     public GhprbBuilds getBuilds() {
