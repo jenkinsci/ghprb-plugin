@@ -73,6 +73,7 @@ public class GhprbRepositoryTest {
     private static final Date UPDATE_DATE = new Date();
     private static final String msg = "Build triggered. sha1 is merged.";
 
+    @Mock
     private GitHub gt;
     @Mock
     private GHRepository ghRepository;
@@ -105,15 +106,18 @@ public class GhprbRepositoryTest {
         AbstractProject<?, ?> project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
         project.addProperty(new GithubProjectProperty("https://github.com/" + TEST_REPO_NAME));
         trigger = GhprbTestUtil.getTrigger(null);
+        doReturn(gt).when(trigger).getGitHub();
+        
+        given(gt.getRepository(anyString())).willReturn(ghRepository);
+        
         trigger.start(project, true);
         trigger.setHelper(helper);
         
-        gt = trigger.getGitHub();
         
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         
+        
         doReturn(mock(QueueTaskFuture.class)).when(trigger).startJob(any(GhprbCause.class), any(GhprbRepository.class));
-        doReturn(ghprbRepository).when(trigger).getRepository();
         initGHPRWithTestData();
         
         given(ghPullRequest.getUser()).willReturn(ghUser);
@@ -203,7 +207,7 @@ public class GhprbRepositoryTest {
 
         verify(helper).ifOnlyTriggerPhrase();
         verify(helper).getWhiteListTargetBranches();
-        verify(helper, times(3)).isProjectDisabled();
+        verify(helper, times(2)).isProjectDisabled();
         verify(helper).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
@@ -272,7 +276,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(5)).isProjectDisabled();
+        verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
@@ -363,7 +367,7 @@ public class GhprbRepositoryTest {
         verify(helper).isOktotestPhrase(eq("comment body"));
         verify(helper).isRetestPhrase(eq("comment body"));
         verify(helper).isTriggerPhrase(eq("comment body"));
-        verify(helper, times(6)).isProjectDisabled();
+        verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
@@ -456,7 +460,7 @@ public class GhprbRepositoryTest {
         verify(helper).isOktotestPhrase(eq("test this please"));
         verify(helper).isRetestPhrase(eq("test this please"));
         verify(helper).isAdmin(eq(ghUser));
-        verify(helper, times(6)).isProjectDisabled();
+        verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
@@ -524,8 +528,8 @@ public class GhprbRepositoryTest {
         ghprbRepository.check();
 
         // THEN
-        verify(trigger, times(1)).getGitHub();
-        verify(gt, only()).getRateLimit();
+        verify(trigger, times(2)).getGitHub();
+        verifyGetGithub(2, 0);
         verifyZeroInteractions(ghRepository);
         verifyZeroInteractions(gitHub);
         verifyZeroInteractions(gt);
@@ -576,8 +580,11 @@ public class GhprbRepositoryTest {
         given(head.getSha()).willReturn("head sha");
 
         ghprbRepository = spy(new GhprbRepository(TEST_REPO_NAME, trigger));
+
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString());
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        
+        doReturn(ghprbRepository).when(trigger).getRepository();
         
         ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository, false);
         
@@ -592,7 +599,7 @@ public class GhprbRepositoryTest {
     // Verifications
     private void verifyGetGithub(int callsCount, int repoTimes) throws IOException {
         verify(trigger, times(callsCount)).getGitHub();
-        verify(gt, times(1)).getRateLimit();
+        verify(gt, times(callsCount)).getRateLimit();
         verify(gt, times(repoTimes)).getRepository(anyString());
     }
 }
