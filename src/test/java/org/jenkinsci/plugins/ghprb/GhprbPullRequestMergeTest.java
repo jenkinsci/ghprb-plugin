@@ -110,6 +110,7 @@ public class GhprbPullRequestMergeTest {
         triggerValues.put("triggerPhrase", triggerPhrase);
         
         GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
+        Mockito.doReturn(repo).when(trigger).getRepository();
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
         
@@ -118,8 +119,8 @@ public class GhprbPullRequestMergeTest {
         jobs.put("project", pulls);
 
         Mockito.doReturn(project).when(trigger).getActualProject();
-        Mockito.doReturn(pulls).when(trigger).getPullRequests();
         Mockito.doReturn(repo).when(trigger).getRepository();
+        repo.addPullRequests(pulls);
         Mockito.doReturn(pr).when(repo).getPullRequest(pullId);
         
         
@@ -161,9 +162,7 @@ public class GhprbPullRequestMergeTest {
         jobsField.set(descriptor, jobs);
 
         helper = spy(new Ghprb(trigger));
-        given(trigger.getPullRequests()).willReturn(pulls);
         trigger.setHelper(helper);
-        given(helper.getRepository()).willReturn(repo);
         given(helper.isBotUser(any(GHUser.class))).willReturn(false);
     }
 

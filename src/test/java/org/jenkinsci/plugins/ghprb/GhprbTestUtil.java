@@ -387,8 +387,6 @@ public class GhprbTestUtil {
         GitHub github = Mockito.mock(GitHub.class);
         given(github.getRateLimit()).willReturn(limit);
 
-        ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
-        Mockito.doReturn(pulls).when(trigger).getPullRequests();
         Mockito.doReturn(github).when(trigger).getGitHub();
         
         return trigger;

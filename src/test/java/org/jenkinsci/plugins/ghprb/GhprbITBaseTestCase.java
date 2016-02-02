@@ -83,22 +83,22 @@ public abstract class GhprbITBaseTestCase {
         GhprbTestUtil.mockCommitList(ghPullRequest);
         
 
-        GhprbRepository repo = Mockito.spy(new GhprbRepository("user", "dropwizard", trigger));
+        GhprbRepository repo = Mockito.spy(new GhprbRepository("user/dropwizard", trigger));
         Mockito.doReturn(ghRepository).when(repo).getGitHubRepo();
         Mockito.doNothing().when(repo).addComment(Mockito.anyInt(), Mockito.anyString(), any(AbstractBuild.class), any(TaskListener.class));
         
+        Mockito.doReturn(repo).when(trigger).getRepository();
 
         builds = new GhprbBuilds(trigger, repo);
 
         // Creating spy on ghprb, configuring repo
         given(helper.getGitHub()).willReturn(ghprbGitHub);
-        given(helper.getRepository()).willReturn(repo);
         given(helper.getTrigger()).willReturn(trigger);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getBuilds()).willReturn(builds);
         
 
-        Mockito.doCallRealMethod().when(helper).run();
+        Mockito.doCallRealMethod().when(trigger).run();
 
 
         // Configuring and adding Ghprb trigger

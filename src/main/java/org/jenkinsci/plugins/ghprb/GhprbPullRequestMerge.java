@@ -109,7 +109,6 @@ public class GhprbPullRequestMerge extends Recorder {
 
         if (helper == null) {
             helper = new Ghprb(trigger);
-            helper.init();
         }
 
         GHUser triggerSender = cause.getTriggerSender();
@@ -209,7 +208,7 @@ public class GhprbPullRequestMerge extends Recorder {
 
     private void commentOnRequest(String comment) {
         try {
-            helper.getRepository().addComment(pr.getNumber(), comment);
+            trigger.getRepository().addComment(pr.getNumber(), comment);
         } catch (Exception e) {
             logger.println("Failed to add comment");
             e.printStackTrace(logger);

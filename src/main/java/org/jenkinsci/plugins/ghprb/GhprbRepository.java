@@ -1,49 +1,76 @@
 package org.jenkinsci.plugins.ghprb;
 
+import hudson.BulkChange;
+import hudson.XmlFile;
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Items;
+import hudson.model.Saveable;
 import hudson.model.TaskListener;
+import hudson.model.listeners.SaveableListener;
 import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
+import org.kohsuke.github.GHHook;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.util.*;
+import java.net.URLEncoder;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * @author Honza Brázdil <jbrazdil@redhat.com>
  */
-public class GhprbRepository {
+public class GhprbRepository implements Saveable{
 
-    private static final Logger logger = Logger.getLogger(GhprbRepository.class.getName());
-    private static final EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
+    private static final transient Logger logger = Logger.getLogger(GhprbRepository.class.getName());
+    private static final transient EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
     private final String reponame;
 
-    private GHRepository ghRepository;
-    private GhprbTrigger trigger;
+    private transient GHRepository ghRepository;
+    private transient GhprbTrigger trigger;
+    private final Map<Integer, GhprbPullRequest> pullRequests;
 
-    public GhprbRepository(String user, String repository, GhprbTrigger trigger) {
-        this.reponame = user + "/" + repository;
+    public GhprbRepository(String reponame, GhprbTrigger trigger) {
+        this.pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
+        this.reponame = reponame;
         this.trigger = trigger;
     }
-
+    
+    public void addPullRequests(Map<Integer, GhprbPullRequest> prs) {
+        pullRequests.putAll(prs);
+    }
+    
     public void init() {
         // make the initial check call to populate our data structures
         initGhRepository();
         
-        for (Entry<Integer, GhprbPullRequest> next : trigger.getPullRequests().entrySet()) {
+        for (Entry<Integer, GhprbPullRequest> next : pullRequests.entrySet()) {
             GhprbPullRequest pull = next.getValue();
             pull.init(trigger.getHelper(), this);
         }
@@ -101,23 +128,24 @@ public class GhprbRepository {
         if (!initGhRepository()) {
             return;
         }
+        
+        GHRepository repo = getGitHubRepo();
 
         List<GHPullRequest> openPulls;
         try {
-            openPulls = getGitHubRepo().getPullRequests(GHIssueState.OPEN);
+            openPulls = repo.getPullRequests(GHIssueState.OPEN);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
         
-        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
         
-        Set<Integer> closedPulls = new HashSet<Integer>(pulls.keySet());
+        Set<Integer> closedPulls = new HashSet<Integer>(pullRequests.keySet());
 
         for (GHPullRequest pr : openPulls) {
             if (pr.getHead() == null) { // Not sure if we need this, but leaving it for now.
                 try {
-                    pr = getGitHubRepo().getPullRequest(pr.getNumber());
+                    pr = getPullRequest(pr.getNumber());
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
                     return;
@@ -130,9 +158,13 @@ public class GhprbRepository {
 
         // remove closed pulls so we don't check them again
         for (Integer id : closedPulls) {
-            pulls.remove(id);
+            pullRequests.remove(id);
         }
-        trigger.save();
+        try {
+            this.save();
+        } catch (IOException e) {
+           logger.log(Level.SEVERE, "Unable to save repository!", e);
+        }
     }
 
     private void check(GHPullRequest pr, boolean isNew) {
@@ -143,7 +175,11 @@ public class GhprbRepository {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to check pr: " + number, e);
         }
-        trigger.save();
+        try {
+            this.save();
+        } catch (IOException e) {
+           logger.log(Level.SEVERE, "Unable to save repository!", e);
+        }
     }
 
     public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
@@ -296,23 +332,26 @@ public class GhprbRepository {
 
         GhprbPullRequest pull = getPullRequest(null, false, number);
         pull.check(issueComment.getComment());
-        trigger.save();
+        try {
+            this.save();
+        } catch (IOException e) {
+           logger.log(Level.SEVERE, "Unable to save repository!", e);
+        }
     }
     
     private GhprbPullRequest getPullRequest(GHPullRequest ghpr, Boolean isNew, Integer number) throws IOException {
-        Map<Integer, GhprbPullRequest> prs = trigger.getPullRequests();
         if (number == null) {
             number = ghpr.getNumber();
         }
-        synchronized (prs) {
-            GhprbPullRequest pr = prs.get(number);
+        synchronized (pullRequests) {
+            GhprbPullRequest pr = pullRequests.get(number);
             if (pr == null) {
                 if (ghpr == null) {
                     GHRepository repo = getGitHubRepo();
                     ghpr = repo.getPullRequest(number);
                 }
                 pr = new GhprbPullRequest(ghpr, trigger.getHelper(), this, isNew);
-                prs.put(number, pr);
+                pullRequests.put(number, pr);
             }
             
             return pr;
@@ -324,10 +363,9 @@ public class GhprbRepository {
         int number = pr.getNumber();
         String action = pr.getAction();
 
-        Map<Integer, GhprbPullRequest> pulls = trigger.getPullRequests();
 
         if ("closed".equals(action)) {
-            pulls.remove(number);
+            pullRequests.remove(number);
         } else if (!trigger.isActive()) {
             logger.log(Level.FINE, "Not processing Pull request since the build is disabled");
         } else if ("opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
@@ -343,5 +381,32 @@ public class GhprbRepository {
             initGhRepository();
         }
         return ghRepository;
+    }
+
+    public void load() throws IOException {
+        XmlFile xml = getConfigXml(trigger.getActualProject());
+        if(xml.exists()){
+            xml.unmarshal(this);
+        }
+        save();
+    }
+
+    public void save() throws IOException {
+        if(BulkChange.contains(this)) {
+            return;
+        }
+        XmlFile config = getConfigXml(trigger.getActualProject());
+        config.write(this);
+        SaveableListener.fireOnChange(this, config);
+    }
+
+    protected XmlFile getConfigXml(AbstractProject<?, ?> project) throws IOException {
+        try {
+            String escapedRepoName = URLEncoder.encode(reponame, "UTF8");
+            File file = new File(project.getBuildDir() + "/pullrequests", escapedRepoName);
+            return Items.getConfigFile(file);
+        } catch (UnsupportedEncodingException e) {
+            throw new IOException(e);
+        }
     }
 }
