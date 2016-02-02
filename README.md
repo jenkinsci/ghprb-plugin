@@ -186,7 +186,7 @@ job('downstreamJob') {
 
 ### Updates
 
-#### -> 1.31
+#### -> 1.30.1
 * Moved pull request state into build/pullrequests directory.
 * Dynamic state is no longer kept as part of the trigger
 * Merged #258 ignore comments on issues that aren't pull requests
