@@ -186,6 +186,11 @@ job('downstreamJob') {
 
 ### Updates
 
+#### -> 1.31
+* Moved pull request state into build/pullrequests directory.
+* Dynamic state is no longer kept as part of the trigger
+* Merged #258 ignore comments on issues that aren't pull requests
+
 #### -> 1.30
 * Merged #253, cleaning up code.
 * WebHooks are refactored to be closer to the variables it depends on
