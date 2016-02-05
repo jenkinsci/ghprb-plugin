@@ -2,7 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -44,6 +44,12 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected transient String commitStatusContext;
     @Deprecated
     protected transient GhprbGitHubAuth gitHubApiAuth;
+    @Deprecated
+    protected transient String project;
+    @Deprecated
+    protected transient AbstractProject<?, ?> _project;
+    @Deprecated
+    protected transient Map<Integer, GhprbPullRequest> pullRequests;
     
 
     
@@ -51,9 +57,6 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected void convertPropertiesToExtensions() {
         if (configVersion == null) {
             configVersion = 0;
-        }
-        if (configVersion < 3 && !StringUtils.isEmpty(triggerPhrase)) {
-            triggerPhrase = Pattern.quote(triggerPhrase);
         }
         
         checkCommentsFile();

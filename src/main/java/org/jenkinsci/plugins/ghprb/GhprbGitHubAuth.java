@@ -12,6 +12,9 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssue;
@@ -35,6 +38,7 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.base.Joiner;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
@@ -58,6 +62,8 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private final String id;
     private final String description;
     private final String secret;
+    
+    private transient GitHub gh;
 
     @DataBoundConstructor
     public GhprbGitHubAuth(
@@ -113,6 +119,39 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     public String getSecret() {
         return secret;
     }
+    
+
+    public boolean checkSignature(String body, String signature) {
+        if (StringUtils.isEmpty(secret)) {
+            return true;
+        }
+        
+        if (signature != null && signature.startsWith("sha1=")) {
+            String expected = signature.substring(5);
+            String algorithm = "HmacSHA1";
+            try {
+                SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), algorithm);
+                Mac mac = Mac.getInstance(algorithm);
+                mac.init(keySpec);
+                byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));
+                String localSignature = Hex.encodeHexString(localSignatureBytes);
+                if (! localSignature.equals(expected)) {
+                    logger.log(Level.SEVERE, "Local signature {0} does not match external signature {1}",
+                            new Object[] {localSignature, expected});
+                    return false;
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Couldn't match both signatures");
+                return false;
+            }
+        } else {
+            logger.log(Level.SEVERE, "Request doesn't contain a signature. Check that github has a secret that should be attached to the hook");
+            return false;
+        }
+
+        logger.log(Level.INFO, "Signatures checking OK");
+        return true;
+    }
 
     private static GitHubBuilder getBuilder(Item context, String serverAPIUrl, String credentialsId) {
         GitHubBuilder builder = new GitHubBuilder()
@@ -144,21 +183,28 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         }
         return builder;
     }
-
-    public GitHub getConnection(Item context) throws IOException {
-        GitHub gh = null;
+    
+    private void buildConnection(Item context) {
         GitHubBuilder builder = getBuilder(context, serverAPIUrl, credentialsId);
         if (builder == null) {
           logger.log(Level.SEVERE, "Unable to get builder using credentials: {0}", credentialsId);
-          return null;
+          return;
         }
         try {
             gh = builder.build();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to connect using credentials: " + credentialsId, e);
         }
-        
-        return gh;
+    }
+
+    public GitHub getConnection(Item context) throws IOException {
+        synchronized (credentialsId) {
+            if (gh == null) {
+                buildConnection(context);
+            }
+            
+            return gh;
+        }
     }
 
     @Override

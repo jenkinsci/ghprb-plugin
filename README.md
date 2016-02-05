@@ -105,8 +105,112 @@ Make sure you **DON'T** have ``Prune remote branches before build`` advanced opt
 #### Parameterized Builds
 If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1`` with a default value of ``master``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
 
+### Job DSL Support
+
+Since the plugin contains an extension for the Job DSL plugin to add DSL syntax for configuring the build trigger and
+the pull request merger post-build action.
+
+It is also possible to set Downstream job commit statuses when `displayBuildErrorsOnDownstreamBuilds()` is set in the
+upstream job's triggers and downstreamCommitStatus block is included in the downstream job's wrappers.
+
+Here is an example showing all DSL syntax elements:
+
+```groovy
+job('upstreamJob') {
+    scm {
+        git {
+            remote {
+                github('test-owner/test-project')
+                refspec('+refs/pull/*:refs/remotes/origin/pr/*')
+            }
+            branch('${sha1}')
+        }
+    }
+
+    triggers {
+        githubPullRequest {
+            admin('user_1')
+            admins(['user_2', 'user_3'])
+            userWhitelist('you@you.com')
+            userWhitelist(['me@me.com', 'they@they.com'])
+            orgWhitelist('my_github_org')
+            orgWhitelist(['your_github_org', 'another_org'])
+            cron('H/5 * * * *')
+            triggerPhrase('OK to test')
+            onlyTriggerPhrase()
+            useGitHubHooks()
+            permitAll()
+            autoCloseFailedPullRequests()
+            displayBuildErrorsOnDownstreamBuilds()
+            whiteListTargetBranches(['master','test', 'test2'])
+            allowMembersOfWhitelistedOrgsAsAdmin()
+            extensions {
+                commitStatus {
+                    context('deploy to staging site')
+                    triggeredStatus('starting deployment to staging site...')
+                    startedStatus('deploying to staging site...')
+                    statusUrl('http://mystatussite.com/prs')
+                    completedStatus('SUCCESS', 'All is well')
+                    completedStatus('FAILURE', 'Something went wrong. Investigate!')
+                    completedStatus('PENDING', 'still in progress...')
+                    completedStatus('ERROR', 'Something went really wrong. Investigate!')
+                }
+            }
+        }
+    }
+    publishers {
+        mergeGithubPullRequest {
+            mergeComment('merged by Jenkins')
+            onlyAdminsMerge()
+            disallowOwnCode()
+            failOnNonMerge()
+            deleteOnMerge()
+        }
+    }
+}
+
+job('downstreamJob') {
+    wrappers {
+        downstreamCommitStatus {
+            context('CONTEXT NAME')
+            triggeredStatus("The job has triggered")
+            startedStatus("The job has started")
+            statusUrl()
+            completedStatus('SUCCESS', "The job has passed")
+            completedStatus('FAILURE', "The job has failed")
+            completedStatus('ERROR', "The job has resulted in an error")
+        }
+    }
+}
+```
 
 ### Updates
+
+#### -> 1.30.1
+* Moved pull request state into build/pullrequests directory.
+* Dynamic state is no longer kept as part of the trigger
+* Merged #258 ignore comments on issues that aren't pull requests
+
+#### -> 1.30
+* Merged #253, cleaning up code.
+* WebHooks are refactored to be closer to the variables it depends on
+* PR data is now local per job instead of global
+* The config.xml is only saved when there is a change to a PR the job is watching
+* GitHub connections are now shared.
+* Shouldn't run into rate limits on startup
+* Pull Requests are only updated when the trigger runs, instead of on startup.
+
+#### -> 1.29.8
+* Merged #246 adding job dsl features and updating docs
+
+#### -> 1.29.7
+* Remove quoting of trigger phrase
+* Merged #242 replaces newline and quoted quotes
+* Merged #229 Add job dsl
+* Merged #238 Update github-api version
+
+#### -> 1.29.5 
+* Merge #232 fixes erroneous no test cases found
 
 #### -> 1.29.4
 * Add secret when auto creating the web hook

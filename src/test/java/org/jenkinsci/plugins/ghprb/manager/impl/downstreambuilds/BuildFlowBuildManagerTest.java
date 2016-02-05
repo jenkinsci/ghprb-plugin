@@ -3,19 +3,15 @@ package org.jenkinsci.plugins.ghprb.manager.impl.downstreambuilds;
 import static org.fest.assertions.Assertions.assertThat;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doReturn;
 
 import com.cloudbees.plugins.flow.BuildFlow;
 import com.cloudbees.plugins.flow.FlowRun;
 import com.cloudbees.plugins.flow.JobInvocation;
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
 import java.util.Iterator;
 
-import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbITBaseTestCase;
 import org.jenkinsci.plugins.ghprb.GhprbTestUtil;
-import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.jenkinsci.plugins.ghprb.rules.JenkinsRuleWithBuildFlow;
@@ -35,16 +31,39 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
     @Rule
     public JenkinsRuleWithBuildFlow jenkinsRule = new JenkinsRuleWithBuildFlow();
+    
+    private BuildFlow buildFlowProject;
 
     @Before
     public void setUp() throws Exception {
-        super.beforeTest();
+        
+        buildFlowProject = jenkinsRule.createBuildFlowProject();
+
+        jenkinsRule.createFreeStyleProject("downstreamProject1");
+        jenkinsRule.createFreeStyleProject("downstreamProject2");
+        jenkinsRule.createFreeStyleProject("downstreamProject3");
+
+        StringBuilder dsl = new StringBuilder();
+
+        dsl.append("parallel (");
+        dsl.append("    { build(\"downstreamProject1\") },");
+        dsl.append("    { build(\"downstreamProject2\") }");
+        dsl.append(")");
+        dsl.append("{ build(\"downstreamProject3\") }");
+
+        buildFlowProject.setDsl(dsl.toString());
+
+        given(ghPullRequest.getNumber()).willReturn(1);
+        given(ghRepository.getPullRequest(1)).willReturn(ghPullRequest);
+
+        super.beforeTest(null, null, buildFlowProject);
     }
 
     @Test
     public void shouldCalculateUrlWithDownstreamBuilds() throws Exception {
         // GIVEN
-        BuildFlow buildFlowProject = givenThatGhprbHasBeenTriggeredForABuildFlowProject();
+
+        GhprbTestUtil.triggerRunAndWait(10, trigger, buildFlowProject);
 
         // THEN
         assertThat(buildFlowProject.getBuilds().toArray().length).isEqualTo(1);
@@ -82,57 +101,6 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
         assertThat(count).isEqualTo(4);
 
         assertThat(buildManager.calculateBuildUrl(null)).isEqualTo(expectedUrl.toString());
-    }
-
-    private BuildFlow givenThatGhprbHasBeenTriggeredForABuildFlowProject() throws Exception {
-
-        BuildFlow buildFlowProject = jenkinsRule.createBuildFlowProject();
-
-        jenkinsRule.createFreeStyleProject("downstreamProject1");
-        jenkinsRule.createFreeStyleProject("downstreamProject2");
-        jenkinsRule.createFreeStyleProject("downstreamProject3");
-
-        StringBuilder dsl = new StringBuilder();
-
-        dsl.append("parallel (");
-        dsl.append("    { build(\"downstreamProject1\") },");
-        dsl.append("    { build(\"downstreamProject2\") }");
-        dsl.append(")");
-        dsl.append("{ build(\"downstreamProject3\") }");
-
-        buildFlowProject.setDsl(dsl.toString());
-
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(null);
-
-        given(commitPointer.getSha()).willReturn("sha");
-        GhprbTestUtil.setupGhprbTriggerDescriptor(null);
-
-        buildFlowProject.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
-
-        given(ghPullRequest.getNumber()).willReturn(1);
-
-        // Creating spy on ghprb, configuring repo
-        Ghprb ghprb = spyCreatingGhprb(trigger, buildFlowProject);
-
-        doReturn(ghprbGitHub).when(ghprb).getGitHub();
-
-        setRepositoryHelper(ghprb);
-
-        given(ghRepository.getPullRequest(1)).willReturn(ghPullRequest);
-
-        // Configuring and adding Ghprb trigger
-        buildFlowProject.addTrigger(trigger);
-
-        // Configuring Git SCM
-        buildFlowProject.setScm(GhprbTestUtil.provideGitSCM());
-
-        trigger.start(buildFlowProject, true);
-
-        setTriggerHelper(trigger, ghprb);
-
-        GhprbTestUtil.triggerRunAndWait(10, trigger, buildFlowProject);
-
-        return buildFlowProject;
     }
 
 }

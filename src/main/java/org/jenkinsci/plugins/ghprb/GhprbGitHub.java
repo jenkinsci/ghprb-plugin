@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 
 import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
 
 /**
  * @author janinko
@@ -19,14 +18,10 @@ public class GhprbGitHub {
         this.trigger = trigger;
     }
 
-    public GitHub get() throws IOException {
-        return trigger.getGitHub();
-    }
-    
     public boolean isUserMemberOfOrganization(String organisation, GHUser member) {
         boolean orgHasMember = false;
         try {
-            GHOrganization org = get().getOrganization(organisation);
+            GHOrganization org = trigger.getGitHub().getOrganization(organisation);
             orgHasMember = org.hasMember(member);
             logger.log(Level.FINE, "org.hasMember(member)? user:{0} org: {1} == {2}", 
                     new Object[] { member.getLogin(), organisation, orgHasMember ? "yes" : "no" });
@@ -40,7 +35,7 @@ public class GhprbGitHub {
 
     public String getBotUserLogin() {
         try {
-            return get().getMyself().getLogin();
+            return trigger.getGitHub().getMyself().getLogin();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
             return null;

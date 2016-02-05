@@ -39,7 +39,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
         
         Map<GHCommitState, StringBuilder> statusMessages = new HashMap<GHCommitState, StringBuilder>(5);
         
-        for (GhprbBuildResultMessage message : completedStatus) {
+        for (GhprbBuildResultMessage message : getCompletedStatus()) {
             GHCommitState state = message.getResult();
             StringBuilder sb;
             if (!statusMessages.containsKey(state)) {

@@ -14,7 +14,6 @@ import com.cloudbees.plugins.credentials.domains.PathSpecification;
 import com.cloudbees.plugins.credentials.domains.SchemeSpecification;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
 
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -44,49 +43,19 @@ import java.net.URI;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import jenkins.model.Jenkins;
 
 /**
  * @author janinko
  */
 public class Ghprb {
     private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
-    private static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*)/([^/]*).*");
+    public static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*/[^/]*).*");
 
     private final GhprbTrigger trigger;
-    private final AbstractProject<?, ?> project;
-    private GhprbRepository repository;
-    private GhprbBuilds builds;
 
-    public Ghprb(AbstractProject<?, ?> project, GhprbTrigger trigger) {
-        this.project = project;
-
-        final GithubProjectProperty ghpp = project.getProperty(GithubProjectProperty.class);
-        if (ghpp == null || ghpp.getProjectUrl() == null) {
-            throw new IllegalStateException("A GitHub project url is required.");
-        }
-        String baseUrl = ghpp.getProjectUrl().baseUrl();
-        Matcher m = githubUserRepoPattern.matcher(baseUrl);
-        if (!m.matches()) {
-            throw new IllegalStateException(String.format("Invalid GitHub project url: %s", baseUrl));
-        }
-        final String user = m.group(2);
-        final String repo = m.group(3);
-
+    public Ghprb(GhprbTrigger trigger) {
         this.trigger = trigger;
-
-        this.repository = new GhprbRepository(user, repo, this);
-        this.builds = new GhprbBuilds(trigger, repository);
-    }
-
-    public void init() {
-        this.repository.init();
-        if (trigger.getUseGitHubHooks()) {
-            this.repository.createHook();
-        }
     }
 
     public void addWhitelist(String author) {
@@ -95,34 +64,22 @@ public class Ghprb {
     }
     
     public boolean isProjectDisabled() {
-        return project.isDisabled();
+        return !trigger.isActive();
     }
 
     public GhprbBuilds getBuilds() {
-        return builds;
+        return trigger.getBuilds();
     }
 
     public GhprbTrigger getTrigger() {
         return trigger;
     }
 
-    public GhprbRepository getRepository() {
-        return repository;
-    }
 
     public GhprbGitHub getGitHub() {
-        return new GhprbGitHub(trigger);
+        return trigger.getGhprbGitHub();
     }
 
-    void run() {
-        repository.check();
-    }
-
-    void stop() {
-        repository = null;
-        builds = null;
-    }
-    
     public static Pattern compilePattern(String regex) {
         return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     }

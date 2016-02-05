@@ -5,7 +5,6 @@ import hudson.model.AbstractProject;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import hudson.security.csrf.CrumbExclusion;
-import jenkins.model.Jenkins;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
@@ -59,18 +58,19 @@ public class GhprbRootAction implements UnprotectedRootAction {
         String payload = null;
         String body = null;
 
-        if ("application/json".equals(type)) {
+        if (type.toLowerCase().startsWith("application/json")) {
             body = extractRequestBody(req);
             if (body == null) {
                 logger.log(Level.SEVERE, "Can't get request body for application/json.");
+                resp.setStatus(StaplerResponse.SC_BAD_REQUEST);
                 return;
             }
             payload = body;
-        } else if ("application/x-www-form-urlencoded".equals(type)) {
+        } else if (type.toLowerCase().startsWith("application/x-www-form-urlencoded")) {
             body = extractRequestBody(req);
             if (body == null || body.length() <= 8) {
-                logger.log(Level.SEVERE, "Request doesn't contain payload. "
-                        + "You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                logger.log(Level.SEVERE, "Request doesn't contain payload. " + "You're sending url encoded request, so you should pass github payload through 'payload' request parameter");
+                resp.setStatus(StaplerResponse.SC_BAD_REQUEST);
                 return;
             }
             try {
@@ -78,22 +78,23 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 payload = URLDecoder.decode(body.substring(8), encoding != null ? encoding : "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 logger.log(Level.SEVERE, "Error while trying to decode the payload");
+                resp.setStatus(StaplerResponse.SC_BAD_REQUEST);
                 return;
             }
         }
 
         if (payload == null) {
-            logger.log(Level.SEVERE, "Payload is null, maybe content type '{0}' is not supported by this plugin. "
-                    + "Please use 'application/json' or 'application/x-www-form-urlencoded'",
+            logger.log(Level.SEVERE, "Payload is null, maybe content type ''{0}'' is not supported by this plugin. " + "Please use 'application/json' or 'application/x-www-form-urlencoded'",
                     new Object[] { type });
+            resp.setStatus(StaplerResponse.SC_UNSUPPORTED_MEDIA_TYPE);
             return;
         }
 
         logger.log(Level.FINE, "Got payload event: {0}", event);
-        
+
         try {
             GitHub gh = GitHub.connectAnonymously();
-            
+
             if ("issue_comment".equals(event)) {
                 IssueComment issueComment = getIssueComment(payload, gh);
                 GHIssueState state = issueComment.getIssue().getState();
@@ -102,18 +103,21 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     return;
                 }
                 
+                if (!issueComment.getIssue().isPullRequest()) {
+                    logger.log(Level.INFO, "Skip comment on Issue");
+                    return;
+                }
+
                 String repoName = issueComment.getRepository().getFullName();
 
-                logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] { issueComment.getComment(), repoName });
+                logger.log(Level.INFO, "Checking issue comment ''{0}'' for repo {1}", new Object[] { issueComment.getComment().getBody(), repoName });
 
-                for (GhprbWebHook webHook : getWebHooks()) {
+                for (GhprbTrigger trigger : getTriggers(repoName, body, signature)) {
                     try {
-                        if (webHook.matchRepo(repoName) && webHook.checkSignature(body, signature)) {
-                            IssueComment authedComment = getIssueComment(payload, webHook.getGitHub());
-                            webHook.handleComment(authedComment);
-                        }
+                        IssueComment authedComment = getIssueComment(payload, trigger.getGitHub());
+                        trigger.handleComment(authedComment);
                     } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+                        logger.log(Level.SEVERE, "Unable to process web hook for: " + trigger.getProjectName(), e);
                     }
                 }
 
@@ -123,14 +127,12 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
                 logger.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] { repoName, pr.getNumber() });
 
-                for (GhprbWebHook webHook : getWebHooks()) {
+                for (GhprbTrigger trigger : getTriggers(repoName, body, signature)) {
                     try {
-                        if (webHook.matchRepo(repoName) && webHook.checkSignature(body, signature)) {
-                            PullRequest authedPr = getPullRequest(payload, webHook.getGitHub());
-                            webHook.handlePR(authedPr);
-                        }
+                        PullRequest authedPr = getPullRequest(payload, trigger.getGitHub());
+                        trigger.handlePR(authedPr);
                     } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Unable to process web hook for: " + webHook.getProjectName(), e);
+                        logger.log(Level.SEVERE, "Unable to process web hook for: " + trigger.getProjectName(), e);
                     }
                 }
             } else {
@@ -141,12 +143,12 @@ public class GhprbRootAction implements UnprotectedRootAction {
             logger.log(Level.SEVERE, "Unable to connect to GitHub anonymously", e);
         }
     }
-    
+
     private PullRequest getPullRequest(String payload, GitHub gh) throws IOException {
         PullRequest pr = gh.parseEventPayload(new StringReader(payload), PullRequest.class);
         return pr;
     }
-    
+
     private IssueComment getIssueComment(String payload, GitHub gh) throws IOException {
         IssueComment issueComment = gh.parseEventPayload(new StringReader(payload), IssueComment.class);
         return issueComment;
@@ -166,31 +168,27 @@ public class GhprbRootAction implements UnprotectedRootAction {
         return body;
     }
 
-    
-    private Set<GhprbWebHook> getWebHooks() {
-        final Set<GhprbWebHook> webHooks = new HashSet<GhprbWebHook>();
+    private Set<GhprbTrigger> getTriggers(String repoName, String body, String signature) {
+        Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>();
 
         // We need this to get access to list of repositories
         Authentication old = SecurityContextHolder.getContext().getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-
-        try {
-            for (AbstractProject<?, ?> job : Jenkins.getInstance().getAllItems(AbstractProject.class)) {
-                GhprbTrigger trigger = job.getTrigger(GhprbTrigger.class);
-                if (trigger == null || trigger.getWebHook() == null) {
-                    continue;
+        
+        Set<AbstractProject<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
+        if (projects != null) {
+            for (AbstractProject<?, ?> project : projects) {
+                GhprbTrigger trigger = Ghprb.extractTrigger(project);
+                if (trigger.matchSignature(body, signature)) {
+                    triggers.add(trigger);
                 }
-                webHooks.add(trigger.getWebHook());
             }
-        } finally {
-            SecurityContextHolder.getContext().setAuthentication(old);
         }
 
-        if (webHooks.size() == 0) {
-            logger.log(Level.WARNING, "No projects found using GitHub pull request trigger");
-        }
-
-        return webHooks;
+        SecurityContextHolder.getContext().setAuthentication(old);
+        
+        return triggers;
+        
     }
 
     @Extension

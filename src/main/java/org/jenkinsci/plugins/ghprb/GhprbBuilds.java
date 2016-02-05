@@ -20,6 +20,7 @@ import org.kohsuke.github.GHUser;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -39,6 +40,16 @@ public class GhprbBuilds {
     }
 
     public void build(GhprbPullRequest pr, GHUser triggerSender, String commentBody) {
+        
+        URL url = null;
+        GHUser prAuthor = null;
+        
+        try {
+            url = pr.getUrl();
+            prAuthor = pr.getPullRequestAuthor();
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to get PR author or PR URL", e);
+        }
 
         GhprbCause cause = new GhprbCause(pr.getHead(), 
                 pr.getId(), 
@@ -47,11 +58,11 @@ public class GhprbBuilds {
                 pr.getSource(), 
                 pr.getAuthorEmail(), 
                 pr.getTitle(), 
-                pr.getUrl(), 
+                url, 
                 triggerSender, 
                 commentBody,
                 pr.getCommitAuthor(), 
-                pr.getPullRequestAuthor(), 
+                prAuthor, 
                 pr.getDescription(), 
                 pr.getAuthorRepoGitUrl());
 
@@ -84,18 +95,11 @@ public class GhprbBuilds {
             int counter = 0;
             // If the PR is being resolved by GitHub then getMergeable will return null
             Boolean isMergeable = pr.getMergeable();
-            Boolean isMerged = pr.isMerged();
-            // Not sure if isMerged can return null, but adding if just in case
-            if (isMerged == null) {
-                isMerged = false;
-            }
+            boolean isMerged = pr.isMerged();
             while (isMergeable == null && !isMerged && counter++ < 60) {
                 Thread.sleep(1000);
                 isMergeable = pr.getMergeable();
                 isMerged = pr.isMerged();
-                if (isMerged == null) {
-                    isMerged = false;
-                }
             }
 
             if (isMerged) {
