@@ -55,24 +55,25 @@ public class GhprbPullRequest {
     private final int id;
     private Date updated; // Needed to track when the PR was updated
     private String head;
+    private String base;
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
-    private Boolean changed = true; // Keep track for when the job config needs to be saved again.
 
 
     private void setUpdated(Date lastUpdateTime) {
         updated = lastUpdateTime;
-        changed = true;
     }
     
     private void setHead(String newHead) {
         this.head = StringUtils.isEmpty(newHead) ? head : newHead;
-        changed = true;
+    }
+    
+    private void setBase(String newBase) {
+        this.base = StringUtils.isEmpty(newBase) ? base : newBase;
     }
     
     private void setAccepted(boolean shouldRun) {
         accepted = true;
         this.shouldRun = shouldRun;
-        changed = true;
     }
     
     public GhprbPullRequest(GHPullRequest pr, Ghprb ghprb, GhprbRepository repo, boolean isNew) {
@@ -97,6 +98,8 @@ public class GhprbPullRequest {
         GHCommitPointer prHead = pr.getHead();
         setHead(prHead.getSha());
         
+        GHCommitPointer prBase = pr.getBase();
+        setBase(prBase.getSha());
         
         GHUser author = pr.getUser();
         String reponame = repo.getName();
@@ -202,7 +205,7 @@ public class GhprbPullRequest {
             }
             
             int commentsChecked = checkComments(pr, lastUpdateTime);
-            boolean newCommit = checkCommit(pr.getHead());
+            boolean newCommit = checkCommit(pr);
 
             if (!newCommit && commentsChecked == 0) {
                 logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
@@ -246,6 +249,11 @@ public class GhprbPullRequest {
         GHCommitPointer pointer = pr.getHead();
         String pointerSha = pointer.getSha();
         ret |= !pointerSha.equals(head);
+        
+        pointer = pr.getBase();
+        pointerSha = pointer.getSha();
+        ret |= !pointerSha.equals(base);
+        
         return ret;
     }
 
@@ -296,12 +304,22 @@ public class GhprbPullRequest {
     }
 
     // returns false if no new commit
-    private boolean checkCommit(GHCommitPointer sha) {
-        if (head.equals(sha.getSha())) {
+    private boolean checkCommit(GHPullRequest pr) {
+        GHCommitPointer head = pr.getHead();
+        GHCommitPointer base = pr.getBase();
+        
+        String headSha = head.getSha();
+        String baseSha = base.getSha();
+        
+        if (StringUtils.equals(headSha, this.head) && StringUtils.equals(baseSha, this.base)) {
             return false;
         }
-        logger.log(Level.FINE, "New commit. Sha: {0} => {1}", new Object[] { head, sha.getSha() });
-        setHead(sha.getSha());
+        
+        logger.log(Level.FINE, "New commit. Sha: Head[{0} => {1}] Base[{2} => {3}]", new Object[] { this.head, headSha, this.base, baseSha });
+        
+        setHead(headSha);
+        setBase(baseSha);
+        
         if (accepted) {
             shouldRun = true;
         }
@@ -549,13 +567,5 @@ public class GhprbPullRequest {
         }
         authorEmail = StringUtils.isEmpty(authorEmail) ? "" : authorEmail;
         return authorEmail;
-    }
-
-    public boolean isChanged() {
-        return changed == null ? false : changed;
-    }
-    
-    public void save() {
-        changed = false;
     }
 }
