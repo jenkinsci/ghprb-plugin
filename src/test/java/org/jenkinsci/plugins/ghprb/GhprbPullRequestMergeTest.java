@@ -121,7 +121,8 @@ public class GhprbPullRequestMergeTest {
         Mockito.doReturn(project).when(trigger).getActualProject();
         Mockito.doReturn(repo).when(trigger).getRepository();
         repo.addPullRequests(pulls);
-        Mockito.doReturn(pr).when(repo).getPullRequest(pullId);
+        Mockito.doReturn(pullRequest).when(repo).getPullRequest(pullId);
+        Mockito.doReturn(pr).when(repo).getActualPullRequest(pullId);
         
         
         GithubProjectProperty projectProperty = new GithubProjectProperty("https://github.com/jenkinsci/ghprb-plugin");

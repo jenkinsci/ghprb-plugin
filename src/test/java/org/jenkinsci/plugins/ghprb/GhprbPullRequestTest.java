@@ -62,7 +62,7 @@ public class GhprbPullRequestTest {
         
         given(ghUser.getEmail()).willReturn("email");
         
-        given(ghprbRepository.getPullRequest(10)).willReturn(pr);
+        given(ghprbRepository.getActualPullRequest(10)).willReturn(pr);
         given(ghprbRepository.getName()).willReturn("name");
         
         given(pr.getHead()).willReturn(head);
@@ -158,30 +158,5 @@ public class GhprbPullRequestTest {
 
         // THEN
         assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isEqualTo(expectedAuthorRepoGitUrl);
-    }
-    
-    @Test
-    public void pullRequestIsMarkedAsChanged() throws Exception {
-        GhprbPullRequest pull = new GhprbPullRequest(pr, helper, repo, true);
-        pull.save();
-        assertThat(pull.isChanged() == false);
-        
-        given(pr.getUpdatedAt()).willReturn(new DateTime().plusHours(2).toDate());
-        pull.check(pr);
-        assertThat(pull.isChanged() == true);
-        
-    }
-    
-    @Test
-    public void pullRequestIsNotMarkedAsChanged() throws Exception {
-        GhprbPullRequest pull = new GhprbPullRequest(pr, helper, repo, true);
-        pull.save();
-        assertThat(pull.isChanged() == false);
-        
-        pull.check(pr);
-        pull.check(pr);
-        pull.check(pr);
-        assertThat(pull.isChanged() == false);
-        
     }
 }

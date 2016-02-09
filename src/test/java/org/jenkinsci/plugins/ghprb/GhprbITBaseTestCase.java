@@ -43,6 +43,8 @@ public abstract class GhprbITBaseTestCase {
     protected GHUser ghUser;
     @Mock
     protected Ghprb helper;
+    @Mock
+    protected GhprbPullRequest ghprbPullRequest;
     
     protected GhprbBuilds builds;
     
@@ -86,6 +88,7 @@ public abstract class GhprbITBaseTestCase {
         GhprbRepository repo = Mockito.spy(new GhprbRepository("user/dropwizard", trigger));
         Mockito.doReturn(ghRepository).when(repo).getGitHubRepo();
         Mockito.doNothing().when(repo).addComment(Mockito.anyInt(), Mockito.anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        Mockito.doReturn(ghprbPullRequest).when(repo).getPullRequest(Mockito.anyInt());
         
         Mockito.doReturn(repo).when(trigger).getRepository();
 
