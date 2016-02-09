@@ -107,6 +107,7 @@ public class GhprbPullRequestTest {
 
         // THEN
         verify(pr, times(1)).getHead();
+        verify(pr, times(1)).getBase();
         verify(pr, times(1)).getNumber();
         verify(pr, times(1)).getUpdatedAt();
         verify(pr, times(3)).getUser();
