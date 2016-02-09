@@ -105,7 +105,7 @@ public class GhprbPullRequestMerge extends Recorder {
             return true;
         }
 
-        pr = trigger.getRepository().getPullRequest(cause.getPullID());
+        pr = trigger.getRepository().getActualPullRequest(cause.getPullID());
 
         if (helper == null) {
             helper = new Ghprb(trigger);
