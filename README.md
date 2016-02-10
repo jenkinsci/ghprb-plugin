@@ -186,6 +186,10 @@ job('downstreamJob') {
 
 ### Updates
 
+#### -> 1.30.2
+* Don't run through all the builds for changelog, track it in the PR object instead
+* Synchronization around the PR object fields
+
 #### -> 1.30.1
 * Moved pull request state into build/pullrequests directory.
 * Dynamic state is no longer kept as part of the trigger
