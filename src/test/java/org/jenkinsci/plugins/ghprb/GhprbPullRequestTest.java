@@ -61,7 +61,7 @@ public class GhprbPullRequestTest {
         
         given(ghUser.getEmail()).willReturn("email");
         
-        given(ghprbRepository.getPullRequest(10)).willReturn(pr);
+        given(ghprbRepository.getActualPullRequest(10)).willReturn(pr);
         given(ghprbRepository.getName()).willReturn("name");
         
         given(pr.getHead()).willReturn(head);

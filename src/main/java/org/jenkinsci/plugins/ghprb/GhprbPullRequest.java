@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
 
+import hudson.model.AbstractBuild;
+
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssue;
@@ -35,6 +37,7 @@ public class GhprbPullRequest {
     @Deprecated @SuppressWarnings("unused") private transient String target;
     @Deprecated @SuppressWarnings("unused") private transient String source;
     @Deprecated @SuppressWarnings("unused") private transient String authorRepoGitUrl;
+    @Deprecated @SuppressWarnings("unused") private transient Boolean changed = true;
 
 
     private transient String authorEmail;
@@ -57,6 +60,7 @@ public class GhprbPullRequest {
     private String head;
     private String base;
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
+    private String lastBuildId;
 
 
     private void setUpdated(Date lastUpdateTime) {
@@ -546,7 +550,7 @@ public class GhprbPullRequest {
      */
     public GHPullRequest getPullRequest(boolean force) throws IOException {
         if (this.pr == null || force) {
-            this.pr = repo.getPullRequest(this.id);
+            this.pr = repo.getActualPullRequest(this.id);
         }
         return pr;
     }
@@ -567,5 +571,13 @@ public class GhprbPullRequest {
         }
         authorEmail = StringUtils.isEmpty(authorEmail) ? "" : authorEmail;
         return authorEmail;
+    }
+
+    public void setBuild(AbstractBuild<?, ?> build) {
+        lastBuildId = build.getId();
+    }
+    
+    public String getLastBuildId() {
+        return lastBuildId;
     }
 }
