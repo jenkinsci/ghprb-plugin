@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.ghprb;
 
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,6 +107,7 @@ public class GhprbPullRequestTest {
 
         // THEN
         verify(pr, times(1)).getHead();
+        verify(pr, times(1)).getBase();
         verify(pr, times(1)).getNumber();
         verify(pr, times(1)).getUpdatedAt();
         verify(pr, times(3)).getUser();
