@@ -202,6 +202,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getHead();
         verify(ghPullRequest, times(2)).getNumber();
         verify(ghPullRequest, times(1)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(1)).getUser();
         verify(ghPullRequest, times(1)).getBase();
         verifyNoMoreInteractions(ghPullRequest);

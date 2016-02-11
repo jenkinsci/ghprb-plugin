@@ -158,6 +158,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
 
+
     @SuppressWarnings("deprecation")
     private void checkGitHubApiAuth() {
         if (gitHubApiAuth != null) {
@@ -982,6 +983,5 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         }
         
     }
-
 
 }
