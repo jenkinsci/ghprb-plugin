@@ -158,17 +158,18 @@ public class GhprbPullRequest {
 
         updatePR(pr, pr.getUser());
 
-        checkSkipBuild(pr);
         tryBuild();
     }
 
-    private void checkSkipBuild(GHIssue issue) {
-        String skipBuildPhrase = helper.checkSkipBuild(issue);
-        if (!StringUtils.isEmpty(skipBuildPhrase)) {
-            logger.log(Level.INFO,
-                       "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
-                       skipBuildPhrase);
-            shouldRun = false;
+    private void checkSkipBuild() {
+        synchronized (this) {
+            String skipBuildPhrase = helper.checkSkipBuild(this.pr);
+            if (!StringUtils.isEmpty(skipBuildPhrase)) {
+                logger.log(Level.INFO,
+                           "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
+                           skipBuildPhrase);
+                shouldRun = false;
+            }
         }
     }
 
@@ -198,7 +199,6 @@ public class GhprbPullRequest {
                 logger.log(Level.SEVERE, "Unable to get a new copy of the pull request!");
             }
 
-            checkSkipBuild(comment.getParent());
             tryBuild();
         }
     }
@@ -277,43 +277,46 @@ public class GhprbPullRequest {
     }
 
     private void tryBuild() {
-        if (helper.isProjectDisabled()) {
-            logger.log(Level.FINEST, "Project is disabled, not trying to build");
-            shouldRun = false;
-            triggered = false;
-        }
-        if (helper.ifOnlyTriggerPhrase() && !triggered) {
-            logger.log(Level.FINEST, "Trigger only phrase but we are not triggered");
-            shouldRun = false;
-        }
-        triggered = false; // Once we have decided that we are triggered then the flag should be set to false.
+        synchronized (this) {
+            checkSkipBuild();
+            if (helper.isProjectDisabled()) {
+                logger.log(Level.FINEST, "Project is disabled, not trying to build");
+                shouldRun = false;
+                triggered = false;
+            }
+            if (helper.ifOnlyTriggerPhrase() && !triggered) {
+                logger.log(Level.FINEST, "Trigger only phrase but we are not triggered");
+                shouldRun = false;
+            }
+            triggered = false; // Once we have decided that we are triggered then the flag should be set to false.
 
-        if (!isWhiteListedTargetBranch()) {
-            logger.log(Level.FINEST, "Branch is not whitelisted, skipping the build");
-            return;
-        }
-        if (shouldRun) {
-            shouldRun = false; // Change the shouldRun flag as soon as we decide to build.
-            logger.log(Level.FINEST, "Running the build");
+            if (!isWhiteListedTargetBranch()) {
+                logger.log(Level.FINEST, "Branch is not whitelisted, skipping the build");
+                return;
+            }
+            if (shouldRun) {
+                shouldRun = false; // Change the shouldRun flag as soon as we decide to build.
+                logger.log(Level.FINEST, "Running the build");
 
-            if (pr != null) {
-                logger.log(Level.FINEST, "PR is not null, checking if mergable");
-                checkMergeable();
-                try {
-                    for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-                        if (commitDetails.getSha().equals(getHead())) {
-                            commitAuthor = commitDetails.getCommit().getCommitter();
-                            break;
+                if (pr != null) {
+                    logger.log(Level.FINEST, "PR is not null, checking if mergable");
+                    checkMergeable();
+                    try {
+                        for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                            if (commitDetails.getSha().equals(getHead())) {
+                                commitAuthor = commitDetails.getCommit().getCommitter();
+                                break;
+                            }
                         }
+                    } catch (Exception ex) {
+                        logger.log(Level.INFO, "Unable to get PR commits: ", ex);
                     }
-                } catch (Exception ex) {
-                    logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+
                 }
 
+                logger.log(Level.FINEST, "Running build...");
+                build();
             }
-
-            logger.log(Level.FINEST, "Running build...");
-            build();
         }
     }
 
