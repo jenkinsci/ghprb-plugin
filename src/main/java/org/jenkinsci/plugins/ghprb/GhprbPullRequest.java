@@ -136,25 +136,27 @@ public class GhprbPullRequest {
      * @param ghpr
      */
     public void check(GHPullRequest ghpr) {
-        if (ghpr != null) {
-            this.pr = ghpr;
-        }
-        if (helper.isProjectDisabled()) {
-            logger.log(Level.FINE, "Project is disabled, ignoring pull request");
-            return;
-        }
-        
-        try {
-            getPullRequest(false);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to get the latest copy of the PR from github", e);
-            return;
-        }
+        synchronized(this) {
+            if (ghpr != null) {
+                this.pr = ghpr;
+            }
+            if (helper.isProjectDisabled()) {
+                logger.log(Level.FINE, "Project is disabled, ignoring pull request");
+                return;
+            }
 
-        updatePR(pr, pr.getUser());
+            try {
+                getPullRequest(false);
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Unable to get the latest copy of the PR from github", e);
+                return;
+            }
 
-        checkSkipBuild(pr);
-        tryBuild();
+            updatePR(pr, pr.getUser());
+
+            checkSkipBuild(pr);
+            tryBuild();
+        }
     }
     
     private void checkSkipBuild(GHIssue issue) {
@@ -171,27 +173,29 @@ public class GhprbPullRequest {
             return;
         }
         
-        try {
-            checkComment(comment);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
-            return;
-        }
-
-        try {
-            GHUser user = null;
+        synchronized(this) {
             try {
-                user = comment.getUser();
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Couldn't get the user that made the comment", e);
+                checkComment(comment);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Couldn't check comment #" + comment.getId(), ex);
+                return;
             }
-            updatePR(getPullRequest(true), user);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to get a new copy of the pull request!");
+
+            try {
+                GHUser user = null;
+                try {
+                    user = comment.getUser();
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Couldn't get the user that made the comment", e);
+                }
+                updatePR(getPullRequest(true), user);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Unable to get a new copy of the pull request!");
+            }
+
+            checkSkipBuild(comment.getParent());
+            tryBuild();
         }
-        
-        checkSkipBuild(comment.getParent());
-        tryBuild();
     }
     
     
