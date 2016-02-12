@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHPullRequest;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -34,7 +35,7 @@ public class GhprbTriggerTest {
 
     @Test
     public void testCheckSkipBuild() throws Exception {
-        GHIssue issue = mock(GHIssue.class);
+        GHPullRequest issue = mock(GHPullRequest.class);
         
         boolean skipBuild = false;
         boolean build = true;
@@ -67,8 +68,13 @@ public class GhprbTriggerTest {
         comment.put(fullSkipCi, skipBuild);
         stringsToTest.put("\\[skip ci\\]\n.*\\[skip\\W+ci\\].*\nskip ci", comment);
         
-        Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild", GHIssue.class);
+        Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild");
         checkSkip.setAccessible(true);
+        
+
+        Field prField = GhprbPullRequest.class.getDeclaredField("pr");
+        prField.setAccessible(true);
+        prField.set(pr, issue);
 
         Field shouldRun = GhprbPullRequest.class.getDeclaredField("shouldRun");
         shouldRun.setAccessible(true);
@@ -104,7 +110,7 @@ public class GhprbTriggerTest {
                 given(helper.checkSkipBuild(issue)).willReturn(skipPhrase);
                 
                 shouldRun.set(pr, true);
-                checkSkip.invoke(pr, issue);
+                checkSkip.invoke(pr);
                 String errorMessage = String.format("Comment does %scontain skip phrase \n(\n%s\n)\n[\n%s\n]", shouldBuild ? "not ": "", nextComment, skipPhrases);
                 
                 if (shouldBuild) {
