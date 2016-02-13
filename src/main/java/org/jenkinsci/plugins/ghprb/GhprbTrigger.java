@@ -80,6 +80,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private Boolean displayBuildErrorsOnDownstreamBuilds;
     private List<GhprbBranch> whiteListTargetBranches;
     private String gitHubAuthId;
+    private String triggerPhrase;
     
 
     private transient Ghprb helper;
@@ -348,6 +349,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return text.replace("\n", "\\n").replace("\r", "\\r").replace("\"", "\\\"");
     }
     
+    public String getGitHubAuthId() {
+        return gitHubAuthId == null ? "" : gitHubAuthId;
+    }
+    
     public GhprbGitHubAuth getGitHubApiAuth() {
         if (gitHubAuthId == null) {
             for (GhprbGitHubAuth auth: getDescriptor().getGithubAuth()){
@@ -488,7 +493,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return permitAll != null && permitAll;
     }
 
-    public Boolean isAutoCloseFailedPullRequests() {
+    public Boolean getAutoCloseFailedPullRequests() {
         if (autoCloseFailedPullRequests == null) {
             Boolean autoClose = getDescriptor().getAutoCloseFailedPullRequests();
             return (autoClose != null && autoClose);
@@ -496,7 +501,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return autoCloseFailedPullRequests;
     }
 
-    public Boolean isDisplayBuildErrorsOnDownstreamBuilds() {
+    public Boolean getDisplayBuildErrorsOnDownstreamBuilds() {
         if (displayBuildErrorsOnDownstreamBuilds == null) {
             Boolean displayErrors = getDescriptor().getDisplayBuildErrorsOnDownstreamBuilds();
             return (displayErrors != null && displayErrors);
@@ -806,6 +811,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public GHCommitState getUnstableAs() {
             return unstableAs;
+        }
+        
+        public Integer getConfigVersion() {
+            return configVersion;
         }
 
         public boolean isUseComments() {

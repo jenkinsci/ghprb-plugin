@@ -51,10 +51,10 @@ public class GhprbRepository implements Saveable{
     private static final transient EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
     private final String reponame;
+    private final Map<Integer, GhprbPullRequest> pullRequests;
 
     private transient GHRepository ghRepository;
     private transient GhprbTrigger trigger;
-    private final Map<Integer, GhprbPullRequest> pullRequests;
 
     public GhprbRepository(String reponame, GhprbTrigger trigger) {
         this.pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
