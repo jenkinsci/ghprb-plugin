@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHPullRequest;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -123,7 +122,7 @@ public class GhprbTriggerTest {
 
             }
         }
-
     }
+    
 
 }

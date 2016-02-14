@@ -172,7 +172,7 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         if (trigger == null) {
             listener.getLogger().println("Unable to get pull request builder trigger!!");
         } else {
-            JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
+            JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(trigger.getDisplayBuildErrorsOnDownstreamBuilds()).build();
 
             GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
             sb.append(buildManager.getOneLineTestResults());

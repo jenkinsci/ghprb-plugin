@@ -49,7 +49,7 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
             return "";
         }
         JobConfiguration jobConfiguration = JobConfiguration.builder()
-                .printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
+                .printStackTrace(trigger.getDisplayBuildErrorsOnDownstreamBuilds()).build();
 
         GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
 

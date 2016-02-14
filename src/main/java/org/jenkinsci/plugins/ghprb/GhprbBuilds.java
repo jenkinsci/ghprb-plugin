@@ -195,7 +195,7 @@ public class GhprbBuilds {
 
         commentOnBuildResult(build, listener, state, c);
         // close failed pull request automatically
-        if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
+        if (state == GHCommitState.FAILURE && trigger.getAutoCloseFailedPullRequests()) {
             closeFailedRequest(listener, c);
         }
     }
