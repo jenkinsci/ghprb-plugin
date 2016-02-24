@@ -19,7 +19,7 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
-import hudson.model.Queue;
+import hudson.model.Item;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.Saveable;
@@ -287,15 +287,6 @@ public class Ghprb {
     }
     
 
-    public static GhprbCause getCause(Queue.Item item) {
-        for (Cause cause : item.getCauses()){
-            if (cause instanceof GhprbCause) {
-                return (GhprbCause) cause;
-            }
-        }
-        return null;
-    }
-    
     public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
         return extractTrigger(build.getProject());
     }
@@ -406,7 +397,7 @@ public class Ghprb {
         extensions.add(ext);
     }
 
-    public static StandardCredentials lookupCredentials(hudson.model.Item context, String credentialId, String uri) {
+    public static StandardCredentials lookupCredentials(Item context, String credentialId, String uri) {
         String contextName = "(Jenkins.instance)";
         if (context != null) {
             contextName = context.getFullName();
@@ -417,7 +408,7 @@ public class Ghprb {
         
         logger.log(Level.FINE, "Using null context because of issues not getting all credentias");
         
-        credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (hudson.model.Item) null, ACL.SYSTEM,
+        credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (Item) null, ACL.SYSTEM,
                 URIRequirementBuilder.fromUri(uri).build());
         
         logger.log(Level.FINE, "Found {0} credentials", new Object[]{credentials.size()});

@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.ghprb.extensions.build;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
@@ -14,6 +15,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -45,12 +47,21 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
         
         Queue queue = Jenkins.getInstance().getQueue();
         for (Queue.Item item : queue.getItems(project)) {
-            GhprbCause cause = Ghprb.getCause(item);
-            if (cause == null) {
+            GhprbCause qcause = null;
+            for (Cause cause : item.getCauses()){
+                if (cause instanceof GhprbCause) {
+                    qcause = (GhprbCause) cause;
+                }
+            }
+            if (qcause == null) {
                 continue;
             }
-            if (cause.getPullID() == prId) {
-                queue.cancel(item);
+            if (qcause.getPullID() == prId) {
+                try {
+                    queue.cancel(item);
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Unable to cancel queued build", e);
+                }
             }
         }
 
@@ -64,8 +75,13 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
                 continue;
             }
             if (cause.getPullID() == prId) {
-                run.addAction(this);
-                run.getExecutor().interrupt(Result.ABORTED);
+                try {
+                    run.addAction(this);
+                    run.getExecutor().interrupt(Result.ABORTED);
+                } catch (Exception e) {
+                    run.getActions().remove(this);
+                    logger.log(Level.SEVERE, "Unable to interrupt build!", e);
+                }
             }
         }
 
@@ -83,7 +99,6 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
     }
 
     public String getIconFileName() {
-        // TODO Auto-generated method stub
         return null;
     }
 
