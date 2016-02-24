@@ -8,5 +8,5 @@ import hudson.model.Action;
 public interface GhprbBuildStep extends Action {
     public static String buildStep = "GhprbBuildStep";
     
-    public void onStartBuild(AbstractProject<?, ?> project, GhprbCause cause);
+    public void onScheduleBuild(AbstractProject<?, ?> project, GhprbCause cause);
 }

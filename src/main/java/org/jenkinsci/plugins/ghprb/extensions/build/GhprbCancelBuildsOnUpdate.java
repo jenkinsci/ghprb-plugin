@@ -71,7 +71,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
 
     }
 
-    public void onStartBuild(AbstractProject<?, ?> project,
+    public void onScheduleBuild(AbstractProject<?, ?> project,
                              GhprbCause cause) {
 
         if (project == null || cause == null) {

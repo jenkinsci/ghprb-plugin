@@ -291,12 +291,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
 
-    public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
+    public QueueTaskFuture<?> scheduleBuild(GhprbCause cause, GhprbRepository repo) {
         
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(this, GhprbBuildStep.class)) {
             if (ext instanceof GhprbBuildStep) {
-                ((GhprbBuildStep)ext).onStartBuild(super.job, cause);
+                ((GhprbBuildStep)ext).onScheduleBuild(super.job, cause);
             }
         }
         

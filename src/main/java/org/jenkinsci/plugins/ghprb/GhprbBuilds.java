@@ -77,7 +77,7 @@ public class GhprbBuilds {
                 }
             }
         }
-        QueueTaskFuture<?> build = trigger.startJob(cause, repo);
+        QueueTaskFuture<?> build = trigger.scheduleBuild(cause, repo);
         if (build == null) {
             logger.log(Level.SEVERE, "Job did not start");
         }

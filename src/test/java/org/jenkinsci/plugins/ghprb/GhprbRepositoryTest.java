@@ -117,7 +117,7 @@ public class GhprbRepositoryTest {
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         
         
-        doReturn(mock(QueueTaskFuture.class)).when(trigger).startJob(any(GhprbCause.class), any(GhprbRepository.class));
+        doReturn(mock(QueueTaskFuture.class)).when(trigger).scheduleBuild(any(GhprbCause.class), any(GhprbRepository.class));
         initGHPRWithTestData();
         
         given(ghPullRequest.getUser()).willReturn(ghUser);
