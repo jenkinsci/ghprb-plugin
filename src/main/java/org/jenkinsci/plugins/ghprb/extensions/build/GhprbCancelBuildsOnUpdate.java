@@ -39,7 +39,10 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
 
     private void cancelCurrentBuilds(AbstractProject<?, ?> project,
                                      Integer prId) {
-
+        if (overrideGlobal) {
+            return;
+        }
+        
         Queue queue = Jenkins.getInstance().getQueue();
         for (Queue.Item item : queue.getItems(project)) {
             GhprbCause cause = Ghprb.getCause(item);
