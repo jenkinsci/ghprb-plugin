@@ -8,7 +8,6 @@ import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
-import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
@@ -31,7 +30,6 @@ public class GhprbBuildStatus extends GhprbExtension implements GhprbCommentAppe
     public List<GhprbBuildResultMessage> getMessages() {
         return messages == null ? new ArrayList<GhprbBuildResultMessage>(0) : messages;
     }
-    
 
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();

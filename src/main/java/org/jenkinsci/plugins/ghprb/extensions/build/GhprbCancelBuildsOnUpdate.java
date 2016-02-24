@@ -7,6 +7,7 @@ import org.jenkinsci.plugins.ghprb.GhprbCause;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -19,15 +20,21 @@ import hudson.model.Run;
 import hudson.util.RunList;
 import jenkins.model.Jenkins;
 
-public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBuildStep, GhprbProjectExtension {
+public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBuildStep, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbCancelBuildsOnUpdate.class.getName());
+    
+    private final Boolean overrideGlobal;
 
     @DataBoundConstructor
-    public GhprbCancelBuildsOnUpdate() {
-
+    public GhprbCancelBuildsOnUpdate(Boolean overrideGlobal) {
+        this.overrideGlobal = overrideGlobal;
+    }
+    
+    public Boolean getOverrideGlobal() {
+        return overrideGlobal == null ? false : overrideGlobal;
     }
 
     private void cancelCurrentBuilds(AbstractProject<?, ?> project,
@@ -72,6 +79,19 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
         }
     }
 
+    public String getIconFileName() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public String getDisplayName() {
+        return "Cancel Build on Pull Request Update";
+    }
+
+    public String getUrlName() {
+        return null;
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -86,17 +106,5 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
         }
     }
 
-    public String getIconFileName() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public String getDisplayName() {
-        return "Cancel Build on Pull Request Update";
-    }
-
-    public String getUrlName() {
-        return null;
-    }
 
 }

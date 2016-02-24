@@ -41,7 +41,10 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
         
         return msg.toString();
     }
-    
+
+    public boolean addIfMissing() {
+        return false;
+    }
 
     private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
@@ -74,6 +77,10 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
         @Override
         public String getDisplayName() {
             return "Add link to Jenkins";
+        }
+
+        public boolean addIfMissing() {
+            return false;
         }
         
     }

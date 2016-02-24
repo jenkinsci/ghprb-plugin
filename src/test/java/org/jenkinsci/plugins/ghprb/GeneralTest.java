@@ -4,6 +4,7 @@ import static org.fest.assertions.Assertions.assertThat;
 
 import java.util.List;
 
+import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
@@ -61,6 +62,11 @@ public class GeneralTest {
     @Test
     public void checkSimpleStatusForGetters() {
         checkClassForGetters(GhprbSimpleStatus.class);
+    }
+
+    @Test
+    public void checkCancelBuildsOnUpdateForGetters() {
+        checkClassForGetters(GhprbCancelBuildsOnUpdate.class);
     }
 
 }

@@ -33,6 +33,9 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
@@ -109,8 +112,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                                               GhprbCommitStatus.class
                                             );
         
-        // Now make sure we have at least one of the types we need one of.
-        Ghprb.addIfMissing(this.extensions, Ghprb.getGlobal(GhprbSimpleStatus.class), GhprbCommitStatus.class);
+        // Make sure we have at least one of the types we need one of.
+        for (GhprbExtension ext : getDescriptor().getExtensions()) {
+            if (ext instanceof GhprbGlobalDefault) {
+                Ghprb.addIfMissing(this.extensions, Ghprb.getGlobal(ext.getClass()), ext.getClass());
+            }
+        }
     }
 
     @DataBoundConstructor
