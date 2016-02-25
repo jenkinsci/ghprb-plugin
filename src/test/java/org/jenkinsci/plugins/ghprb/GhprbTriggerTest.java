@@ -14,8 +14,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -26,11 +31,27 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbTriggerTest {
 
+    @Rule
+    public JenkinsRule jenkinsRule = new JenkinsRule();
+    
     @Mock
     private GhprbPullRequest pr;
     
     @Mock 
     private Ghprb helper;
+    
+    @Test
+    public void testGlobalExtensions() throws Exception {
+        GhprbTrigger.getDscp().getExtensions().add(new GhprbCancelBuildsOnUpdate(false));
+        
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger();
+        
+        for (GhprbExtension ext : trigger.getDescriptor().getExtensions()) {
+            if (ext instanceof GhprbGlobalDefault) {
+                assertThat(trigger.getExtensions().contains(ext));
+            }
+        }
+    }
 
     @Test
     public void testCheckSkipBuild() throws Exception {

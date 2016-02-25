@@ -28,9 +28,14 @@ import hudson.util.ListBoxModel.Option;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
@@ -107,8 +112,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                                               GhprbCommitStatus.class
                                             );
         
-        // Now make sure we have at least one of the types we need one of.
-        Ghprb.addIfMissing(this.extensions, Ghprb.getGlobal(GhprbSimpleStatus.class), GhprbCommitStatus.class);
+        // Make sure we have at least one of the types we need one of.
+        for (GhprbExtension ext : getDescriptor().getExtensions()) {
+            if (ext instanceof GhprbGlobalDefault) {
+                Ghprb.addIfMissing(this.extensions, Ghprb.getGlobal(ext.getClass()), ext.getClass());
+            }
+        }
     }
 
     @DataBoundConstructor
@@ -280,8 +289,17 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
         this.repository.check();
     }
+    
 
-    public QueueTaskFuture<?> startJob(GhprbCause cause, GhprbRepository repo) {
+    public QueueTaskFuture<?> scheduleBuild(GhprbCause cause, GhprbRepository repo) {
+        
+
+        for (GhprbExtension ext : Ghprb.getJobExtensions(this, GhprbBuildStep.class)) {
+            if (ext instanceof GhprbBuildStep) {
+                ((GhprbBuildStep)ext).onScheduleBuild(super.job, cause);
+            }
+        }
+        
         ArrayList<ParameterValue> values = getDefaultParameters();
         final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
         values.add(new StringParameterValue("sha1", commitSha));
@@ -697,7 +715,19 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (repoJobs == null) {
                 repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>();
             }
-            save();
+            saveAfterPause();
+        }
+        
+        private void saveAfterPause() {
+            new java.util.Timer().schedule( 
+                                           new java.util.TimerTask() {
+                                               @Override
+                                               public void run() {
+                                                   save();
+                                               }
+                                           }, 
+                                           5000 
+                                   );
         }
 
         @Override
@@ -739,7 +769,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             
             readBackFromLegacy();
 
-            save();
+            saveAfterPause();
             return super.configure(req, formData);
         }
         

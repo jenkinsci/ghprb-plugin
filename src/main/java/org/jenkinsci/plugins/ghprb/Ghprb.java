@@ -21,6 +21,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Item;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
@@ -277,7 +278,7 @@ public class Ghprb {
     }
     
 
-    public static GhprbCause getCause(AbstractBuild<?, ?> build) {
+    public static GhprbCause getCause(Run<?, ?> build) {
         Cause cause = build.getCause(GhprbCause.class);
         if (cause == null || (!(cause instanceof GhprbCause))) {
             return null;
@@ -285,6 +286,7 @@ public class Ghprb {
         return (GhprbCause) cause;
     }
     
+
     public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
         return extractTrigger(build.getProject());
     }
