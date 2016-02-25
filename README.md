@@ -128,7 +128,7 @@ job('upstreamJob') {
     }
 
     triggers {
-        githubPullRequest {
+        pullRequest {
             admin('user_1')
             admins(['user_2', 'user_3'])
             userWhitelist('you@you.com')
