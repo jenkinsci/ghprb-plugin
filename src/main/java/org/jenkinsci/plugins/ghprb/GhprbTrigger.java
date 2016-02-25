@@ -295,7 +295,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         BuildData buildData = null;
         if (!(job instanceof MatrixProject) && !StringUtils.isEmpty(lastBuildId)) {
             AbstractBuild<?, ?> lastBuild = job.getBuild(lastBuildId);
-            buildData = lastBuild.getAction(BuildData.class);
+            if (lastBuild != null) {
+                buildData = lastBuild.getAction(BuildData.class);
+            }
         }
 
         try {
