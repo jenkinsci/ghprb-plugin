@@ -32,8 +32,8 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class GhprbSimpleStatus extends GhprbExtension
-                               implements GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
+public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension,
+                               GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -42,14 +42,15 @@ public class GhprbSimpleStatus extends GhprbExtension
     private final String triggeredStatus;
     private final String startedStatus;
     private final String statusUrl;
+    private final Boolean addTestResults;
     private final List<GhprbBuildResultMessage> completedStatus;
 
     public GhprbSimpleStatus() {
-        this(null, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
+        this(null);
     }
 
     public GhprbSimpleStatus(String commitStatusContext) {
-        this(commitStatusContext, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
+        this(commitStatusContext, null, null, null, false, new ArrayList<GhprbBuildResultMessage>(0));
     }
 
     @DataBoundConstructor
@@ -57,11 +58,13 @@ public class GhprbSimpleStatus extends GhprbExtension
                              String statusUrl,
                              String triggeredStatus,
                              String startedStatus,
+                             Boolean addTestResults,
                              List<GhprbBuildResultMessage> completedStatus) {
         this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
         this.triggeredStatus = triggeredStatus;
         this.startedStatus = startedStatus;
+        this.addTestResults = addTestResults;
         this.completedStatus = completedStatus;
     }
 
@@ -79,6 +82,10 @@ public class GhprbSimpleStatus extends GhprbExtension
 
     public String getTriggeredStatus() {
         return triggeredStatus == null ? "" : triggeredStatus;
+    }
+
+    public Boolean getAddTestResults() {
+        return addTestResults == null ? false : addTestResults;
     }
 
     public List<GhprbBuildResultMessage> getCompletedStatus() {
@@ -191,7 +198,9 @@ public class GhprbSimpleStatus extends GhprbExtension
                                             .printStackTrace(trigger.getDisplayBuildErrorsOnDownstreamBuilds()).build();
 
             GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
-            sb.append(buildManager.getOneLineTestResults());
+            if (getAddTestResults()) {
+                sb.append(buildManager.getOneLineTestResults());
+            }
         }
 
         createCommitStatus(build, listener, sb.toString(), repo, state);
@@ -263,6 +272,10 @@ public class GhprbSimpleStatus extends GhprbExtension
 
         public String getStartedStatusDefault(GhprbSimpleStatus local) {
             return Ghprb.getDefaultValue(local, GhprbSimpleStatus.class, "getStartedStatus");
+        }
+
+        public Boolean getAddTestResultsDefault(GhprbSimpleStatus local) {
+            return Ghprb.getDefaultValue(local, GhprbSimpleStatus.class, "getAddTestResults");
         }
 
         public List<GhprbBuildResultMessage> getCompletedStatusDefault(GhprbSimpleStatus local) {

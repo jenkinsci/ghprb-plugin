@@ -15,7 +15,6 @@
 package org.jenkinsci.plugins.ghprb;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
 import java.lang.reflect.Field;
@@ -27,12 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import org.codehaus.plexus.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.junit.Test;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRateLimit;
@@ -429,7 +425,7 @@ public class GhprbTestUtil {
         }
         
         for (Field field : xmlFields) {
-            String getter = "get" + StringUtils.capitalise(field.getName());
+            String getter = "get" + StringUtils.capitalize(field.getName());
             try {
                 Method method = clazz.getDeclaredMethod(getter);
                 int modifier = method.getModifiers();
@@ -437,7 +433,7 @@ public class GhprbTestUtil {
                     errors.add(getter + " is not a public method");
                 }
             } catch (Exception e) {
-                String wrongGetter = "is" + StringUtils.capitalise(field.getName());
+                String wrongGetter = "is" + StringUtils.capitalize(field.getName());
                 try {
                     clazz.getDeclaredMethod(wrongGetter);
                     errors.add("Setter is using the wrong name, is " + wrongGetter + " and should be " + getter);

@@ -23,6 +23,7 @@ class GhprbExtensionContext implements Context {
                 context.statusUrl,
                 context.triggeredStatus,
                 context.startedStatus,
+                context.addTestResults,
                 context.completedStatus
         ));
     }
