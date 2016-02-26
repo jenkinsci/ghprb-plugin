@@ -217,7 +217,7 @@ public class GhprbPullRequest {
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(pr.getUser())) {
                     logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[] { id });
-                    setAccepted(false);
+                    setAccepted(true);
                 }
 
                 int commentsChecked = checkComments(pr, lastUpdateTime);
