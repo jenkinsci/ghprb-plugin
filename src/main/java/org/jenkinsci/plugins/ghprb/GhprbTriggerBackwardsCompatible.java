@@ -26,7 +26,6 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected final int latestVersion = 3;
     
 
-    protected String triggerPhrase;
     protected Integer configVersion;
 
     public GhprbTriggerBackwardsCompatible(String cron) throws ANTLRException {

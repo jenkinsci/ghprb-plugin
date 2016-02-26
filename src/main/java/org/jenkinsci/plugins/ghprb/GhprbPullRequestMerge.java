@@ -57,19 +57,19 @@ public class GhprbPullRequestMerge extends Recorder {
         return mergeComment;
     }
 
-    public boolean isOnlyAdminsMerge() {
+    public boolean getOnlyAdminsMerge() {
         return onlyAdminsMerge == null ? false : onlyAdminsMerge;
     }
 
-    public boolean isDisallowOwnCode() {
+    public boolean getDisallowOwnCode() {
         return disallowOwnCode == null ? false : disallowOwnCode;
     }
 
-    public boolean isFailOnNonMerge() {
+    public boolean getFailOnNonMerge() {
         return failOnNonMerge == null ? false : failOnNonMerge;
     }
 
-    public boolean isDeleteOnMerge() {
+    public boolean getDeleteOnMerge() {
         return deleteOnMerge == null ? false : deleteOnMerge;
     }
 
@@ -77,10 +77,10 @@ public class GhprbPullRequestMerge extends Recorder {
         return BuildStepMonitor.BUILD;
     }
 
-    private GhprbTrigger trigger;
-    private Ghprb helper;
-    private GhprbCause cause;
-    private GHPullRequest pr;
+    private transient GhprbTrigger trigger;
+    private transient Ghprb helper;
+    private transient GhprbCause cause;
+    private transient GHPullRequest pr;
 
     @VisibleForTesting
     void setHelper(Ghprb helper) {
@@ -105,7 +105,7 @@ public class GhprbPullRequestMerge extends Recorder {
             return true;
         }
 
-        pr = trigger.getRepository().getPullRequest(cause.getPullID());
+        pr = trigger.getRepository().getActualPullRequest(cause.getPullID());
 
         if (helper == null) {
             helper = new Ghprb(trigger);
@@ -134,7 +134,7 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         // If there is no intention to merge there is no point checking
-        if (intendToMerge && isOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender))) {
+        if (intendToMerge && getOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender))) {
             canMerge = false;
             logger.println("Only admins can merge this pull request, " + (triggerSender != null ? triggerSender.getLogin() + " is not an admin" : " and build was triggered via automation") + ".");
             if (triggerSender != null) {
@@ -143,7 +143,7 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         // If there is no intention to merge there is no point checking
-        if (intendToMerge && isDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender))) {
+        if (intendToMerge && getDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender))) {
             canMerge = false;
             if (triggerSender != null) {
                 logger.println("The commentor is also one of the contributors.");
@@ -181,7 +181,7 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         // We should only fail the build if there is an intent to merge
-        if (intendToMerge && !canMerge && isFailOnNonMerge()) {
+        if (intendToMerge && !canMerge && getFailOnNonMerge()) {
             listener.finished(Result.FAILURE);
         } else {
             listener.finished(Result.SUCCESS);
@@ -190,7 +190,7 @@ public class GhprbPullRequestMerge extends Recorder {
     }
 
     private void deleteBranch(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
-        if (!isDeleteOnMerge()) {
+        if (!getDeleteOnMerge()) {
             return;
         }
         String branchName = pr.getHead().getRef();

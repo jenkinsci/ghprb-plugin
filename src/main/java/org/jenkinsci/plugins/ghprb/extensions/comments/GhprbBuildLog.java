@@ -61,7 +61,6 @@ public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppende
     public boolean ignorePublishedUrl() {
         return false;
     }
-    
 
     @Override
     public DescriptorImpl getDescriptor() {

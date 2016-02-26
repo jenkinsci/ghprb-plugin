@@ -51,10 +51,10 @@ public class GhprbRepository implements Saveable{
     private static final transient EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
     private final String reponame;
+    private final Map<Integer, GhprbPullRequest> pullRequests;
 
     private transient GHRepository ghRepository;
     private transient GhprbTrigger trigger;
-    private final Map<Integer, GhprbPullRequest> pullRequests;
 
     public GhprbRepository(String reponame, GhprbTrigger trigger) {
         this.pullRequests = new ConcurrentHashMap<Integer, GhprbPullRequest>();
@@ -145,7 +145,7 @@ public class GhprbRepository implements Saveable{
         for (GHPullRequest pr : openPulls) {
             if (pr.getHead() == null) { // Not sure if we need this, but leaving it for now.
                 try {
-                    pr = getPullRequest(pr.getNumber());
+                    pr = getActualPullRequest(pr.getNumber());
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Could not retrieve pr " + pr.getNumber(), ex);
                     return;
@@ -313,7 +313,11 @@ public class GhprbRepository implements Saveable{
         return baseUrl + GhprbRootAction.URL + "/";
     }
 
-    public GHPullRequest getPullRequest(int id) throws IOException {
+    public GhprbPullRequest getPullRequest(int id) {
+        return pullRequests.get(id);
+    }
+    
+    public GHPullRequest getActualPullRequest(int id) throws IOException {
         return getGitHubRepo().getPullRequest(id);
     }
 

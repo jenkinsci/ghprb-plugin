@@ -91,6 +91,10 @@ public class GhprbRootAction implements UnprotectedRootAction {
         }
 
         logger.log(Level.FINE, "Got payload event: {0}", event);
+        
+        // Not sure if this is needed, but it may be to get info about old builds.
+        Authentication old = SecurityContextHolder.getContext().getAuthentication();
+        SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
 
         try {
             GitHub gh = GitHub.connectAnonymously();
@@ -141,7 +145,10 @@ public class GhprbRootAction implements UnprotectedRootAction {
 
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to connect to GitHub anonymously", e);
+        } finally {
+            SecurityContextHolder.getContext().setAuthentication(old);
         }
+
     }
 
     private PullRequest getPullRequest(String payload, GitHub gh) throws IOException {
@@ -171,22 +178,19 @@ public class GhprbRootAction implements UnprotectedRootAction {
     private Set<GhprbTrigger> getTriggers(String repoName, String body, String signature) {
         Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>();
 
-        // We need this to get access to list of repositories
-        Authentication old = SecurityContextHolder.getContext().getAuthentication();
-        SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-        
         Set<AbstractProject<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
         if (projects != null) {
             for (AbstractProject<?, ?> project : projects) {
                 GhprbTrigger trigger = Ghprb.extractTrigger(project);
+                if (trigger == null) {
+                    logger.log(Level.WARNING, "Warning, trigger unexpectedly null for project " + project.getFullName());
+                    continue;
+                }
                 if (trigger.matchSignature(body, signature)) {
                     triggers.add(trigger);
                 }
             }
         }
-
-        SecurityContextHolder.getContext().setAuthentication(old);
-        
         return triggers;
         
     }

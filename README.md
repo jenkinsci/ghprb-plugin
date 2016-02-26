@@ -128,7 +128,7 @@ job('upstreamJob') {
     }
 
     triggers {
-        githubPullRequest {
+        pullRequest {
             admin('user_1')
             admins(['user_2', 'user_3'])
             userWhitelist('you@you.com')
@@ -185,6 +185,10 @@ job('downstreamJob') {
 ```
 
 ### Updates
+
+#### -> 1.30.2
+* Don't run through all the builds for changelog, track it in the PR object instead
+* Synchronization around the PR object fields
 
 #### -> 1.30.1
 * Moved pull request state into build/pullrequests directory.

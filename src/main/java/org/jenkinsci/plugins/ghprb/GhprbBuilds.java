@@ -4,11 +4,13 @@ import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
@@ -75,7 +77,7 @@ public class GhprbBuilds {
                 }
             }
         }
-        QueueTaskFuture<?> build = trigger.startJob(cause, repo);
+        QueueTaskFuture<?> build = trigger.scheduleBuild(cause, repo);
         if (build == null) {
             logger.log(Level.SEVERE, "Job did not start");
         }
@@ -89,9 +91,11 @@ public class GhprbBuilds {
         }
 
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
+        GhprbPullRequest pullRequest = trigger.getRepository().getPullRequest(c.getPullID());
+        pullRequest.setBuild(build);
 
         try {
-            GHPullRequest pr = trigger.getRepository().getPullRequest(c.getPullID());
+            GHPullRequest pr = pullRequest.getPullRequest(true);
             int counter = 0;
             // If the PR is being resolved by GitHub then getMergeable will return null
             Boolean isMergeable = pr.getMergeable();
@@ -167,15 +171,19 @@ public class GhprbBuilds {
         // remove the BuildData action that we may have added earlier to avoid
         // having two of them, and because the one we added isn't correct
         // @see GhprbTrigger
-        BuildData fakeOne = null;
         for (BuildData data : build.getActions(BuildData.class)) {
             if (data.getLastBuiltRevision() != null && !data.getLastBuiltRevision().getSha1String().equals(c.getCommit())) {
-                fakeOne = data;
+                build.getActions().remove(data);
                 break;
             }
         }
-        if (fakeOne != null) {
-            build.getActions().remove(fakeOne);
+        
+
+        if (build.getResult() == Result.ABORTED) {
+            GhprbBuildStep abortAction = build.getAction(GhprbBuildStep.class);
+            if (abortAction != null) {
+                return;
+            }
         }
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
@@ -193,14 +201,14 @@ public class GhprbBuilds {
 
         commentOnBuildResult(build, listener, state, c);
         // close failed pull request automatically
-        if (state == GHCommitState.FAILURE && trigger.isAutoCloseFailedPullRequests()) {
+        if (state == GHCommitState.FAILURE && trigger.getAutoCloseFailedPullRequests()) {
             closeFailedRequest(listener, c);
         }
     }
 
     private void closeFailedRequest(TaskListener listener, GhprbCause c) {
         try {
-            GHPullRequest pr = repo.getPullRequest(c.getPullID());
+            GHPullRequest pr = repo.getActualPullRequest(c.getPullID());
 
             if (pr.getState().equals(GHIssueState.OPEN)) {
                 repo.closePullRequest(c.getPullID());

@@ -14,9 +14,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kohsuke.github.GHIssue;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.kohsuke.github.GHPullRequest;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -26,15 +31,31 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbTriggerTest {
 
+    @Rule
+    public JenkinsRule jenkinsRule = new JenkinsRule();
+    
     @Mock
     private GhprbPullRequest pr;
     
     @Mock 
     private Ghprb helper;
+    
+    @Test
+    public void testGlobalExtensions() throws Exception {
+        GhprbTrigger.getDscp().getExtensions().add(new GhprbCancelBuildsOnUpdate(false));
+        
+        GhprbTrigger trigger = GhprbTestUtil.getTrigger();
+        
+        for (GhprbExtension ext : trigger.getDescriptor().getExtensions()) {
+            if (ext instanceof GhprbGlobalDefault) {
+                assertThat(trigger.getExtensions().contains(ext));
+            }
+        }
+    }
 
     @Test
     public void testCheckSkipBuild() throws Exception {
-        GHIssue issue = mock(GHIssue.class);
+        GHPullRequest issue = mock(GHPullRequest.class);
         
         boolean skipBuild = false;
         boolean build = true;
@@ -67,8 +88,13 @@ public class GhprbTriggerTest {
         comment.put(fullSkipCi, skipBuild);
         stringsToTest.put("\\[skip ci\\]\n.*\\[skip\\W+ci\\].*\nskip ci", comment);
         
-        Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild", GHIssue.class);
+        Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild");
         checkSkip.setAccessible(true);
+        
+
+        Field prField = GhprbPullRequest.class.getDeclaredField("pr");
+        prField.setAccessible(true);
+        prField.set(pr, issue);
 
         Field shouldRun = GhprbPullRequest.class.getDeclaredField("shouldRun");
         shouldRun.setAccessible(true);
@@ -104,7 +130,7 @@ public class GhprbTriggerTest {
                 given(helper.checkSkipBuild(issue)).willReturn(skipPhrase);
                 
                 shouldRun.set(pr, true);
-                checkSkip.invoke(pr, issue);
+                checkSkip.invoke(pr);
                 String errorMessage = String.format("Comment does %scontain skip phrase \n(\n%s\n)\n[\n%s\n]", shouldBuild ? "not ": "", nextComment, skipPhrases);
                 
                 if (shouldBuild) {
@@ -117,7 +143,7 @@ public class GhprbTriggerTest {
 
             }
         }
-
     }
+    
 
 }
