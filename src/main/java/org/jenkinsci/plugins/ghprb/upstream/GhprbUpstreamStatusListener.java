@@ -64,8 +64,10 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
         if (StringUtils.isEmpty(context)) {
             context = jobName;
         }
+        
+        Boolean addTestResults = new Boolean(envVars.get("ghprbStartedStatus"));
 
-        statusUpdater = new GhprbSimpleStatus(envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), statusMessages);
+        statusUpdater = new GhprbSimpleStatus(envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), addTestResults, statusMessages);
 
         String credentialsId = envVars.get("ghprbCredentialsId");
         String repoName = envVars.get("ghprbGhRepository");

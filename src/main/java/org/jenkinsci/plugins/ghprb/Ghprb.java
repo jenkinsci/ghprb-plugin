@@ -475,14 +475,13 @@ public class Ghprb {
     
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <T> T getDefaultValue(Object local, Class globalClass, String methodName) {
+    public static <T, S extends GhprbExtension> T getDefaultValue(S local, Class<S> globalClass, String methodName) {
         T toReturn = null;
-        Object global = getGlobal(globalClass);
+        S global = getGlobal(globalClass);
         if (local == null && global == null) {
             return null;
         }
         try {
-            
             if (local == null) {
                 return (T) global.getClass().getMethod(methodName).invoke(global);
             } else if (global == null) {
