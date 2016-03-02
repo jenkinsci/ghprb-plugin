@@ -347,7 +347,7 @@ public class GhprbRepository implements Saveable{
         if (number == null) {
             number = ghpr.getNumber();
         }
-        synchronized (pullRequests) {
+        synchronized (this) {
             GhprbPullRequest pr = pullRequests.get(number);
             if (pr == null) {
                 if (ghpr == null) {

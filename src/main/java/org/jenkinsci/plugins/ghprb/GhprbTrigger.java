@@ -885,7 +885,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             }
             logger.log(Level.FINE, "Adding [{0}] to webhooks repo [{1}]", new Object[]{project.getFullName(), repo});
             
-            synchronized (repoJobs) {
+            synchronized (this) {
                 Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
                 if (projects == null) {
                     logger.log(Level.FINE, "No other projects found, creating new repo set");
