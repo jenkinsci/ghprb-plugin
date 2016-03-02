@@ -280,6 +280,32 @@ public class Ghprb {
         return trigger.getWhiteListTargetBranches();
     }
 
+    public List<Pattern> getIncludedRegionPatterns() {
+        List<String> regions = Arrays.asList(trigger.getIncludedRegions().split("\\s+"));
+        List<Pattern> patterns = new ArrayList<Pattern>(regions.size());
+
+        for (String region : regions) {
+            if(StringUtils.isNotEmpty(region)) {
+                patterns.add(Pattern.compile(region));
+            }
+        }
+
+        return patterns;
+    }
+
+    public List<Pattern> getExcludedRegionPatterns() {
+        List<String> regions = Arrays.asList(trigger.getExcludedRegions().split("\\s+"));
+        List<Pattern> patterns = new ArrayList<Pattern>(regions.size());
+
+        for (String region : regions) {
+            if(StringUtils.isNotEmpty(region)) {
+                patterns.add(Pattern.compile(region));
+            }
+        }
+
+        return patterns;
+    }
+
     public static String replaceMacros(Run<?, ?> build, TaskListener listener, String inputString) {
         String returnString = inputString;
         if (build != null && inputString != null) {

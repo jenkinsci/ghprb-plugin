@@ -82,6 +82,12 @@ f.advanced() {
       }
     }
   }
+  f.entry(field: "includedRegions", title: _("Included regions")) {
+    f.textarea()
+  }
+  f.entry(field: "excludedRegions", title: _("Excluded regions")) {
+    f.textarea()
+  }
 }
 f.advanced(title: _("Trigger Setup")) {
   f.entry(title: _("Trigger Setup")) {
