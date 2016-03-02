@@ -131,6 +131,14 @@
                         <version>2.16</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>java.util.logging.config.file</name>
+                            <value>${project.build.testOutputDirectory}/surefire-logging.properties</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -149,6 +157,12 @@
                     <includes>
                         <include>**/*IT.java</include>
                     </includes>
+                    <systemProperties>
+                        <property>
+                            <name>java.util.logging.config.file</name>
+                            <value>${project.build.testOutputDirectory}/surefire-logging.properties</value>
+                        </property>
+                    </systemProperties>
                 </configuration>
             </plugin>
             <plugin>
