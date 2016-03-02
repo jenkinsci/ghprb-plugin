@@ -76,7 +76,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String blackListCommitAuthor;
     private String blackListLabels;
     private String whiteListLabels;
-    
+    private String includedRegions;
+    private String excludedRegions;
 
     private transient Ghprb helper;
     private transient GhprbRepository repository;
@@ -134,7 +135,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String buildDescTemplate,
             String blackListLabels,
             String whiteListLabels,
-            List<GhprbExtension> extensions
+            List<GhprbExtension> extensions,
+            String includedRegions,
+            String excludedRegions
             ) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -156,6 +159,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.buildDescTemplate = buildDescTemplate;
         this.blackListLabels = blackListLabels;
         this.whiteListLabels = whiteListLabels;
+        this.includedRegions = includedRegions;
+        this.excludedRegions = excludedRegions;
         setExtensions(extensions);
         configVersion = latestVersion;
     }
@@ -561,6 +566,20 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public List<GhprbBranch> getBlackListTargetBranches() {
         return normalizeTargetBranches(blackListTargetBranches);
+    }
+
+    public String getIncludedRegions() {
+        if (includedRegions == null) {
+            return "";
+        }
+        return includedRegions;
+    }
+
+    public String getExcludedRegions() {
+        if (excludedRegions == null) {
+            return "";
+        }
+        return excludedRegions;
     }
 
     @Override
