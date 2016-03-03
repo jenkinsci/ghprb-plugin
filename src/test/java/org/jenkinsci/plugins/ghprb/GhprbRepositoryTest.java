@@ -563,7 +563,7 @@ public class GhprbRepositoryTest {
         mac.init(keySpec);
 
         byte[] signatureBytes = mac.doFinal(body.getBytes("UTF-8"));
-        String signature = new String(Hex.encodeHexString(signatureBytes));
+        String signature = Hex.encodeHexString(signatureBytes);
         return "sha1=" + signature;
     }
 

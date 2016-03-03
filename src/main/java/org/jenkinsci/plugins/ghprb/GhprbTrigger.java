@@ -94,7 +94,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     
     public DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions() {
         if (extensions == null) {
-            extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP,Util.fixNull(extensions));
+            extensions = new DescribableList<GhprbExtension, GhprbExtensionDescriptor>(Saveable.NOOP, Util.fixNull(extensions));
             extensions.add(new GhprbSimpleStatus());
         }
         return extensions;
@@ -163,8 +163,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         checkGitHubApiAuth();
         return this;
     }
-    
-
 
     @SuppressWarnings("deprecation")
     private void checkGitHubApiAuth() {
@@ -372,11 +370,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     
     public GhprbGitHubAuth getGitHubApiAuth() {
         if (gitHubAuthId == null) {
-            for (GhprbGitHubAuth auth: getDescriptor().getGithubAuth()){
-                gitHubAuthId = auth.getId();
-                getDescriptor().save();
-                return auth;
-            }
+            GhprbGitHubAuth auth = getDescriptor().getGithubAuth().get(0);
+            gitHubAuthId = auth.getId();
+            getDescriptor().save();
+            return auth;
         }
         return getDescriptor().getGitHubAuth(gitHubAuthId);
     }
@@ -586,8 +583,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public String getProjectName() {
-        String projectName = super.job == null ? "NOT_STARTED" : super.job.getFullName();
-        return projectName;
+        return super.job == null ? "NOT_STARTED" : super.job.getFullName();
     }
     
 
@@ -596,7 +592,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return false;
         }
         GhprbGitHubAuth auth = getGitHubApiAuth();
-        return auth == null ? false : auth.checkSignature(body, signature);
+        return auth != null && auth.checkSignature(body, signature);
     }
     
     public void handleComment(IssueComment issueComment) throws IOException {

@@ -271,8 +271,7 @@ public class GhprbTestUtil {
     private static final String apiUrl = "https://api.github.com";
     
     private static String setUpCredentials() throws Exception {
-        String credentialsId = Ghprb.createCredentials(apiUrl, "accessToken");
-        return credentialsId;
+        return Ghprb.createCredentials(apiUrl, "accessToken");
     }
     
     private static String credentialsId;

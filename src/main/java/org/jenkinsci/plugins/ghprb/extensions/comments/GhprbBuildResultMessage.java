@@ -40,7 +40,7 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
         StringBuilder msg = new StringBuilder();
 
         GHCommitState state = Ghprb.getState(build);
-        String buildMessage = null;
+        String buildMessage;
         if (state == result) {
             buildMessage = message;
             if (StringUtils.isEmpty(buildMessage)) {
@@ -84,7 +84,7 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
             for (GHCommitState nextResult : results) {
 
                 items.add(nextResult.toString(), nextResult.toString());
-                if (result.toString().equals(nextResult)) {
+                if (result.equals(nextResult)) {
                     items.get(items.size() - 1).selected = true;
                 }
             }

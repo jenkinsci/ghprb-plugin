@@ -18,7 +18,6 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Cause;
 import hudson.model.Item;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -95,7 +94,7 @@ public class Ghprb {
     /**
      * Returns skip build phrases from Jenkins global configuration
      * 
-     * @return
+     * @return set of skip build phrases
      */
     public Set<String> getSkipBuildPhrases() {
         return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
@@ -103,8 +102,8 @@ public class Ghprb {
     
     /**
      * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
-     * 
-     * @param issue
+     *
+     * @param issue pull request to check
      */
     public String checkSkipBuild(GHIssue issue) {
         // check for skip build phrase.
@@ -279,11 +278,7 @@ public class Ghprb {
     
 
     public static GhprbCause getCause(Run<?, ?> build) {
-        Cause cause = build.getCause(GhprbCause.class);
-        if (cause == null || (!(cause instanceof GhprbCause))) {
-            return null;
-        }
-        return (GhprbCause) cause;
+        return build.getCause(GhprbCause.class);
     }
     
 
@@ -292,11 +287,7 @@ public class Ghprb {
     }
 
     public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
-        }
-        return trigger;
+        return p.getTrigger(GhprbTrigger.class);
     }
     
     private static List<Predicate> createPredicate(Class<?> ...types) {
@@ -471,12 +462,9 @@ public class Ghprb {
         
         return copyExtensions.get(clazz);
     }
-    
-    
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T, S extends GhprbExtension> T getDefaultValue(S local, Class<S> globalClass, String methodName) {
-        T toReturn = null;
         S global = getGlobal(globalClass);
         if (local == null && global == null) {
             return null;
@@ -507,6 +495,6 @@ public class Ghprb {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return toReturn;
+        return null;
     }
 }

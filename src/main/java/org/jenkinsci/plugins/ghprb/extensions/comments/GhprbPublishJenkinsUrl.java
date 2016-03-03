@@ -33,13 +33,9 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
     }
 
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
-        StringBuilder msg = new StringBuilder();
-
-        msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
-        msg.append(generateCustomizedMessage(build));
-        msg.append("\n");
-        
-        return msg.toString();
+        return "\nRefer to this link for build results (access rights to CI server needed): \n" +
+                generateCustomizedMessage(build) +
+                "\n";
     }
 
     public boolean addIfMissing() {

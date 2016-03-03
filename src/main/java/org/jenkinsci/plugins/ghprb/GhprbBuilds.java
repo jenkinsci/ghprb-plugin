@@ -114,7 +114,7 @@ public class GhprbBuilds {
                 logger.println("!!! PR mergeability status has changed !!!  ");
                 if (isMergeable) {
                     logger.println("PR now has NO merge conflicts");
-                } else if (!isMergeable) {
+                } else {
                     logger.println("PR now has merge conflicts!");
                 }
             }

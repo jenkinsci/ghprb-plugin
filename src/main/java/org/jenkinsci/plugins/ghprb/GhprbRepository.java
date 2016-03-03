@@ -81,7 +81,7 @@ public class GhprbRepository implements Saveable{
             return true;
         }
         
-        GitHub gitHub = null;
+        GitHub gitHub;
         
         try {
             gitHub = trigger.getGitHub();
@@ -290,8 +290,8 @@ public class GhprbRepository implements Saveable{
             String secret = getSecret();
             config.put("url", new URL(getHookUrl()).toExternalForm());
             config.put("insecure_ssl", "1");
-            if (secret != "") {
-             config.put("secret",secret);
+            if (secret != null && !secret.equals("")) {
+             config.put("secret", secret);
             }
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
             return true;

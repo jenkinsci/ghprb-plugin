@@ -24,14 +24,12 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     public abstract DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions();
     
     protected final int latestVersion = 3;
-    
 
     protected Integer configVersion;
 
     public GhprbTriggerBackwardsCompatible(String cron) throws ANTLRException {
         super(cron);
     }
-    
 
     @Deprecated
     protected transient String commentFilePath;
@@ -49,9 +47,6 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     protected transient AbstractProject<?, ?> _project;
     @Deprecated
     protected transient Map<Integer, GhprbPullRequest> pullRequests;
-    
-
-    
     
     protected void convertPropertiesToExtensions() {
         if (configVersion == null) {

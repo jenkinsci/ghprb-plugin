@@ -19,7 +19,7 @@ public class GhprbGitHub {
     }
 
     public boolean isUserMemberOfOrganization(String organisation, GHUser member) {
-        boolean orgHasMember = false;
+        boolean orgHasMember;
         try {
             GHOrganization org = trigger.getGitHub().getOrganization(organisation);
             orgHasMember = org.hasMember(member);

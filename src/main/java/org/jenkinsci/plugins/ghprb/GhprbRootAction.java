@@ -152,13 +152,11 @@ public class GhprbRootAction implements UnprotectedRootAction {
     }
 
     private PullRequest getPullRequest(String payload, GitHub gh) throws IOException {
-        PullRequest pr = gh.parseEventPayload(new StringReader(payload), PullRequest.class);
-        return pr;
+        return gh.parseEventPayload(new StringReader(payload), PullRequest.class);
     }
 
     private IssueComment getIssueComment(String payload, GitHub gh) throws IOException {
-        IssueComment issueComment = gh.parseEventPayload(new StringReader(payload), IssueComment.class);
-        return issueComment;
+        return gh.parseEventPayload(new StringReader(payload), IssueComment.class);
     }
 
     private String extractRequestBody(StaplerRequest req) {

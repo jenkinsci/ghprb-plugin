@@ -224,8 +224,10 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
          *
          * @param context
          *            the context.
-         * @param remoteBase
-         *            the remote base.
+         * @param serverAPIUrl
+         *            the server api url
+         * @param credentialsId
+         *            the credential id
          * @return list box model.
          * @throws URISyntaxException 
          */

@@ -43,15 +43,13 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
         jenkinsRule.createFreeStyleProject("downstreamProject2");
         jenkinsRule.createFreeStyleProject("downstreamProject3");
 
-        StringBuilder dsl = new StringBuilder();
+        String dsl = "parallel (" +
+                "    { build(\"downstreamProject1\") }," +
+                "    { build(\"downstreamProject2\") }" +
+                ")" +
+                "{ build(\"downstreamProject3\") }";
 
-        dsl.append("parallel (");
-        dsl.append("    { build(\"downstreamProject1\") },");
-        dsl.append("    { build(\"downstreamProject2\") }");
-        dsl.append(")");
-        dsl.append("{ build(\"downstreamProject3\") }");
-
-        buildFlowProject.setDsl(dsl.toString());
+        buildFlowProject.setDsl(dsl);
 
         given(ghPullRequest.getNumber()).willReturn(1);
         given(ghRepository.getPullRequest(1)).willReturn(ghPullRequest);
