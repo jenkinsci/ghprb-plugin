@@ -255,13 +255,13 @@ public class GhprbPullRequest {
 
     private boolean isUpdated(GHPullRequest pr) {
         synchronized (this) {
-            Date lastUpdated = new Date();
+            
             boolean ret = false;
             try {
-                lastUpdated = pr.getUpdatedAt();
-                ret = updated.compareTo(lastUpdated) < 0;
+                Date lastUpdated = pr.getUpdatedAt();
+                ret = updated == null || updated.compareTo(lastUpdated) < 0;
                 setUpdated(lastUpdated);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 logger.log(Level.WARNING, "Unable to update last updated date", e);
             }
             GHCommitPointer pointer = pr.getHead();

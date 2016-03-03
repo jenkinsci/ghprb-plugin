@@ -68,6 +68,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
     @Test
     public void shouldBuildTriggersOnUpdatingRetestMessagePR() throws Exception {
         // GIVEN
+        given(ghPullRequest.getCreatedAt()).willReturn(new DateTime().toDate());
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
         
