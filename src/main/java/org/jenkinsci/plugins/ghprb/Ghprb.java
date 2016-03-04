@@ -75,7 +75,6 @@ public class Ghprb {
         return trigger;
     }
 
-
     public GhprbGitHub getGitHub() {
         return trigger.getGhprbGitHub();
     }
@@ -236,7 +235,6 @@ public class Ghprb {
         }
         return messageEnvVars;
     }
-    
 
     public static String replaceMacros(AbstractProject<?, ?> project, String inputString) {
         String returnString = inputString;
@@ -275,12 +273,10 @@ public class Ghprb {
         listSet.remove("");
         return listSet;
     }
-    
 
     public static GhprbCause getCause(Run<?, ?> build) {
         return build.getCause(GhprbCause.class);
     }
-    
 
     public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
         return extractTrigger(build.getProject());

@@ -49,12 +49,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -369,13 +364,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public GhprbGitHubAuth getGitHubApiAuth() {
-        if (gitHubAuthId == null) {
-            GhprbGitHubAuth auth = getDescriptor().getGithubAuth().get(0);
+        GhprbGitHubAuth auth = getDescriptor().getGitHubAuth(gitHubAuthId);
+        if (gitHubAuthId == null && auth != null) {
             gitHubAuthId = auth.getId();
             getDescriptor().save();
-            return auth;
         }
-        return getDescriptor().getGitHubAuth(gitHubAuthId);
+        return auth;
     }
     
 
@@ -583,7 +577,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public String getProjectName() {
-        return super.job == null ? "NOT_STARTED" : super.job.getFullName();
+        @SuppressWarnings("UnnecessaryLocalVariable")
+        String projectName = super.job == null ? "NOT_STARTED" : super.job.getFullName();
+        return projectName;
     }
     
 
@@ -642,7 +638,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         public GhprbGitHubAuth getGitHubAuth(String gitHubAuthId) {
             
             if (gitHubAuthId == null) {
-                return getGithubAuth().get(0);
+                Iterator<GhprbGitHubAuth> authIterator = getGithubAuth().iterator();
+                return authIterator.hasNext() ? authIterator.next() : null;
             }
             
             GhprbGitHubAuth firstAuth = null;
