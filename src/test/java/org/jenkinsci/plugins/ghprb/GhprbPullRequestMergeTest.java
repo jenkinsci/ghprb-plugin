@@ -101,11 +101,9 @@ public class GhprbPullRequestMergeTest {
 
     private final Integer pullId = 1;
 
-    private Map<String, Object> triggerValues;
-
     @Before
     public void beforeTest() throws Exception {
-        triggerValues = new HashMap<String, Object>(10);
+        Map<String, Object> triggerValues = new HashMap<String, Object>(10);
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
         

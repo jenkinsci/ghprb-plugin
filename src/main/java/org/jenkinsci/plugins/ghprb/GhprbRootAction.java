@@ -152,11 +152,13 @@ public class GhprbRootAction implements UnprotectedRootAction {
     }
 
     private PullRequest getPullRequest(String payload, GitHub gh) throws IOException {
+        @SuppressWarnings("UnnecessaryLocalVariable")
         PullRequest pr = gh.parseEventPayload(new StringReader(payload), PullRequest.class);
         return pr;
     }
 
     private IssueComment getIssueComment(String payload, GitHub gh) throws IOException {
+        @SuppressWarnings("UnnecessaryLocalVariable")
         IssueComment issueComment = gh.parseEventPayload(new StringReader(payload), IssueComment.class);
         return issueComment;
     }

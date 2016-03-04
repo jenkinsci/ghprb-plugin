@@ -119,7 +119,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
                 continue;
             }
 
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>) report.child.getProject();
+            AbstractProject<?, ?> project = report.child.getProject();
 
             String baseUrl = Jenkins.getInstance().getRootUrl() + build.getUrl() + project.getShortUrl() + "testReport";
 

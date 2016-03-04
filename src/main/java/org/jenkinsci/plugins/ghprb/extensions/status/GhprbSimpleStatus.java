@@ -240,7 +240,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
                                                    url,
                                                    message));
         if (context != null) {
-            listener.getLogger().println(String.format("Using context: " + context));
+            listener.getLogger().println("Using context: " + context);
         }
         try {
             repo.createCommitStatus(sha1, state, url, message, context);

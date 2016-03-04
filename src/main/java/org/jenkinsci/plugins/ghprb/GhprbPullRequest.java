@@ -140,7 +140,7 @@ public class GhprbPullRequest {
      * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers a build if
      * necessary.
      *
-     * @param ghpr
+     * @param ghpr the github pull request
      */
     public void check(GHPullRequest ghpr) {
         setPullRequest(ghpr);
@@ -493,7 +493,7 @@ public class GhprbPullRequest {
     /**
      * Base and Ref are part of the PullRequest object
      * 
-     * @return
+     * @return the Github pull request target branch
      */
     public String getTarget() {
         try {
@@ -506,7 +506,7 @@ public class GhprbPullRequest {
     /**
      * Head and Ref are part of the PullRequest object
      * 
-     * @return
+     * @return the Github pull request source branch
      */
     public String getSource() {
         try {
@@ -519,7 +519,7 @@ public class GhprbPullRequest {
     /**
      * Title is part of the PullRequest object
      * 
-     * @return
+     * @return the Github pull request title
      */
     public String getTitle() {
         try {
@@ -542,7 +542,7 @@ public class GhprbPullRequest {
     /**
      * The description body is part of the PullRequest object
      * 
-     * @return
+     * @return the Github pull request description
      */
     public String getDescription() {
         try {
@@ -559,7 +559,7 @@ public class GhprbPullRequest {
     /**
      * Author is part of the PullRequest Object
      * 
-     * @return
+     * @return the Github pull request author
      * @throws IOException
      */
     public GHUser getPullRequestAuthor() throws IOException {
@@ -570,7 +570,7 @@ public class GhprbPullRequest {
      * Get the PullRequest object for this PR
      * 
      * @param force - forces the code to go get the PullRequest from GitHub now
-     * @return
+     * @return the Github pull request
      * @throws IOException
      */
     public GHPullRequest getPullRequest(boolean force) throws IOException {
@@ -611,7 +611,7 @@ public class GhprbPullRequest {
     /**
      * Email address is collected from GitHub as extra information, so lets cache it.
      * 
-     * @return
+     * @return the Github pull request author's email
      */
     public String getAuthorEmail() {
         if (StringUtils.isEmpty(authorEmail)) {

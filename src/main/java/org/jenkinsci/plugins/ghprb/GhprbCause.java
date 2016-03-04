@@ -107,7 +107,7 @@ public class GhprbCause extends Cause {
     /**
      * Returns the title of the cause, not null.
      * 
-     * @return
+     * @return the title
      */
     public String getTitle() {
         return title != null ? title : "";
@@ -116,7 +116,7 @@ public class GhprbCause extends Cause {
     /**
      * Returns at most the first 30 characters of the title, or
      * 
-     * @return
+     * @return the abbreviated title
      */
     public String getAbbreviatedTitle() {
         return StringUtils.abbreviate(getTitle(), 30);

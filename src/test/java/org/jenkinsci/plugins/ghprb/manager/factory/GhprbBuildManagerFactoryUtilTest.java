@@ -9,7 +9,6 @@ import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixProject;
 
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
-import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.jenkinsci.plugins.ghprb.manager.impl.GhprbDefaultBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.impl.downstreambuilds.BuildFlowBuildManager;
 import org.jenkinsci.plugins.ghprb.rules.JenkinsRuleWithBuildFlow;

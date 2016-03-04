@@ -19,6 +19,7 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,15 +60,15 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
             statusMessages.add(new GhprbBuildResultMessage(state, message));
         }
         
-        String context = envVars.get("commitStatusContext");
+        String context = envVars.get("ghprbCommitStatusContext");
         
         if (StringUtils.isEmpty(context)) {
             context = jobName;
         }
         
-        Boolean addTestResults = new Boolean(envVars.get("ghprbStartedStatus"));
+        Boolean addTestResults = Boolean.valueOf(envVars.get("ghprbStartedStatus"));
 
-        statusUpdater = new GhprbSimpleStatus(envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), addTestResults, statusMessages);
+        statusUpdater = new GhprbSimpleStatus(context, envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), addTestResults, statusMessages);
 
         String credentialsId = envVars.get("ghprbCredentialsId");
         String repoName = envVars.get("ghprbGhRepository");
@@ -115,7 +116,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
 
     // Sets the status to the build result when the job is done, and then calls the createCommitStatus method to send it to GitHub
     @Override
-    public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
+    public void onCompleted(AbstractBuild<?, ?> build, @Nonnull TaskListener listener) {
         if (!updateEnvironmentVars(build, listener)) {
             return;
         }

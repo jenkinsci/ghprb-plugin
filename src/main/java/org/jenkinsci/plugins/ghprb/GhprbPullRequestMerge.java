@@ -37,11 +37,11 @@ public class GhprbPullRequestMerge extends Recorder {
 
     private transient PrintStream logger;
 
-    private final Boolean onlyAdminsMerge;
-    private final Boolean disallowOwnCode;
+    private final boolean onlyAdminsMerge;
+    private final boolean disallowOwnCode;
     private final String mergeComment;
-    private final Boolean failOnNonMerge;
-    private final Boolean deleteOnMerge;
+    private final boolean failOnNonMerge;
+    private final boolean deleteOnMerge;
 
     @DataBoundConstructor
     public GhprbPullRequestMerge(String mergeComment, boolean onlyAdminsMerge, boolean disallowOwnCode, boolean failOnNonMerge, boolean deleteOnMerge) {
@@ -58,19 +58,19 @@ public class GhprbPullRequestMerge extends Recorder {
     }
 
     public boolean getOnlyAdminsMerge() {
-        return onlyAdminsMerge == null ? false : onlyAdminsMerge;
+        return onlyAdminsMerge;
     }
 
     public boolean getDisallowOwnCode() {
-        return disallowOwnCode == null ? false : disallowOwnCode;
+        return disallowOwnCode;
     }
 
     public boolean getFailOnNonMerge() {
-        return failOnNonMerge == null ? false : failOnNonMerge;
+        return failOnNonMerge;
     }
 
     public boolean getDeleteOnMerge() {
-        return deleteOnMerge == null ? false : deleteOnMerge;
+        return deleteOnMerge;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -79,7 +79,6 @@ public class GhprbPullRequestMerge extends Recorder {
 
     private transient GhprbTrigger trigger;
     private transient Ghprb helper;
-    private transient GhprbCause cause;
     private transient GHPullRequest pr;
 
     @VisibleForTesting
@@ -100,7 +99,7 @@ public class GhprbPullRequestMerge extends Recorder {
         if (trigger == null)
             return false;
 
-        cause = Ghprb.getCause(build);
+        GhprbCause cause = Ghprb.getCause(build);
         if (cause == null) {
             return true;
         }
@@ -151,10 +150,10 @@ public class GhprbPullRequestMerge extends Recorder {
             }
         }
 
-        Boolean isMergeable = cause.isMerged();
+        boolean isMergeable = cause.isMerged();
 
         // The build should not fail if no merge is expected
-        if (intendToMerge && canMerge && (isMergeable == null || !isMergeable)) {
+        if (intendToMerge && canMerge && !isMergeable) {
             logger.println("Pull request cannot be automerged.");
             commentOnRequest("Pull request is not mergeable.");
             listener.finished(Result.FAILURE);
@@ -233,14 +232,12 @@ public class GhprbPullRequestMerge extends Recorder {
                 String committerName = committer.getName();
                 String committerEmail = committer.getEmail();
 
-                boolean isSame = false;
-
-                isSame |= commentorName != null && commentorName.equals(committerName);
+                boolean isSame = commentorName != null && commentorName.equals(committerName);
                 isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
 
                 if (isSame) {
                     logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber() + "] that is to be merged");
-                    return isSame;
+                    return true;
                 }
             }
         } catch (IOException e) {

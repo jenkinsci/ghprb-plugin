@@ -64,8 +64,6 @@ public class GhprbRootActionTest {
     @Mock
     private StaplerRequest req;
 
-    private BufferedReader br;
-    
     private GhprbTrigger trigger;
     
 
@@ -205,7 +203,7 @@ public class GhprbRootActionTest {
         // convert String into InputStream
         InputStream is = new ByteArrayInputStream(GhprbTestUtil.PAYLOAD.getBytes());
         // read it with BufferedReader
-        br = spy(new BufferedReader(new InputStreamReader(is)));
+        BufferedReader br = spy(new BufferedReader(new InputStreamReader(is)));
 
         given(req.getReader()).willReturn(br);
 
