@@ -354,7 +354,8 @@ public class GhprbTestUtil {
     @SuppressWarnings("unchecked")
     private static void setupReq() throws Exception{
         MetaClass meta = Mockito.mock(MetaClass.class);
-        given(meta.getPostConstructMethods()).willReturn(SingleLinkedList.empty());
+        SingleLinkedList<MethodRef> list = SingleLinkedList.empty();
+        given(meta.getPostConstructMethods()).willReturn(list);
 
         
         WebApp webApp = Mockito.mock(WebApp.class);
