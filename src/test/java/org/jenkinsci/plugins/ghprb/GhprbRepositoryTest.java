@@ -36,11 +36,8 @@ import hudson.model.queue.QueueTaskFuture;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -74,15 +71,11 @@ public class GhprbRepositoryTest {
     private static final String msg = "Build triggered. sha1 is merged.";
 
     @Mock
-    private GitHub gt;
-    @Mock
     private GHRepository ghRepository;
     @Mock
     private GhprbGitHub gitHub;
     @Mock
     private Ghprb helper;
-    @Mock
-    private GHRateLimit ghRateLimit;
     @Mock
     private GHPullRequest ghPullRequest;
     @Mock
@@ -92,27 +85,26 @@ public class GhprbRepositoryTest {
     @Mock
     private GHUser ghUser;
     
+    private GitHub gt;
     private GhprbTrigger trigger;
 
     private GhprbRepository ghprbRepository;
     private ConcurrentMap<Integer, GhprbPullRequest> pulls;
     private GhprbPullRequest ghprbPullRequest;
+    private AbstractProject<?, ?> project;
+    private GHRateLimit rateLimit;
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
+    
 
     @Before
     public void setUp() throws Exception {
-        AbstractProject<?, ?> project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
+        project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
         project.addProperty(new GithubProjectProperty("https://github.com/" + TEST_REPO_NAME));
-        trigger = GhprbTestUtil.getTrigger(null);
-        doReturn(gt).when(trigger).getGitHub();
         
-        given(gt.getRepository(anyString())).willReturn(ghRepository);
-        
-        trigger.start(project, true);
-        trigger.setHelper(helper);
-        
+        getNewTrigger();
+        startTrigger();
         
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         
@@ -125,14 +117,28 @@ public class GhprbRepositoryTest {
         // Mock github API
         given(helper.getGitHub()).willReturn(gitHub);
         given(helper.getTrigger()).willReturn(trigger);
-        given(gt.getRepository(anyString())).willReturn(ghRepository);
 
         // Mock rate limit
-        given(gt.getRateLimit()).willReturn(ghRateLimit);
-        increaseRateLimitToDefaults();
         addSimpleStatus();
     }
+
+    private void getNewTrigger() throws Exception{
+        trigger = GhprbTestUtil.getTrigger(null);
+        
+        gt = trigger.getGitHub();
+        
+        rateLimit = gt.getRateLimit();
+        verify(gt).getRateLimit();
+        
+        given(gt.getRepository(anyString())).willReturn(ghRepository);
+        
+    }
     
+    private void startTrigger() throws IOException{
+
+        trigger.start(project, true);
+        trigger.setHelper(helper);
+    }
     
     private void addSimpleStatus() {
         GhprbSimpleStatus status = new GhprbSimpleStatus("default");
@@ -145,7 +151,7 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void testCheckMethodWhenUsingGitHubEnterprise() throws IOException {
+    public void testCheckMethodWhenUsingGitHubEnterprise() throws Exception {
         // GIVEN
         given(gt.getRateLimit()).willThrow(new FileNotFoundException());
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
@@ -166,11 +172,11 @@ public class GhprbRepositoryTest {
         ghprbRepository.check();
 
         // THEN
-        verifyGetGithub(2, 0);
+        verifyGetGithub(3, 3, 1);
     }
 
     @Test
-    public void testCheckMethodWithOnlyExistingPRs() throws IOException {
+    public void testCheckMethodWithOnlyExistingPRs() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
@@ -192,7 +198,7 @@ public class GhprbRepositoryTest {
         ghprbRepository.check();
 
         // THEN
-        verifyGetGithub(2, 1);
+        verifyGetGithub(3, 3, 2);
 
         /** GH Repo verifications */
         verify(ghRepository, only()).getPullRequests(OPEN); // Call to Github API
@@ -218,7 +224,7 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void testCheckMethodWithNewPR() throws IOException {
+    public void testCheckMethodWithNewPR() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         ghPullRequests.add(ghPullRequest);
@@ -250,7 +256,7 @@ public class GhprbRepositoryTest {
         ghprbRepository.check();
 
         // THEN
-        verifyGetGithub(2, 1);
+        verifyGetGithub(3, 3, 2);
         verifyNoMoreInteractions(gt);
 
         /** GH PR verifications */
@@ -295,7 +301,7 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void testCheckMethodWhenPrWasUpdatedWithNonKeyPhrase() throws IOException {
+    public void testCheckMethodWhenPrWasUpdatedWithNonKeyPhrase() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
 
@@ -333,7 +339,7 @@ public class GhprbRepositoryTest {
         ghprbRepository.check(); // PR was updated
 
         // THEN
-        verifyGetGithub(2, 1);
+        verifyGetGithub(3, 3, 2);
         verifyNoMoreInteractions(gt);
 
         /** GH PR verifications */
@@ -388,7 +394,7 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void testCheckMethodWhenPrWasUpdatedWithRetestPhrase() throws IOException {
+    public void testCheckMethodWhenPrWasUpdatedWithRetestPhrase() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
         Date now = new Date();
@@ -424,7 +430,7 @@ public class GhprbRepositoryTest {
         ghprbRepository.check(); // PR was updated
 
         // THEN
-        verifyGetGithub(2, 1);
+        verifyGetGithub(3, 3, 2);
         verifyNoMoreInteractions(gt);
 
         /** GH PR verifications */
@@ -503,7 +509,7 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void testCheckMethodWithNoPR() throws IOException {
+    public void testCheckMethodWithNoPR() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = new ArrayList<GHPullRequest>();
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
@@ -514,7 +520,7 @@ public class GhprbRepositoryTest {
         verify(trigger).isActive();
 
         // THEN
-        verifyGetGithub(2, 1);
+        verifyGetGithub(3, 3, 2);
         verifyNoMoreInteractions(gt);
 
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
@@ -522,23 +528,25 @@ public class GhprbRepositoryTest {
     }
 
     @Test
-    public void testExceedRateLimit() throws IOException {
+    public void testExceedRateLimit() throws Exception {
         // GIVEN
-        ghRateLimit.remaining = 0;
-
+        getNewTrigger();
+        rateLimit.remaining = 0;
+        verify(gt, times(1)).getRateLimit();
+        
         // WHEN
-        ghprbRepository.check();
+        startTrigger();
 
         // THEN
-        verify(trigger, times(2)).getGitHub();
-        verifyGetGithub(2, 0);
+        verify(gt, times(2)).getRateLimit();
+        verifyGetGithub(2, 2, 0);
         verifyZeroInteractions(ghRepository);
         verifyZeroInteractions(gitHub);
         verifyZeroInteractions(gt);
     }
 
     @Test
-    public void testSignature() throws IOException, InvalidKeyException, NoSuchAlgorithmException {
+    public void testSignature() throws Exception {
         String body = URLEncoder.encode("payload=" + GhprbTestUtil.PAYLOAD, "UTF-8");
         String actualSecret = "123";
         String actualSignature = createSHA1Signature(actualSecret, body);
@@ -556,7 +564,7 @@ public class GhprbRepositoryTest {
         Assert.assertFalse(trigger.matchSignature(body, fakeSignature));
     }
 
-    private String createSHA1Signature(String secret, String body) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
+    private String createSHA1Signature(String secret, String body) throws Exception {
         String algorithm = "HmacSHA1";
         SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), algorithm);
         Mac mac = Mac.getInstance(algorithm);
@@ -594,14 +602,11 @@ public class GhprbRepositoryTest {
         reset(ghPullRequest, ghUser, helper, head, base);
     }
 
-    private void increaseRateLimitToDefaults() {
-        ghRateLimit.remaining = 5000;
-    }
 
     // Verifications
-    private void verifyGetGithub(int callsCount, int repoTimes) throws IOException {
-        verify(trigger, times(callsCount)).getGitHub();
-        verify(gt, times(callsCount)).getRateLimit();
-        verify(gt, times(repoTimes)).getRepository(anyString());
+    private void verifyGetGithub(int triggerCount, int rateCount, int repoCount) throws Exception {
+        verify(trigger, times(triggerCount)).getGitHub();
+        verify(gt, times(rateCount)).getRateLimit();
+        verify(gt, times(repoCount)).getRepository(anyString());
     }
 }
