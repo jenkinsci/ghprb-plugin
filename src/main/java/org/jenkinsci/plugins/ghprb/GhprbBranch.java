@@ -6,7 +6,8 @@ import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * @author Ray Sennewald & David Wang
+ * @author Ray Sennewald
+ * @author David Wang
  */
 
 public class GhprbBranch extends AbstractDescribableImpl<GhprbBranch> {

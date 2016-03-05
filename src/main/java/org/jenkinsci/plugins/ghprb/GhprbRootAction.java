@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * @author Honza Brázdil <jbrazdil@redhat.com>
+ * @author Honza Brázdil jbrazdil@redhat.com
  */
 @Extension
 public class GhprbRootAction implements UnprotectedRootAction {
