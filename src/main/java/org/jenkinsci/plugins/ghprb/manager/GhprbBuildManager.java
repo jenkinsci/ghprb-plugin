@@ -9,6 +9,7 @@ public interface GhprbBuildManager {
 
     /**
      * Calculate the build URL of a build
+     * @param publishedURL the public jenkins url
      * 
      * @return the build URL
      */

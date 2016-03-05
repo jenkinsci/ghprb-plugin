@@ -95,7 +95,7 @@ public class Ghprb {
     /**
      * Returns skip build phrases from Jenkins global configuration
      * 
-     * @return
+     * @return skip build phrases
      */
     public Set<String> getSkipBuildPhrases() {
         return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
@@ -104,7 +104,8 @@ public class Ghprb {
     /**
      * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
      * 
-     * @param issue
+     * @param issue The GitHub issue
+     * @return the skip phrase or null if should not skip
      */
     public String checkSkipBuild(GHIssue issue) {
         // check for skip build phrase.

@@ -222,12 +222,11 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         /**
          * Stapler helper method.
          *
-         * @param context
-         *            the context.
-         * @param remoteBase
-         *            the remote base.
+         * @param context the context.
+         * @param serverAPIUrl the github api server url.
+         * @param credentialsId the credentialsId from the credentials plugin
          * @return list box model.
-         * @throws URISyntaxException 
+         * @throws URISyntaxException If the url is bad
          */
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl, @QueryParameter String credentialsId) throws URISyntaxException {
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(serverAPIUrl).build();

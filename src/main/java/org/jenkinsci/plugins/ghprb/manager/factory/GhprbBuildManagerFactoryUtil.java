@@ -18,8 +18,8 @@ public class GhprbBuildManagerFactoryUtil {
      * 
      * If the class representing the build type is not present on the classloader then default implementation is returned.
      * 
-     * @param build
-     * @return
+     * @param build the job from Jenkins
+     * @return a buildManager
      */
     public static GhprbBuildManager getBuildManager(AbstractBuild<?, ?> build) {
         JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(false).build();

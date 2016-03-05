@@ -9,7 +9,7 @@ import hudson.model.Cause;
 import java.net.URL;
 
 /**
- * @author Honza Brázdil <jbrazdil@redhat.com>
+ * @author Honza Brázdil
  */
 public class GhprbCause extends Cause {
     private final String commit;
@@ -105,18 +105,17 @@ public class GhprbCause extends Cause {
     }
 
     /**
-     * Returns the title of the cause, not null.
      * 
-     * @return
+     * @return the title of the cause, not null.
      */
     public String getTitle() {
         return title != null ? title : "";
     }
 
     /**
-     * Returns at most the first 30 characters of the title, or
+     * Returns
      * 
-     * @return
+     * @return  at most the first 30 characters of the title
      */
     public String getAbbreviatedTitle() {
         return StringUtils.abbreviate(getTitle(), 30);
