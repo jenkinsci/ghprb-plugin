@@ -389,6 +389,9 @@ public class Ghprb {
     }
     
     public static void addIfMissing(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, GhprbExtension ext, Class<?> type) {
+        if (ext == null) {
+            return;
+        }
         Predicate predicate = InstanceofPredicate.getInstance(type);
         for (GhprbExtension extension : extensions) {
             if (predicate.evaluate(extension)){
