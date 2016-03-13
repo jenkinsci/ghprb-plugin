@@ -32,7 +32,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
 
     @DataBoundConstructor
     public GhprbCancelBuildsOnUpdate(Boolean overrideGlobal) {
-        this.overrideGlobal = overrideGlobal;
+        this.overrideGlobal = overrideGlobal == null ? false : overrideGlobal;
     }
     
     public Boolean getOverrideGlobal() {
@@ -41,7 +41,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
 
     private void cancelCurrentBuilds(AbstractProject<?, ?> project,
                                      Integer prId) {
-        if (overrideGlobal) {
+        if (getOverrideGlobal()) {
             return;
         }
         
@@ -79,8 +79,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
                     run.addAction(this);
                     run.getExecutor().interrupt(Result.ABORTED);
                 } catch (Exception e) {
-                    run.getActions().remove(this);
-                    logger.log(Level.SEVERE, "Unable to interrupt build!", e);
+                    logger.log(Level.SEVERE, "Error while trying to interrupt build!", e);
                 }
             }
         }
