@@ -1,5 +1,10 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
 import org.apache.commons.codec.binary.Hex;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.joda.time.DateTime;
@@ -9,31 +14,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.TaskListener;
-import hudson.model.queue.QueueTaskFuture;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -50,15 +37,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link GhprbRepository}.
@@ -217,6 +196,7 @@ public class GhprbRepositoryTest {
         verify(helper).getWhiteListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
         verify(helper).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(1)).areRegionsEnabled();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -286,6 +266,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).areRegionsEnabled();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -375,6 +356,7 @@ public class GhprbRepositoryTest {
         verify(helper).isOktotestPhrase(eq("comment body"));
         verify(helper).isRetestPhrase(eq("comment body"));
         verify(helper).isTriggerPhrase(eq("comment body"));
+        verify(helper, times(2)).areRegionsEnabled();
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
@@ -418,6 +400,7 @@ public class GhprbRepositoryTest {
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
 
+        given(helper.areRegionsEnabled()).willReturn(false);
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isRetestPhrase(eq("test this please"))).willReturn(true);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
@@ -470,6 +453,7 @@ public class GhprbRepositoryTest {
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).areRegionsEnabled();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
