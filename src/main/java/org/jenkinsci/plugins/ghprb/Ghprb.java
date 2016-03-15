@@ -63,7 +63,11 @@ public class Ghprb {
         logger.log(Level.INFO, "Adding {0} to whitelist", author);
         trigger.addWhitelist(author);
     }
-    
+
+    public boolean areRegionsEnabled() {
+        return !(getExcludedRegion().isEmpty() && getIncludedRegion().isEmpty());
+    }
+
     public boolean isProjectDisabled() {
         return !trigger.isActive();
     }
@@ -126,7 +130,15 @@ public class Ghprb {
         }
         return null;
     }
-    
+
+    protected String getIncludedRegion() {
+        return trigger.getIncludedRegion();
+    }
+
+    protected String getExcludedRegion() {
+        return trigger.getExcludedRegion();
+    }
+
     private Pattern whitelistPhrasePattern() {
         return compilePattern(trigger.getDescriptor().getWhitelistPhrase());
     }

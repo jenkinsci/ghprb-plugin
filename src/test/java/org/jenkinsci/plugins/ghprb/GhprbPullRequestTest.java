@@ -3,27 +3,21 @@ package org.jenkinsci.plugins.ghprb;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.function.Consumer;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit test for {@link org.jenkinsci.plugins.ghprb.GhprbPullRequest}.
@@ -58,6 +52,27 @@ public class GhprbPullRequestTest {
         given(pr.getTitle()).willReturn("title");
         given(pr.getHead()).willReturn(head);
         given(pr.getBase()).willReturn(base);
+
+
+        PagedIterable<GHPullRequestFileDetail> mockFiles = new PagedIterable<GHPullRequestFileDetail>() {
+            @Override
+            public PagedIterator<GHPullRequestFileDetail> iterator() {
+                return new PagedIterator<GHPullRequestFileDetail>(){
+                    @Override
+                    public void forEachRemaining(Consumer<? super GHPullRequestFileDetail> action) {
+
+                    }
+
+                    @Override
+                    protected void wrapUp(GHPullRequestFileDetail[] page) {
+
+                    }
+                };
+            }
+        };
+
+
+        when(pr.listFiles()).thenReturn(mockFiles);
         
         given(ghUser.getEmail()).willReturn("email");
         
@@ -158,5 +173,37 @@ public class GhprbPullRequestTest {
 
         // THEN
         assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isEqualTo(expectedAuthorRepoGitUrl);
+    }
+
+    @Test
+    public void fileInPathNoRegionEnabled() throws Exception{
+
+        // GIVEN
+        given(helper.getExcludedRegion()).willReturn("");
+        given(helper.getIncludedRegion()).willReturn("");
+
+        // WHEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        //THEN
+        assertThat(ghprbPullRequest.isBuildRegionAccepted()).isFalse();
+    }
+
+    @Test
+    public void fileInPathIncludedRegionEnabledAndMatch() throws Exception{
+
+
+
+        // GIVEN
+        given(helper.getExcludedRegion()).willReturn("");
+        given(helper.getIncludedRegion()).willReturn("/some/path/to/file");
+
+        // WHEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        //THEN
+        assertThat(ghprbPullRequest.isBuildRegionAccepted()).isFalse();
     }
 }

@@ -1,17 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
-
 import hudson.model.AbstractBuild;
-
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitUser;
+import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * Maintains state about a Pull Request for a particular Jenkins job. This is what understands the current state of a PR
@@ -72,7 +65,6 @@ public class GhprbPullRequest {
     private transient boolean triggered = false; // Only lets us know if the trigger phrase was used for this run
     private transient boolean mergeable = false; // Only works as an easy way to pass the value around for the start of
                                                  // this build
-
     private final int id;
     private Date updated; // Needed to track when the PR was updated
     private String head;
@@ -134,6 +126,41 @@ public class GhprbPullRequest {
                      GhprbRepository repo) {
         this.helper = helper;
         this.repo = repo;
+    }
+
+    // this method returns true or false based on results of included and excluded regions
+    // excluded regions take precedence over included regions.
+    public boolean isBuildRegionAccepted() {
+        boolean buildIncl = false;
+        boolean buildExcl = true;
+        PagedIterable<GHPullRequestFileDetail> files = pr.listFiles();
+
+        if (!helper.getIncludedRegion().isEmpty()) {
+            Pattern includedRegion = Pattern.compile(helper.getIncludedRegion());
+            for (GHPullRequestFileDetail file : files) {
+                logger.info("Checking if file: " + file.getFilename() + " matches regex: " + helper.getIncludedRegion());
+                // if path is found in files, set buildable to true so the build runs
+                // a build should run if any files match included region
+                if (includedRegion.matcher(file.getFilename()).matches()) {
+                    logger.info("Matched Included Region for " + file.getFilename() + " with regex " + helper.getIncludedRegion());
+                    buildIncl = true;
+                }
+            }
+        }
+
+        if (!helper.getExcludedRegion().isEmpty()) {
+            buildIncl = true;
+            Pattern excludedRegion = Pattern.compile(helper.getExcludedRegion());
+            for (GHPullRequestFileDetail file : files) {
+                logger.info("Checking if file: " + file.getFilename() + " matches excluded region");
+                // if path is present in any file, then build should not run
+                if (excludedRegion.matcher(file.getFilename()).matches()) {
+                    logger.info("Matched Excluded Region for " + file.getFilename() + " with regex " + helper.getExcludedRegion());
+                    buildExcl = false;
+                }
+            }
+        }
+        return buildIncl && buildExcl;
     }
 
     /**
@@ -225,7 +252,7 @@ public class GhprbPullRequest {
 
                 if (!newCommit && commentsChecked == 0) {
                     logger.log(Level.INFO,
-                               "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
+                               "Pull request #{0} was updated on repo {1} but there aren't any new comments nor commits; "
                                            + "that may mean that commit status was updated.",
                                new Object[] { id, repo.getName() });
                 }
@@ -248,7 +275,7 @@ public class GhprbPullRequest {
             }
         }
         logger.log(Level.FINEST,
-                   "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}",
+                   "PR #{0} target branch: {1} isn't in our whitelist of target branches: {2}",
                    new Object[] { id, target, Joiner.on(',').skipNulls().join(branches) });
         return false;
     }
@@ -279,6 +306,12 @@ public class GhprbPullRequest {
     private void tryBuild() {
         synchronized (this) {
             checkSkipBuild();
+
+            if( helper.areRegionsEnabled() ) {
+                logger.finest("Verifying regions for exclusion or inclusion to determine build condition");
+                shouldRun = isBuildRegionAccepted();
+            }
+
             if (helper.isProjectDisabled()) {
                 logger.log(Level.FINEST, "Project is disabled, not trying to build");
                 shouldRun = false;
@@ -297,7 +330,6 @@ public class GhprbPullRequest {
             if (shouldRun) {
                 shouldRun = false; // Change the shouldRun flag as soon as we decide to build.
                 logger.log(Level.FINEST, "Running the build");
-
                 if (pr != null) {
                     logger.log(Level.FINEST, "PR is not null, checking if mergable");
                     checkMergeable();
