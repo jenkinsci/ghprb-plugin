@@ -1,4 +1,10 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+
+    <f:entry title="Post commit statuses of the matrix job only" field="showMatrixStatus">
+        <f:checkbox default="${descriptor.isShowMatrixStatus(instance)}"  placeholder="${descriptor.isShowMatrixStatus(instance)}"/>
+    </f:entry>
+
   <f:entry title="${%Commit Status Context}" field="commitStatusContext">
     <f:textbox default="${descriptor.getCommitStatusContextDefault(instance)}"  placeholder="${descriptor.getCommitStatusContextDefault(instance)}"/>
   </f:entry>

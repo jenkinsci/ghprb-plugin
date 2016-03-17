@@ -22,23 +22,25 @@ import java.util.Map.Entry;
 
 public class GhprbUpstreamStatus extends BuildWrapper {
 
+    boolean showMatrixStatus;
     private final String commitStatusContext;
     private final String triggeredStatus;
     private final String startedStatus;
     private final String statusUrl;
     private final List<GhprbBuildResultMessage> completedStatus;
-    
+
     // sets the context and message as env vars so that they are available in the Listener class
     @Override
     public void makeBuildVariables(@SuppressWarnings("rawtypes") AbstractBuild build, Map<String,String> variables){
         variables.put("ghprbUpstreamStatus", "true");
+        variables.put("ghprbShowMatrixStatus",String.valueOf(isShowMatrixStatus()));
         variables.put("ghprbCommitStatusContext", getCommitStatusContext());
         variables.put("ghprbTriggeredStatus", getTriggeredStatus());
         variables.put("ghprbStartedStatus", getStartedStatus());
         variables.put("ghprbStatusUrl", getStatusUrl());
-        
+
         Map<GHCommitState, StringBuilder> statusMessages = new HashMap<GHCommitState, StringBuilder>(5);
-        
+
         for (GhprbBuildResultMessage message : getCompletedStatus()) {
             GHCommitState state = message.getResult();
             StringBuilder sb;
@@ -50,11 +52,15 @@ public class GhprbUpstreamStatus extends BuildWrapper {
                 sb.append("\n");
             }
             sb.append(message.getMessage());
+
         }
-        
+
         for (Entry<GHCommitState, StringBuilder> next : statusMessages.entrySet()) {
-            String key = String.format("ghprb%sMessage", next.getKey().name());
-            variables.put(key, next.getValue().toString());
+            if(!isShowMatrixStatus()){
+                String key = String.format("ghprb%sMessage", next.getKey().name());
+                variables.put(key, next.getValue().toString());
+            }
+
         }
     }
 
@@ -73,7 +79,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
 
     @DataBoundConstructor
     public GhprbUpstreamStatus(
-            String commitStatusContext, 
+            String commitStatusContext,
             String statusUrl, 
             String triggeredStatus, 
             String startedStatus, 
@@ -85,12 +91,15 @@ public class GhprbUpstreamStatus extends BuildWrapper {
         this.startedStatus = startedStatus;
         this.completedStatus = completedStatus;
     }
-    
+
+    public boolean isShowMatrixStatus(){
+        return showMatrixStatus;
+    }
 
     public String getStatusUrl() {
         return statusUrl == null ? "" : statusUrl;
     }
-    
+
     public String getCommitStatusContext() {
         return commitStatusContext == null ? "" : commitStatusContext;
     }
@@ -98,13 +107,15 @@ public class GhprbUpstreamStatus extends BuildWrapper {
     public String getStartedStatus() {
         return startedStatus == null ? "" : startedStatus;
     }
-    
+
     public String getTriggeredStatus() {
         return triggeredStatus == null ? "" : triggeredStatus;
     }
 
     public List<GhprbBuildResultMessage> getCompletedStatus() {
-        return completedStatus == null ? new ArrayList<GhprbBuildResultMessage>(0) : completedStatus;
+        return completedStatus == null ? new
+
+    ArrayList<GhprbBuildResultMessage>(0) : completedStatus;
     }
 
     @Extension

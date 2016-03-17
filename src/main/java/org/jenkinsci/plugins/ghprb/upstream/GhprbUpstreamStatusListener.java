@@ -52,6 +52,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
         String jobName = envVars.get("JOB_NAME");
         
         List<GhprbBuildResultMessage> statusMessages = new ArrayList<GhprbBuildResultMessage>(5);
+
         
         for (GHCommitState state : GHCommitState.values()) {
             String envVar = String.format("ghprb%sMessage", state.name());
@@ -65,11 +66,13 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
             context = jobName;
         }
 
-        statusUpdater = new GhprbSimpleStatus(envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), statusMessages);
+        statusUpdater = new GhprbSimpleStatus(Boolean.valueOf(envVars.get("ghprbShowMatrixStatus")),envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), statusMessages);
 
         String credentialsId = envVars.get("ghprbCredentialsId");
         String repoName = envVars.get("ghprbGhRepository");
-        
+
+        System.out.println(statusMessages);
+
         GhprbGitHubAuth auth = GhprbTrigger.getDscp().getGitHubAuth(credentialsId);
         try {
             GitHub gh = auth.getConnection(build.getProject());
@@ -87,12 +90,16 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
     public Environment setUpEnvironment(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
         if (updateEnvironmentVars(build, listener)) {
             logger.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
-            
+
             try {
+
+
                 statusUpdater.onEnvironmentSetup(build, listener, repo);
+
             } catch (GhprbCommitStatusException e) {
                 e.printStackTrace();
             }
+
         }
 
         return new Environment(){};
@@ -100,12 +107,15 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
 
     @Override
     public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
+
+        logger.info(Integer.toString(build.getDownstreamBuilds().size()));
         if (!updateEnvironmentVars(build, listener)) {
             return;
         }
 
         try {
             statusUpdater.onBuildStart(build, listener, repo);
+
         } catch (GhprbCommitStatusException e) {
             e.printStackTrace();
         }
@@ -117,9 +127,10 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
         if (!updateEnvironmentVars(build, listener)) {
             return;
         }
-        
+
         try {
             statusUpdater.onBuildComplete(build, listener, repo);
+
         } catch (GhprbCommitStatusException e) {
             e.printStackTrace();
         }

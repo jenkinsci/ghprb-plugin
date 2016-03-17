@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.ghprb.extensions.status;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.matrix.MatrixProject;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -10,6 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 
@@ -32,38 +35,43 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension {
-
+    private static final Logger logger = Logger.getLogger(GhprbSimpleStatus.class.getName());
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
+    private final boolean showMatrixStatus;
     private final String commitStatusContext;
     private final String triggeredStatus;
     private final String startedStatus;
     private final String statusUrl;
     private final List<GhprbBuildResultMessage> completedStatus;
-    
+
     
     public GhprbSimpleStatus() {
-        this(null, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
+        this(false,null, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
     }
     
     public GhprbSimpleStatus(String commitStatusContext) {
-        this(commitStatusContext, null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
+        this(false,commitStatusContext,null, null, null, new ArrayList<GhprbBuildResultMessage>(0));
     }
 
     @DataBoundConstructor
     public GhprbSimpleStatus(
+            boolean showMatrixStatus,
             String commitStatusContext, 
             String statusUrl, 
             String triggeredStatus, 
             String startedStatus, 
             List<GhprbBuildResultMessage> completedStatus) {
+        this.showMatrixStatus = showMatrixStatus;
         this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
         this.triggeredStatus = triggeredStatus;
         this.startedStatus = startedStatus;
         this.completedStatus = completedStatus;
     }
+
+    public boolean getShowMatrixStatus() { return showMatrixStatus; }
+
 
     public String getStatusUrl() {
         return statusUrl == null ? "" : statusUrl;
@@ -118,11 +126,15 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         }
 
         String message = sb.toString();
+
         try {
+
             ghRepository.createCommitStatus(commitSha, state, url, message, context);
+
         } catch (IOException e) {
             throw new GhprbCommitStatusException(e, state, message, prId);
         }
+
     }
 
     public void onEnvironmentSetup(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
@@ -132,6 +144,9 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
 
     public void onBuildStart(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
+        boolean showMatrixStatus = getDescriptor().isShowMatrixStatusDefault(this);
+
+
 
         // check if we even need to update
         if (StringUtils.equals(startedStatus, "--none--")) {
@@ -146,11 +161,22 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
         }
-        createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
+        logger.log(Level.FINE, "Full Display Name onBuildStart: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
+
+
+        if(!showMatrixStatus || (showMatrixStatus && build.getProject() instanceof MatrixProject)){
+            createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
+        }
+
+
+
+
     }
 
     public void onBuildComplete(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
         List<GhprbBuildResultMessage> completedStatus = getDescriptor().getCompletedStatusDefault(this);
+
+        boolean showMatrixStatus = getDescriptor().isShowMatrixStatusDefault(this);
         
         GHCommitState state = Ghprb.getState(build);
 
@@ -167,6 +193,9 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             }
         }
 
+        logger.log(Level.FINE, "Full Display Name onBuildComplete: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
+
+
         sb.append(" ");
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
         if (trigger == null) {
@@ -175,10 +204,18 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
 
             GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
-            sb.append(buildManager.getOneLineTestResults());
+
+
         }
 
-        createCommitStatus(build, listener, sb.toString(), repo, state);
+
+
+
+        if(!showMatrixStatus || (showMatrixStatus && build.getParent() instanceof MatrixProject)){
+            createCommitStatus(build, listener, sb.toString(), repo, state);
+        }
+
+
     }
 
     private void createCommitStatus(AbstractBuild<?, ?> build, TaskListener listener, String message, GHRepository repo, GHCommitState state) throws GhprbCommitStatusException {
@@ -186,7 +223,9 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         Map<String, String> envVars = Ghprb.getEnvVars(build, listener);
         
         String sha1 = envVars.get("ghprbActualCommit");
+
         Integer pullId = Integer.parseInt(envVars.get("ghprbPullId"));
+
 
         String url = envVars.get("BUILD_URL");
         if (StringUtils.isEmpty(url)) {
@@ -209,6 +248,8 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         if (context != null) {
             listener.getLogger().println(String.format("Using context: " + context));
         }
+
+
         try {
             repo.createCommitStatus(sha1, state, url, message, context);
         } catch (IOException e) {
@@ -247,5 +288,9 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         public String getCommitStatusContextDefault(GhprbSimpleStatus local) {
             return Ghprb.getDefaultValue(local, GhprbSimpleStatus.class, "getCommitStatusContext");
         }
+        public boolean isShowMatrixStatusDefault (GhprbSimpleStatus local){
+            return Ghprb.getDefaultValue(local,GhprbSimpleStatus.class, "getShowMatrixStatus");
+        }
     }
+
 }
