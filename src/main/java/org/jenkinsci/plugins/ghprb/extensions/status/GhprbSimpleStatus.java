@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb.extensions.status;
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
+
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -11,8 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 
@@ -35,7 +34,7 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension {
-    private static final Logger logger = Logger.getLogger(GhprbSimpleStatus.class.getName());
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private final boolean showMatrixStatus;
@@ -71,7 +70,6 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     }
 
     public boolean getShowMatrixStatus() { return showMatrixStatus; }
-
 
     public String getStatusUrl() {
         return statusUrl == null ? "" : statusUrl;
@@ -134,7 +132,6 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         } catch (IOException e) {
             throw new GhprbCommitStatusException(e, state, message, prId);
         }
-
     }
 
     public void onEnvironmentSetup(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
@@ -146,8 +143,6 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
         boolean showMatrixStatus = getDescriptor().isShowMatrixStatusDefault(this);
 
-
-
         // check if we even need to update
         if (StringUtils.equals(startedStatus, "--none--")) {
             return;
@@ -155,22 +150,18 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
 
         GhprbCause c = Ghprb.getCause(build);
         StringBuilder sb = new StringBuilder();
+
         if (StringUtils.isEmpty(startedStatus)) {
             sb.append("Build started");
             sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
         }
-        logger.log(Level.FINE, "Full Display Name onBuildStart: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
 
 
         if(!showMatrixStatus || (showMatrixStatus && build.getProject() instanceof MatrixProject)){
             createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
         }
-
-
-
-
     }
 
     public void onBuildComplete(AbstractBuild<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
@@ -193,9 +184,6 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             }
         }
 
-        logger.log(Level.FINE, "Full Display Name onBuildComplete: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
-
-
         sb.append(" ");
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
         if (trigger == null) {
@@ -204,18 +192,11 @@ public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, bo
             JobConfiguration jobConfiguration = JobConfiguration.builder().printStackTrace(trigger.isDisplayBuildErrorsOnDownstreamBuilds()).build();
 
             GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
-
-
         }
-
-
-
 
         if(!showMatrixStatus || (showMatrixStatus && build.getParent() instanceof MatrixProject)){
             createCommitStatus(build, listener, sb.toString(), repo, state);
         }
-
-
     }
 
     private void createCommitStatus(AbstractBuild<?, ?> build, TaskListener listener, String message, GHRepository repo, GHCommitState state) throws GhprbCommitStatusException {
