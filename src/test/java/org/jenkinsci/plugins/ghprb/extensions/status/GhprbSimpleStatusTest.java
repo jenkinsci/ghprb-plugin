@@ -48,9 +48,7 @@ public class GhprbSimpleStatusTest {
 
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
-
         verifyNoMoreInteractions(ghprbPullRequest);
-
     }
 
     @Test
@@ -64,9 +62,7 @@ public class GhprbSimpleStatusTest {
 
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
-
         verifyNoMoreInteractions(ghprbPullRequest);
-
     }
 
     @Test
@@ -80,9 +76,7 @@ public class GhprbSimpleStatusTest {
 
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), isNull(String.class));
         verifyNoMoreInteractions(ghRepository);
-
         verifyNoMoreInteractions(ghprbPullRequest);
-
     }
 
 }
