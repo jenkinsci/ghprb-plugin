@@ -127,7 +127,7 @@ public class GhprbPullRequestMerge extends Recorder {
 
         // If merge can only be triggered by a comment and there is a
         // comment
-        if (commentBody == null || !helper.isTriggerPhrase(commentBody)) {
+        if (mergeComment == null || !helper.isTriggerPhrase(mergeComment)) {
             logger.println("The comment does not contain the required trigger phrase.");
         } else {
             intendToMerge = true;
