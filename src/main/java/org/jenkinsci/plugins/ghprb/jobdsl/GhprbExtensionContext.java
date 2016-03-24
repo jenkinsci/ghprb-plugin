@@ -19,6 +19,7 @@ class GhprbExtensionContext implements Context {
         ContextExtensionPoint.executeInContext(closure, context);
 
         extensions.add(new GhprbSimpleStatus(
+                false,
                 context.context,
                 context.statusUrl,
                 context.triggeredStatus,
