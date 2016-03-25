@@ -177,9 +177,12 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
         }
 
-        if(!showMatrixStatus || (showMatrixStatus && build.getProject() instanceof MatrixProject)){
-            createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
+        if((showMatrixStatus && build.getProject() instanceof MatrixProject)){
+            return;
         }
+
+        createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
+
     }
 
     public void onBuildComplete(AbstractBuild<?, ?> build,
@@ -218,9 +221,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
             }
         }
 
-        if(!showMatrixStatus || (showMatrixStatus && build.getProject() instanceof MatrixProject)){
-            createCommitStatus(build, listener, sb.toString(), repo, state);
+        if((showMatrixStatus && build.getProject() instanceof MatrixProject)){
+            return;
         }
+        createCommitStatus(build, listener, sb.toString(), repo, state);
     }
 
     private void createCommitStatus(AbstractBuild<?, ?> build,
