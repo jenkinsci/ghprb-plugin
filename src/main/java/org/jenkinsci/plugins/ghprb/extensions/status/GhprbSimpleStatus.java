@@ -36,10 +36,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
+    private static final Logger logger = Logger.getLogger(GhprbSimpleStatus.class.getName());
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private final String commitStatusContext;
-    private final boolean showMatrixStatus;
+    private final Boolean showMatrixStatus;
     private final String triggeredStatus;
     private final String startedStatus;
     private final String statusUrl;
@@ -74,7 +76,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     public String getStatusUrl() {
         return statusUrl == null ? "" : statusUrl;
     }
-    public boolean getShowMatrixStatus(){return showMatrixStatus;}
+    public boolean getShowMatrixStatus(){return showMatrixStatus == null ? false: showMatrixStatus;}
 
     public String getCommitStatusContext() {
         return commitStatusContext == null ? "" : commitStatusContext;
@@ -173,7 +175,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
         }
 
-        if((showMatrixStatus && build.getProject() instanceof MatrixProject)){
+        if(showMatrixStatus && !(build.getProject() instanceof MatrixProject)){
             return;
         }
 
@@ -216,7 +218,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
             }
         }
 
-        if((showMatrixStatus && build.getProject() instanceof MatrixProject)){
+        if(showMatrixStatus && !(build.getProject() instanceof MatrixProject)){
             return;
         }
 
