@@ -34,9 +34,7 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension,
-                               GhprbProjectExtension, GhprbGlobalDefault {
-    private static final Logger logger = Logger.getLogger(GhprbSimpleStatus.class.getName());
+public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -56,10 +54,8 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         this(true,commitStatusContext, null, null, null, false, new ArrayList<GhprbBuildResultMessage>(0));
     }
 
-
     @DataBoundConstructor
-    public GhprbSimpleStatus(
-                             Boolean showMatrixStatus,
+    public GhprbSimpleStatus(Boolean showMatrixStatus,
                              String commitStatusContext,
                              String statusUrl,
                              String triggeredStatus,
@@ -182,7 +178,6 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         }
 
         createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
-
     }
 
     public void onBuildComplete(AbstractBuild<?, ?> build,
@@ -224,6 +219,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         if((showMatrixStatus && build.getProject() instanceof MatrixProject)){
             return;
         }
+
         createCommitStatus(build, listener, sb.toString(), repo, state);
     }
 
