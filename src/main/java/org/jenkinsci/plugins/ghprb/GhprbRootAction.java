@@ -186,8 +186,13 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     logger.log(Level.WARNING, "Warning, trigger unexpectedly null for project " + project.getFullName());
                     continue;
                 }
-                if (trigger.matchSignature(body, signature)) {
-                    triggers.add(trigger);
+                try {
+                    if (trigger.matchSignature(body, signature)) {
+                        triggers.add(trigger);
+                    }
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "Failed to match signature for trigger on project: " + trigger.getProjectName(), e);
                 }
             }
         }
