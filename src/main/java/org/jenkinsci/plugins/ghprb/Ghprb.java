@@ -141,14 +141,14 @@ public class Ghprb {
 
     private HashSet<String> admins() {
         HashSet<String> adminList;
-        adminList = new HashSet<String>(Arrays.asList(trigger.getAdminlist().split("\\s+")));
+        adminList = new HashSet<String>(Arrays.asList(trigger.getAdminlist().toLowerCase().split("\\s+")));
         adminList.remove("");
         return adminList;
     }
 
     private HashSet<String> whitelisted() {
         HashSet<String> whitelistedList;
-        whitelistedList = new HashSet<String>(Arrays.asList(trigger.getWhitelist().split("\\s+")));
+        whitelistedList = new HashSet<String>(Arrays.asList(trigger.getWhitelist().toLowerCase().split("\\s+")));
         whitelistedList.remove("");
         return whitelistedList;
     }
@@ -182,13 +182,13 @@ public class Ghprb {
 
     public boolean isWhitelisted(GHUser user) {
         return trigger.getPermitAll()
-                || whitelisted().contains(user.getLogin())
-                || admins().contains(user.getLogin())
+                || whitelisted().contains(user.getLogin().toLowerCase())
+                || admins().contains(user.getLogin().toLowerCase())
                 || isInWhitelistedOrganisation(user);
     }
 
     public boolean isAdmin(GHUser user) {
-        return admins().contains(user.getLogin())
+        return admins().contains(user.getLogin().toLowerCase())
                 || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
                         && isInWhitelistedOrganisation(user));
     }
