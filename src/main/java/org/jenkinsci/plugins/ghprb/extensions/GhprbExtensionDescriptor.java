@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb.extensions;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.collections.Predicate;
@@ -18,34 +19,50 @@ public abstract class GhprbExtensionDescriptor extends Descriptor<GhprbExtension
         return true;
     }
 
-    public static DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> getExtensions(Class<? extends GhprbExtensionType>... types) {
-        DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> list = Jenkins.getInstance().getDescriptorList(GhprbExtension.class);
+    public static List<GhprbExtensionDescriptor> getExtensions(Class<? extends GhprbExtensionType>... types) {
+        List<GhprbExtensionDescriptor> list = getExtensions();
         filterExtensions(list, types);
         return list;
     }
 
-    private static void filterExtensions(DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> descriptors, Class<? extends GhprbExtensionType>... types) {
+    private static void filterExtensions(List<GhprbExtensionDescriptor> descriptors, Class<? extends GhprbExtensionType>... types) {
         List<Predicate> predicates = new ArrayList<Predicate>(types.length);
         for (Class<? extends GhprbExtensionType> type : types) {
             predicates.add(InstanceofPredicate.getInstance(type));
 
         }
         Predicate anyPredicate = PredicateUtils.anyPredicate(predicates);
-        for (GhprbExtensionDescriptor descriptor : descriptors) {
+        Iterator<GhprbExtensionDescriptor> iter = descriptors.iterator();
+        while (iter.hasNext()) {
+            GhprbExtensionDescriptor descriptor = iter.next();
             if (!anyPredicate.evaluate(descriptor)) {
-                descriptors.remove(descriptor);
+                iter.remove();
             }
         }
     }
+    
+    private static DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> getExtensionList() {
+        return Jenkins.getInstance().getDescriptorList(GhprbExtension.class);
+    }
+    
+    /**
+     * Don't mutate the list from Jenkins, they will persist;
+     * @return list of extensions
+     */
+    private static List<GhprbExtensionDescriptor> getExtensions() {
+        List<GhprbExtensionDescriptor> list = new ArrayList<GhprbExtensionDescriptor>();
+        list.addAll(getExtensionList());
+        return list;
+    }
 
-    public static DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> allProject() {
-        DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> list = Jenkins.getInstance().getDescriptorList(GhprbExtension.class);
+    public static List<GhprbExtensionDescriptor> allProject() {
+        List<GhprbExtensionDescriptor> list = getExtensions();
         filterExtensions(list, GhprbProjectExtension.class);
         return list;
     }
 
-    public static DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> allGlobal() {
-        DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> list = Jenkins.getInstance().getDescriptorList(GhprbExtension.class);
+    public static List<GhprbExtensionDescriptor> allGlobal() {
+        List<GhprbExtensionDescriptor> list = getExtensions();
         filterExtensions(list, GhprbGlobalExtension.class);
         return list;
     }
