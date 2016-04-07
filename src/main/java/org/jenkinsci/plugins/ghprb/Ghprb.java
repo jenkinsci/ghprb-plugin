@@ -82,7 +82,17 @@ public class Ghprb {
     }
 
     public static Pattern compilePattern(String regex) {
-        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        try {
+            return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to compile pattern "+regex, e);
+            return null;
+        }
+    }
+    
+    private static boolean checkPattern(Pattern pattern, String comment) {
+        return pattern != null && pattern.matcher(comment).matches();
     }
 
     // These used to be stored on the object in the constructor.
@@ -118,8 +128,7 @@ public class Ghprb {
             for (String skipBuildPhrase : skipBuildPhrases) {
                 skipBuildPhrase = skipBuildPhrase.trim();
                 Pattern skipBuildPhrasePattern = compilePattern(skipBuildPhrase);
-               
-                if (skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+                if (skipBuildPhrasePattern != null && skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
                     return skipBuildPhrase;
                 }
             }
@@ -161,19 +170,19 @@ public class Ghprb {
     }
 
     public boolean isRetestPhrase(String comment) {
-        return retestPhrasePattern().matcher(comment).matches();
+        return checkPattern(retestPhrasePattern(), comment);
     }
 
     public boolean isWhitelistPhrase(String comment) {
-        return whitelistPhrasePattern().matcher(comment).matches();
+        return checkPattern(whitelistPhrasePattern(), comment);
     }
 
     public boolean isOktotestPhrase(String comment) {
-        return oktotestPhrasePattern().matcher(comment).matches();
+        return checkPattern(oktotestPhrasePattern(), comment);
     }
 
     public boolean isTriggerPhrase(String comment) {
-        return triggerPhrase().matcher(comment).matches();
+        return checkPattern(triggerPhrase(), comment);
     }
 
     public boolean ifOnlyTriggerPhrase() {
