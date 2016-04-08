@@ -53,7 +53,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>matrix-project</artifactId>
-            <version>1.4.1</version>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -131,6 +131,14 @@
                         <version>2.16</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>java.util.logging.config.file</name>
+                            <value>${project.build.testOutputDirectory}/surefire-logging.properties</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -149,6 +157,12 @@
                     <includes>
                         <include>**/*IT.java</include>
                     </includes>
+                    <systemProperties>
+                        <property>
+                            <name>java.util.logging.config.file</name>
+                            <value>${project.build.testOutputDirectory}/surefire-logging.properties</value>
+                        </property>
+                    </systemProperties>
                 </configuration>
             </plugin>
             <plugin>
