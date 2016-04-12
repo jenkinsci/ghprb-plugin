@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +45,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
     private static final Logger logger = Logger.getLogger(GhprbRootAction.class.getName());
     
     private Set<StartTrigger> triggerThreads;
+    private ExecutorService pool;
 
     public String getIconFileName() {
         return null;
@@ -62,6 +65,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
     
     public GhprbRootAction() {
         triggerThreads = Collections.newSetFromMap(new WeakHashMap<StartTrigger, Boolean>());
+        this.pool = Executors.newFixedThreadPool(10);
     }
 
     public void doIndex(StaplerRequest req,
@@ -213,9 +217,8 @@ public class GhprbRootAction implements UnprotectedRootAction {
                     runner.comment = getIssueComment(payload, trigger.getGitHub());
                 }
 
-                Thread thread = new Thread(runner);
                 triggerThreads.add(runner);
-                thread.start();
+                pool.submit(runner);
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Unable to get authorized version of event", e);
             }
