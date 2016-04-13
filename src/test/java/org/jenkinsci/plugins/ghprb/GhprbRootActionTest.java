@@ -149,6 +149,9 @@ public class GhprbRootActionTest {
 
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
+        while(ra.getThreadCount() > 0) {
+            Thread.sleep(500);
+        }
         GhprbTestUtil.waitForBuildsToFinish(project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
