@@ -15,7 +15,6 @@
 package org.jenkinsci.plugins.ghprb;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
 import java.lang.reflect.Field;
@@ -27,12 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import org.codehaus.plexus.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.junit.Test;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRateLimit;
@@ -40,7 +36,11 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
 import org.kohsuke.stapler.BindInterceptor;
+import org.kohsuke.stapler.MetaClass;
 import org.kohsuke.stapler.RequestImpl;
+import org.kohsuke.stapler.SingleLinkedList;
+import org.kohsuke.stapler.WebApp;
+import org.kohsuke.stapler.lang.MethodRef;
 import org.mockito.Mockito;
 
 import hudson.model.AbstractProject;
@@ -336,12 +336,41 @@ public class GhprbTestUtil {
         
     }
     
+    static void setFinal(Object o, Field field, Object newValue) throws Exception {
+        field.setAccessible(true);
+
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        int prevModifiers = field.getModifiers();
+        modifiersField.setInt(field, prevModifiers & ~Modifier.FINAL);
+
+        field.set(o, newValue);
+        modifiersField.setInt(field, prevModifiers);
+        modifiersField.setAccessible(false);
+        field.setAccessible(false);
+        
+     }
+    
     @SuppressWarnings("unchecked")
-    private static void setupReq() {
+    private static void setupReq() throws Exception{
+        MetaClass meta = Mockito.mock(MetaClass.class);
+        SingleLinkedList<MethodRef> list = SingleLinkedList.empty();
+        given(meta.getPostConstructMethods()).willReturn(list);
+
+        
+        WebApp webApp = Mockito.mock(WebApp.class);
+        setFinal(webApp, WebApp.class.getDeclaredField("bindInterceptors"), new ArrayList<BindInterceptor>(0));
+        
+        given(webApp.getMetaClass(Mockito.any(GhprbTrigger.class))).willReturn(meta);
+
         req = Mockito.mock(RequestImpl.class);
+        
         given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
         given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.setBindInterceptpr(any(BindInterceptor.class))).willCallRealMethod();
         given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
+        given(req.getWebApp()).willReturn(webApp);
+        
         req.setBindListener(BindInterceptor.NOOP);
 
     }
@@ -429,7 +458,7 @@ public class GhprbTestUtil {
         }
         
         for (Field field : xmlFields) {
-            String getter = "get" + StringUtils.capitalise(field.getName());
+            String getter = "get" + StringUtils.capitalize(field.getName());
             try {
                 Method method = clazz.getDeclaredMethod(getter);
                 int modifier = method.getModifiers();
@@ -437,7 +466,7 @@ public class GhprbTestUtil {
                     errors.add(getter + " is not a public method");
                 }
             } catch (Exception e) {
-                String wrongGetter = "is" + StringUtils.capitalise(field.getName());
+                String wrongGetter = "is" + StringUtils.capitalize(field.getName());
                 try {
                     clazz.getDeclaredMethod(wrongGetter);
                     errors.add("Setter is using the wrong name, is " + wrongGetter + " and should be " + getter);

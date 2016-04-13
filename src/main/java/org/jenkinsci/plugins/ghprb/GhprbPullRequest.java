@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * Maintains state about a Pull Request for a particular Jenkins job. This is what understands the current state of a PR
  * for a particular job.
  *
- * @author Honza Brázdil <jbrazdil@redhat.com>
+ * @author Honza Brázdil jbrazdil@redhat.com
  */
 public class GhprbPullRequest {
 
@@ -140,7 +140,7 @@ public class GhprbPullRequest {
      * Checks this Pull Request representation against a GitHub version of the Pull Request, and triggers a build if
      * necessary.
      *
-     * @param ghpr
+     * @param ghpr the pull request from github
      */
     public void check(GHPullRequest ghpr) {
         setPullRequest(ghpr);
@@ -217,7 +217,7 @@ public class GhprbPullRequest {
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(pr.getUser())) {
                     logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[] { id });
-                    setAccepted(false);
+                    setAccepted(true);
                 }
 
                 int commentsChecked = checkComments(pr, lastUpdateTime);
@@ -255,13 +255,13 @@ public class GhprbPullRequest {
 
     private boolean isUpdated(GHPullRequest pr) {
         synchronized (this) {
-            Date lastUpdated = new Date();
+            
             boolean ret = false;
             try {
-                lastUpdated = pr.getUpdatedAt();
-                ret = updated.compareTo(lastUpdated) < 0;
+                Date lastUpdated = pr.getUpdatedAt();
+                ret = updated == null || updated.compareTo(lastUpdated) < 0;
                 setUpdated(lastUpdated);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 logger.log(Level.WARNING, "Unable to update last updated date", e);
             }
             GHCommitPointer pointer = pr.getHead();
@@ -493,7 +493,7 @@ public class GhprbPullRequest {
     /**
      * Base and Ref are part of the PullRequest object
      * 
-     * @return
+     * @return the sha to the base
      */
     public String getTarget() {
         try {
@@ -506,7 +506,7 @@ public class GhprbPullRequest {
     /**
      * Head and Ref are part of the PullRequest object
      * 
-     * @return
+     * @return the sha for the head.
      */
     public String getSource() {
         try {
@@ -519,7 +519,7 @@ public class GhprbPullRequest {
     /**
      * Title is part of the PullRequest object
      * 
-     * @return
+     * @return the title of the pull request.
      */
     public String getTitle() {
         try {
@@ -534,6 +534,7 @@ public class GhprbPullRequest {
      * This URL is part of the pull request object
      *
      * @return the Github Pull Request URL
+     * @throws IOException If unable to connect to GitHub
      */
     public URL getUrl() throws IOException {
         return getPullRequest(false).getHtmlUrl();
@@ -542,7 +543,7 @@ public class GhprbPullRequest {
     /**
      * The description body is part of the PullRequest object
      * 
-     * @return
+     * @return the description from github
      */
     public String getDescription() {
         try {
@@ -559,8 +560,8 @@ public class GhprbPullRequest {
     /**
      * Author is part of the PullRequest Object
      * 
-     * @return
-     * @throws IOException
+     * @return The GitHub user that created the PR
+     * @throws IOException Unable to connect to GitHub
      */
     public GHUser getPullRequestAuthor() throws IOException {
         return getPullRequest(false).getUser();
@@ -570,8 +571,8 @@ public class GhprbPullRequest {
      * Get the PullRequest object for this PR
      * 
      * @param force - forces the code to go get the PullRequest from GitHub now
-     * @return
-     * @throws IOException
+     * @return a copy of the pull request
+     * @throws IOException if unable to connect to GitHub
      */
     public GHPullRequest getPullRequest(boolean force) throws IOException {
         if (this.pr == null || force) {
@@ -611,7 +612,7 @@ public class GhprbPullRequest {
     /**
      * Email address is collected from GitHub as extra information, so lets cache it.
      * 
-     * @return
+     * @return The PR authors email address
      */
     public String getAuthorEmail() {
         if (StringUtils.isEmpty(authorEmail)) {

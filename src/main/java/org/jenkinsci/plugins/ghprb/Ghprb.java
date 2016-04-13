@@ -82,7 +82,17 @@ public class Ghprb {
     }
 
     public static Pattern compilePattern(String regex) {
-        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        try {
+            return Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        }
+        catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to compile pattern "+regex, e);
+            return null;
+        }
+    }
+    
+    private static boolean checkPattern(Pattern pattern, String comment) {
+        return pattern != null && pattern.matcher(comment).matches();
     }
 
     // These used to be stored on the object in the constructor.
@@ -95,7 +105,7 @@ public class Ghprb {
     /**
      * Returns skip build phrases from Jenkins global configuration
      * 
-     * @return
+     * @return skip build phrases
      */
     public Set<String> getSkipBuildPhrases() {
         return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
@@ -104,7 +114,8 @@ public class Ghprb {
     /**
      * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
      * 
-     * @param issue
+     * @param issue The GitHub issue
+     * @return the skip phrase or null if should not skip
      */
     public String checkSkipBuild(GHIssue issue) {
         // check for skip build phrase.
@@ -117,8 +128,7 @@ public class Ghprb {
             for (String skipBuildPhrase : skipBuildPhrases) {
                 skipBuildPhrase = skipBuildPhrase.trim();
                 Pattern skipBuildPhrasePattern = compilePattern(skipBuildPhrase);
-               
-                if (skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+                if (skipBuildPhrasePattern != null && skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
                     return skipBuildPhrase;
                 }
             }
@@ -140,14 +150,14 @@ public class Ghprb {
 
     private HashSet<String> admins() {
         HashSet<String> adminList;
-        adminList = new HashSet<String>(Arrays.asList(trigger.getAdminlist().split("\\s+")));
+        adminList = new HashSet<String>(Arrays.asList(trigger.getAdminlist().toLowerCase().split("\\s+")));
         adminList.remove("");
         return adminList;
     }
 
     private HashSet<String> whitelisted() {
         HashSet<String> whitelistedList;
-        whitelistedList = new HashSet<String>(Arrays.asList(trigger.getWhitelist().split("\\s+")));
+        whitelistedList = new HashSet<String>(Arrays.asList(trigger.getWhitelist().toLowerCase().split("\\s+")));
         whitelistedList.remove("");
         return whitelistedList;
     }
@@ -160,19 +170,19 @@ public class Ghprb {
     }
 
     public boolean isRetestPhrase(String comment) {
-        return retestPhrasePattern().matcher(comment).matches();
+        return checkPattern(retestPhrasePattern(), comment);
     }
 
     public boolean isWhitelistPhrase(String comment) {
-        return whitelistPhrasePattern().matcher(comment).matches();
+        return checkPattern(whitelistPhrasePattern(), comment);
     }
 
     public boolean isOktotestPhrase(String comment) {
-        return oktotestPhrasePattern().matcher(comment).matches();
+        return checkPattern(oktotestPhrasePattern(), comment);
     }
 
     public boolean isTriggerPhrase(String comment) {
-        return triggerPhrase().matcher(comment).matches();
+        return checkPattern(triggerPhrase(), comment);
     }
 
     public boolean ifOnlyTriggerPhrase() {
@@ -181,13 +191,13 @@ public class Ghprb {
 
     public boolean isWhitelisted(GHUser user) {
         return trigger.getPermitAll()
-                || whitelisted().contains(user.getLogin())
-                || admins().contains(user.getLogin())
+                || whitelisted().contains(user.getLogin().toLowerCase())
+                || admins().contains(user.getLogin().toLowerCase())
                 || isInWhitelistedOrganisation(user);
     }
 
     public boolean isAdmin(GHUser user) {
-        return admins().contains(user.getLogin())
+        return admins().contains(user.getLogin().toLowerCase())
                 || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
                         && isInWhitelistedOrganisation(user));
     }
@@ -388,6 +398,9 @@ public class Ghprb {
     }
     
     public static void addIfMissing(DescribableList<GhprbExtension, GhprbExtensionDescriptor> extensions, GhprbExtension ext, Class<?> type) {
+        if (ext == null) {
+            return;
+        }
         Predicate predicate = InstanceofPredicate.getInstance(type);
         for (GhprbExtension extension : extensions) {
             if (predicate.evaluate(extension)){
@@ -475,14 +488,13 @@ public class Ghprb {
     
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <T> T getDefaultValue(Object local, Class globalClass, String methodName) {
+    public static <T, S extends GhprbExtension> T getDefaultValue(S local, Class<S> globalClass, String methodName) {
         T toReturn = null;
-        Object global = getGlobal(globalClass);
+        S global = getGlobal(globalClass);
         if (local == null && global == null) {
             return null;
         }
         try {
-            
             if (local == null) {
                 return (T) global.getClass().getMethod(methodName).invoke(global);
             } else if (global == null) {

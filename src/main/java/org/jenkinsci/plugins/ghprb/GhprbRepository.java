@@ -10,6 +10,7 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.SaveableListener;
 import jenkins.model.Jenkins;
 
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
@@ -43,7 +44,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @author Honza Brázdil <jbrazdil@redhat.com>
+ * @author Honza Brázdil jbrazdil@redhat.com
  */
 public class GhprbRepository implements Saveable{
 
@@ -290,7 +291,7 @@ public class GhprbRepository implements Saveable{
             String secret = getSecret();
             config.put("url", new URL(getHookUrl()).toExternalForm());
             config.put("insecure_ssl", "1");
-            if (secret != "") {
+            if (!StringUtils.isEmpty(secret)) {
              config.put("secret",secret);
             }
             ghRepository.createHook("web", config, HOOK_EVENTS, true);
@@ -347,7 +348,7 @@ public class GhprbRepository implements Saveable{
         if (number == null) {
             number = ghpr.getNumber();
         }
-        synchronized (pullRequests) {
+        synchronized (this) {
             GhprbPullRequest pr = pullRequests.get(number);
             if (pr == null) {
                 if (ghpr == null) {
