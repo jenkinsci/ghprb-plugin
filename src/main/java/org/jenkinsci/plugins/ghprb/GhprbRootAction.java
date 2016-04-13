@@ -65,7 +65,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
     
     public GhprbRootAction() {
         triggerThreads = Collections.newSetFromMap(new WeakHashMap<StartTrigger, Boolean>());
-        this.pool = Executors.newFixedThreadPool(10);
+        this.pool = Executors.newCachedThreadPool();
     }
 
     public void doIndex(StaplerRequest req,
