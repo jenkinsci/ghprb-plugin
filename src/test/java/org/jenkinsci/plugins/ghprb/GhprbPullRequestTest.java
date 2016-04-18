@@ -1,33 +1,22 @@
 package org.jenkinsci.plugins.ghprb;
 
-import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.kohsuke.github.*;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Date;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestFileDetail;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit test for {@link org.jenkinsci.plugins.ghprb.GhprbPullRequest}.
@@ -66,22 +55,22 @@ public class GhprbPullRequestTest {
 
         PagedIterable<GHPullRequestFileDetail> mockFiles = new PagedIterable<GHPullRequestFileDetail>() {
             @Override
-            public PagedIterator<GHPullRequestFileDetail> iterator() {
-            	GHPullRequestFileDetail detail1 = new GHPullRequestFileDetail() {
-            		@Override public String getFilename() {
-            			return "/foo/bar/baz";
-            		}
-            	};
-            	GHPullRequestFileDetail detail2 = new GHPullRequestFileDetail() {
-            		@Override public String getFilename() {
-            			return "/foo/def/ghi";
-            		}
-            	};
-            	
-            	PagedIterator<GHPullRequestFileDetail> mock = mock(PagedIterator.class);
-            	when(mock.hasNext()).thenReturn(true, true, false);
-            	when(mock.next()).thenReturn(detail1, detail2, null);
-            	return mock;
+            public PagedIterator<GHPullRequestFileDetail> _iterator(int i) {
+                GHPullRequestFileDetail detail1 = new GHPullRequestFileDetail() {
+                    @Override public String getFilename() {
+                        return "/foo/bar/baz";
+                    }
+                };
+                GHPullRequestFileDetail detail2 = new GHPullRequestFileDetail() {
+                    @Override public String getFilename() {
+                        return "/foo/def/ghi";
+                    }
+                };
+
+                PagedIterator<GHPullRequestFileDetail> mock = mock(PagedIterator.class);
+                when(mock.hasNext()).thenReturn(true, true, false);
+                when(mock.next()).thenReturn(detail1, detail2, null);
+                return mock;
             }
         };
         when(pr.listFiles()).thenReturn(mockFiles);

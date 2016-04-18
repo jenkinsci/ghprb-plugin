@@ -175,7 +175,8 @@ public class GhprbPullRequestMerge extends Recorder {
             } catch (Exception e) {
                 e.printStackTrace(logger);
             }
-            pr.merge(getMergeComment());
+            String mergeComment = Ghprb.replaceMacros(build, listener, getMergeComment());
+            pr.merge(mergeComment);
             logger.println("Pull request successfully merged");
             deleteBranch(build, launcher, listener);
         }
