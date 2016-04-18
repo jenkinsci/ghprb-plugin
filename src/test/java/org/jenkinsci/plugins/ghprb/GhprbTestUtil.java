@@ -14,8 +14,17 @@
 
 package org.jenkinsci.plugins.ghprb;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.BDDMockito.given;
+import hudson.model.AbstractProject;
+import hudson.plugins.git.BranchSpec;
+import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.UserRemoteConfig;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.kohsuke.github.*;
+import org.kohsuke.stapler.*;
+import org.kohsuke.stapler.lang.MethodRef;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -27,27 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
-import org.kohsuke.stapler.BindInterceptor;
-import org.kohsuke.stapler.MetaClass;
-import org.kohsuke.stapler.RequestImpl;
-import org.kohsuke.stapler.SingleLinkedList;
-import org.kohsuke.stapler.WebApp;
-import org.kohsuke.stapler.lang.MethodRef;
-import org.mockito.Mockito;
-
-import hudson.model.AbstractProject;
-import hudson.plugins.git.BranchSpec;
-import hudson.plugins.git.GitSCM;
-import hudson.plugins.git.UserRemoteConfig;
-import net.sf.json.JSONObject;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 
@@ -304,6 +294,8 @@ public class GhprbTestUtil {
         jsonObject.put("publishedURL", "defaultPublishedURL");
         jsonObject.put("requestForTestingPhrase", "test this");
         jsonObject.put("whitelistPhrase", "");
+        jsonObject.put("includedRegion", "");
+        jsonObject.put("excludedRegion", "");
         jsonObject.put("okToTestPhrase", "ok to test");
         jsonObject.put("retestPhrase", "retest this please");
         jsonObject.put("skipBuildPhrase", "[skip ci]");
@@ -405,6 +397,8 @@ public class GhprbTestUtil {
         defaults.put("cron", "0 0 31 2 0");
         defaults.put("triggerPhrase", "retest this please");
         defaults.put("onlyTriggerPhrase", false);
+        defaults.put("excludedRegion", "");
+        defaults.put("includedRegion", "");
         defaults.put("useGitHubHooks", false);
         defaults.put("permitAll", false);
         defaults.put("autoCloseFailedPullRequests", false);
