@@ -65,7 +65,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
             context = jobName;
         }
         
-        Boolean addTestResults = new Boolean(envVars.get("ghprbStartedStatus"));
+        Boolean addTestResults = new Boolean(envVars.get("ghprbAddTestResults"));
 
         statusUpdater = new GhprbSimpleStatus(envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), addTestResults, statusMessages);
 
