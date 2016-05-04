@@ -67,7 +67,15 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
         
         Boolean addTestResults = new Boolean(envVars.get("ghprbStartedStatus"));
 
-        statusUpdater = new GhprbSimpleStatus(Boolean.valueOf(envVars.get("ghprbShowMatrixStatus")),envVars.get("ghprbCommitStatusContext"), envVars.get("ghprbStatusUrl"), envVars.get("ghprbTriggeredStatus"), envVars.get("ghprbStartedStatus"), addTestResults, statusMessages);
+        statusUpdater = new GhprbSimpleStatus(
+                Boolean.valueOf(envVars.get("ghprbShowMatrixStatus")),
+                envVars.get("ghprbCommitStatusContext"),
+                envVars.get("ghprbStatusUrl"),
+                envVars.get("ghprbTriggeredStatus"),
+                envVars.get("ghprbStartedStatus"),
+                addTestResults,
+                statusMessages
+        );
 
         String credentialsId = envVars.get("ghprbCredentialsId");
         String repoName = envVars.get("ghprbGhRepository");
@@ -89,6 +97,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
     public Environment setUpEnvironment(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
         if (updateEnvironmentVars(build, listener)) {
             logger.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
+
             try {
                 statusUpdater.onEnvironmentSetup(build, listener, repo);
             } catch (GhprbCommitStatusException e) {
@@ -118,6 +127,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
         if (!updateEnvironmentVars(build, listener)) {
             return;
         }
+
         try {
             statusUpdater.onBuildComplete(build, listener, repo);
         } catch (GhprbCommitStatusException e) {
