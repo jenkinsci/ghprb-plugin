@@ -296,7 +296,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                 ((GhprbBuildStep)ext).onScheduleBuild(super.job, cause);
             }
         }
-        
+
+        /*
+         * setting parameters like this is deprecated now, keeping this code
+         * for old Jenkins version
+         */
         ArrayList<ParameterValue> values = getDefaultParameters();
         final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
         values.add(new StringParameterValue("sha1", commitSha));
