@@ -28,7 +28,7 @@ public class GhprbBuildManagerFactoryUtilTest {
     @Test
     public void shouldReturnDefaultManager() throws Exception {
         // GIVEN
-        MatrixProject project = jenkinsRule.createMatrixProject("PRJ");
+        MatrixProject project = jenkinsRule.createProject(MatrixProject.class, "PRJ");
 
         GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(new MatrixBuild(project));
 
