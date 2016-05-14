@@ -14,6 +14,7 @@ class GhprbTriggerContext implements Context {
     List<GhprbBranch> whiteListTargetBranches = new ArrayList<GhprbBranch>();
     String cron = "H/5 * * * *";
     String triggerPhrase;
+    String skipBuildPhrase;
     boolean onlyTriggerPhrase;
     boolean useGitHubHooks;
     boolean permitAll;
@@ -99,6 +100,13 @@ class GhprbTriggerContext implements Context {
      */
     public void triggerPhrase(String triggerPhrase) {
         this.triggerPhrase = triggerPhrase;
+    }
+
+    /**
+     * When filled, adding this phrase to the pull request title or body will skip the build.
+     */
+    public void skipBuildPhrase(String skipBuildPhrase) {
+        this.skipBuildPhrase = skipBuildPhrase;
     }
 
     /**

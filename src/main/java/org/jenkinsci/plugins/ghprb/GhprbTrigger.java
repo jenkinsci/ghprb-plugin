@@ -83,6 +83,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private List<GhprbBranch> whiteListTargetBranches;
     private String gitHubAuthId;
     private String triggerPhrase;
+    private String skipBuildPhrase;
     
 
     private transient Ghprb helper;
@@ -128,7 +129,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             Boolean permitAll,
             Boolean autoCloseFailedPullRequests,
             Boolean displayBuildErrorsOnDownstreamBuilds,
-            String commentFilePath, 
+            String commentFilePath,
+            String skipBuildPhrase,
             List<GhprbBranch> whiteListTargetBranches,
             Boolean allowMembersOfWhitelistedOrgsAsAdmin, 
             String msgSuccess, 
@@ -149,6 +151,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
+        this.skipBuildPhrase = skipBuildPhrase;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
@@ -489,6 +492,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return "";
         }
         return triggerPhrase;
+    }
+
+    public String getSkipBuildPhrase() {
+        if (skipBuildPhrase == null) {
+            // if it's null, set it to the default ".*\\[skip\\W+ci\\].*"
+            return getDescriptor().getSkipBuildPhrase();
+        }
+        return skipBuildPhrase;
     }
 
     public Boolean getOnlyTriggerPhrase() {
