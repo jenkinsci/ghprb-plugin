@@ -45,6 +45,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
             return;
         }
         
+        logger.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId + ", checking for queued items to cancel.");
         Queue queue = Jenkins.getInstance().getQueue();
         for (Queue.Item item : queue.getItems(project)) {
             GhprbCause qcause = null;
@@ -58,6 +59,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
             }
             if (qcause.getPullID() == prId) {
                 try {
+                    logger.log(Level.FINER, "Cancelling queued build of " + project.getName() + " for PR # " + qcause.getPullID() + ", checking for queued items to cancel.");
                     queue.cancel(item);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Unable to cancel queued build", e);
@@ -65,6 +67,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
             }
         }
 
+        logger.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId);
         RunList<?> runs = project.getBuilds();
         for (Run<?, ?> run : runs) {
             if (!run.isBuilding() && !run.hasntStartedYet()) {
@@ -76,6 +79,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
             }
             if (cause.getPullID() == prId) {
                 try {
+                    logger.log(Level.FINER, "Cancelling running build #" + run.getNumber() + " of " + project.getName() + " for PR # " + cause.getPullID());
                     run.addAction(this);
                     run.getExecutor().interrupt(Result.ABORTED);
                 } catch (Exception e) {

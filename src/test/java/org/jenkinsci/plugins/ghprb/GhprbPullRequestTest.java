@@ -84,7 +84,7 @@ public class GhprbPullRequestTest {
     public void testConstructorWhenAuthorIsWhitelisted() throws IOException {
 
         // WHEN
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
 
         // THEN
         assertThat(ghprbPullRequest.getId()).isEqualTo(10);
@@ -100,7 +100,7 @@ public class GhprbPullRequestTest {
 
         given(repo.getName()).willReturn(null);
 
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
@@ -110,7 +110,7 @@ public class GhprbPullRequestTest {
         verify(pr, times(1)).getBase();
         verify(pr, times(1)).getNumber();
         verify(pr, times(1)).getCreatedAt();
-        verify(pr, times(3)).getUser();
+        verify(pr, times(2)).getUser();
         Mockito.verifyNoMoreInteractions(pr);
 
     }
@@ -122,7 +122,7 @@ public class GhprbPullRequestTest {
         given(repo.getName()).willReturn("name");
         doNothing().when(repo).addComment(eq(10), anyString());
 
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
@@ -136,7 +136,7 @@ public class GhprbPullRequestTest {
     public void authorRepoGitUrlShouldBeNullWhenNoRepository() throws Exception {
         // GIVEN
 
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
 
         // WHEN
         ghprbPullRequest.init(helper, ghprbRepository);
@@ -154,7 +154,7 @@ public class GhprbPullRequestTest {
 
         given(head.getRepository()).willReturn(repository);
 
-        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo, false);
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
 
         // THEN
         assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isEqualTo(expectedAuthorRepoGitUrl);
