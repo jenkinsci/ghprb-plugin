@@ -6,6 +6,9 @@ f.section(title: descriptor.displayName) {
   f.entry(field: "githubAuth", title: _("GitHub Auth")) {
     f.repeatableProperty(field: "githubAuth", default: descriptor.getGithubAuth()) 
   }
+  f.entry(field: "manageWebhooks", title: _("Auto-manage webhooks")) {
+    f.checkbox(default: true) 
+  }  
   f.entry(field: "useComments", title: _("Use comments to report results when updating commit status fails")) {
     f.checkbox() 
   }

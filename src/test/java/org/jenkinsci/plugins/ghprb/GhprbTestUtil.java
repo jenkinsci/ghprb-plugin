@@ -310,6 +310,7 @@ public class GhprbTestUtil {
         jsonObject.put("cron", "0 0 31 2 0");
         jsonObject.put("useComments", "true");
         jsonObject.put("useDetailedComments", "false");
+        jsonObject.put("manageWebhooks", "true");
         jsonObject.put("logExcerptLines", "0");
         jsonObject.put("unstableAs", "FAILURE");
         jsonObject.put("testMode", "true");
