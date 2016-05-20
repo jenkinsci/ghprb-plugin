@@ -21,7 +21,7 @@ import java.util.Map.Entry;
  */
 
 public class GhprbUpstreamStatus extends BuildWrapper {
-
+    private final Boolean showMatrixStatus;
     private final String commitStatusContext;
     private final String triggeredStatus;
     private final String startedStatus;
@@ -32,6 +32,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
     // sets the context and message as env vars so that they are available in the Listener class
     @Override
     public void makeBuildVariables(@SuppressWarnings("rawtypes") AbstractBuild build, Map<String,String> variables){
+        variables.put("ghprbShowMatrixStatus",Boolean.toString(getShowMatrixStatus()));
         variables.put("ghprbUpstreamStatus", "true");
         variables.put("ghprbCommitStatusContext", getCommitStatusContext());
         variables.put("ghprbTriggeredStatus", getTriggeredStatus());
@@ -75,6 +76,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
 
     @DataBoundConstructor
     public GhprbUpstreamStatus(
+            Boolean showMatrixStatus,
             String commitStatusContext, 
             String statusUrl, 
             String triggeredStatus, 
@@ -82,6 +84,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
             Boolean addTestResults,
             List<GhprbBuildResultMessage> completedStatus
             ) {
+        this.showMatrixStatus = showMatrixStatus;
         this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
         this.triggeredStatus = triggeredStatus;
@@ -109,6 +112,10 @@ public class GhprbUpstreamStatus extends BuildWrapper {
 
     public Boolean getAddTestResults() {
         return addTestResults == null ? false : addTestResults;
+    }
+
+    public Boolean getShowMatrixStatus(){
+        return showMatrixStatus == null ? false : showMatrixStatus;
     }
 
 

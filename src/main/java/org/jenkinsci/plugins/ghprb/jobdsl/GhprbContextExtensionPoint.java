@@ -62,6 +62,7 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
         executeInContext(closure, context);
 
         return new GhprbUpstreamStatus(
+                context.showMatrixStatus,
                 context.context,
                 context.statusUrl,
                 context.triggeredStatus,
