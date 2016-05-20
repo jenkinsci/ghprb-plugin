@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <f:entry title="Override Global setting and don't cancel builds" field="overrideGlobal">
     <f:checkbox />
