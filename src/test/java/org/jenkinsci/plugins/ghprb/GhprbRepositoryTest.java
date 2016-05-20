@@ -33,6 +33,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.util.Secret;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -554,13 +555,13 @@ public class GhprbRepositoryTest {
         String actualSignature = createSHA1Signature(actualSecret, body);
         String fakeSignature = createSHA1Signature("abc", body);
         
-        GhprbGitHubAuth ghAuth = Mockito.spy(new GhprbGitHubAuth("", "", "", "", "", actualSecret));
+        GhprbGitHubAuth ghAuth = Mockito.spy(new GhprbGitHubAuth("", "", "", "", "", Secret.fromString(actualSecret)));
         doReturn(true).when(trigger).isActive();
         
         doReturn(ghAuth).when(trigger).getGitHubApiAuth();
         
         Assert.assertFalse(actualSignature.equals(fakeSignature));
-        Assert.assertTrue(actualSecret.equals(ghAuth.getSecret()));
+        Assert.assertTrue(actualSecret.equals(ghAuth.getSecret().getPlainText()));
         
         Assert.assertTrue(trigger.matchSignature(body, actualSignature));
         Assert.assertFalse(trigger.matchSignature(body, fakeSignature));

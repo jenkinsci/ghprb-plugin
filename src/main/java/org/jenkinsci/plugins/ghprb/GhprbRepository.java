@@ -8,6 +8,7 @@ import hudson.model.Items;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.model.listeners.SaveableListener;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
@@ -305,7 +306,8 @@ public class GhprbRepository implements Saveable{
     }
 
     private String getSecret() {
-        return trigger.getGitHubApiAuth().getSecret();
+        Secret secret = trigger.getGitHubApiAuth().getSecret();
+        return secret == null ? "" : secret.getPlainText();
     }
 
     private String getHookUrl() {
