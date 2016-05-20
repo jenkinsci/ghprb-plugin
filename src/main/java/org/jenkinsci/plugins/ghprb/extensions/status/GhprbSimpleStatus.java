@@ -224,6 +224,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
             GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
             if (getAddTestResults()) {
+                listener.getLogger().println("Adding one-line test results to commit status...");
                 sb.append(buildManager.getOneLineTestResults());
             }
         }
