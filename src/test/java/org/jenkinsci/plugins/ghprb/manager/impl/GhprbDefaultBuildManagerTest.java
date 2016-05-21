@@ -35,7 +35,7 @@ public class GhprbDefaultBuildManagerTest extends GhprbITBaseTestCase {
     @Before
     public void setUp() throws Exception {
         // GhprbTestUtil.mockGithubUserPage();
-        project = jenkinsRule.createMatrixProject("MTXPRJ");
+        project = jenkinsRule.getInstance().createProject(MatrixProject.class, "MTXPRJ");
        
         Map<String, Object> config = new HashMap<String, Object>(1);
        

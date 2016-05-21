@@ -156,6 +156,7 @@ public class GhprbPullRequest {
      * necessary.
      *
      * @param ghpr the pull request from github
+     * @param isWebhook whether this is from a webhook or not
      */
     public void check(GHPullRequest ghpr, boolean isWebhook) {
         if (helper.isProjectDisabled()) {
