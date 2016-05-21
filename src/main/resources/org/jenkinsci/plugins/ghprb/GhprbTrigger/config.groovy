@@ -22,7 +22,7 @@ f.advanced() {
     f.checkbox(default: descriptor.autoCloseFailedPullRequests) 
   }
   f.entry(field: "skipBuildPhrase", title: _("Skip build phrase")) {
-    f.textarea(default: descriptor.skipBuildPhrase) 
+    f.textbox(default: descriptor.skipBuildPhrase)
   }
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
     f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds) 

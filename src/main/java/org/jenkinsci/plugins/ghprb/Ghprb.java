@@ -108,27 +108,48 @@ public class Ghprb {
      * @return skip build phrases
      */
     public Set<String> getSkipBuildPhrases() {
-        return new HashSet<String>(Arrays.asList(GhprbTrigger.getDscp().getSkipBuildPhrase().split("[\\r\\n]+")));
+        return new HashSet<String>(Arrays.asList(getTrigger().getSkipBuildPhrase().split("[\\r\\n]+")));
     }
     
     /**
-     * Checks for skip build phrase in pull request comment. If present it updates shouldRun as false.
+     * Checks for skip build phrase in pull request title and body. If present it updates shouldRun as false.
      * 
      * @param issue The GitHub issue
      * @return the skip phrase or null if should not skip
      */
     public String checkSkipBuild(GHIssue issue) {
-        // check for skip build phrase.
+        // check in title
+        String pullRequestTitle = issue.getTitle();
+        String skipBuildPhrase = checkSkipBuildInString(pullRequestTitle);
+        if (StringUtils.isNotBlank(skipBuildPhrase)) {
+            return skipBuildPhrase;
+        }
+        // not found in title, check in body
         String pullRequestBody = issue.getBody();
-        if (StringUtils.isNotBlank(pullRequestBody)) {
-            pullRequestBody = pullRequestBody.trim();
+        skipBuildPhrase = checkSkipBuildInString(pullRequestBody);
+        if (StringUtils.isNotBlank(skipBuildPhrase)) {
+            return skipBuildPhrase;
+        }
+        return null;
+    }
+
+    /**
+     * Checks for skip build phrase in the passed string
+     *
+     * @param string The string we're looking for the phrase in
+     * @return the skip phrase or null if we don't find it
+     */
+    private String checkSkipBuildInString( String string ) {
+        // check for skip build phrase in the passed string
+        if (StringUtils.isNotBlank(string)) {
+            string = string.trim();
             Set<String> skipBuildPhrases = getSkipBuildPhrases();
             skipBuildPhrases.remove("");
 
             for (String skipBuildPhrase : skipBuildPhrases) {
                 skipBuildPhrase = skipBuildPhrase.trim();
                 Pattern skipBuildPhrasePattern = compilePattern(skipBuildPhrase);
-                if (skipBuildPhrasePattern != null && skipBuildPhrasePattern.matcher(pullRequestBody).matches()) {
+                if (skipBuildPhrasePattern != null && skipBuildPhrasePattern.matcher(string).matches()) {
                     return skipBuildPhrase;
                 }
             }
