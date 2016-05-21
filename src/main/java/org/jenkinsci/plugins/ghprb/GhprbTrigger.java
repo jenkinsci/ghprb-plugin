@@ -386,8 +386,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public String getSkipBuildPhrase() {
-        if (skipBuildPhrase == null) {
-            // if it's null, set it to the default ".*\\[skip\\W+ci\\].*"
+        if (StringUtils.isEmpty(skipBuildPhrase)) {
+            // if it's empty grab the global value
             return getDescriptor().getSkipBuildPhrase();
         }
         return skipBuildPhrase;
