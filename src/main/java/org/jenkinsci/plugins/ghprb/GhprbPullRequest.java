@@ -72,13 +72,13 @@ public class GhprbPullRequest {
     private transient boolean triggered = false; // Only lets us know if the trigger phrase was used for this run
     private transient boolean mergeable = false; // Only works as an easy way to pass the value around for the start of
                                                  // this build
-    // Only useful for webhooks.  We want to avoid excessive use of
-    // Github API calls, specifically comment checks.  In updatePR, we check
+    // Only useful for webhooks. We want to avoid excessive use of
+    // Github API calls, specifically comment checks. In updatePR, we check
     // for comments that may have occurred between the previous update
-    // and the current one.  However, if we are using webhooks, we will always
-    // receive these events directly from github.  Unfortunately, simply avoiding
+    // and the current one. However, if we are using webhooks, we will always
+    // receive these events directly from github. Unfortunately, simply avoiding
     // the comment check altogether when using webhooks will not be perfect
-    // since a Jenkins restart could miss some comments.  This flag indicates that
+    // since a Jenkins restart could miss some comments. This flag indicates that
     // an initial comment check has been done and we can now operate in pure
     // webhook mode.
     private transient boolean initialCommentCheckDone = false;
@@ -90,7 +90,7 @@ public class GhprbPullRequest {
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
     private String lastBuildId;
 
-    // Sets the updated time of the PR.  If the updated time is newer,
+    // Sets the updated time of the PR. If the updated time is newer,
     // return true, false otherwise.
     private boolean setUpdated(Date lastUpdateTime) {
         // Because there is no gaurantee of order of delivery,
@@ -141,8 +141,8 @@ public class GhprbPullRequest {
         }
 
         logger.log(Level.INFO,
-            "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}",
-            new Object[] { id, reponame, author.getLogin(), getAuthorEmail(), updated, this.head });
+                   "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}",
+                   new Object[] { id, reponame, author.getLogin(), getAuthorEmail(), updated, this.head });
     }
 
     public void init(Ghprb helper,
@@ -158,13 +158,14 @@ public class GhprbPullRequest {
      * @param ghpr the pull request from github
      * @param isWebhook whether this is from a webhook or not
      */
-    public void check(GHPullRequest ghpr, boolean isWebhook) {
+    public void check(GHPullRequest ghpr,
+                      boolean isWebhook) {
         if (helper.isProjectDisabled()) {
             logger.log(Level.FINE, "Project is disabled, ignoring pull request");
             return;
         }
         // Call update PR with the update PR info and no comment
-        updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
+        updatePR(ghpr, null /* GHIssueComment */, isWebhook);
         checkSkipBuild();
         tryBuild();
     }
@@ -187,86 +188,106 @@ public class GhprbPullRequest {
             return;
         }
 
-        updatePR(null /*GHPullRequest*/, comment, true);
+        updatePR(null /* GHPullRequest */, comment, true);
         checkSkipBuild();
         tryBuild();
     }
-    
+
     // Reconcile the view of the PR we have locally with the one that was sent to us by GH.
     // We can reach this method in one of three ways, and the comment indicates what
     // we should do in each case:
-    //      1. With webhooks + new trigger/PR initialization - 
-    //         This could happen if a new job was added, new trigger was enabled, or if Jenkins
-    //         was restarted.  In this case, our view of the PR is out of date.  We need to
-    //         compare hashes and check the comments going back to when the last update was (which could be
-    //         when the PR was created).
-    //      2. With webhooks + new comment/PR update - This is "normal" operation.  In these
-    //         cases, we only need to process the comment that was just added, or compare hashes with
-    //         the updated PR info (for instance, if someone changes a title of a PR it shouldn't trigger.
-    //         We do NOT need to pull the comment info, since we will have gotten or will get
-    //         each comment.
-    //      3. Without webhooks - In this case, we will always check comments and hashes until
-    //         the last update time.
-    private void updatePR(GHPullRequest ghpr, GHIssueComment comment, boolean isWebhook) {
+    // 1. With webhooks + new trigger/PR initialization -
+    // This could happen if a new job was added, new trigger was enabled, or if Jenkins
+    // was restarted. In this case, our view of the PR is out of date. We need to
+    // compare hashes and check the comments going back to when the last update was (which could be
+    // when the PR was created).
+    // 2. With webhooks + new comment/PR update - This is "normal" operation. In these
+    // cases, we only need to process the comment that was just added, or compare hashes with
+    // the updated PR info (for instance, if someone changes a title of a PR it shouldn't trigger.
+    // We do NOT need to pull the comment info, since we will have gotten or will get
+    // each comment.
+    // 3. Without webhooks - In this case, we will always check comments and hashes until
+    // the last update time.
+    private void updatePR(GHPullRequest ghpr,
+                          GHIssueComment comment,
+                          boolean isWebhook) {
         // Get the updated time
         try {
             Date lastUpdateTime = updated;
             Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
-            // Don't log unless it was actually updated
-            if (updated == null || updated.compareTo(updatedDate) < 0) {
-                String user = comment != null ? comment.getUser().getName(): ghpr.getUser().getName();
-                logger.log(Level.INFO, "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})", new Object[] { this.id, this.repo.getName(), updatedDate, user,
-                    comment != null ? "comment" : "PR update"});
+            if (!isUpdated(getPullRequest(), updatedDate)) {
+                return;
             }
-        
+            String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
+            logger.log(Level.INFO,
+                       "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
+                       new Object[] { this.id, this.repo.getName(), updatedDate, user,
+                                      comment != null ? "comment" : "PR update" });
+
             // Update the PR object with the new pull request object if
-            // it is non-null.  getPullRequest will then avoid another
+            // it is non-null. getPullRequest will then avoid another
             // GH API call.
             if (ghpr != null) {
                 setPullRequest(ghpr);
             }
-            
+
             // Grab the pull request for use in this method (in case we came in through the comment path)
             GHPullRequest pullRequest = getPullRequest();
-            
+
             synchronized (this) {
                 boolean wasUpdated = setUpdated(updatedDate);
-                
+
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
-                    logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
+                    logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[] { id });
                     setAccepted(false);
                 }
 
                 // If we were passed a comment and are receiving all the comments
                 // as they come in (e.g. webhooks), then we don't need to do anything but
-                // check that comment.  Otherwise check the full set since the last
+                // check that comment. Otherwise check the full set since the last
                 // time we updated (which might have just happened).
                 int commentsChecked = 0;
                 if (wasUpdated && (!isWebhook || !initialCommentCheckDone)) {
                     initialCommentCheckDone = true;
                     commentsChecked = checkComments(pullRequest, lastUpdateTime);
-                }
-                else if (comment != null) {
+                } else if (comment != null) {
                     checkComment(comment);
                     commentsChecked = 1;
                 }
-                
+
                 // Check the commit on the PR against the recorded version.
                 boolean newCommit = checkCommit(pullRequest);
-            
+
                 // Log some info.
                 if (!newCommit && commentsChecked == 0) {
-                    logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
-                            + "that may mean that commit status was updated.", 
-                            new Object[] { this.id, this.repo.getName() }
-                    );
+                    logger.log(Level.INFO,
+                               "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
+                                           + "that may mean that commit status was updated.",
+                               new Object[] { this.id, this.repo.getName() });
                 }
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, "Exception caught while updating the PR", ex);
         }
+    }
+
+    private boolean isUpdated(GHPullRequest pr,
+                              Date lastUpdated) {
+
+        boolean ret = false;
+        if (lastUpdated != null) {
+            ret = updated == null || updated.compareTo(lastUpdated) < 0;
+        }
+        GHCommitPointer pointer = pr.getHead();
+        String pointerSha = pointer.getSha();
+        ret |= !pointerSha.equals(head);
+
+        pointer = pr.getBase();
+        pointerSha = pointer.getSha();
+        ret |= !pointerSha.equals(base);
+
+        return ret;
     }
 
     public boolean isWhiteListedTargetBranch() {
@@ -582,7 +603,7 @@ public class GhprbPullRequest {
     public GHPullRequest getPullRequest() throws IOException {
         return getPullRequest(false);
     }
-    
+
     /**
      * Get the PullRequest object for this PR
      * 
@@ -596,7 +617,7 @@ public class GhprbPullRequest {
         }
         return pr;
     }
-    
+
     private void setPullRequest(GHPullRequest pr) {
         if (pr == null) {
             return;
@@ -624,7 +645,7 @@ public class GhprbPullRequest {
             }
         }
     }
-    
+
     /**
      * Email address is collected from GitHub as extra information, so lets cache it.
      * 
