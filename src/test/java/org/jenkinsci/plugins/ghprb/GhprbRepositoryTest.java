@@ -206,12 +206,11 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         /** GH PR verifications */
-        verify(ghPullRequest, times(3)).getHead();
+        verify(ghPullRequest, times(2)).getHead();
         verify(ghPullRequest, times(2)).getNumber();
         verify(ghPullRequest, times(1)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
-        verify(ghPullRequest, times(1)).getUser();
-        verify(ghPullRequest, times(2)).getBase();
+        verify(ghPullRequest, times(1)).getBase();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper).ifOnlyTriggerPhrase();
@@ -221,7 +220,6 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
-        verify(ghUser, times(1)).getName();
         verifyNoMoreInteractions(ghUser);
         verifyZeroInteractions(ghUser);
     }

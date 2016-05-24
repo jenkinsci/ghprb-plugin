@@ -98,7 +98,6 @@ public class GhprbPullRequest {
         // earlier than the current updated time
         if (updated == null || updated.compareTo(lastUpdateTime) < 0) {
             updated = lastUpdateTime;
-            changed = true;
             return true;
         }
         return false;
@@ -213,29 +212,29 @@ public class GhprbPullRequest {
                           boolean isWebhook) {
         // Get the updated time
         try {
-            Date lastUpdateTime = updated;
-            Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
-            if (!isUpdated(getPullRequest(), updatedDate)) {
-                return;
-            }
-            String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
-            logger.log(Level.INFO,
-                       "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
-                       new Object[] { this.id, this.repo.getName(), updatedDate, user,
-                                      comment != null ? "comment" : "PR update" });
-
-            // Update the PR object with the new pull request object if
-            // it is non-null. getPullRequest will then avoid another
-            // GH API call.
-            if (ghpr != null) {
-                setPullRequest(ghpr);
-            }
-
-            // Grab the pull request for use in this method (in case we came in through the comment path)
-            GHPullRequest pullRequest = getPullRequest();
-
             synchronized (this) {
-                boolean wasUpdated = setUpdated(updatedDate);
+
+                // Update the PR object with the new pull request object if
+                // it is non-null. getPullRequest will then avoid another
+                // GH API call.
+                if (ghpr != null) {
+                    setPullRequest(ghpr);
+                }
+
+                Date lastUpdateTime = updated;
+                Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
+                boolean wasUpdated = isUpdated(getPullRequest(), updatedDate);
+                if (!wasUpdated) {
+                    return;
+                }
+                String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
+                logger.log(Level.INFO,
+                           "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
+                           new Object[] { this.id, this.repo.getName(), updatedDate, user,
+                                          comment != null ? "comment" : "PR update" });
+
+                // Grab the pull request for use in this method (in case we came in through the comment path)
+                GHPullRequest pullRequest = getPullRequest();
 
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
@@ -275,10 +274,7 @@ public class GhprbPullRequest {
     private boolean isUpdated(GHPullRequest pr,
                               Date lastUpdated) {
 
-        boolean ret = false;
-        if (lastUpdated != null) {
-            ret = updated == null || updated.compareTo(lastUpdated) < 0;
-        }
+        boolean ret = setUpdated(lastUpdated);
         GHCommitPointer pointer = pr.getHead();
         String pointerSha = pointer.getSha();
         ret |= !pointerSha.equals(head);
