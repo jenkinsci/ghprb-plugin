@@ -3,17 +3,12 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.EnvironmentContributor;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersAction;
-import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
 import javax.annotation.Nonnull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 @Extension
 public class GhprbAdditionalParameterEnvironmentContributor extends EnvironmentContributor {
@@ -27,7 +22,6 @@ public class GhprbAdditionalParameterEnvironmentContributor extends EnvironmentC
         if (cause == null) {
             return;
         }
-        run.addAction(getDefaultParameters(run));
 
         final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
         putEnvVar(envs, "sha1", commitSha);
@@ -78,18 +72,6 @@ public class GhprbAdditionalParameterEnvironmentContributor extends EnvironmentC
 
     }
 
-    private ParametersAction getDefaultParameters(Run<?, ?> run) {
-        ArrayList<ParameterValue> values = new ArrayList<ParameterValue>();
-        ParametersDefinitionProperty pdp = run.getParent().getProperty(ParametersDefinitionProperty.class);
-        if (pdp != null) {
-            for (ParameterDefinition pd : pdp.getParameterDefinitions()) {
-                if (pd.getName().equals("sha1"))
-                    continue;
-                values.add(pd.getDefaultParameterValue());
-            }
-        }
-        return new ParametersAction(values);
-    }
 
     private void setCommitAuthor(GhprbCause cause,
                                  EnvVars values) {
