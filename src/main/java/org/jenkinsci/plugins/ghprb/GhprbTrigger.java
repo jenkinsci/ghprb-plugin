@@ -324,8 +324,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         ParametersDefinitionProperty pdp = this.job.getProperty(ParametersDefinitionProperty.class);
         if (pdp != null) {
             for (ParameterDefinition pd : pdp.getParameterDefinitions()) {
-                if (pd.getName().equals("sha1"))
-                    continue;
                 values.add(pd.getDefaultParameterValue());
             }
         }
