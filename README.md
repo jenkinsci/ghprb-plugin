@@ -15,7 +15,7 @@ build.
 
 A new build can also be started with a comment: ``retest this please``.
 
-You can extend the standard build comment message on github 
+You can extend the standard build comment message on GitHub
 creating a comment file from shell console or any other 
 jenkins plugin. Contents of that file will be added to the comment on GitHub. 
 This is useful for posting some build dependent urls for users without 
@@ -93,7 +93,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * If you want to use the actual commit in the pull request, use ``${ghprbActualCommit}`` instead of ``${sha1}``
 * Under ``Build Triggers``, check ``GitHub pull requests builder``.
   * Add admins for this specific job.  
-  * If you want to use GitHub hooks for automatic testing, read the help for ``Use github hooks for build triggering`` in job configuration. Then you can check the checkbox.
+  * If you want to use GitHub hooks for automatic testing, read the help for ``Use GitHub hooks for build triggering`` in job configuration. Then you can check the checkbox.
   * In Advanced, you can modify:  
     * The crontab line for this specific job. This schedules polling to GitHub for new changes in Pull Requests.  
     * The whitelisted users for this specific job.  
