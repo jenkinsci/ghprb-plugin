@@ -8,7 +8,7 @@ f.entry(field: "gitHubAuthId", title:_("GitHub API credentials")) {
 f.entry(field: "adminlist", title: _("Admin list")) {
   f.textarea(default: descriptor.adminlist) 
 }
-f.entry(field: "useGitHubHooks", title: "Use github hooks for build triggering") {
+f.entry(field: "useGitHubHooks", title: "Use GitHub hooks for build triggering") {
   f.checkbox() 
 }
 f.advanced() {
