@@ -455,6 +455,9 @@ public class GhprbPullRequest {
                 } catch (InterruptedException ex) {
                     break;
                 }
+                // If the mergeability state was unknown, we need
+                // to grab the mergeability state from the server.
+                this.getPullRequest(true);
                 isMergeable = pr.getMergeable();
             }
             mergeable = isMergeable != null && isMergeable;
