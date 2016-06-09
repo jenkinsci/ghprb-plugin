@@ -3,15 +3,46 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.EnvironmentContributor;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
 import hudson.model.Run;
+import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 
 import javax.annotation.Nonnull;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 @Extension
 public class GhprbAdditionalParameterEnvironmentContributor extends EnvironmentContributor {
+
+    private static Set<String> params =
+                    new HashSet<String>(Arrays.asList("sha1",
+                                                      "ghprbCredentialsId",
+                                                      "ghprbActualCommit",
+                                                      "ghprbPullId",
+                                                      "ghprbPullDescription",
+                                                      "ghprbPullTitle",
+                                                      "ghprbPullLink",
+                                                      "ghprbPullLongDescription",
+                                                      "ghprbTargetBranch",
+                                                      "ghprbSourceBranch",
+                                                      "ghprbCommentBody",
+                                                      "ghprbGhRepository",
+                                                      "ghprbTriggerAuthor",
+                                                      "ghprbTriggerAuthorEmail",
+                                                      "ghprbTriggerAuthorLogin",
+                                                      "ghprbTriggerAuthorLoginMention",
+                                                      "GIT_BRANCH",
+                                                      "ghprbPullAuthorEmail",
+                                                      "ghprbPullAuthorLogin",
+                                                      "ghprbPullAuthorLoginMention",
+                                                      "ghprbAuthorRepoGitUrl",
+                                                      "ghprbActualCommitAuthor",
+                                                      "ghprbActualCommitAuthorEmail"));
 
     @Override
     @SuppressWarnings("rawtypes")
@@ -19,85 +50,29 @@ public class GhprbAdditionalParameterEnvironmentContributor extends EnvironmentC
                                     @Nonnull EnvVars envs,
                                     @Nonnull TaskListener listener) throws IOException, InterruptedException {
         GhprbCause cause = (GhprbCause) ((Run<?, ?>) run).getCause(GhprbCause.class);
-        if (cause == null) {
+        if (cause == null || envs.containsKey(params.iterator().next())) {
             return;
         }
 
-        final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
-        putEnvVar(envs, "sha1", commitSha);
-        putEnvVar(envs, "ghprbActualCommit", cause.getCommit());
-
-        try {
-            putEnvVar(envs, "ghprbTriggerAuthor", cause.getTriggerSender().getName());
-        } catch (Exception e) {}
-        try {
-            putEnvVar(envs, "ghprbTriggerAuthorEmail", cause.getTriggerSender().getEmail());
-        } catch (Exception e) {}
-
-        String triggerAuthorLogin = "";
-        try {
-            triggerAuthorLogin = cause.getTriggerSender().getLogin();
-            if (triggerAuthorLogin == null) {
-                triggerAuthorLogin = "";
-            }
-            putEnvVar(envs, "ghprbTriggerAuthorLogin", triggerAuthorLogin);
-        } catch (Exception e) {}
-
-        setCommitAuthor(cause, envs);
-
-        putEnvVar(envs, "ghprbAuthorRepoGitUrl", cause.getAuthorRepoGitUrl());
-
-        putEnvVar(envs,
-                  "ghprbTriggerAuthorLoginMention",
-                  !triggerAuthorLogin.isEmpty() ? "@" + triggerAuthorLogin : "");
-        putEnvVar(envs, "ghprbPullId", String.valueOf(cause.getPullID()));
-        putEnvVar(envs, "ghprbTargetBranch", cause.getTargetBranch());
-        putEnvVar(envs, "ghprbSourceBranch", cause.getSourceBranch());
-        putEnvVar(envs, "GIT_BRANCH", cause.getSourceBranch());
-
-        // it's possible the GHUser doesn't have an associated email address
-        putEnvVar(envs, "ghprbPullAuthorEmail", cause.getAuthorEmail());
-        putEnvVar(envs, "ghprbPullAuthorLogin", cause.getPullRequestAuthor().getLogin());
-        putEnvVar(envs, "ghprbPullAuthorLoginMention", "@" + cause.getPullRequestAuthor().getLogin());
-
-        putEnvVar(envs, "ghprbPullDescription", escapeText(String.valueOf(cause.getShortDescription())));
-        putEnvVar(envs, "ghprbPullTitle", cause.getTitle());
-        putEnvVar(envs, "ghprbPullLink", String.valueOf(cause.getUrl()));
-        putEnvVar(envs, "ghprbPullLongDescription", escapeText(String.valueOf(cause.getDescription())));
-
-        putEnvVar(envs, "ghprbCommentBody", escapeText(String.valueOf(cause.getCommentBody())));
-
-        putEnvVar(envs, "ghprbGhRepository", escapeText(String.valueOf(cause.getRepositoryName())));
-        putEnvVar(envs, "ghprbCredentialsId", escapeText(String.valueOf(cause.getCredentialsId())));
-
+        ParametersAction pa = run.getAction(ParametersAction.class);
+        for (String param : params) {
+            addParameter(param, pa, envs);
+        }
     }
 
-
-    private void setCommitAuthor(GhprbCause cause,
-                                 EnvVars values) {
-        String authorName = "";
-        String authorEmail = "";
-        if (cause.getCommitAuthor() != null) {
-            authorName = getString(cause.getCommitAuthor().getName(), "");
-            authorEmail = getString(cause.getCommitAuthor().getEmail(), "");
+    private static void addParameter(String key,
+                                     ParametersAction pa,
+                                     EnvVars envs) {
+        ParameterValue pv = pa.getParameter(key);
+        if (pv == null || !(pv instanceof StringParameterValue)) {
+            return;
         }
-
-        putEnvVar(values, "ghprbActualCommitAuthor", authorName);
-        putEnvVar(values, "ghprbActualCommitAuthorEmail", authorEmail);
+        StringParameterValue value = (StringParameterValue) pa.getParameter(key);
+        envs.put(key, getString(value.value, ""));
     }
 
     private static String getString(String actual,
                                     String d) {
         return actual == null ? d : actual;
-    }
-
-    private static String escapeText(String text) {
-        return text.replace("\n", "\\n").replace("\r", "\\r").replace("\"", "\\\"");
-    }
-
-    private static void putEnvVar(@Nonnull EnvVars envs,
-                                  String name,
-                                  String value) {
-        envs.put(name, getString(value, ""));
     }
 }
