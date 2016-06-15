@@ -269,24 +269,49 @@ public class GhprbPullRequest {
         }
     }
 
-    public boolean isWhiteListedTargetBranch() {
-        List<GhprbBranch> branches = helper.getWhiteListTargetBranches();
-        if (branches.isEmpty() || (branches.size() == 1 && branches.get(0).getBranch().equals(""))) {
-            // no branches in white list means we should test all
-            return true;
-        }
-
-        String target = getTarget();
+    private boolean matchesAnyBranch(String target, List<GhprbBranch> branches) {
         for (GhprbBranch b : branches) {
             if (b.matches(target)) {
                 // the target branch is in the whitelist!
                 return true;
             }
         }
-        logger.log(Level.FINEST,
-                   "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}",
-                   new Object[] { id, target, Joiner.on(',').skipNulls().join(branches) });
         return false;
+    }
+
+    // Determines whether a branch is an allowed target branch
+    //
+    // A branch is an allowed target branch if it matches a branch in the whitelist
+    // but NOT any branches in the blacklist.
+    public boolean isAllowedTargetBranch() {
+        List<GhprbBranch> whiteListBranches = helper.getWhiteListTargetBranches();
+        List<GhprbBranch> blackListBranches = helper.getBlackListTargetBranches();
+
+        String target = getTarget();
+
+        // First check if it matches any whitelist branch.  It matches if
+        // the list is empty, or if it matches any branch in the list
+        if (!whiteListBranches.isEmpty()) {
+            if(!matchesAnyBranch(target, whiteListBranches)) {
+                logger.log(Level.FINEST,
+                   "PR #{0} target branch: {1} isn''t in our whitelist of target branches: {2}",
+                   new Object[] { id, target, Joiner.on(',').skipNulls().join(whiteListBranches) });
+                return false;
+            }
+        }
+
+        // We matched something in the whitelist, now check the blacklist. It must
+        // not match any branch in the blacklist
+        if (!blackListBranches.isEmpty()) {
+            if(matchesAnyBranch(target, blackListBranches)) {
+                logger.log(Level.FINEST,
+                   "PR #{0} target branch: {1} is in our blacklist of target branches: {2}",
+                   new Object[] { id, target, Joiner.on(',').skipNulls().join(blackListBranches) });
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void tryBuild() {
@@ -302,8 +327,8 @@ public class GhprbPullRequest {
             }
             triggered = false; // Once we have decided that we are triggered then the flag should be set to false.
 
-            if (!isWhiteListedTargetBranch()) {
-                logger.log(Level.FINEST, "Branch is not whitelisted, skipping the build");
+            if (!isAllowedTargetBranch()) {
+                logger.log(Level.FINEST, "Branch is not whitelisted or is blacklisted, skipping the build");
                 return;
             }
             if (shouldRun) {

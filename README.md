@@ -143,6 +143,7 @@ job('upstreamJob') {
             autoCloseFailedPullRequests()
             displayBuildErrorsOnDownstreamBuilds()
             whiteListTargetBranches(['master','test', 'test2'])
+            blackListListTargetBranches(['master','test', 'test2'])
             allowMembersOfWhitelistedOrgsAsAdmin()
             extensions {
                 commitStatus {
