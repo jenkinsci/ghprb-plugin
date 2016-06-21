@@ -98,7 +98,6 @@ public class GhprbPullRequest {
         // earlier than the current updated time
         if (updated == null || updated.compareTo(lastUpdateTime) < 0) {
             updated = lastUpdateTime;
-            changed = true;
             return true;
         }
         return false;
@@ -219,18 +218,19 @@ public class GhprbPullRequest {
                     comment != null ? "comment" : "PR update"});
             }
         
-            // Update the PR object with the new pull request object if
-            // it is non-null.  getPullRequest will then avoid another
-            // GH API call.
-            if (ghpr != null) {
-                setPullRequest(ghpr);
-            }
-            
-            // Grab the pull request for use in this method (in case we came in through the comment path)
-            GHPullRequest pullRequest = getPullRequest();
-            
             synchronized (this) {
                 boolean wasUpdated = setUpdated(updatedDate);
+
+                // Update the PR object with the new pull request object if
+                // it is non-null.  getPullRequest will then avoid another
+                // GH API call.
+                if (ghpr != null) {
+                    setPullRequest(ghpr);
+                }
+                
+                // Grab the pull request for use in this method (in case we came in through the comment path)
+                GHPullRequest pullRequest = getPullRequest();
+                
                 
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
