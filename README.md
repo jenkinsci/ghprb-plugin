@@ -160,7 +160,7 @@ job('upstreamJob') {
         }
     }
     publishers {
-        mergeGithubPullRequest {
+        mergePullRequest {
             mergeComment('merged by Jenkins')
             onlyAdminsMerge()
             disallowOwnCode()
