@@ -418,11 +418,11 @@ public class GhprbPullRequest {
 
     private int checkComments(GHPullRequest ghpr,
                               Date lastUpdatedTime) {
-
-        if (ghpr.getCommentsCount() == 0) {
-            // Avoid the API call. Nothing to do here.
-            return 0;
-        }
+//        It looks like this is always returning 0, ignoring till it can be confirmed.
+//        if (ghpr.getCommentsCount() == 0) {
+//            // Avoid the API call. Nothing to do here.
+//            return 0;
+//        }
 
         int count = 0;
         logger.log(Level.FINEST, "Checking for comments after: {0}", lastUpdatedTime);
