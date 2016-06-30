@@ -211,7 +211,8 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUser();
         verify(ghPullRequest, times(1)).getBase();
-        verify(ghPullRequest, times(1)).getCommentsCount();
+        verify(ghPullRequest, times(1)).getComments();
+//        verify(ghPullRequest, times(1)).getCommentsCount();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper).ifOnlyTriggerPhrase();
@@ -362,8 +363,8 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
 
-        verify(ghPullRequest, times(1)).getComments();
-        verify(ghPullRequest, times(2)).getCommentsCount();
+        verify(ghPullRequest, times(2)).getComments();
+//        verify(ghPullRequest, times(2)).getCommentsCount();
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
@@ -458,7 +459,7 @@ public class GhprbRepositoryTest {
 
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(1)).getComments();
-        verify(ghPullRequest, times(1)).getCommentsCount();
+//        verify(ghPullRequest, times(1)).getCommentsCount();
         verify(ghPullRequest, times(2)).listCommits();
 
         verify(ghPullRequest, times(2)).getBody();
