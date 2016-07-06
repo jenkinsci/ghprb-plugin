@@ -28,15 +28,15 @@
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/ghprb-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/ghprb-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/ghprb-plugin</url>
+        <connection>scm:git:ssh://github.com/dulvac/ghprb-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/dulvac/ghprb-plugin.git</developerConnection>
+        <url>https://github.com/dulvac/ghprb-plugin</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/janinko/ghprb/issues</url>
+        <url>https://github.com/dulvac/ghprb/issues</url>
     </issueManagement>
 
     <properties>
