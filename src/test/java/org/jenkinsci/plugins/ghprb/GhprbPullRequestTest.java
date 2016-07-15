@@ -45,12 +45,12 @@ public class GhprbPullRequestTest {
     private GHUser ghUser;
     @Mock
     private GhprbBuilds builds;
-
+    
     @Before
     public void setup() throws IOException {
         given(head.getSha()).willReturn("some sha");
         given(base.getRef()).willReturn("some ref");
-        // given(pr.getMergeCommitSha()).willReturn("some other ref");
+        given(pr.getMergeCommitSha()).willReturn("some other ref");
 
         // Mocks for GHPullRequest
         given(pr.getNumber()).willReturn(10);
@@ -109,6 +109,7 @@ public class GhprbPullRequestTest {
         // THEN
         verify(pr, times(1)).getHead();
         verify(pr, times(1)).getBase();
+        verify(pr, times(1)).getMergeCommitSha();
         verify(pr, times(1)).getNumber();
         verify(pr, times(1)).getCreatedAt();
         verify(pr, times(2)).getUser();
