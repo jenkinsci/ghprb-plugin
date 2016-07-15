@@ -14,6 +14,7 @@ class GhprbSimpleStatusContext implements Context {
     String startedStatus;
     String statusUrl;
     Boolean addTestResults;
+    Boolean updateQueuePosition;
     List<GhprbBuildResultMessage> completedStatus = new ArrayList<GhprbBuildResultMessage>();
 
     /**
@@ -63,6 +64,13 @@ class GhprbSimpleStatusContext implements Context {
      */
     void addTestResults(Boolean addTestResults) {
         this.addTestResults = addTestResults;
+    }
+    
+    /**
+     * Update the queue positioning of triggered jobs
+     */
+    void updateQueuePosition(Boolean updateQueuePosition) {
+        this.updateQueuePosition = updateQueuePosition;
     }
 
     /**

@@ -15,6 +15,9 @@
   <f:entry title="${%Add test result one liner}" field="addTestResults" >
     <f:checkbox default="${descriptor.getAddTestResultsDefault(instance)}" />
   </f:entry>
+  <f:entry title="${%Periodically update status with queue position}" field="updateQueuePosition" >
+    <f:checkbox default="${descriptor.getUpdateQueuePositionDefault(instance)}" />
+  </f:entry>
   <f:entry title="${%Commit Status Build Result}" field="completedStatus" >
     <f:repeatableProperty field="completedStatus" default="${descriptor.getCompletedStatusDefault(instance)}" />
   </f:entry>

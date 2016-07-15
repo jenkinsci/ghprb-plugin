@@ -27,6 +27,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
     private final String startedStatus;
     private final String statusUrl;
     private final Boolean addTestResults;
+    private final Boolean updateQueuePosition;
     private final List<GhprbBuildResultMessage> completedStatus;
     
     // sets the context and message as env vars so that they are available in the Listener class
@@ -39,6 +40,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
         variables.put("ghprbStartedStatus", getStartedStatus());
         variables.put("ghprbStatusUrl", getStatusUrl());
         variables.put("ghprbAddTestResults", Boolean.toString(getAddTestResults()));
+        variables.put("ghprbUpdateQueuePosition", Boolean.toString(getUpdateQueuePosition()));
         
         Map<GHCommitState, StringBuilder> statusMessages = new HashMap<GHCommitState, StringBuilder>(5);
         
@@ -82,7 +84,8 @@ public class GhprbUpstreamStatus extends BuildWrapper {
             String triggeredStatus, 
             String startedStatus, 
             Boolean addTestResults,
-            List<GhprbBuildResultMessage> completedStatus
+            List<GhprbBuildResultMessage> completedStatus,
+            Boolean updateQueuePosition
             ) {
         this.showMatrixStatus = showMatrixStatus;
         this.statusUrl = statusUrl;
@@ -91,6 +94,7 @@ public class GhprbUpstreamStatus extends BuildWrapper {
         this.startedStatus = startedStatus;
         this.addTestResults = addTestResults;
         this.completedStatus = completedStatus;
+        this.updateQueuePosition = updateQueuePosition;
     }
     
 
@@ -112,6 +116,10 @@ public class GhprbUpstreamStatus extends BuildWrapper {
 
     public Boolean getAddTestResults() {
         return addTestResults == null ? false : addTestResults;
+    }
+    
+    public Boolean getUpdateQueuePosition() {
+        return updateQueuePosition == null ? false : updateQueuePosition;
     }
 
     public Boolean getShowMatrixStatus(){

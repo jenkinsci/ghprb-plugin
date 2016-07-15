@@ -4,6 +4,8 @@ import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
+import java.util.List;
 
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
@@ -36,8 +38,8 @@ public class GhprbNoCommitStatus extends GhprbExtension implements GhprbCommitSt
         
     }
 
-    public void onBuildTriggered(AbstractProject<?, ?> project, String commitSha, boolean isMergeable, int prId, GHRepository ghRepository) throws GhprbCommitStatusException {
-        
+    public List<Action> onBuildTriggered(AbstractProject<?, ?> project, String commitSha, boolean isMergeable, int prId, GHRepository ghRepository) throws GhprbCommitStatusException {
+        return null;
     }
 
     @Override

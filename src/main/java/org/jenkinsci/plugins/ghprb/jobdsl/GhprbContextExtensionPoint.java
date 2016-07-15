@@ -70,7 +70,8 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 context.triggeredStatus,
                 context.startedStatus,
                 context.addTestResults,
-                context.completedStatus
+                context.completedStatus,
+                context.updateQueuePosition
         );
     }
 }

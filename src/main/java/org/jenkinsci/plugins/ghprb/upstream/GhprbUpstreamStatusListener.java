@@ -74,7 +74,8 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
                 envVars.get("ghprbTriggeredStatus"),
                 envVars.get("ghprbStartedStatus"),
                 new Boolean(envVars.get("ghprbAddTestResults")),
-                statusMessages
+                statusMessages,
+                new Boolean(envVars.get("ghprbUpdateQueuePosition"))
         );
     }
 

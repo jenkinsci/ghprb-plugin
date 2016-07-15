@@ -31,6 +31,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.util.Secret;
@@ -49,6 +50,7 @@ import static org.kohsuke.github.GHCommitState.PENDING;
 import static org.kohsuke.github.GHIssueState.OPEN;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -110,7 +112,7 @@ public class GhprbRepositoryTest {
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
         
         
-        doReturn(mock(QueueTaskFuture.class)).when(trigger).scheduleBuild(any(GhprbCause.class), any(GhprbRepository.class));
+        doReturn(mock(QueueTaskFuture.class)).when(trigger).scheduleBuild(any(GhprbCause.class), any(GhprbRepository.class), anyListOf(Action.class));
         initGHPRWithTestData();
         
         given(ghPullRequest.getUser()).willReturn(ghUser);

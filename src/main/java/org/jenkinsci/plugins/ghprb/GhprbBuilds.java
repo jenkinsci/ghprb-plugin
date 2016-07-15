@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
+import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.model.TaskListener;
@@ -23,7 +24,9 @@ import org.kohsuke.github.GHUser;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,16 +73,24 @@ public class GhprbBuilds {
                 repo.getName(),
                 trigger.getGitHubApiAuth().getCredentialsId());
 
+        ArrayList<Action> moreActions = null;
+        
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
             if (ext instanceof GhprbCommitStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onBuildTriggered(trigger.getActualProject(), pr.getHead(), pr.isMergeable(), pr.getId(), repo.getGitHubRepo());
+                    List<Action> additionalActions = ((GhprbCommitStatus) ext).onBuildTriggered(trigger.getActualProject(), pr.getHead(), pr.isMergeable(), pr.getId(), repo.getGitHubRepo());
+                    if (additionalActions != null) {
+                        if (moreActions == null) {
+                            moreActions = new ArrayList<Action>();
+                        }
+                        moreActions.addAll(additionalActions);
+                    }
                 } catch (GhprbCommitStatusException e) {
                     repo.commentOnFailure(null, null, e);
                 }
             }
         }
-        QueueTaskFuture<?> build = trigger.scheduleBuild(cause, repo);
+        QueueTaskFuture<?> build = trigger.scheduleBuild(cause, repo, moreActions);
         if (build == null) {
             logger.log(Level.SEVERE, "Job did not start");
         }
