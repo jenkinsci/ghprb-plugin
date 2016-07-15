@@ -25,7 +25,10 @@ f.advanced() {
     f.textbox(default: descriptor.skipBuildPhrase)
   }
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
-    f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds) 
+    f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds)
+  }
+  f.entry(field: "checkMergeCommit", title: _("Check merge commit sha for updates?")) {
+    f.checkbox(default: descriptor.checkMergeCommit)
   }
   f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
     f.textbox(default: descriptor.cron, checkUrl: "'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)") 
