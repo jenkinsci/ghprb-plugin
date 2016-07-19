@@ -50,7 +50,6 @@ public class GhprbPullRequestTest {
     public void setup() throws IOException {
         given(head.getSha()).willReturn("some sha");
         given(base.getRef()).willReturn("some ref");
-        given(pr.getMergeCommitSha()).willReturn("some other ref");
 
         // Mocks for GHPullRequest
         given(pr.getNumber()).willReturn(10);
