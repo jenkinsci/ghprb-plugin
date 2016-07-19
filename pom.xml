@@ -26,13 +26,12 @@
             <name>Valdis Rigdon</name>
         </developer>
     </developers>
-
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/ghprb-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/ghprb-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/ghprb-plugin</url>
-        <tag>HEAD</tag>
     </scm>
+
 
     <issueManagement>
         <system>GitHub</system>
