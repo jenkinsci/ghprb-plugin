@@ -198,7 +198,7 @@ class GhprbTriggerContext implements Context {
      * Check the merge commit sha for updates
      */
     public void checkMergeCommit(boolean checkMergeCommit) {
-        this.checkMergeCommit= checkMergeCommit;
+        this.checkMergeCommit = checkMergeCommit;
     }
 
     /**

@@ -366,28 +366,29 @@ public class GhprbPullRequest {
         return true;
     }
 
+    // returns false if no new merge commit
     private boolean checkMergeCommit(GHPullRequest pr) {
-	String mergeSha = "";
-	try {
-	    mergeSha=pr.getMergeCommitSha();
-	} catch (IOException ex) {
+        String mergeSha = "";
+        try {
+            mergeSha = pr.getMergeCommitSha();
+        } catch (IOException ex) {
             logger.log(Level.INFO, "Unable to get PR merge commit: ", ex);
-	}
+        }
 
-        if (StringUtils.equals(mergeSha,this.merge)) {
-	  return false;
+        if (StringUtils.equals(mergeSha, this.merge)) {
+          return false;
         }
 
         logger.log(Level.FINE,
                    "New commit. Sha: Merge[{0} => {1}]",
                    new Object[] { this.merge, mergeSha });
 
-	setMerge(mergeSha);
+        setMerge(mergeSha);
 
-	if (accepted) {
-	    shouldRun = true;
-	}
-	return true;
+        if (accepted) {
+          shouldRun = true;
+        }
+        return true;
     }
 
     private void checkComment(GHIssueComment comment) throws IOException {
