@@ -21,6 +21,7 @@ class GhprbTriggerContext implements Context {
     boolean autoCloseFailedPullRequests;
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
     boolean displayBuildErrorsOnDownstreamBuilds;
+    String buildDescriptionTemplate;
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
 
     /**
@@ -191,6 +192,13 @@ class GhprbTriggerContext implements Context {
      */
     public void displayBuildErrorsOnDownstreamBuilds() {
         displayBuildErrorsOnDownstreamBuilds(true);
+    }
+
+    /**
+     * When filled, changes the default build description template
+     */
+    public void buildDescriptionTemplate(String template) {
+       this.buildDescriptionTemplate = template;
     }
 
     /**
