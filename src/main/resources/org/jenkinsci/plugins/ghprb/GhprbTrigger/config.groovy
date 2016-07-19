@@ -59,6 +59,20 @@ f.advanced() {
       }
     }
   }
+  f.entry(field: "blackListTargetBranches", title: _("Blacklist Target Branches:")) {
+    f.repeatable(field: "blackListTargetBranches", minimum: "1", add: "Add Branch") {
+      table(width: "100%") {
+        f.entry(field: "branch") {
+          f.textbox() 
+        }
+        f.entry(title: "") {
+          div(align: "right") {
+            f.repeatableDeleteButton(value: "Delete Branch") 
+          }
+        }
+      }
+    }
+  }
 }
 f.advanced(title: _("Trigger Setup")) {
   f.entry(title: _("Trigger Setup")) {
