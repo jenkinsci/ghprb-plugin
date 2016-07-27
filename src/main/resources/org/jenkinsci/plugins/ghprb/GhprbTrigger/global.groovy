@@ -28,6 +28,9 @@ f.section(title: descriptor.displayName) {
     f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
       f.checkbox() 
     }
+    f.entry(field: "checkMergeCommit", title: _("Check merge commit sha for updates?")) {
+      f.checkbox()
+    }
     f.entry(field: "requestForTestingPhrase", title: _("Request for testing phrase")) {
       f.textarea(default: "Can one of the admins verify this patch?") 
     }
