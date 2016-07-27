@@ -240,6 +240,10 @@ public class Ghprb {
         return false;
     }
 
+    List<GhprbBranch> getBlackListTargetBranches() {
+        return trigger.getBlackListTargetBranches();
+    }
+
     List<GhprbBranch> getWhiteListTargetBranches() {
         return trigger.getWhiteListTargetBranches();
     }
