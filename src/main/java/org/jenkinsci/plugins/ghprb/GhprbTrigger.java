@@ -48,6 +48,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.servlet.ServletException;
 
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -163,7 +164,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     @Override
-    public Object readResolve() {
+    public Object readResolve() throws ObjectStreamException {
+        super.readResolve();
         convertPropertiesToExtensions();
         checkGitHubApiAuth();
         return this;
