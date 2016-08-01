@@ -85,6 +85,9 @@ public class GhprbPullRequest {
 
     private final int id;
     private Date updated; // Needed to track when the PR was updated
+    // Local representation of the number of comments that we have
+    // on the PR.
+    private transient int commentCount;
     private String head;
     private String base;
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
@@ -220,12 +223,17 @@ public class GhprbPullRequest {
         
             synchronized (this) {
                 boolean wasUpdated = setUpdated(updatedDate);
-
+                
                 // Update the PR object with the new pull request object if
                 // it is non-null.  getPullRequest will then avoid another
                 // GH API call.
                 if (ghpr != null) {
                     setPullRequest(ghpr);
+                }
+                
+                if (comment != null) {
+                    // Increment the number of comments by 1
+                    this.commentCount++;
                 }
                 
                 // Grab the pull request for use in this method (in case we came in through the comment path)
@@ -443,11 +451,11 @@ public class GhprbPullRequest {
 
     private int checkComments(GHPullRequest ghpr,
                               Date lastUpdatedTime) {
-//        It looks like this is always returning 0, ignoring till it can be confirmed.
-//        if (ghpr.getCommentsCount() == 0) {
-//            // Avoid the API call. Nothing to do here.
-//            return 0;
-//        }
+        if (this.commentCount == 0) {
+            // Avoid the API call. Nothing to do here.  Use the local representation
+            // which is updated with the webhook comment updates.
+            return 0;
+        }
 
         int count = 0;
         logger.log(Level.FINEST, "Checking for comments after: {0}", lastUpdatedTime);
@@ -656,6 +664,9 @@ public class GhprbPullRequest {
                 GHCommitPointer prBase = pr.getBase();
                 setBase(prBase.getSha());
             }
+            
+            // Update the number of comments
+            this.commentCount = pr.getCommentsCount();
         }
     }
     
