@@ -409,6 +409,8 @@ public class GhprbPullRequest {
                    new Object[] { this.merge, mergeSha });
 
         setMerge(mergeSha);
+	setHead(pr.getHead().getSha());
+	setBase(pr.getBase().getSha());
 
         if (accepted) {
           shouldRun = true;
