@@ -251,7 +251,7 @@ public class GhprbRepository implements Saveable{
             GHPullRequest pr = repo.getPullRequest(id);
             pr.comment(comment);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
+            logger.log(Level.SEVERE, "Could not add comment to pull request #" + id + ": '" + comment + "'", ex);
         }
     }
 
@@ -261,12 +261,15 @@ public class GhprbRepository implements Saveable{
             GHPullRequest pr = repo.getPullRequest(id);
             pr.close();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
+            logger.log(Level.SEVERE, "Could not close the pull request #" + id + ": '", ex);
         }
     }
 
     private boolean hookExist() throws IOException {
         GHRepository ghRepository = getGitHubRepo();
+        if (ghRepository == null) {
+            throw new IOException("Unable to get repo [ " + reponame + " ]");
+        }
         for (GHHook h : ghRepository.getHooks()) {
             if (!"web".equals(h.getName())) {
                 continue;
@@ -300,7 +303,7 @@ public class GhprbRepository implements Saveable{
                 return true;
             }
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Couldn''t create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
+            logger.log(Level.SEVERE, "Could not create web hook for repository {0}. Does the user (from global configuration) have admin rights to the repository?", reponame);
             return false;
         }
     }
@@ -395,8 +398,8 @@ public class GhprbRepository implements Saveable{
     }
     
     public GHRepository getGitHubRepo() {
-        if (ghRepository == null) {
-            initGhRepository();
+        if (ghRepository == null && !initGhRepository()) {
+            logger.log(Level.SEVERE, "Unable to get repository [ {0} ]", reponame);
         }
         return ghRepository;
     }
