@@ -26,6 +26,13 @@ a smoke test job and a full test job, you can configure the full test job to onl
 
 For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
 
+### ITHAKA STATUS:
+* this is a fork from the upstream and will occasionally require a merge to work
+  with newer versions of Jenkins
+* when you build this with mvn clean package, make sure your .m2/settings.xml
+  file is clean and not the ITHAKA one (e.g. rename it)
+
+
 ### Master status:
 
 [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/ghprb-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/ghprb-plugin/)
@@ -128,7 +135,7 @@ job('upstreamJob') {
     }
 
     triggers {
-        pullRequest {
+        githubPullRequest {
             admin('user_1')
             admins(['user_2', 'user_3'])
             userWhitelist('you@you.com')
@@ -143,6 +150,7 @@ job('upstreamJob') {
             autoCloseFailedPullRequests()
             displayBuildErrorsOnDownstreamBuilds()
             whiteListTargetBranches(['master','test', 'test2'])
+            blackListListTargetBranches(['master','test', 'test2'])
             allowMembersOfWhitelistedOrgsAsAdmin()
             extensions {
                 commitStatus {

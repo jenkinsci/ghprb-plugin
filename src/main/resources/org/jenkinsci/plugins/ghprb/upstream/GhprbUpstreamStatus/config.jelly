@@ -1,4 +1,8 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:entry title="Only post commit status of parent matrix job" field="showMatrixStatus">
+    <f:checkbox default = "${descriptor.getShowMatrixStatusDefault(instance)}" placeholder = "${descriptor.getShowMatrixStatusDefault(instance)}"/>
+  </f:entry>
   <f:entry title="${%Commit Status Context}" field="commitStatusContext">
     <f:textbox default="${descriptor.getCommitStatusContextDefault(instance)}"  placeholder="${descriptor.getCommitStatusContextDefault(instance)}"/>
   </f:entry>
@@ -10,6 +14,9 @@
   </f:entry>
     <f:entry title="${%Commit Status Build Started}" field="startedStatus">
     <f:textbox default="${descriptor.getStartedStatusDefault(instance)}" placeholder="${descriptor.getStartedStatusDefault(instance)}"/>
+  </f:entry>
+  <f:entry title="${%Add test result one liner}" field="addTestResults" >
+    <f:checkbox default="${descriptor.getAddTestResultsDefault(instance)}" />
   </f:entry>
   <f:entry title="${%Commit Status Build Result}" field="completedStatus" >
     <f:repeatableProperty field="completedStatus" default="${descriptor.getCompletedStatusDefault(instance)}" />

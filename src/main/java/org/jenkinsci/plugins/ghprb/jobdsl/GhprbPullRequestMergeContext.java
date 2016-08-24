@@ -8,6 +8,7 @@ public class GhprbPullRequestMergeContext implements Context {
     boolean disallowOwnCode;
     boolean failOnNonMerge;
     boolean deleteOnMerge;
+    boolean allowMergeWithoutTriggerPhrase;
 
     /**
      * @param mergeComment Sets a comment that should show up when the merge command is sent to GitHub.
@@ -70,5 +71,20 @@ public class GhprbPullRequestMergeContext implements Context {
      */
     public void deleteOnMerge() {
         deleteOnMerge(true);
+    }
+
+    /**
+     * Allows merging the PR even if the trigger phrase was not present. Defaults to {@code false}
+     * @param allowMergeWithoutTriggerPhrase Allow the merge to happen without the trigger phrase
+     */
+    public void allowMergeWithoutTriggerPhrase(boolean allowMergeWithoutTriggerPhrase) {
+        this.allowMergeWithoutTriggerPhrase = allowMergeWithoutTriggerPhrase;
+    }
+
+    /**
+     * Allows merging the PR even if the trigger phrase was not present. Defaults to {@code false}
+     */
+    public void allowMergeWithoutTriggerPhrase() {
+        allowMergeWithoutTriggerPhrase(false);
     }
 }

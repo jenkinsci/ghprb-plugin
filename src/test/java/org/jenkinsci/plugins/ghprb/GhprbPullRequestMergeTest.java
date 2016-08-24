@@ -142,7 +142,7 @@ public class GhprbPullRequestMergeTest {
         given(build.getResult()).willReturn(Result.SUCCESS);
         given(build.getParent()).willCallRealMethod();
 
-        given(pullRequest.getPullRequest(Mockito.anyBoolean())).willReturn(pr);
+        given(pullRequest.getPullRequest()).willReturn(pr);
 
         given(cause.getPullID()).willReturn(pullId);
         given(cause.isMerged()).willReturn(true);
@@ -209,7 +209,8 @@ public class GhprbPullRequestMergeTest {
             boolean onlyAdminsMerge, 
             boolean disallowOwnCode,
             boolean failOnNonMerge,
-            boolean deleteOnMerge
+            boolean deleteOnMerge,
+            boolean allowMergeWithoutTriggerPhrase
             ) {
 
         GhprbPullRequestMerge merger = spy(new GhprbPullRequestMerge(
@@ -217,7 +218,8 @@ public class GhprbPullRequestMergeTest {
                 onlyAdminsMerge, 
                 disallowOwnCode,
                 failOnNonMerge,
-                deleteOnMerge));
+                deleteOnMerge,
+                allowMergeWithoutTriggerPhrase));
 
         merger.setHelper(helper);
 
@@ -228,7 +230,7 @@ public class GhprbPullRequestMergeTest {
     private GhprbPullRequestMerge setupMerger(
             boolean onlyAdminsMerge, 
             boolean disallowOwnCode) {
-        return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false);
+        return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false, false);
     }
 
     @Test

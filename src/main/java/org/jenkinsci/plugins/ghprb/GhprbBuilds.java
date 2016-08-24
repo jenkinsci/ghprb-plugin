@@ -66,7 +66,9 @@ public class GhprbBuilds {
                 pr.getCommitAuthor(), 
                 prAuthor, 
                 pr.getDescription(), 
-                pr.getAuthorRepoGitUrl());
+                pr.getAuthorRepoGitUrl(),
+                repo.getName(),
+                trigger.getGitHubApiAuth().getCredentialsId());
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
             if (ext instanceof GhprbCommitStatus) {

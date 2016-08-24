@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <f:entry title="${%Build Result Message}" field="messages" >
     <f:repeatableProperty field="messages" default="${descriptor.getMessagesDefault(instance)}" placeholder="${descriptor.getMessagesDefault(instance)}"/>
