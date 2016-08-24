@@ -18,8 +18,14 @@ f.advanced() {
   f.entry(field: "onlyTriggerPhrase", title: "Only use trigger phrase for build triggering") {
     f.checkbox() 
   }
+  f.entry(field: "includedRegion", title: _("Included Region")) {
+    f.textbox(default: descriptor.includedRegion)
+  }
+  f.entry(field: "excludedRegion", title: _("Excluded Region")) {
+    f.textbox(default: descriptor.excludedRegion)
+  }
   f.entry(field: "autoCloseFailedPullRequests", title: _("Close failed pull request automatically?")) {
-    f.checkbox(default: descriptor.autoCloseFailedPullRequests) 
+    f.checkbox(default: descriptor.autoCloseFailedPullRequests)
   }
   f.entry(field: "skipBuildPhrase", title: _("Skip build phrase")) {
     f.textbox(default: descriptor.skipBuildPhrase)
