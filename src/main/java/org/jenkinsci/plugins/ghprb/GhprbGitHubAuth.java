@@ -49,6 +49,7 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 
 public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private static final Logger logger = Logger.getLogger(GhprbGitHubAuth.class.getName());
@@ -61,7 +62,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private final String credentialsId;
     private final String id;
     private final String description;
-    private final String secret;
+    private final Secret secret;
     
     private transient GitHub gh;
 
@@ -72,7 +73,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             String credentialsId, 
             String description, 
             String id,
-            String secret
+            Secret secret
             ) {
         if (StringUtils.isEmpty(serverAPIUrl)) {
             serverAPIUrl = "https://api.github.com";
@@ -116,13 +117,13 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     
 
     @Exported
-    public String getSecret() {
+    public Secret getSecret() {
         return secret;
     }
     
 
     public boolean checkSignature(String body, String signature) {
-        if (StringUtils.isEmpty(secret)) {
+        if (secret == null || StringUtils.isEmpty(secret.getPlainText())) {
             return true;
         }
         
@@ -130,7 +131,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             String expected = signature.substring(5);
             String algorithm = "HmacSHA1";
             try {
-                SecretKeySpec keySpec = new SecretKeySpec(secret.getBytes(), algorithm);
+                SecretKeySpec keySpec = new SecretKeySpec(secret.getPlainText().getBytes(), algorithm);
                 Mac mac = Mac.getInstance(algorithm);
                 mac.init(keySpec);
                 byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));

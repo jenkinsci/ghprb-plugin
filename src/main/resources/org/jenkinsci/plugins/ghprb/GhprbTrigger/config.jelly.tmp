@@ -25,7 +25,7 @@
 	  <f:checkbox default="${descriptor.autoCloseFailedPullRequests}"/>
 	</f:entry>
     <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
-  	  <f:textarea default="${descriptor.skipBuildPhrase}"/>
+  	  <f:textbox default="${descriptor.skipBuildPhrase}"/>
     </f:entry>
 	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
 	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>

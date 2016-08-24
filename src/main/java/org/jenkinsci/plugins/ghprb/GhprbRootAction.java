@@ -76,7 +76,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
         String payload = null;
         String body = null;
 
-        if (type.toLowerCase().startsWith("application/json")) {
+        if (type != null && type.toLowerCase().startsWith("application/json")) {
             body = extractRequestBody(req);
             if (body == null) {
                 logger.log(Level.SEVERE, "Can't get request body for application/json.");
@@ -84,7 +84,7 @@ public class GhprbRootAction implements UnprotectedRootAction {
                 return;
             }
             payload = body;
-        } else if (type.toLowerCase().startsWith("application/x-www-form-urlencoded")) {
+        } else if (type != null && type.toLowerCase().startsWith("application/x-www-form-urlencoded")) {
             body = extractRequestBody(req);
             if (body == null || body.length() <= 8) {
                 logger.log(Level.SEVERE,

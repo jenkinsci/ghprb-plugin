@@ -1,17 +1,21 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-	<f:entry title="Merge comment" field="mergeComment">
-		<f:textarea />
-	</f:entry>
-	<f:entry title="Only Admin can merge code" field="onlyAdminsMerge">
-		<f:checkbox />
-	</f:entry>
-	<f:entry title="Disallow merging own code?" field="disallowOwnCode">
-		<f:checkbox />
-	</f:entry>
+    <f:entry title="Merge comment" field="mergeComment">
+        <f:textarea />
+    </f:entry>
+    <f:entry title="Only Admin can merge code" field="onlyAdminsMerge">
+        <f:checkbox />
+    </f:entry>
+    <f:entry title="Disallow merging own code?" field="disallowOwnCode">
+        <f:checkbox />
+    </f:entry>
     <f:entry title="Fail the build if the Pull Request can't be merged?" field="failOnNonMerge">
         <f:checkbox />
     </f:entry>
     <f:entry title="Delete the branch after successful merge?" field="deleteOnMerge">
         <f:checkbox />
     </f:entry>
+    <f:entry title="Allow merge without trigger phrase?" field="allowMergeWithoutTriggerPhrase">
+            <f:checkbox />
+        </f:entry>
 </j:jelly>

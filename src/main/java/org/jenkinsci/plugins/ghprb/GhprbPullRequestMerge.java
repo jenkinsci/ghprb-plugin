@@ -36,21 +36,24 @@ import hudson.util.FormValidation;
 public class GhprbPullRequestMerge extends Recorder {
 
     private transient PrintStream logger;
-
     private final Boolean onlyAdminsMerge;
+
     private final Boolean disallowOwnCode;
     private final String mergeComment;
     private final Boolean failOnNonMerge;
     private final Boolean deleteOnMerge;
+    private final Boolean allowMergeWithoutTriggerPhrase;
 
     @DataBoundConstructor
-    public GhprbPullRequestMerge(String mergeComment, boolean onlyAdminsMerge, boolean disallowOwnCode, boolean failOnNonMerge, boolean deleteOnMerge) {
+    public GhprbPullRequestMerge(String mergeComment, boolean onlyAdminsMerge, boolean disallowOwnCode, boolean failOnNonMerge,
+                                 boolean deleteOnMerge, boolean allowMergeWithoutTriggerPhrase) {
 
         this.mergeComment = mergeComment;
         this.onlyAdminsMerge = onlyAdminsMerge;
         this.disallowOwnCode = disallowOwnCode;
         this.failOnNonMerge = failOnNonMerge;
         this.deleteOnMerge = deleteOnMerge;
+        this.allowMergeWithoutTriggerPhrase = allowMergeWithoutTriggerPhrase;
     }
 
     public String getMergeComment() {
@@ -71,6 +74,10 @@ public class GhprbPullRequestMerge extends Recorder {
 
     public boolean getDeleteOnMerge() {
         return deleteOnMerge == null ? false : deleteOnMerge;
+    }
+
+    public Boolean getAllowMergeWithoutTriggerPhrase() {
+        return allowMergeWithoutTriggerPhrase == null ? false : allowMergeWithoutTriggerPhrase;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -125,9 +132,8 @@ public class GhprbPullRequestMerge extends Recorder {
         boolean canMerge = true;
         String commentBody = cause.getCommentBody();
 
-        // If merge can only be triggered by a comment and there is a
-        // comment
-        if (commentBody == null || !helper.isTriggerPhrase(commentBody)) {
+        // If merge can only be triggered by a comment and there is a comment
+        if (!getAllowMergeWithoutTriggerPhrase() && (commentBody == null || !helper.isTriggerPhrase(commentBody))) {
             logger.println("The comment does not contain the required trigger phrase.");
         } else {
             intendToMerge = true;

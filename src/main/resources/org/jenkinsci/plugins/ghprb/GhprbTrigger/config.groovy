@@ -28,7 +28,7 @@ f.advanced() {
     f.checkbox(default: descriptor.autoCloseFailedPullRequests)
   }
   f.entry(field: "skipBuildPhrase", title: _("Skip build phrase")) {
-    f.textarea(default: descriptor.skipBuildPhrase) 
+    f.textbox(default: descriptor.skipBuildPhrase)
   }
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
     f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds) 
@@ -53,6 +53,20 @@ f.advanced() {
   }
   f.entry(field: "whiteListTargetBranches", title: _("Whitelist Target Branches:")) {
     f.repeatable(field: "whiteListTargetBranches", minimum: "1", add: "Add Branch") {
+      table(width: "100%") {
+        f.entry(field: "branch") {
+          f.textbox() 
+        }
+        f.entry(title: "") {
+          div(align: "right") {
+            f.repeatableDeleteButton(value: "Delete Branch") 
+          }
+        }
+      }
+    }
+  }
+  f.entry(field: "blackListTargetBranches", title: _("Blacklist Target Branches:")) {
+    f.repeatable(field: "blackListTargetBranches", minimum: "1", add: "Add Branch") {
       table(width: "100%") {
         f.entry(field: "branch") {
           f.textbox() 

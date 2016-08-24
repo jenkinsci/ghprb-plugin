@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.ghprb.extensions.status;
 
 import hudson.Extension;
 import hudson.Util;
+import hudson.matrix.MatrixProject;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -39,6 +40,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     private final String commitStatusContext;
+    private final Boolean showMatrixStatus;
     private final String triggeredStatus;
     private final String startedStatus;
     private final String statusUrl;
@@ -50,16 +52,18 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     }
 
     public GhprbSimpleStatus(String commitStatusContext) {
-        this(commitStatusContext, null, null, null, false, new ArrayList<GhprbBuildResultMessage>(0));
+        this(false, commitStatusContext, null, null, null, false, new ArrayList<GhprbBuildResultMessage>(0));
     }
 
     @DataBoundConstructor
-    public GhprbSimpleStatus(String commitStatusContext,
+    public GhprbSimpleStatus(Boolean showMatrixStatus,
+                             String commitStatusContext,
                              String statusUrl,
                              String triggeredStatus,
                              String startedStatus,
                              Boolean addTestResults,
                              List<GhprbBuildResultMessage> completedStatus) {
+        this.showMatrixStatus = showMatrixStatus;
         this.statusUrl = statusUrl;
         this.commitStatusContext = commitStatusContext == null ? "" : commitStatusContext;
         this.triggeredStatus = triggeredStatus;
@@ -70,6 +74,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
     public String getStatusUrl() {
         return statusUrl == null ? "" : statusUrl;
+    }
+
+    public boolean getShowMatrixStatus() {
+        return showMatrixStatus == null ? false: showMatrixStatus;
     }
 
     public String getCommitStatusContext() {
@@ -152,6 +160,13 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
                              GHRepository repo) throws GhprbCommitStatusException {
         String startedStatus = getDescriptor().getStartedStatusDefault(this);
 
+        // If the showMatrixStatus checkbox is selected and the job is not a Matrix Job (Children
+        // nodes), then don't post statuses
+        boolean showMatrixStatus = getDescriptor().getShowMatrixStatusDefault(this);
+        if(showMatrixStatus && !(build.getProject() instanceof MatrixProject)){
+            return;
+        }
+
         // check if we even need to update
         if (StringUtils.equals(startedStatus, "--none--")) {
             return;
@@ -167,6 +182,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
         }
+
         createCommitStatus(build, listener, sb.toString(), repo, GHCommitState.PENDING);
     }
 
@@ -174,6 +190,13 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
                                 TaskListener listener,
                                 GHRepository repo) throws GhprbCommitStatusException {
         List<GhprbBuildResultMessage> completedStatus = getDescriptor().getCompletedStatusDefault(this);
+        boolean showMatrixStatus = getDescriptor().getShowMatrixStatusDefault(this);
+
+        // If the showMatrixStatus checkbox is selected and the job is not a Matrix Job (Children
+        // nodes), then don't post statuses
+        if(showMatrixStatus && !(build.getProject() instanceof MatrixProject)) {
+            return;
+        }
 
         GHCommitState state = Ghprb.getState(build);
 
@@ -201,6 +224,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
             GhprbBuildManager buildManager = GhprbBuildManagerFactoryUtil.getBuildManager(build, jobConfiguration);
             if (getAddTestResults()) {
+                listener.getLogger().println("Adding one-line test results to commit status...");
                 sb.append(buildManager.getOneLineTestResults());
             }
         }
@@ -244,6 +268,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         if (context != null) {
             listener.getLogger().println(String.format("Using context: " + context));
         }
+
         try {
             repo.createCommitStatus(sha1, state, url, message, context);
         } catch (IOException e) {
@@ -286,6 +311,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
 
         public String getCommitStatusContextDefault(GhprbSimpleStatus local) {
             return Ghprb.getDefaultValue(local, GhprbSimpleStatus.class, "getCommitStatusContext");
+        }
+        
+        public Boolean getShowMatrixStatusDefault(GhprbSimpleStatus local){
+            return Ghprb.getDefaultValue(local,GhprbSimpleStatus.class, "getShowMatrixStatus");
         }
 
         public boolean addIfMissing() {

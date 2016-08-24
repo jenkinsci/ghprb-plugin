@@ -8,12 +8,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 class GhprbSimpleStatusContext implements Context {
+    Boolean showMatrixStatus;
     String context;
     String triggeredStatus;
     String startedStatus;
     String statusUrl;
     Boolean addTestResults;
     List<GhprbBuildResultMessage> completedStatus = new ArrayList<GhprbBuildResultMessage>();
+
+    /**
+     * A boolean to indicate whether we only want to post commit statuses on the Matrix parent job
+     */
+    void showMatrixStatus(Boolean showMatrixStatus) {
+        this.showMatrixStatus = showMatrixStatus;
+    }
+
+    /**
+     * A boolean to indicate whether we only want to post commit statuses on the Matrix parent job
+     */
+    void showMatrixStatus() {
+        this.showMatrixStatus = true;
+    }
 
     /**
      * A string label to differentiate this status from the status of other systems.

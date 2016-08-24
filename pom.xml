@@ -10,7 +10,7 @@
 
     <artifactId>ghprb</artifactId>
     <name>GitHub Pull Request Builder</name>
-    <version>1.31.5-SNAPSHOT</version>
+    <version>1.33.1</version>
     <packaging>hpi</packaging>
 
     <url>https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin</url>
@@ -26,13 +26,13 @@
             <name>Valdis Rigdon</name>
         </developer>
     </developers>
-
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/ghprb-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/ghprb-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/ghprb-plugin</url>
-        <tag>HEAD</tag>
-    </scm>
+      <tag>ghprb-1.33.1</tag>
+  </scm>
+
 
     <issueManagement>
         <system>GitHub</system>
