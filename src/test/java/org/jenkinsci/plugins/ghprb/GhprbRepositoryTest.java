@@ -385,6 +385,7 @@ public class GhprbRepositoryTest {
         verify(helper).isTriggerPhrase(eq("comment body"));
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(1)).isIgnoreBotUser();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -480,6 +481,7 @@ public class GhprbRepositoryTest {
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(1)).isIgnoreBotUser();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API

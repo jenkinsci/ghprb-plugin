@@ -123,7 +123,7 @@ public class GhprbPullRequestMerge extends Recorder {
         // ignore comments from bot user, this fixes an issue where the bot would auto-merge
         // a PR when the 'request for testing' phrase contains the PR merge trigger phrase and
         // the bot is a member of a whitelisted organization
-        if (helper.isBotUser(triggerSender)) {
+        if (helper.isIgnoreBotUser() && helper.isBotUser(triggerSender)) {
             logger.println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
             return false;
         }

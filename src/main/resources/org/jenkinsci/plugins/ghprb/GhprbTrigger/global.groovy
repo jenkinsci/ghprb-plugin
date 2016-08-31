@@ -8,7 +8,10 @@ f.section(title: descriptor.displayName) {
   }
   f.entry(field: "manageWebhooks", title: _("Auto-manage webhooks")) {
     f.checkbox(default: true) 
-  }  
+  }
+  f.entry(field: "ignoreCommentsFromBotUser", title: _("Ignore comments made by PR bot")) {
+    f.checkbox() 
+  }
   f.entry(field: "useComments", title: _("Use comments to report results when updating commit status fails")) {
     f.checkbox() 
   }

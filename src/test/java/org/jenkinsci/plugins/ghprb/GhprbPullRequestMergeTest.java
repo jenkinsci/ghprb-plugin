@@ -164,6 +164,7 @@ public class GhprbPullRequestMergeTest {
 
         helper = spy(new Ghprb(trigger));
         trigger.setHelper(helper);
+        given(helper.isIgnoreBotUser()).willReturn(false);
         given(helper.isBotUser(any(GHUser.class))).willReturn(false);
     }
 

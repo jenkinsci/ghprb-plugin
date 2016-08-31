@@ -393,14 +393,10 @@ public class GhprbPullRequest {
 
         logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { sender.getName(), body });
 
-        // Disabled until more advanced configs get set up
-        // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
-        // a user or trigger a build when the 'request for testing' phrase contains the
-        // whitelist/trigger phrase and the bot is a member of a whitelisted organisation
-        // if (helper.isBotUser(sender)) {
-        // logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);
-        // return;
-        // }
+        if (helper.isIgnoreBotUser() && helper.isBotUser(sender)) {
+            logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);
+            return;
+        }
 
         if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) { // add to whitelist
             GHIssue parent = comment.getParent();

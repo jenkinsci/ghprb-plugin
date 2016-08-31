@@ -226,6 +226,10 @@ public class Ghprb {
     public boolean isBotUser(GHUser user) {
         return user != null && user.getLogin().equals(getGitHub().getBotUserLogin());
     }
+    
+    public boolean isIgnoreBotUser() {
+        return GhprbTrigger.getDscp().isIgnoreCommentsFromBotUser();
+    }
 
     private boolean isInWhitelistedOrganisation(GHUser user) {
         for (String organisation : organisations()) {
