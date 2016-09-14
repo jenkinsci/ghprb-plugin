@@ -190,11 +190,11 @@ public class GhprbPullRequest {
         checkSkipBuild();
         tryBuild();
     }
-    
+
     // Reconcile the view of the PR we have locally with the one that was sent to us by GH.
     // We can reach this method in one of three ways, and the comment indicates what
     // we should do in each case:
-    //      1. With webhooks + new trigger/PR initialization - 
+    //      1. With webhooks + new trigger/PR initialization -
     //         This could happen if a new job was added, new trigger was enabled, or if Jenkins
     //         was restarted.  In this case, our view of the PR is out of date.  We need to
     //         compare hashes and check the comments going back to when the last update was (which could be
@@ -217,7 +217,7 @@ public class GhprbPullRequest {
                 logger.log(Level.INFO, "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})", new Object[] { this.id, this.repo.getName(), updatedDate, user,
                     comment != null ? "comment" : "PR update"});
             }
-        
+
             synchronized (this) {
                 boolean wasUpdated = setUpdated(updatedDate);
 
@@ -227,11 +227,11 @@ public class GhprbPullRequest {
                 if (ghpr != null) {
                     setPullRequest(ghpr);
                 }
-                
+
                 // Grab the pull request for use in this method (in case we came in through the comment path)
                 GHPullRequest pullRequest = getPullRequest();
-                
-                
+
+
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
                     logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
@@ -251,14 +251,14 @@ public class GhprbPullRequest {
                     checkComment(comment);
                     commentsChecked = 1;
                 }
-                
+
                 // Check the commit on the PR against the recorded version.
                 boolean newCommit = checkCommit(pullRequest);
-            
+
                 // Log some info.
                 if (!newCommit && commentsChecked == 0) {
                     logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
-                            + "that may mean that commit status was updated.", 
+                            + "that may mean that commit status was updated.",
                             new Object[] { this.id, this.repo.getName() }
                     );
                 }
@@ -422,6 +422,28 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
             }
+            //stages
+        } else if(helper.isDeployMincPhrase(body)){
+          logger.log(Level.FINEST, "Deploy minc phrase");
+          if (helper.isAdmin(sender)){
+            logger.log(Level.FINEST, "Admin {0} ran deploy minc phrase", sender);
+            shouldRun = true;
+            //triggered=true ?
+          }
+        } else if(helper.isDeployProdLikePhrase(body)){
+          logger.log(Level.FINEST, "Deploy prod like phrase");
+          if (helper.isAdmin(sender)){
+            logger.log(Level.FINEST, "Admin {0} ran deploy prod like phrase", sender);
+            shouldRun = true;
+            //triggered=true ?
+          }
+        } else if(helper.isDeployProdPhrase(body)){
+          logger.log(Level.FINEST, "Deploy prod phrase");
+          if (helper.isAdmin(sender)){
+            logger.log(Level.FINEST, "Admin {0} ran deploy prod phrase", sender);
+            shouldRun = true;
+            //triggered=true ?
+          }
         } else if (helper.isTriggerPhrase(body)) { // trigger phrase
             logger.log(Level.FINEST, "Trigger phrase");
             if (helper.isAdmin(sender)) {
@@ -532,7 +554,7 @@ public class GhprbPullRequest {
 
     /**
      * Base and Ref are part of the PullRequest object
-     * 
+     *
      * @return the sha to the base
      */
     public String getTarget() {
@@ -545,7 +567,7 @@ public class GhprbPullRequest {
 
     /**
      * Head and Ref are part of the PullRequest object
-     * 
+     *
      * @return the sha for the head.
      */
     public String getSource() {
@@ -558,7 +580,7 @@ public class GhprbPullRequest {
 
     /**
      * Title is part of the PullRequest object
-     * 
+     *
      * @return the title of the pull request.
      */
     public String getTitle() {
@@ -582,7 +604,7 @@ public class GhprbPullRequest {
 
     /**
      * The description body is part of the PullRequest object
-     * 
+     *
      * @return the description from github
      */
     public String getDescription() {
@@ -599,7 +621,7 @@ public class GhprbPullRequest {
 
     /**
      * Author is part of the PullRequest Object
-     * 
+     *
      * @return The GitHub user that created the PR
      * @throws IOException Unable to connect to GitHub
      */
@@ -609,17 +631,17 @@ public class GhprbPullRequest {
 
     /**
      * Get the PullRequest object for this PR
-     * 
+     *
      * @return a copy of the pull request
      * @throws IOException if unable to connect to GitHub
      */
     public GHPullRequest getPullRequest() throws IOException {
         return getPullRequest(false);
     }
-    
+
     /**
      * Get the PullRequest object for this PR
-     * 
+     *
      * @param force If true, forces retrieval of the PR info from the github API. Use sparingly.
      * @return a copy of the pull request
      * @throws IOException if unable to connect to GitHub
@@ -630,7 +652,7 @@ public class GhprbPullRequest {
         }
         return pr;
     }
-    
+
     private void setPullRequest(GHPullRequest pr) {
         if (pr == null) {
             return;
@@ -658,10 +680,10 @@ public class GhprbPullRequest {
             }
         }
     }
-    
+
     /**
      * Email address is collected from GitHub as extra information, so lets cache it.
-     * 
+     *
      * @return The PR authors email address
      */
     public String getAuthorEmail() {
