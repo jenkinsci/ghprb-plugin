@@ -44,13 +44,13 @@ f.section(title: descriptor.displayName) {
       f.textbox(default: ".*\\[skip\\W+ci\\].*")
     }
     f.entry(field: "deployMincPhrase", title: _("Deploy to Min C")) {
-      f.textbox(default: "deploy\\W+to\\W+minc\\W*$")
+      f.textbox(default: "deploy\\W+to\\W+minc\\W*")
     }
     f.entry(field: "deployProdLikePhrase", title: _("Deploy to Prod Like")) {
-      f.textbox(default: "deploy\\W+to\\W+prod\\W+like\\W*$")
+      f.textbox(default: "deploy\\W+to\\W+prod\\W+like\\W*")
     }
     f.entry(field: "deployProdPhrase", title: _("Deploy to Prod")) {
-      f.textbox(default: "deploy\\W+to\\W+prod\\W*$")
+      f.textbox(default: "deploy\\W+to\\W+prod\\W*")
     }
     f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
       f.textbox(default: "H/5 * * * *", checkUrl: "'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)")
