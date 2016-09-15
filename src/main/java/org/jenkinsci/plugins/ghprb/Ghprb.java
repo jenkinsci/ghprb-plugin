@@ -217,6 +217,18 @@ public class Ghprb {
         return checkPattern(oktotestPhrasePattern(), comment);
     }
 
+    //stages
+    public boolean isDeployMincPhrase(String comment){
+      return checkPattern(deployMincPhrasePattern(), comment);
+    }
+    public boolean isDeployProdLikePhrase(String comment){
+      return checkPattern(deployProdLikePhrasePattern(), comment);
+    }
+    public boolean isDeployProdPhrase(String comment){
+      return checkPattern(deployProdPhrasePattern(), comment);
+    }
+    
+
     public boolean isTriggerPhrase(String comment) {
         return checkPattern(triggerPhrase(), comment);
     }
@@ -224,6 +236,8 @@ public class Ghprb {
     public boolean ifOnlyTriggerPhrase() {
         return trigger.getOnlyTriggerPhrase();
     }
+
+
 
     public boolean isWhitelisted(GHUser user) {
         return trigger.getPermitAll()

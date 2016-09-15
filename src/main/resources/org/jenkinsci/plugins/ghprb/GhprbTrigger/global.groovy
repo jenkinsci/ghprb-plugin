@@ -43,13 +43,13 @@ f.section(title: descriptor.displayName) {
     f.entry(field: "skipBuildPhrase", title: _("Skip build phrase")) {
       f.textbox(default: ".*\\[skip\\W+ci\\].*")
     }
-    f.entry(field: "deployToMinCPhase", title: _("Deploy to Min C")) {
+    f.entry(field: "deployMincPhrase", title: _("Deploy to Min C")) {
       f.textbox(default: "deploy\\W+to\\W+minc\\W*$")
     }
-    f.entry(field: "deployToProdLike", title: _("Deploy to Prod Like")) {
+    f.entry(field: "deployProdLikePhrase", title: _("Deploy to Prod Like")) {
       f.textbox(default: "deploy\\W+to\\W+prod\\W+like\\W*$")
     }
-    f.entry(field: "deployToProd", title: _("Deploy to Prod")) {
+    f.entry(field: "deployProdPhrase", title: _("Deploy to Prod")) {
       f.textbox(default: "deploy\\W+to\\W+prod\\W*$")
     }
     f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
