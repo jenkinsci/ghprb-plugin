@@ -43,6 +43,15 @@
       <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
       	<f:textbox default=".*\[skip\W+ci\].*"/>
       </f:entry>
+      <f:entry title="${%Deploy to Min C}" field="deployMincPhrase">
+        <f:textbox default="deploy\\W+to\\W+minc\\W*$"/>
+      </f:entry>
+      <f:entry title="${%Deploy to Prod Like}" field="deployProdLikePhrase">
+        <f:textbox default="deploy\\W+to\\W+prod\\W+like\\W*$"/>
+      </f:entry>
+      <f:entry title="${%Deploy to Prod}" field="deployProdPhrase">
+        <f:textbox default="deploy\\W+to\\W+prod\\W*$"/>
+      </f:entry>
       <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
         <f:textbox default="H/5 * * * *" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
       </f:entry>

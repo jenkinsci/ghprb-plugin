@@ -85,7 +85,7 @@ public class GhprbRepositoryTest {
     private GHCommitPointer head;
     @Mock
     private GHUser ghUser;
-    
+
     private GitHub gt;
     private GhprbTrigger trigger;
 
@@ -97,22 +97,22 @@ public class GhprbRepositoryTest {
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
-    
+
 
     @Before
     public void setUp() throws Exception {
         project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
         project.addProperty(new GithubProjectProperty("https://github.com/" + TEST_REPO_NAME));
-        
+
         getNewTrigger();
         startTrigger();
-        
+
         pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
-        
-        
+
+
         doReturn(mock(QueueTaskFuture.class)).when(trigger).scheduleBuild(any(GhprbCause.class), any(GhprbRepository.class));
         initGHPRWithTestData();
-        
+
         given(ghPullRequest.getUser()).willReturn(ghUser);
 
         // Mock github API
@@ -125,22 +125,22 @@ public class GhprbRepositoryTest {
 
     private void getNewTrigger() throws Exception{
         trigger = GhprbTestUtil.getTrigger(null);
-        
+
         gt = trigger.getGitHub();
-        
+
         rateLimit = gt.getRateLimit();
         verify(gt).getRateLimit();
-        
+
         given(gt.getRepository(anyString())).willReturn(ghRepository);
-        
+
     }
-    
+
     private void startTrigger() throws IOException{
 
         trigger.start(project, true);
         trigger.setHelper(helper);
     }
-    
+
     private void addSimpleStatus() {
         GhprbSimpleStatus status = new GhprbSimpleStatus("default");
         try {
@@ -250,7 +250,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
         given(ghPullRequest.getId()).willReturn(100);
         given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
-        
+
         given(ghUser.getEmail()).willReturn("email");
 
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
@@ -314,7 +314,7 @@ public class GhprbRepositoryTest {
         mockHeadAndBase();
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
-        
+
         Date later = new DateTime().plusHours(3).toDate();
         Date tomorrow = new DateTime().plusDays(1).toDate();
 
@@ -330,7 +330,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
         given(ghPullRequest.getId()).willReturn(100);
         given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
-        
+
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
 
@@ -340,7 +340,7 @@ public class GhprbRepositoryTest {
 
         // WHEN
         ghprbRepository.check(); // PR was created
-        
+
         mockComments("comment body", tomorrow);
         ghprbRepository.check(); // PR was updated
 
@@ -382,9 +382,15 @@ public class GhprbRepositoryTest {
         verify(helper).isWhitelistPhrase(eq("comment body"));
         verify(helper).isOktotestPhrase(eq("comment body"));
         verify(helper).isRetestPhrase(eq("comment body"));
+        //stages
+        verify(helper).isDeployMincPhrase(eq("comment body"));
+        verify(helper).isDeployProdLikePhrase(eq("comment body"));
+        verify(helper).isDeployProdPhrase(eq("comment body"));
+        
         verify(helper).isTriggerPhrase(eq("comment body"));
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -422,7 +428,7 @@ public class GhprbRepositoryTest {
         given(ghPullRequest.getId()).willReturn(100);
         given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
-        
+
         given(ghUser.getEmail()).willReturn("email");
         given(ghUser.getLogin()).willReturn("login");
 
@@ -433,7 +439,7 @@ public class GhprbRepositoryTest {
 
         // WHEN
         ghprbRepository.check(); // PR was created
-        
+
         mockComments("test this please", tomorrow);
         ghprbRepository.check(); // PR was updated
 
@@ -444,7 +450,7 @@ public class GhprbRepositoryTest {
         /** GH PR verifications */
         verify(builds, times(2)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verifyNoMoreInteractions(builds);
-        
+
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
         verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
@@ -544,7 +550,7 @@ public class GhprbRepositoryTest {
         getNewTrigger();
         rateLimit.remaining = 0;
         verify(gt, times(1)).getRateLimit();
-        
+
         // WHEN
         startTrigger();
 
@@ -562,15 +568,15 @@ public class GhprbRepositoryTest {
         String actualSecret = "123";
         String actualSignature = createSHA1Signature(actualSecret, body);
         String fakeSignature = createSHA1Signature("abc", body);
-        
+
         GhprbGitHubAuth ghAuth = Mockito.spy(new GhprbGitHubAuth("", "", "", "", "", Secret.fromString(actualSecret)));
         doReturn(true).when(trigger).isActive();
-        
+
         doReturn(ghAuth).when(trigger).getGitHubApiAuth();
-        
+
         Assert.assertFalse(actualSignature.equals(fakeSignature));
         Assert.assertTrue(actualSecret.equals(ghAuth.getSecret().getPlainText()));
-        
+
         Assert.assertTrue(trigger.matchSignature(body, actualSignature));
         Assert.assertFalse(trigger.matchSignature(body, fakeSignature));
     }
@@ -604,11 +610,11 @@ public class GhprbRepositoryTest {
 
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString());
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(AbstractBuild.class), any(TaskListener.class));
-        
+
         doReturn(ghprbRepository).when(trigger).getRepository();
-        
+
         ghprbPullRequest = new GhprbPullRequest(ghPullRequest, helper, ghprbRepository);
-        
+
         // Reset mocks not to mix init data invocations with tests
         reset(ghPullRequest, ghUser, helper, head, base);
     }

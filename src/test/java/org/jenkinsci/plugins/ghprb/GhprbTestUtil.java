@@ -240,7 +240,7 @@ public class GhprbTestUtil {
             "  }" +
             "}";
 
-    
+
     private static RequestImpl req;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -271,16 +271,16 @@ public class GhprbTestUtil {
             given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate());
         }
     }
-    
+
     private static final String apiUrl = "https://api.github.com";
-    
+
     private static String setUpCredentials() throws Exception {
         String credentialsId = Ghprb.createCredentials(apiUrl, "accessToken");
         return credentialsId;
     }
-    
+
     private static String credentialsId;
-    
+
     private static String getCredentialsId() throws Exception {
         if (credentialsId == null) {
             credentialsId = setUpCredentials();
@@ -305,6 +305,9 @@ public class GhprbTestUtil {
         jsonObject.put("requestForTestingPhrase", "test this");
         jsonObject.put("whitelistPhrase", "");
         jsonObject.put("okToTestPhrase", "ok to test");
+        jsonObject.put("deployMincPhrase", "deploy to minc");
+        jsonObject.put("deployProdLikePhrase", "deploy to prod like");
+        jsonObject.put("deployProdPhrase", "deploy to prod");
         jsonObject.put("retestPhrase", "retest this please");
         jsonObject.put("skipBuildPhrase", "[skip ci]");
         jsonObject.put("cron", "0 0 31 2 0");
@@ -319,24 +322,24 @@ public class GhprbTestUtil {
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
-        
+
         JSONObject githubAuth = new JSONObject();
         githubAuth.put("credentialsId", getCredentialsId());
         githubAuth.put("serverAPIUrl", apiUrl);
         githubAuth.put("secret", null);
-        
+
         jsonObject.put("githubAuth", githubAuth);
-        
+
 
         for ( Entry<String, Object> next: config.entrySet()) {
             jsonObject.put(next.getKey(), next.getValue());
         }
-        
+
 
         GhprbTrigger.getDscp().configure(req, jsonObject);
-        
+
     }
-    
+
     static void setFinal(Object o, Field field, Object newValue) throws Exception {
         field.setAccessible(true);
 
@@ -349,52 +352,52 @@ public class GhprbTestUtil {
         modifiersField.setInt(field, prevModifiers);
         modifiersField.setAccessible(false);
         field.setAccessible(false);
-        
+
      }
-    
+
     @SuppressWarnings("unchecked")
     private static void setupReq() throws Exception{
         MetaClass meta = Mockito.mock(MetaClass.class);
         SingleLinkedList<MethodRef> list = SingleLinkedList.empty();
         given(meta.getPostConstructMethods()).willReturn(list);
 
-        
+
         WebApp webApp = Mockito.mock(WebApp.class);
         setFinal(webApp, WebApp.class.getDeclaredField("bindInterceptors"), new ArrayList<BindInterceptor>(0));
-        
+
         given(webApp.getMetaClass(Mockito.any(GhprbTrigger.class))).willReturn(meta);
 
         req = Mockito.mock(RequestImpl.class);
-        
+
         given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
         given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
         given(req.setBindInterceptpr(any(BindInterceptor.class))).willCallRealMethod();
         given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
         given(req.getBindInterceptor()).willCallRealMethod();
         given(req.getWebApp()).willReturn(webApp);
-        
+
         req.setBindListener(BindInterceptor.NOOP);
         req.setBindInterceptpr(BindInterceptor.NOOP);
 
     }
-    
+
     public static GitSCM provideGitSCM() {
         return new GitSCM(newArrayList(
-                new UserRemoteConfig("https://github.com/user/dropwizard", 
-                    "", "+refs/pull/*:refs/remotes/origin/pr/*", "")), 
-                newArrayList(new BranchSpec("${sha1}")), 
+                new UserRemoteConfig("https://github.com/user/dropwizard",
+                    "", "+refs/pull/*:refs/remotes/origin/pr/*", "")),
+                newArrayList(new BranchSpec("${sha1}")),
                 false,
-                null, 
-                null, 
-                "", 
+                null,
+                null,
+                "",
                 null);
     }
-    
+
 
     public static GhprbTrigger getTrigger() throws Exception {
         return getTrigger(null);
     }
-    
+
     public static GhprbTrigger getTrigger(Map<String, Object> values) throws Exception {
         setupReq();
         if (values == null) {
@@ -418,20 +421,20 @@ public class GhprbTestUtil {
         for ( Entry<String, Object> next: values.entrySet()) {
             defaults.put(next.getKey(), next.getValue());
         }
-        
+
         GhprbTrigger trigger = spy(req.bindJSON(GhprbTrigger.class, defaults));
-        
+
         GHRateLimit limit = new GHRateLimit();
         limit.remaining = INITIAL_RATE_LIMIT;
-        
+
         GitHub github = Mockito.mock(GitHub.class);
         given(github.getRateLimit()).willReturn(limit);
 
         Mockito.doReturn(github).when(trigger).getGitHub();
-        
+
         return trigger;
     }
-    
+
     public static void waitForBuildsToFinish(AbstractProject<?, ?> project) throws InterruptedException {
         while (project.isBuilding() || project.isInQueue()) {
             // THEN
@@ -446,26 +449,26 @@ public class GhprbTestUtil {
         }
 
     }
-    
+
 
     public static List<String> checkClassForGetters(Class<?> clazz) {
         Field[] fields = clazz.getDeclaredFields();
         List<Field> xmlFields = new ArrayList<Field>();
         List<String> errors = new ArrayList<String>();
-        
+
         for (Field field : fields) {
             int modifiers = field.getModifiers();
             if (modifiers == (Modifier.PRIVATE) || modifiers == (Modifier.PRIVATE | Modifier.FINAL)) {
                 xmlFields.add(field);
             }
         }
-        
+
         for (Field field : xmlFields) {
             String getter = "get" + StringUtils.capitalize(field.getName());
             try {
                 Method method = clazz.getDeclaredMethod(getter);
                 int modifier = method.getModifiers();
-                if (!Modifier.isPublic(modifier)) { 
+                if (!Modifier.isPublic(modifier)) {
                     errors.add(getter + " is not a public method");
                 }
             } catch (Exception e) {
