@@ -40,7 +40,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
     private Map<String, String> returnEnvironmentVars(AbstractBuild<?, ?> build, TaskListener listener){
         Map<String, String> envVars = Ghprb.getEnvVars(build, listener);
 
-        if (!envVars.containsKey("ghprbUpstreamStatus")) {
+        if (!(envVars.containsKey("ghprbUpstreamStatus") && envVars.containsKey("ghprbGhRepository"))) {
             return null;
         }        
         
