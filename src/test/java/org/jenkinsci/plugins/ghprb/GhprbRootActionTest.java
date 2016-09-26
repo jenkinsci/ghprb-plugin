@@ -142,7 +142,7 @@ public class GhprbRootActionTest {
         GHIssueComment ghIssueComment = spy(issueComment.getComment());
         
         Mockito.when(issueComment.getComment()).thenReturn(ghIssueComment);
-        Mockito.when(ghIssueComment.getUser()).thenReturn(ghUser);
+        Mockito.doReturn(ghUser).when(ghIssueComment).getUser();
         
         
         given(trigger.getGitHub().parseEventPayload(Mockito.any(Reader.class), Mockito.eq(IssueComment.class))).willReturn(issueComment);
