@@ -1,5 +1,100 @@
 ### Updates
 
+ghprb-1.30.4
+ghprb-1.30.5
+ghprb-1.30.6
+ghprb-1.31.1
+ghprb-1.31.2
+ghprb-1.31.3
+ghprb-1.31.4
+ghprb-1.32.1
+ghprb-1.32.2
+ghprb-1.32.3
+ghprb-1.32.4
+ghprb-1.32.5
+ghprb-1.32.6
+ghprb-1.32.7
+ghprb-1.32.8
+ghprb-1.33.0
+ghprb-1.33.1
+
+#### -> 1.33.1
+* Handle 'edited' pull request hooks
+* Fix NPE when creating hooks
+
+#### -> 1.33.0
+* Ability to blacklist branches
+
+#### -> 1.32.8
+* Setting a TODO on getting comment counts
+
+#### -> 1.32.7
+* Some NPE fixes, some doc fixes
+* Simpler ingestion of environment variables
+
+#### -> 1.32.6
+* Set the pull request after updating the updated timestamp. [See PR 368]
+
+#### -> 1.32.5
+* Pull new data in the case of a mergeability check
+
+#### -> 1.32.4
+* Don't check for comments when a new PR is opened.
+
+#### -> 1.32.3
+* Set the paramters again.
+
+#### -> 1.32.2
+* Remove adding parameters action from the env contributor; just add them all.
+
+#### -> 1.32.1
+* Allow for manual managing of webhooks
+* Various fixes, like:
+** Avoid overwriting test results when there's a race condition
+** Reduce API calls
+** Skip build phrase fix and improvements (PR#339)
+** Security 170
+** Downstream job fixes
+
+#### -> 1.31.4
+* TL;DR: refactoring around thread usage.
+* Updated core Jenkins version used in order to fix an issue with Matrix job types
+* The trigger regex is something the admin configures. Handle regex issues gracefully to avoid a build queue blockage.
+* Handle webhooks in separate threads
+* Avoid NPE if cause is null
+* Update Github API version
+* Handle triggers with threads
+
+#### -> 1.31.3
+* Catch configuration errors made by user
+* Expand merge comment
+
+#### -> 1.31.2
+* Fixes for bugs related canceled builds and global overrides
+
+#### -> 1.31.1
+* Various changes to support mvn & java library upgrades
+* Other refactors
+
+#### -> 1.30.7 & 1.30.8
+* These were rolled back
+
+#### -> 1.30.6
+* Fix "no test results found". Interpreting test results is now avaiable as a configuration setting, and is off by default.
+* If user is whitelisted after his/her PR was opened, allow testing on the PR going forward.
+
+#### -> 1.30.5
+* README fixes
+* Fix NPE when last build has been deleted
+* Inherit some global configuration to individual projects
+* Add extension: when a new build is queued, it will abort any running builds for that pull request, and remove any older ones from the queue. (This is the default but comes with a configuration setting to override it.)
+
+#### -> 1.30.4
+* Fix NPE for Ghprb.extractTrigger
+
+#### -> 1.30.3
+* Use `get*` instead of `is*` as a convention for methods
+
 #### -> 1.30.2
 * Don't run through all the builds for changelog, track it in the PR object instead
 * Synchronization around the PR object fields
