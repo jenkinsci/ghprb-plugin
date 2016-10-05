@@ -1,22 +1,5 @@
 ### Updates
 
-ghprb-1.30.4
-ghprb-1.30.5
-ghprb-1.30.6
-ghprb-1.31.1
-ghprb-1.31.2
-ghprb-1.31.3
-ghprb-1.31.4
-ghprb-1.32.1
-ghprb-1.32.2
-ghprb-1.32.3
-ghprb-1.32.4
-ghprb-1.32.5
-ghprb-1.32.6
-ghprb-1.32.7
-ghprb-1.32.8
-ghprb-1.33.0
-ghprb-1.33.1
 
 #### -> 1.33.1
 * Handle 'edited' pull request hooks
@@ -42,7 +25,7 @@ ghprb-1.33.1
 * Don't check for comments when a new PR is opened.
 
 #### -> 1.32.3
-* Set the paramters again.
+* Set the paramaters again.
 
 #### -> 1.32.2
 * Remove adding parameters action from the env contributor; just add them all.
@@ -50,20 +33,20 @@ ghprb-1.33.1
 #### -> 1.32.1
 * Allow for manual managing of webhooks
 * Various fixes, like:
-** Avoid overwriting test results when there's a race condition
-** Reduce API calls
-** Skip build phrase fix and improvements (PR#339)
-** Security 170
-** Downstream job fixes
+  * Avoid overwriting test results when there's a race condition
+  * Reduce API calls
+  * Skip build phrase fix and improvements (PR#339)
+  * Security 170
+  * Downstream job fixes
 
 #### -> 1.31.4
-* TL;DR: refactoring around thread usage.
-* Updated core Jenkins version used in order to fix an issue with Matrix job types
-* The trigger regex is something the admin configures. Handle regex issues gracefully to avoid a build queue blockage.
-* Handle webhooks in separate threads
-* Avoid NPE if cause is null
 * Update Github API version
-* Handle triggers with threads
+* Avoid NPE if cause is null
+* Refactoring around thread usage:
+  * Updated core Jenkins version used in order to fix an issue with Matrix job types
+  * The trigger regex is something the admin configures. Handle regex issues gracefully to avoid a build queue blockage.
+  * Handle webhooks in separate threads
+  * Handle triggers with threads
 
 #### -> 1.31.3
 * Catch configuration errors made by user

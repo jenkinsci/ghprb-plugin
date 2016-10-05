@@ -193,4 +193,4 @@ job('downstreamJob') {
 
 ### Updates
 
-See [CHANGELOG.md]
+See [CHANGELOG](CHANGELOG.md)
