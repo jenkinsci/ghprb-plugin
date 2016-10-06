@@ -25,7 +25,7 @@
 * Don't check for comments when a new PR is opened.
 
 #### -> 1.32.3
-* Set the paramaters again.
+* Set the parameters again.
 
 #### -> 1.32.2
 * Remove adding parameters action from the env contributor; just add them all.
