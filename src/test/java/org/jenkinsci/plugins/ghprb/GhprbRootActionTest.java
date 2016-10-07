@@ -149,10 +149,14 @@ public class GhprbRootActionTest {
 
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
-        while(ra.getThreadCount() > 0) {
-            Thread.sleep(500);
+        // handles race condition around starting and finishing builds. Give the system time
+        // to finish indexing, create a build, queue it, and run it.
+        int count = 0;
+        while (count < 5 && project.getBuilds().toArray().length == 0) {
+            GhprbTestUtil.waitForBuildsToFinish(project);
+            Thread.sleep(50);
+            count = count + 1;
         }
-        GhprbTestUtil.waitForBuildsToFinish(project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
