@@ -36,7 +36,7 @@
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/janinko/ghprb/issues</url>
+        <url>https://github.com/jenkinsci/ghprb-plugin/issues</url>
     </issueManagement>
 
     <properties>
