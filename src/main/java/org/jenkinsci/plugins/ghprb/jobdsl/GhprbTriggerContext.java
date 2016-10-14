@@ -17,6 +17,8 @@ class GhprbTriggerContext implements Context {
     String triggerPhrase;
     String skipBuildPhrase;
     boolean onlyTriggerPhrase;
+    String includedRegion;
+    String excludedRegion;
     boolean useGitHubHooks;
     boolean permitAll;
     boolean autoCloseFailedPullRequests;
@@ -139,6 +141,28 @@ class GhprbTriggerContext implements Context {
     public void onlyTriggerPhrase() {
         onlyTriggerPhrase(true);
     }
+
+    /**
+     * When filled, this will set the included regions of code that should trigger a build.
+     */
+    public void includedRegion(String includedRegion) {
+        this.includedRegion = includedRegion;
+    }
+
+    /**
+     * When filled, this will set the included regions of code that should trigger a build.
+     */
+    public void includedRegion() { includedRegion(""); }
+
+    /**
+     * When filled, this will set the excluded regions of code that should not trigger a build.
+     */
+    public void excludedRegion(String excludedRegion) { this.excludedRegion = excludedRegion; }
+
+    /**
+     * When filled, this will set the excluded regions of code that should not trigger a build.
+     */
+    public void excludedRegion(){ excludedRegion(""); }
 
     /**
      * Checking this option will disable regular polling for changes in GitHub and will try to create a GitHub hook.

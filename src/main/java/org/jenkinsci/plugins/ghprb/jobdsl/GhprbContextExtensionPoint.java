@@ -15,6 +15,7 @@ import org.jenkinsci.plugins.ghprb.upstream.GhprbUpstreamStatus;
 
 @Extension(optional = true)
 public class GhprbContextExtensionPoint extends ContextExtensionPoint {
+
     @DslExtensionMethod(context = TriggerContext.class)
     public Object githubPullRequest(Runnable closure) throws ANTLRException {
         GhprbTriggerContext context = new GhprbTriggerContext();
@@ -26,6 +27,8 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 context.cron,
                 context.triggerPhrase,
                 context.onlyTriggerPhrase,
+                context.includedRegion,
+                context.excludedRegion,
                 context.useGitHubHooks,
                 context.permitAll,
                 context.autoCloseFailedPullRequests,

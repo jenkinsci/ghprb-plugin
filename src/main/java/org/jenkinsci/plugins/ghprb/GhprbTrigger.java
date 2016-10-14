@@ -1,10 +1,8 @@
 package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
-
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
@@ -25,35 +23,24 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import net.sf.json.JSONObject;
-
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.plugins.ghprb.extensions.*;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -76,6 +63,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
+    private String includedRegion;
+    private String excludedRegion;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
@@ -85,7 +74,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String triggerPhrase;
     private String skipBuildPhrase;
     
-
     private transient Ghprb helper;
     private transient GhprbRepository repository;
     private transient GhprbBuilds builds;
@@ -124,7 +112,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String orgslist,
             String cron,
             String triggerPhrase,
-            Boolean onlyTriggerPhrase, 
+            Boolean onlyTriggerPhrase,
+            String includedRegion,
+            String excludedRegion,
             Boolean useGitHubHooks,
             Boolean permitAll,
             Boolean autoCloseFailedPullRequests,
@@ -148,6 +138,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.cron = cron;
         this.triggerPhrase = triggerPhrase;
         this.onlyTriggerPhrase = onlyTriggerPhrase;
+        this.includedRegion = includedRegion;
+        this.excludedRegion = excludedRegion;
         this.useGitHubHooks = useGitHubHooks;
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
@@ -168,8 +160,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         checkGitHubApiAuth();
         return this;
     }
-    
-
 
     @SuppressWarnings("deprecation")
     private void checkGitHubApiAuth() {
@@ -489,6 +479,20 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return onlyTriggerPhrase != null && onlyTriggerPhrase;
     }
 
+    public String getIncludedRegion() {
+        if (includedRegion == null || includedRegion.isEmpty()) {
+            return "";
+        }
+        return includedRegion;
+    }
+
+    public String getExcludedRegion() {
+        if (excludedRegion == null || excludedRegion.isEmpty()) {
+            return "";
+        }
+        return excludedRegion;
+    }
+
     public Boolean getUseGitHubHooks() {
         return useGitHubHooks != null && useGitHubHooks;
     }
@@ -633,6 +637,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
          * value in the global.jelly file as this value is dynamic and will not be
          * retained once configure() is called.
          */
+        private String includedRegion = "";
+        private String excludedRegion = "";
         private String whitelistPhrase = ".*add\\W+to\\W+whitelist.*";
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
@@ -748,6 +754,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             adminlist = formData.getString("adminlist");
             requestForTestingPhrase = formData.getString("requestForTestingPhrase");
             whitelistPhrase = formData.getString("whitelistPhrase");
+            includedRegion = formData.getString("includedRegion");
+            excludedRegion = formData.getString("excludedRegion");
             okToTestPhrase = formData.getString("okToTestPhrase");
             retestPhrase = formData.getString("retestPhrase");
             skipBuildPhrase = formData.getString("skipBuildPhrase");
@@ -836,6 +844,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return useDetailedComments;
         }
 
+        public String getIncludedRegion() { return includedRegion; }
+
+        public String getExcludedRegion() { return excludedRegion; }
+
         public Boolean getManageWebhooks() {
             return manageWebhooks;
         }
@@ -878,7 +890,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             }
             return model;
         }
-        
+
 
         public Map<Integer, GhprbPullRequest> getPullRequests(String projectName) {
             Map<Integer, GhprbPullRequest> ret = null;

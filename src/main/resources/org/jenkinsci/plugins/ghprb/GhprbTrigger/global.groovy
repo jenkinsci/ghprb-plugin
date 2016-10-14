@@ -3,6 +3,8 @@ f = namespace("/lib/form")
 
 
 f.section(title: descriptor.displayName) {
+  f.invisibleEntry{ f.textbox(field:"includedRegion", value:"") }
+  f.invisibleEntry{ f.textbox(field:"excludedRegion", value:"") }
   f.entry(field: "githubAuth", title: _("GitHub Auth")) {
     f.repeatableProperty(field: "githubAuth", default: descriptor.getGithubAuth()) 
   }
