@@ -319,6 +319,7 @@ public class GhprbTestUtil {
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
+        jsonObject.put("labelslist", "in progress");
         
         JSONObject githubAuth = new JSONObject();
         githubAuth.put("credentialsId", getCredentialsId());

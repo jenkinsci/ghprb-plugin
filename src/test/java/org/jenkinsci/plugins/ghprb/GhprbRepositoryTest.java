@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import org.apache.commons.codec.binary.Hex;
+import org.fest.util.Collections;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -220,6 +221,7 @@ public class GhprbRepositoryTest {
         verify(helper).getBlackListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
         verify(helper).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(1)).getLabels();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -256,6 +258,7 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getLabels()).willReturn(Collections.set("bug", "help wanted"));
 
         // WHEN
         ghprbRepository.check();
@@ -283,6 +286,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
+        verify(ghPullRequest, times(2)).getLabels();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -292,6 +296,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).getLabels();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -337,6 +342,7 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getLabels()).willReturn(Collections.set("bug", "help wanted"));
 
         // WHEN
         ghprbRepository.check(); // PR was created
@@ -370,6 +376,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
+        verify(ghPullRequest, times(2)).getLabels();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -377,6 +384,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(2)).getLabels();
 
         // verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("comment body"));
@@ -430,6 +438,7 @@ public class GhprbRepositoryTest {
         given(helper.isRetestPhrase(eq("test this please"))).willReturn(true);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getLabels()).willReturn(Collections.set("bug", "help wanted"));
 
         // WHEN
         ghprbRepository.check(); // PR was created
@@ -459,6 +468,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(2)).getHtmlUrl();
+        verify(ghPullRequest, times(2)).getLabels();
 
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(1)).getComments();
@@ -473,6 +483,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(2)).getLabels();
 
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));

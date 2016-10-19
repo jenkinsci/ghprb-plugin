@@ -156,7 +156,17 @@ public class Ghprb {
         }
         return null;
     }
-    
+
+    public Set<String> getLabels() {
+        String labelsField = getTrigger().getLabelslist();
+        Set<String> labels = new HashSet<String>();
+        if (labelsField != null) {
+            String[] split = labelsField.split("\\s+");
+            Collections.addAll(labels, split);
+        }
+        return labels;
+    }
+
     private Pattern whitelistPhrasePattern() {
         return compilePattern(trigger.getDescriptor().getWhitelistPhrase());
     }
