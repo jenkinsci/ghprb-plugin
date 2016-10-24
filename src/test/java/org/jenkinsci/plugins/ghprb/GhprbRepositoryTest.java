@@ -10,17 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -41,6 +31,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -221,7 +212,7 @@ public class GhprbRepositoryTest {
         verify(helper).getBlackListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
         verify(helper).checkSkipBuild(eq(ghPullRequest));
-        verify(helper, times(1)).getLabels();
+        verify(helper, times(1)).getLabelsIgnoreList();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -258,7 +249,7 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
-        given(helper.getLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getLabelsIgnoreList()).willReturn(Collections.set("bug", "help wanted"));
 
         // WHEN
         ghprbRepository.check();
@@ -296,12 +287,60 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
-        verify(helper, times(2)).getLabels();
+        verify(helper, times(2)).getLabelsIgnoreList();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
         verifyNoMoreInteractions(ghUser);
+    }
+
+    @Test
+    public void testShouldSkipBuildIfLabelInIgnoreListWithNewPR() throws Exception {
+        // GIVEN
+        GHLabel label1 = mock(GHLabel.class);
+        given(label1.getName()).willReturn("in progress");
+        GHLabel label2 = mock(GHLabel.class);
+        given(label2.getName()).willReturn("testing");
+        List<GHLabel> ghLabels = Arrays.asList(label1, label2);
+
+        List<GHPullRequest> ghPullRequests = createListWithMockPR();
+        ghPullRequests.add(ghPullRequest);
+
+        GhprbBuilds builds = mockBuilds();
+
+        mockHeadAndBase();
+        mockCommitList();
+
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
+        given(ghPullRequest.getUpdatedAt()).willReturn(UPDATE_DATE);
+        given(ghPullRequest.getNumber()).willReturn(100);
+        given(ghPullRequest.getMergeable()).willReturn(true);
+        given(ghPullRequest.getTitle()).willReturn("title");
+        given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghPullRequest.getLabels()).willReturn(ghLabels);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+
+        given(ghUser.getEmail()).willReturn("email");
+
+        given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getLabelsIgnoreList()).willReturn(Collections.set("in progress"));
+
+        // WHEN
+        ghprbRepository.check();
+
+        // THEN
+        verifyGetGithub(2, 2, 1);
+        verifyNoMoreInteractions(gt);
+
+        /** Verify no attempt was made to start a build */
+        verifyNoMoreInteractions(builds);
     }
 
     private GhprbBuilds mockBuilds() throws IOException {
@@ -342,7 +381,7 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
-        given(helper.getLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getLabelsIgnoreList()).willReturn(Collections.set("bug", "help wanted"));
 
         // WHEN
         ghprbRepository.check(); // PR was created
@@ -384,7 +423,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
-        verify(helper, times(2)).getLabels();
+        verify(helper, times(2)).getLabelsIgnoreList();
 
         // verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("comment body"));
@@ -438,7 +477,7 @@ public class GhprbRepositoryTest {
         given(helper.isRetestPhrase(eq("test this please"))).willReturn(true);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
-        given(helper.getLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getLabelsIgnoreList()).willReturn(Collections.set("bug", "help wanted"));
 
         // WHEN
         ghprbRepository.check(); // PR was created
@@ -483,7 +522,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
-        verify(helper, times(2)).getLabels();
+        verify(helper, times(2)).getLabelsIgnoreList();
 
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));

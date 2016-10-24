@@ -157,11 +157,11 @@ public class Ghprb {
         return null;
     }
 
-    public Set<String> getLabels() {
-        String labelsField = getTrigger().getLabelslist();
+    public Set<String> getLabelsIgnoreList() {
+        String labelsField = getTrigger().getLabelsIgnoreList();
         Set<String> labels = new HashSet<String>();
         if (labelsField != null) {
-            String[] split = labelsField.split("\\s+");
+            String[] split = labelsField.split("\\n+");
             Collections.addAll(labels, split);
         }
         return labels;

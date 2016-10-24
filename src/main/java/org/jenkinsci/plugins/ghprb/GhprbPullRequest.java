@@ -172,11 +172,11 @@ public class GhprbPullRequest {
     }
 
     private void checkLabels() {
-        Set<String> labelsToSkip = helper.getLabels();
-        if (labelsToSkip != null && !labelsToSkip.isEmpty()) {
+        Set<String> labelsToIgnore = helper.getLabelsIgnoreList();
+        if (labelsToIgnore != null && !labelsToIgnore.isEmpty()) {
             try {
                 for (GHLabel label : pr.getLabels()) {
-                    if (labelsToSkip.contains(label.getName())) {
+                    if (labelsToIgnore.contains(label.getName())) {
                         logger.log(Level.INFO,
                                 "Found label {0} in ignore list, pull request will be ignored.",
                                 label.getName());
@@ -210,6 +210,7 @@ public class GhprbPullRequest {
 
         updatePR(null /*GHPullRequest*/, comment, true);
         checkSkipBuild();
+        checkLabels();
         tryBuild();
     }
     

@@ -36,7 +36,7 @@ f.advanced() {
   f.entry(field: "orgslist", title: _("List of organizations. Their members will be whitelisted.")) {
     f.textarea() 
   }
-  f.entry(field: "labelslist", title: _("List of github labels for which the build should not be triggered.")) {
+  f.entry(field: "labelsIgnoreList", title: _("List of github labels for which the build should not be triggered.")) {
     f.textarea()
   }
   f.entry(field: "allowMembersOfWhitelistedOrgsAsAdmin", title: "Allow members of whitelisted organizations as admins") {
