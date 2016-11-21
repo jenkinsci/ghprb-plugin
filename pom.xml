@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.596.1</version>
+        <version>2.7</version>
     </parent>
 
     <artifactId>ghprb</artifactId>
@@ -42,6 +42,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <workflow.version>1.4</workflow.version>
+        <jenkins.version>1.596.1</jenkins.version>
+        <jenkins-test-harness.version>2.17</jenkins-test-harness.version>
+        <java.level>7</java.level>
+        <findbugs.failOnError>false</findbugs.failOnError>
     </properties>
 
     <dependencies>
@@ -58,12 +63,12 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.72.1</version>
+            <version>1.80</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>2.2.4</version>
+            <version>2.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
