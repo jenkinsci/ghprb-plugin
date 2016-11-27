@@ -1,5 +1,11 @@
 ### Updates
 
+#### -> 1.33.2
+* Fix for issue #352 / JENKINS-34762
+* Update pom
+* Add ability to ignore PRs based on label
+* Add job DSL extensions for build status messages
+* Fix some typos, harden some tests
 
 #### -> 1.33.1
 * Handle 'edited' pull request hooks
