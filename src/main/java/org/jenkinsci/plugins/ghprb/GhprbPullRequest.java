@@ -8,7 +8,6 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHLabel;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHUser;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -167,27 +165,7 @@ public class GhprbPullRequest {
         // Call update PR with the update PR info and no comment
         updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
         checkSkipBuild();
-        checkLabels();
         tryBuild();
-    }
-
-    private void checkLabels() {
-        Set<String> labelsToIgnore = helper.getLabelsIgnoreList();
-        if (labelsToIgnore != null && !labelsToIgnore.isEmpty()) {
-            try {
-                for (GHLabel label : pr.getLabels()) {
-                    if (labelsToIgnore.contains(label.getName())) {
-                        logger.log(Level.INFO,
-                                "Found label {0} in ignore list, pull request will be ignored.",
-                                label.getName());
-                        shouldRun = false;
-                    }
-                }
-
-            } catch(IOException e) {
-                logger.log(Level.SEVERE, "Failed to read labels", e);
-            }
-        }
     }
 
     private void checkSkipBuild() {
@@ -210,7 +188,6 @@ public class GhprbPullRequest {
 
         updatePR(null /*GHPullRequest*/, comment, true);
         checkSkipBuild();
-        checkLabels();
         tryBuild();
     }
     
