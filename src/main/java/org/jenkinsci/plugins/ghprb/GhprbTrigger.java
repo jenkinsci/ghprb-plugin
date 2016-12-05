@@ -84,7 +84,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String gitHubAuthId;
     private String triggerPhrase;
     private String skipBuildPhrase;
-    private String labelsIgnoreList;
     
 
     private transient Ghprb helper;
@@ -140,7 +139,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String commitStatusContext,
             String gitHubAuthId,
             String buildDescTemplate,
-            String labelsIgnoreList,
             List<GhprbExtension> extensions
             ) throws ANTLRException {
         super(cron);
@@ -160,7 +158,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.buildDescTemplate = buildDescTemplate;
-        this.labelsIgnoreList = labelsIgnoreList;
         setExtensions(extensions);
         configVersion = latestVersion;
     }
@@ -488,10 +485,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return skipBuildPhrase;
     }
 
-    public String getLabelsIgnoreList() {
-        return labelsIgnoreList;
-    }
-
     public Boolean getOnlyTriggerPhrase() {
         return onlyTriggerPhrase != null && onlyTriggerPhrase;
     }
@@ -653,7 +646,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private List<GhprbBranch> blackListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-        private String labelsIgnoreList;
         
         private List<GhprbGitHubAuth> githubAuth;
         
@@ -766,7 +758,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
-            labelsIgnoreList = formData.getString("labelsIgnoreList");
             
             githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.get("githubAuth"));
             
@@ -843,10 +834,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Boolean getUseDetailedComments() {
             return useDetailedComments;
-        }
-
-        public String getLabelsIgnoreList() {
-            return labelsIgnoreList;
         }
 
         public Boolean getManageWebhooks() {
