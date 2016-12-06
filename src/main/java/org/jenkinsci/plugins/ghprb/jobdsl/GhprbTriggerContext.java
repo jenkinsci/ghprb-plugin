@@ -22,6 +22,7 @@ class GhprbTriggerContext implements Context {
     boolean autoCloseFailedPullRequests;
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
     boolean displayBuildErrorsOnDownstreamBuilds;
+    boolean checkMergeCommit;
     String buildDescriptionTemplate;
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
 
@@ -211,6 +212,20 @@ class GhprbTriggerContext implements Context {
     }
 
     /**
+     * Check the merge commit sha for updates
+     */
+    public void checkMergeCommit(boolean checkMergeCommit) {
+        this.checkMergeCommit = checkMergeCommit;
+    }
+
+    /**
+     * Check the merge commit sha for updates
+     */
+    public void checkMergeCommit() {
+        checkMergeCommit(true);
+    }
+
+    /**
      * When filled, changes the default build description template
      */
     public void buildDescriptionTemplate(String template) {
@@ -223,4 +238,5 @@ class GhprbTriggerContext implements Context {
     public void extensions(Runnable closure) {
         ContextExtensionPoint.executeInContext(closure, extensionContext);
     }
+
 }

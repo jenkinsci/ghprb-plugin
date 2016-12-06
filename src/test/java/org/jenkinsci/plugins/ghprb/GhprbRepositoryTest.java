@@ -211,6 +211,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getUser();
         verify(ghPullRequest, times(2)).getBase();
+        verify(ghPullRequest, times(1)).getMergeCommitSha();
         verify(ghPullRequest, times(1)).getComments();
 //        verify(ghPullRequest, times(1)).getCommentsCount();
         verifyNoMoreInteractions(ghPullRequest);
@@ -219,6 +220,7 @@ public class GhprbRepositoryTest {
         verify(helper).getWhiteListTargetBranches();
         verify(helper).getBlackListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
+        verify(helper, times(1)).checkMergeCommit();
         verify(helper).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
@@ -276,6 +278,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(6)).getBase();
+        verify(ghPullRequest, times(3)).getMergeCommitSha();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
@@ -291,6 +294,7 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
+        verify(helper, times(2)).checkMergeCommit();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
@@ -360,6 +364,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(6)).getBase();
+        verify(ghPullRequest, times(3)).getMergeCommitSha();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(1)).getHtmlUrl();
         verify(ghPullRequest, times(2)).getUpdatedAt();
@@ -384,6 +389,7 @@ public class GhprbRepositoryTest {
         verify(helper).isRetestPhrase(eq("comment body"));
         verify(helper).isTriggerPhrase(eq("comment body"));
         verify(helper, times(4)).isProjectDisabled();
+        verify(helper, times(2)).checkMergeCommit();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
@@ -455,6 +461,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(9)).getHead();
         verify(ghPullRequest, times(7)).getBase();
+        verify(ghPullRequest, times(3)).getMergeCommitSha();
         verify(ghPullRequest, times(5)).getNumber();
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
@@ -479,6 +486,7 @@ public class GhprbRepositoryTest {
         verify(helper).isRetestPhrase(eq("test this please"));
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(4)).isProjectDisabled();
+        verify(helper, times(2)).checkMergeCommit();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
@@ -506,6 +514,8 @@ public class GhprbRepositoryTest {
         /** Mock head\base */
         given(ghPullRequest.getHead()).willReturn(head);
         given(base.getSha()).willReturn("base sha");
+        given(ghPullRequest.getBase()).willReturn(base);
+        given(head.getSha()).willReturn("head sha");
         given(ghPullRequest.getBase()).willReturn(base);
         given(head.getSha()).willReturn("head sha");
     }

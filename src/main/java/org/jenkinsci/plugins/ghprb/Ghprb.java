@@ -68,6 +68,10 @@ public class Ghprb {
         return !trigger.isActive();
     }
 
+    public boolean checkMergeCommit() {
+        return trigger.getCheckMergeCommit();
+    }
+
     public GhprbBuilds getBuilds() {
         return trigger.getBuilds();
     }

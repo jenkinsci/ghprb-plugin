@@ -316,6 +316,7 @@ public class GhprbTestUtil {
         jsonObject.put("testMode", "true");
         jsonObject.put("autoCloseFailedPullRequests", "false");
         jsonObject.put("displayBuildErrorsOnDownstreamBuilds", "false");
+        jsonObject.put("checkMergeCommit", "false");
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
@@ -412,6 +413,7 @@ public class GhprbTestUtil {
         defaults.put("permitAll", false);
         defaults.put("autoCloseFailedPullRequests", false);
         defaults.put("displayBuildErrorsOnDownstreamBuilds", false);
+        defaults.put("checkMergeCommit", false);
         defaults.put("allowMembersOfWhitelistedOrgsAsAdmin", false);
         defaults.put("gitHubApi", "https://api.github.com");
 

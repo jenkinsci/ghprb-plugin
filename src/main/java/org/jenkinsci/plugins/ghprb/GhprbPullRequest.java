@@ -87,6 +87,7 @@ public class GhprbPullRequest {
     private Date updated; // Needed to track when the PR was updated
     private String head;
     private String base;
+    private String merge;
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
     private String lastBuildId;
 
@@ -105,6 +106,10 @@ public class GhprbPullRequest {
 
     private void setHead(String newHead) {
         this.head = StringUtils.isEmpty(newHead) ? head : newHead;
+    }
+
+    private void setMerge(String newMerge) {
+        this.merge = StringUtils.isEmpty(newMerge) ? merge : newMerge;
     }
 
     private void setBase(String newBase) {
@@ -253,7 +258,7 @@ public class GhprbPullRequest {
                 }
                 
                 // Check the commit on the PR against the recorded version.
-                boolean newCommit = checkCommit(pullRequest);
+                boolean newCommit = (helper.checkMergeCommit() ? checkMergeCommit(pullRequest) : checkCommit(pullRequest));
             
                 // Log some info.
                 if (!newCommit && commentsChecked == 0) {
@@ -369,7 +374,6 @@ public class GhprbPullRequest {
 
         String headSha = head.getSha();
         String baseSha = base.getSha();
-
         if (StringUtils.equals(headSha, this.head) && StringUtils.equals(baseSha, this.base)) {
             return false;
         }
@@ -383,6 +387,33 @@ public class GhprbPullRequest {
 
         if (accepted) {
             shouldRun = true;
+        }
+        return true;
+    }
+
+    // returns false if no new merge commit
+    private boolean checkMergeCommit(GHPullRequest pr) {
+        String mergeSha = "";
+        try {
+            mergeSha = pr.getMergeCommitSha();
+        } catch (IOException ex) {
+            logger.log(Level.INFO, "Unable to get PR merge commit: ", ex);
+        }
+
+        if (StringUtils.equals(mergeSha, this.merge)) {
+          return false;
+        }
+
+        logger.log(Level.FINE,
+                   "New commit. Sha: Merge[{0} => {1}]",
+                   new Object[] { this.merge, mergeSha });
+
+        setMerge(mergeSha);
+	setHead(pr.getHead().getSha());
+	setBase(pr.getBase().getSha());
+
+        if (accepted) {
+          shouldRun = true;
         }
         return true;
     }
@@ -656,6 +687,14 @@ public class GhprbPullRequest {
                 GHCommitPointer prBase = pr.getBase();
                 setBase(prBase.getSha());
             }
+
+            if (StringUtils.isEmpty(this.merge)) {
+	       try {
+	        setMerge(pr.getMergeCommitSha());
+	      } catch (IOException ex) {
+                logger.log(Level.INFO, "Unable to get PR merge commit: ", ex);
+	      }
+	    }
         }
     }
     

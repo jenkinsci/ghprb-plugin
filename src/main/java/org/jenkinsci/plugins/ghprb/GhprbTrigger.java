@@ -79,6 +79,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
+    private Boolean checkMergeCommit;
     private List<GhprbBranch> whiteListTargetBranches;
     private List<GhprbBranch> blackListTargetBranches;
     private String gitHubAuthId;
@@ -129,6 +130,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             Boolean permitAll,
             Boolean autoCloseFailedPullRequests,
             Boolean displayBuildErrorsOnDownstreamBuilds,
+            Boolean checkMergeCommit,
             String commentFilePath,
             String skipBuildPhrase,
             List<GhprbBranch> whiteListTargetBranches,
@@ -152,6 +154,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
+        this.checkMergeCommit = checkMergeCommit;
         this.skipBuildPhrase = skipBuildPhrase;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.blackListTargetBranches = blackListTargetBranches;
@@ -520,6 +523,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return displayBuildErrorsOnDownstreamBuilds;
     }
 
+    public Boolean getCheckMergeCommit() {
+        if (checkMergeCommit == null) {
+            Boolean check = getDescriptor().getCheckMergeCommit();
+            return (check != null && check);
+        }
+        return checkMergeCommit;
+    }
+
     private List<GhprbBranch> normalizeTargetBranches(List<GhprbBranch> branches) {
         if (branches == null || 
                 (branches.size() == 1 && branches.get(0).getBranch().equals(""))) {
@@ -646,6 +657,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private List<GhprbBranch> blackListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
+        private Boolean checkMergeCommit = false;
         
         private List<GhprbGitHubAuth> githubAuth;
         
@@ -758,6 +770,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
+            checkMergeCommit = formData.getBoolean("checkMergeCommit");
             
             githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.get("githubAuth"));
             
@@ -846,6 +859,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Boolean getDisplayBuildErrorsOnDownstreamBuilds() {
             return displayBuildErrorsOnDownstreamBuilds;
+        }
+
+        public Boolean getCheckMergeCommit() {
+            return checkMergeCommit;
         }
 
         public GHCommitState getUnstableAs() {

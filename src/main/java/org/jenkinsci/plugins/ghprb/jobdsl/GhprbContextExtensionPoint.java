@@ -30,6 +30,7 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 context.permitAll,
                 context.autoCloseFailedPullRequests,
                 context.displayBuildErrorsOnDownstreamBuilds,
+                context.checkMergeCommit,
                 null,
                 context.skipBuildPhrase,
                 context.whiteListTargetBranches,
