@@ -1,5 +1,11 @@
 ### Updates
 
+#### -> 1.33.4
+Fix for issue #441. That required a revert of label support.
+
+#### -> 1.33.3
+Fix for issue #441 (it didn't work so don't use this hpi)
+
 #### -> 1.33.2
 * Fix for issue #352 / JENKINS-34762
 * Update pom
