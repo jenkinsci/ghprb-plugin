@@ -2,7 +2,11 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.collect.Lists;
 
-import hudson.model.FreeStyleProject;
+import hudson.model.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -21,6 +25,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
+
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbIT extends GhprbITBaseTestCase {
@@ -104,7 +109,45 @@ public class GhprbIT extends GhprbITBaseTestCase {
         
         Mockito.verify(ghRepository, Mockito.times(0)).createCommitStatus(any(String.class), any(GHCommitState.class), any(String.class), any(String.class));
     }
-    
+
+    @Test
+    public void shouldContainParamsWhenDone() throws Exception {
+        // GIVEN
+        // This test confirms env vars are populated. It only tests one env var
+        // under the premise that if one is populated then all are populated.
+
+        String canaryVar = "ghprbActualCommit";
+
+        given(ghPullRequest.getNumber()).willReturn(1);
+
+        GhprbTestUtil.triggerRunAndWait(10, trigger, project);
+
+        assertThat(project.getBuilds().toArray().length).isEqualTo(1);
+
+        hudson.util.RunList builds = project.getBuilds();
+        Run build = builds.getLastBuild();
+        Map envVars = build.getEnvVars();
+
+        // Ensure that the var is contained in the environment
+        assertThat(envVars.get(canaryVar)).isNotNull();
+
+
+        ArrayList<String> paramsList = newArrayList();
+        List<? extends Action> actions = build.getAllActions();
+        for (Action a : actions) { // SECURITY-170
+            if (a instanceof GhprbParametersAction) {
+                List<ParameterValue> parameterValues = ((GhprbParametersAction) a).getParameters();
+                for (ParameterValue pv : parameterValues) {
+                    paramsList.add(pv.getName());
+                }
+            }
+        }
+
+        // Ensure that the var is contained in the parameters
+        assertThat(paramsList).contains(canaryVar);
+
+    }
+
     @Test
     public void triggerIsRemovedFromListWhenProjectChanges() {
         
