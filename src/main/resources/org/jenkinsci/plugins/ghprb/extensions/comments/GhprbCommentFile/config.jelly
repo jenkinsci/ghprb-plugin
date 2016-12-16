@@ -3,4 +3,10 @@
     <f:entry title="${%Comment file path}" field="commentFilePath">
       <f:textbox />
     </f:entry>
+    <f:entry title="Comment file on Success" field="commentFileOnSuccess">
+      <f:checkbox default="${descriptor.commentFileOnSuccess}"/>
+    </f:entry>
+    <f:entry title="Comment file on Failure" field="commentFileOnFailure">
+      <f:checkbox default="${descriptor.commentFileOnFailure}"/>
+    </f:entry>
 </j:jelly>

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import hudson.Extension;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 
@@ -21,22 +22,41 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     
     private final String commentFilePath;
+    private final Boolean commentFileOnSuccess;
+    private final Boolean commentFileOnFailure;
 
     @DataBoundConstructor
-    public GhprbCommentFile(String commentFilePath) {
+    public GhprbCommentFile(String commentFilePath,
+            Boolean commentFileOnSuccess,
+            Boolean commentFileOnFailure) {
         this.commentFilePath = commentFilePath;
+        this.commentFileOnSuccess = commentFileOnSuccess;
+        this.commentFileOnFailure = commentFileOnFailure;
     }
     
     public String getCommentFilePath() {
         return commentFilePath != null ? commentFilePath : "";
     }
-    
+
+    public Boolean getCommentFileOnSuccess() {
+        return commentFileOnSuccess;
+    }
+
+    public Boolean getCommentFileOnFailure() {
+        return commentFileOnFailure;
+    }
+
     public boolean ignorePublishedUrl() {
         // TODO Auto-generated method stub
         return false;
     }
 
     public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+
+        if (checkSkipPostBuildComment(build)) {
+            return ""; // Skip posting a build comment
+        }
+
         StringBuilder msg = new StringBuilder();
         if (commentFilePath != null && !commentFilePath.isEmpty()) {
             try {
@@ -55,6 +75,15 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         return msg.toString();
     }
 
+    private Boolean checkSkipPostBuildComment(AbstractBuild<?, ?> build) {
+        if (((build.getResult() == Result.SUCCESS) && commentFileOnSuccess)
+                || ((build.getResult() == Result.FAILURE) && commentFileOnFailure)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -67,7 +96,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         public String getDisplayName() {
             return "Comment File";
         }
-        
+
     }
 
 }

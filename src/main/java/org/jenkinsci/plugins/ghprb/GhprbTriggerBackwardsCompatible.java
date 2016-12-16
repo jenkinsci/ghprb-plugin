@@ -36,6 +36,10 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
     @Deprecated
     protected transient String commentFilePath;
     @Deprecated
+    protected transient Boolean commentFileOnSuccess;
+    @Deprecated
+    protected transient Boolean commentFileOnFailure;
+    @Deprecated
     protected transient String msgSuccess;
     @Deprecated
     protected transient String msgFailure;
@@ -82,7 +86,9 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<AbstractPr
 
     private void checkCommentsFile() {
         if (!StringUtils.isEmpty(commentFilePath)) {
-            GhprbCommentFile comments = new GhprbCommentFile(commentFilePath);
+            GhprbCommentFile comments = new GhprbCommentFile(commentFilePath,
+                    commentFileOnSuccess,
+                    commentFileOnFailure);
             addIfMissing(comments);
             commentFilePath = null;
         }
