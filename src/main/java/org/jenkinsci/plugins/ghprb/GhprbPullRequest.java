@@ -91,7 +91,6 @@ public class GhprbPullRequest {
     private String base;
     private boolean accepted = false; // Needed to see if the PR has been added to the accepted list
     private String lastBuildId;
-    private boolean isDirtyPullRequest = false;
 
     // Sets the updated time of the PR.  If the updated time is newer,
     // return true, false otherwise.
@@ -170,14 +169,12 @@ public class GhprbPullRequest {
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
-        checkDirtyPullRequest();
         tryBuild();
     }
 
     private void checkBlackListLabels() {
         Set<String> labelsToIgnore = helper.getBlackListLabels();
         if (labelsToIgnore != null && !labelsToIgnore.isEmpty()) {
-            isDirtyPullRequest = true;
             try {
                 for (GHLabel label : pr.getLabels()) {
                     if (labelsToIgnore.contains(label.getName())) {
@@ -196,7 +193,6 @@ public class GhprbPullRequest {
     private void checkWhiteListLabels() {
         Set<String> labelsMustContain = helper.getWhiteListLabels();
         if (labelsMustContain != null && !labelsMustContain.isEmpty()) {
-            isDirtyPullRequest = true;
             boolean containsWhiteListLabel = false;
             try {
                 for (GHLabel label : pr.getLabels()) {
@@ -214,18 +210,6 @@ public class GhprbPullRequest {
                 }
             } catch(IOException e) {
                 logger.log(Level.SEVERE, "Failed to read whitelist labels", e);
-            }
-        }
-    }
-
-    private void checkDirtyPullRequest() {
-        if (isDirtyPullRequest) {
-            synchronized (this) {
-                try {
-                    this.pr = getPullRequest(true);
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Error while reloading pull request.", e);
-                }
             }
         }
     }
@@ -252,7 +236,6 @@ public class GhprbPullRequest {
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
-        checkDirtyPullRequest();
         tryBuild();
     }
     

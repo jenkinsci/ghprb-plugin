@@ -275,7 +275,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
-        verify(ghRepository, times(3)).getPullRequest(Mockito.anyInt());
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
@@ -453,7 +453,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
         verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
-        verify(ghRepository, times(3)).getPullRequest(Mockito.anyInt());
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
@@ -542,7 +542,7 @@ public class GhprbRepositoryTest {
         verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
-        verify(ghRepository, times(3)).getPullRequest(Mockito.anyInt());
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
@@ -642,7 +642,7 @@ public class GhprbRepositoryTest {
         
         verify(ghRepository, times(2)).getPullRequests(eq(OPEN)); // Call to Github API
         verify(ghRepository, times(2)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
-        verify(ghRepository, times(3)).getPullRequest(Mockito.anyInt());
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
