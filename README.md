@@ -51,7 +51,8 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
   * The phrase for adding users to the whitelist via comment. (Java regexp)  
   * The phrase for accepting a pull request for testing. (Java regexp)
   * The phrase for starting a new build. (Java regexp)  
-  * The crontab line. This specify default setting for new jobs.  
+  * The crontab line. This specify default setting for new jobs.
+  * Github labels for which the build will not be triggered (Separated by newline characters)
 * Under Application Setup
   * There are global and job default extensions that can be configured for things like:
     * Commit status updates

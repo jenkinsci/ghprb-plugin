@@ -156,7 +156,24 @@ public class Ghprb {
         }
         return null;
     }
-    
+
+    public Set<String> getBlackListLabels() {
+        return spiltLabels(getTrigger().getBlackListLabels());
+    }
+
+    public Set<String> getWhiteListLabels() {
+        return spiltLabels(getTrigger().getWhiteListLabels());
+    }
+
+    private Set<String> spiltLabels(String labelsField) {
+        Set<String> labels = new HashSet<String>();
+        if (labelsField != null && !labelsField.trim().isEmpty()) {
+            String[] split = labelsField.split("\\n+");
+            Collections.addAll(labels, split);
+        }
+        return labels;
+    }
+
     private Pattern whitelistPhrasePattern() {
         return compilePattern(trigger.getDescriptor().getWhitelistPhrase());
     }
