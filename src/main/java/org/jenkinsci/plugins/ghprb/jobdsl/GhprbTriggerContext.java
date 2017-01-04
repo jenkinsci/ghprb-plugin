@@ -13,6 +13,8 @@ class GhprbTriggerContext implements Context {
     List<String> orgWhitelist = new ArrayList<String>();
     List<GhprbBranch> whiteListTargetBranches = new ArrayList<GhprbBranch>();
     List<GhprbBranch> blackListTargetBranches = new ArrayList<GhprbBranch>();
+    String blackListLabels;
+    String whiteListLabels;
     String cron = "H/5 * * * *";
     String triggerPhrase;
     String skipBuildPhrase;
@@ -85,6 +87,20 @@ class GhprbTriggerContext implements Context {
      */
     public void blackListTargetBranch(String branch) {
         blackListTargetBranches.add(new GhprbBranch(branch));
+    }
+
+    /**
+     * Set label lists whose they are considered whitelisted for this specific job
+     */
+    public void whiteListLabels(String whiteListLabels) {
+        this.whiteListLabels = whiteListLabels;
+    }
+
+    /**
+     * Set label lists whose they are considered blacklisted for this specific job
+     */
+    public void blackListLabels(String blackListLabels) {
+        this.blackListLabels = blackListLabels;
     }
 
     /**
