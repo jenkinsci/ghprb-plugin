@@ -223,7 +223,11 @@ public class GhprbBuilds {
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommentAppender.class)) {
             if (ext instanceof GhprbCommentAppender) {
-                msg.append(((GhprbCommentAppender) ext).postBuildComment(build, listener));
+                String cmt = ((GhprbCommentAppender) ext).postBuildComment(build, listener);
+                if ("--none--".equals(cmt)) {
+                    return;
+                }
+                msg.append(cmt);
             }
         }
 
