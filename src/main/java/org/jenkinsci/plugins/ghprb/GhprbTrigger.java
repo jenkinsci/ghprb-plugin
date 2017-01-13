@@ -84,6 +84,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String gitHubAuthId;
     private String triggerPhrase;
     private String skipBuildPhrase;
+    private String blackListLabels;
+    private String whiteListLabels;
     
 
     private transient Ghprb helper;
@@ -139,6 +141,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String commitStatusContext,
             String gitHubAuthId,
             String buildDescTemplate,
+            String blackListLabels,
+            String whiteListLabels,
             List<GhprbExtension> extensions
             ) throws ANTLRException {
         super(cron);
@@ -158,6 +162,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.buildDescTemplate = buildDescTemplate;
+        this.blackListLabels = blackListLabels;
+        this.whiteListLabels = whiteListLabels;
         setExtensions(extensions);
         configVersion = latestVersion;
     }
@@ -485,6 +491,20 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return skipBuildPhrase;
     }
 
+    public String getBlackListLabels() {
+        if (blackListLabels == null) {
+            return "";
+        }
+        return blackListLabels;
+    }
+
+    public String getWhiteListLabels() {
+        if (whiteListLabels == null) {
+            return "";
+        }
+        return whiteListLabels;
+    }
+
     public Boolean getOnlyTriggerPhrase() {
         return onlyTriggerPhrase != null && onlyTriggerPhrase;
     }
@@ -646,7 +666,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private List<GhprbBranch> blackListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-        
+        private String blackListLabels;
+        private String whiteListLabels;
+
         private List<GhprbGitHubAuth> githubAuth;
         
         public GhprbGitHubAuth getGitHubAuth(String gitHubAuthId) {
@@ -758,6 +780,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
+            blackListLabels = formData.getString("blackListLabels");
+            whiteListLabels = formData.getString("whiteListLabels");
             
             githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.get("githubAuth"));
             
@@ -834,6 +858,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Boolean getUseDetailedComments() {
             return useDetailedComments;
+        }
+
+        public String getBlackListLabels() {
+            return blackListLabels;
+        }
+
+        public String getWhiteListLabels() {
+            return whiteListLabels;
         }
 
         public Boolean getManageWebhooks() {
