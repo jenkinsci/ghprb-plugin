@@ -1,5 +1,9 @@
 ### Updates
 
+#### -> 1.34.0
+Add whitelisting and blacklisting of labels
+* Note: This enhancement does not include ingesting webhooks from label events
+
 #### -> 1.33.4
 Fix for issue #441. That required a revert of label support.
 

@@ -492,10 +492,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public String getBlackListLabels() {
+        if (blackListLabels == null) {
+            return "";
+        }
         return blackListLabels;
     }
 
     public String getWhiteListLabels() {
+        if (whiteListLabels == null) {
+            return "";
+        }
         return whiteListLabels;
     }
 
@@ -662,7 +668,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
         private String blackListLabels;
         private String whiteListLabels;
-        
+
         private List<GhprbGitHubAuth> githubAuth;
         
         public GhprbGitHubAuth getGitHubAuth(String gitHubAuthId) {

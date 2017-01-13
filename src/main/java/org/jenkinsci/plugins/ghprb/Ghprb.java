@@ -169,6 +169,9 @@ public class Ghprb {
         Set<String> labels = new HashSet<String>();
         if (labelsField != null && !labelsField.trim().isEmpty()) {
             String[] split = labelsField.split("\\n+");
+            for (int i = 0; i < split.length; i++) {
+                split[i] = split[i].trim();
+            }
             Collections.addAll(labels, split);
         }
         return labels;

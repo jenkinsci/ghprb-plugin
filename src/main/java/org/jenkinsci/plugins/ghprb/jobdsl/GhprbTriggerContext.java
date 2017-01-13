@@ -13,8 +13,8 @@ class GhprbTriggerContext implements Context {
     List<String> orgWhitelist = new ArrayList<String>();
     List<GhprbBranch> whiteListTargetBranches = new ArrayList<GhprbBranch>();
     List<GhprbBranch> blackListTargetBranches = new ArrayList<GhprbBranch>();
-    String blackListLabels;
-    String whiteListLabels;
+    List<String> blackListLabels = new ArrayList<String>();
+    List<String> whiteListLabels = new ArrayList<String>();
     String cron = "H/5 * * * *";
     String triggerPhrase;
     String skipBuildPhrase;
@@ -90,20 +90,6 @@ class GhprbTriggerContext implements Context {
     }
 
     /**
-     * Set label lists whose they are considered whitelisted for this specific job
-     */
-    public void whiteListLabels(String whiteListLabels) {
-        this.whiteListLabels = whiteListLabels;
-    }
-
-    /**
-     * Set label lists whose they are considered blacklisted for this specific job
-     */
-    public void blackListLabels(String blackListLabels) {
-        this.blackListLabels = blackListLabels;
-    }
-
-    /**
      * Add branch names whose they are considered whitelisted for this specific job
      */
     public void whiteListTargetBranches(Iterable<String> branches) {
@@ -119,6 +105,40 @@ class GhprbTriggerContext implements Context {
         for (String branch : branches) {
             blackListTargetBranches.add(new GhprbBranch(branch));
         }
+    }
+
+    /**
+     * Set label lists which are considered whitelisted for this specific job
+     */
+    private void whiteListLabel(String whiteListLabel) {
+        whiteListLabels.add(whiteListLabel);
+    }
+
+    /**
+     * Set label lists which are considered whitelisted for this specific job
+     */
+    public void whiteListLabels(Iterable<String> labels) {
+        for (String label: labels) {
+            whiteListLabel(label);
+        }
+
+    }
+
+    /**
+     * Set label lists which are considered blacklisted for this specific job
+     */
+    private void blackListLabel(String label) {
+        blackListLabels.add(label);
+    }
+
+    /**
+     * Set label lists which are considered blacklisted for this specific job
+     */
+    public void blackListLabels(Iterable<String> labels) {
+        for (String label: labels) {
+            blackListLabel(label);
+        }
+
     }
 
     /**
