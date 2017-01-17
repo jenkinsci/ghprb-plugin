@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.google.common.annotations.VisibleForTesting;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.*;
@@ -218,7 +219,8 @@ public class GhprbBuilds {
         }
     }
 
-    private void commentOnBuildResult(Run<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
+    @VisibleForTesting
+    void commentOnBuildResult(Run<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
         StringBuilder msg = new StringBuilder();
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommentAppender.class)) {
