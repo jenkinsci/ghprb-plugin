@@ -21,30 +21,8 @@ import java.util.List;
 @Restricted(NoExternalUse.class)
 public class GhprbParametersAction extends ParametersAction {
 
-    private List<ParameterValue> parameters;
-
     public GhprbParametersAction(List<ParameterValue> parameters) {
-        this.parameters = parameters;
-    }
-
-    public GhprbParametersAction(ParameterValue... parameters) {
-        this(Arrays.asList(parameters));
-    }
-
-    @Override
-    public List<ParameterValue> getParameters() {
-        return Collections.unmodifiableList(parameters);
-    }
-
-    @Override
-    public ParameterValue getParameter(String name) {
-        for (ParameterValue parameter : parameters) {
-            if (parameter != null && parameter.getName().equals(name)) {
-                return parameter;
-            }
-        }
-
-        return null;
+        super(parameters);
     }
 
     @Extension
