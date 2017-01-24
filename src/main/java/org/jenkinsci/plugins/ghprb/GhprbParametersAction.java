@@ -24,6 +24,7 @@ public class GhprbParametersAction extends ParametersAction {
     private List<ParameterValue> parameters;
 
     public GhprbParametersAction(List<ParameterValue> parameters) {
+        super(parameters);
         this.parameters = parameters;
     }
 
@@ -64,6 +65,7 @@ public class GhprbParametersAction extends ParametersAction {
                     envs.put(p.getName(), String.valueOf(p.getValue()));
                 }
             }
+            super.buildEnvironmentFor(run, envs, listener);
         }
     }
 }

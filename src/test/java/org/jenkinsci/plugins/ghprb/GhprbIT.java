@@ -64,11 +64,15 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment> newArrayList());
         
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
-        
-        GhprbTestUtil.triggerRunAndWait(10, trigger, project);
+
+        // Also verify that uniquely different builds do not get comingled
+        project.setQuietPeriod(4);
+
+        GhprbTestUtil.triggerRunsAtOnceThenWait(10, trigger, project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
+
 
     @Test
     public void shouldBuildTriggersOnUpdatingRetestMessagePR() throws Exception {
@@ -76,7 +80,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(ghPullRequest.getCreatedAt()).willReturn(new DateTime().toDate());
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
-        
+
         given(comment.getBody()).willReturn("retest this please");
         given(comment.getUpdatedAt()).willReturn(new DateTime().plusDays(1).toDate());
         given(comment.getUser()).willReturn(ghUser);
@@ -84,11 +88,10 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5).willReturn(5);
 
-        
+
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(2);
     }
-    
 
     @Test
     public void shouldNotBuildDisabledBuild() throws Exception {

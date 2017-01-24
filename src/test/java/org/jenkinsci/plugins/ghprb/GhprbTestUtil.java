@@ -448,7 +448,14 @@ public class GhprbTestUtil {
         }
 
     }
-    
+
+    public static void triggerRunsAtOnceThenWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
+        for (int i = 0; i < numOfTriggers; ++i) {
+            trigger.run();
+        }
+        waitForBuildsToFinish(project);
+
+    }
 
     public static List<String> checkClassForGetters(Class<?> clazz) {
         Field[] fields = clazz.getDeclaredFields();
