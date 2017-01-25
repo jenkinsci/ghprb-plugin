@@ -65,7 +65,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
         
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
 
-        // Also verify that uniquely different builds do not get comingled
+        // Also verify that uniquely different builds do not get commingled
         project.setQuietPeriod(4);
 
         GhprbTestUtil.triggerRunsAtOnceThenWait(10, trigger, project);

@@ -1,11 +1,16 @@
 ### Updates
 
+#### -> 1.35.0
+* Fix issue #354. (Multiple queued builds would be squashed into one.)
+
 #### -> 1.34.0
 Add whitelisting and blacklisting of labels
 * Note: This enhancement does not include ingesting webhooks from label events
+* Don't use if you have queued builds; see v 1.35.0.
 
 #### -> 1.33.4
-Fix for issue #441. That required a revert of label support.
+* Fix for issue #441. That required a revert of label support.
+* Don't use this version if you have queued builds; see v 1.35.0.
 
 #### -> 1.33.3
 Fix for issue #441 (it didn't work so don't use this hpi)
