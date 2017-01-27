@@ -456,7 +456,6 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
                 helper.addWhitelist(author.getLogin());
             }
-            setAccepted(true);
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) { // ok to test
             logger.log(Level.FINEST, "Admin {0} gave OK to test", sender);
             setAccepted(true);
