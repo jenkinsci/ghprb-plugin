@@ -3,15 +3,9 @@ package org.jenkinsci.plugins.ghprb.extensions.status;
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
-import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import hudson.model.Job;
+import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
@@ -32,6 +26,11 @@ import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStatus, GhprbGlobalExtension,
                                GhprbProjectExtension, GhprbGlobalDefault {
@@ -104,7 +103,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         return true;
     }
 
-    public void onBuildTriggered(AbstractProject<?, ?> project,
+    public void onBuildTriggered(Job<?, ?> project,
                                  String commitSha,
                                  boolean isMergeable,
                                  int prId,

@@ -14,19 +14,20 @@ import com.cloudbees.plugins.credentials.domains.PathSpecification;
 import com.cloudbees.plugins.credentials.domains.SchemeSpecification;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-
 import hudson.Util;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.triggers.Trigger;
 import hudson.util.DescribableList;
 import hudson.util.Secret;
+import jenkins.model.ParameterizedJobMixIn;
 
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
@@ -41,7 +42,15 @@ import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHUser;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -294,7 +303,7 @@ public class Ghprb {
     }
     
 
-    public static String replaceMacros(AbstractProject<?, ?> project, String inputString) {
+    public static String replaceMacros(Job<?, ?> project, String inputString) {
         String returnString = inputString;
         if (project != null && inputString != null) {
             try {
@@ -346,12 +355,20 @@ public class Ghprb {
         return extractTrigger(build.getProject());
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
+    public static GhprbTrigger extractTrigger(Job<?, ?> p) {
+
+        ParameterizedJobMixIn.ParameterizedJob pJob = (ParameterizedJobMixIn.ParameterizedJob) p;
+        GhprbTrigger ghprbTrigger = null;
+        if (p instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            for (Trigger trigger : pJob.getTriggers().values()) {
+                if (trigger instanceof GhprbTrigger) {
+                    ghprbTrigger = (GhprbTrigger) trigger;
+                    break;
+                }
+            }
         }
-        return trigger;
+
+        return ghprbTrigger;
     }
     
     private static List<Predicate> createPredicate(Class<?> ...types) {
