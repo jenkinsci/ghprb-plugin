@@ -3,8 +3,8 @@ package org.jenkinsci.plugins.ghprb;
 import hudson.BulkChange;
 import hudson.XmlFile;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Items;
+import hudson.model.Job;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.model.listeners.SaveableListener;
@@ -421,7 +421,7 @@ public class GhprbRepository implements Saveable{
         SaveableListener.fireOnChange(this, config);
     }
 
-    protected XmlFile getConfigXml(AbstractProject<?, ?> project) throws IOException {
+    protected XmlFile getConfigXml(Job<?, ?> project) throws IOException {
         try {
             String escapedRepoName = URLEncoder.encode(reponame, "UTF8");
             File file = new File(project.getBuildDir() + "/pullrequests", escapedRepoName);
