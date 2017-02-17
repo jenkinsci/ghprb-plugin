@@ -137,7 +137,7 @@ job('upstreamJob') {
             orgWhitelist('my_github_org')
             orgWhitelist(['your_github_org', 'another_org'])
             cron('H/5 * * * *')
-            triggerPhrase('OK to test')
+            triggerPhrase('special trigger phrase')
             onlyTriggerPhrase()
             useGitHubHooks()
             permitAll()
