@@ -7,6 +7,8 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,16 +16,22 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import hudson.triggers.Trigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
 import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.LocalData;
 import org.kohsuke.github.GHPullRequest;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Unit test for {@link org.jenkinsci.plugins.ghprb.GhprbTriggerTest}.
@@ -144,6 +152,18 @@ public class GhprbTriggerTest {
             }
         }
     }
-    
+
+    @Issue("JENKINS-36986")
+    @LocalData
+    @Test
+    public void testMissedCron() {
+        assertNotNull("Test job should exist", jenkinsRule.getInstance().getItem("test-job"));
+        final Calendar cal = new GregorianCalendar();
+        try {
+            Trigger.checkTriggers(cal);
+        } catch (Exception e) {
+            assertNull("No exception should be thrown", e);
+        }
+    }
 
 }
