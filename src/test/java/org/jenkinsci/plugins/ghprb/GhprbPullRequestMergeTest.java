@@ -140,7 +140,7 @@ public class GhprbPullRequestMergeTest {
         given(project.getTriggers()).willReturn(map);
         given(project.getName()).willReturn("project");
         given(project.getProperty(GithubProjectProperty.class)).willReturn(projectProperty);
-        given(project.isDisabled()).willReturn(false);
+        given(project.isBuildable()).willReturn(true);
 
         given(build.getCause(GhprbCause.class)).willReturn(cause);
         given(build.getResult()).willReturn(Result.SUCCESS);

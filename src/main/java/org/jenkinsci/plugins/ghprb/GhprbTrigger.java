@@ -242,11 +242,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
         String name = project.getFullName();
 
-        // TODO: What is the candidate for `isDisabled`?
-//        if (project.isDisabled()) {
-//            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
-//            return;
-//        }
+        if (!project.isBuildable()) {
+            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
+            return;
+        }
         if (project.getProperty(GithubProjectProperty.class) == null) {
             logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + name);
             return;
@@ -379,9 +378,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         // note that this will be removed from the Actions list after the job is completed so that the old (and incorrect)
         // one isn't there
 
-        // TODO use standard method in 1.621+
         ParameterizedJobMixIn scheduledJob = new ParameterizedJobMixIn() {
-            @Override protected Job asJob() {
+            @Override
+            protected Job asJob() {
                 return job;
             }
         };
@@ -597,10 +596,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         if (super.job == null) {
             logger.log(Level.FINE, "Project was never set, start was never run");
             isActive = false;
-            // TODO: What is the candidate for `isDisabled`?
-//        } else if (super.job.isDisabled()) {
-//            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
-//            isActive = false;
+        } else if (!super.job.isBuildable()) {
+            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
+            isActive = false;
         } else if (getRepository() == null) {
             logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - repository is null", name);
             isActive = false;
@@ -610,7 +608,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public GhprbRepository getRepository() {
-        if (this.repository == null && super.job != null ){ // && !super.job.isDisabled()) { TODO: What is the candidate for `isDisabled`?
+        if (this.repository == null && super.job != null  && super.job.isBuildable()) {
             try {
                 this.initState();
             } catch (IOException e) {
