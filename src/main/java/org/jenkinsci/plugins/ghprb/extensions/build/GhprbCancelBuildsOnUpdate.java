@@ -1,7 +1,13 @@
 package org.jenkinsci.plugins.ghprb.extensions.build;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import hudson.Extension;
+import hudson.model.Cause;
+import hudson.model.Job;
+import hudson.model.Queue;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.util.RunList;
+import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbCause;
@@ -13,14 +19,8 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.model.Cause;
-import hudson.model.Queue;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.util.RunList;
-import jenkins.model.Jenkins;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBuildStep, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
@@ -39,7 +39,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
         return overrideGlobal == null ? false : overrideGlobal;
     }
 
-    private void cancelCurrentBuilds(AbstractProject<?, ?> project,
+    private void cancelCurrentBuilds(Job<?, ?> project,
                                      Integer prId) {
         if (getOverrideGlobal()) {
             return;
@@ -47,7 +47,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
         
         logger.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId + ", checking for queued items to cancel.");
         Queue queue = Jenkins.getInstance().getQueue();
-        for (Queue.Item item : queue.getItems(project)) {
+        for (Queue.Item item : queue.getItems()) {
             GhprbCause qcause = null;
             for (Cause cause : item.getCauses()){
                 if (cause instanceof GhprbCause) {
@@ -90,7 +90,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
 
     }
 
-    public void onScheduleBuild(AbstractProject<?, ?> project,
+    public void onScheduleBuild(Job<?, ?> project,
                              GhprbCause cause) {
 
         if (project == null || cause == null) {

@@ -1,20 +1,15 @@
 package org.jenkinsci.plugins.ghprb;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.lang.reflect.Field;
-
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.model.AbstractBuild;
 import hudson.model.FreeStyleBuild;
-import hudson.model.ItemGroup;
-import hudson.model.StreamBuildListener;
 import hudson.model.FreeStyleProject;
-import hudson.model.Run;
+import hudson.model.ItemGroup;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.StreamBuildListener;
+import hudson.triggers.Trigger;
+import hudson.triggers.TriggerDescriptor;
 
 import org.jenkinsci.plugins.ghprb.GhprbTrigger.DescriptorImpl;
 import org.junit.After;
@@ -35,16 +30,22 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
+import static org.fest.assertions.Assertions.*;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -109,7 +110,7 @@ public class GhprbPullRequestMergeTest {
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
         
-        GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
+        final GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
         Mockito.doReturn(repo).when(trigger).getRepository();
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
@@ -132,11 +133,14 @@ public class GhprbPullRequestMergeTest {
 
         given(parent.getFullName()).willReturn("");
 
+        Map<TriggerDescriptor, Trigger<?>> map = new HashMap<TriggerDescriptor, Trigger<?>>();
+        map.put(descriptor,trigger);
+
         given(project.getParent()).willReturn(parent);
-        given(project.getTrigger(GhprbTrigger.class)).willReturn(trigger);
+        given(project.getTriggers()).willReturn(map);
         given(project.getName()).willReturn("project");
         given(project.getProperty(GithubProjectProperty.class)).willReturn(projectProperty);
-        given(project.isDisabled()).willReturn(false);
+        given(project.isBuildable()).willReturn(true);
 
         given(build.getCause(GhprbCause.class)).willReturn(cause);
         given(build.getResult()).willReturn(Result.SUCCESS);
