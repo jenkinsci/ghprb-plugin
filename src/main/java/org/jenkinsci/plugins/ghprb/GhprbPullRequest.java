@@ -216,11 +216,22 @@ public class GhprbPullRequest {
 
     private void checkSkipBuild() {
         synchronized (this) {
-            String skipBuildPhrase = helper.checkSkipBuild(this.pr);
+            String skipBuildPhrase = helper.checkSkipBuildPhrase(this.pr);
             if (!StringUtils.isEmpty(skipBuildPhrase)) {
                 logger.log(Level.INFO,
-                           "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
-                           skipBuildPhrase);
+                        "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
+                        skipBuildPhrase);
+                shouldRun = false;
+                return;
+            }
+            if (commitAuthor == null){
+                return;
+            }
+            String skipBuildCommitAuthor = helper.checkSkipBuildCommitAuthor(commitAuthor.getName());
+            if (!StringUtils.isEmpty(skipBuildCommitAuthor)) {
+                logger.log(Level.INFO,
+                        "Pull request triggered by {0} user. Hence skipping the build.",
+                        skipBuildCommitAuthor);
                 shouldRun = false;
             }
         }

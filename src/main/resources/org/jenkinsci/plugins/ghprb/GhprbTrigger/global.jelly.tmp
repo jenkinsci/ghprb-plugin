@@ -43,6 +43,9 @@
       <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
       	<f:textbox default=".*\[skip\W+ci\].*"/>
       </f:entry>
+      <f:entry title="${%Skip build sender}" field="skipBuildCommitAuthor">
+      	<f:textbox default=""/>
+      </f:entry>
       <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
         <f:textbox default="H/5 * * * *" checkUrl="'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)"/>
       </f:entry>

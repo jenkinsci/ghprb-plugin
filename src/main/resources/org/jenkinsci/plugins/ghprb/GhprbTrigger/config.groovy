@@ -24,8 +24,11 @@ f.advanced() {
   f.entry(field: "skipBuildPhrase", title: _("Skip build phrase")) {
     f.textbox(default: descriptor.skipBuildPhrase)
   }
+  f.entry(field: "skipBuildCommitAuthor", title: _("Skip build commit author")) {
+    f.textbox(default: descriptor.skipBuildCommitAuthor)
+  }
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
-    f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds) 
+    f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds)
   }
   f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
     f.textbox(default: descriptor.cron, checkUrl: "'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)") 

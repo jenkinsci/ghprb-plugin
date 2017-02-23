@@ -18,6 +18,7 @@ class GhprbTriggerContext implements Context {
     String cron = "H/5 * * * *";
     String triggerPhrase;
     String skipBuildPhrase;
+    String skipBuildCommitAuthor;
     boolean onlyTriggerPhrase;
     boolean useGitHubHooks;
     boolean permitAll;
@@ -163,11 +164,20 @@ class GhprbTriggerContext implements Context {
     }
 
     /**
+     * When filled, pull requests comits from this user will be skipped.
+     */
+    public void skipBuildCommitAuthor(String skipBuildCommitAuthor) {
+        this.skipBuildCommitAuthor = skipBuildCommitAuthor;
+    }
+
+    /**
      * When set, only commenting the trigger phrase in the pull request will trigger a build.
      */
     public void onlyTriggerPhrase(boolean onlyTriggerPhrase) {
         this.onlyTriggerPhrase = onlyTriggerPhrase;
     }
+
+
 
     /**
      * When set, only commenting the trigger phrase in the pull request will trigger a build.

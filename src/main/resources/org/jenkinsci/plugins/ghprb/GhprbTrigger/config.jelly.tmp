@@ -27,6 +27,9 @@
     <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
   	  <f:textbox default="${descriptor.skipBuildPhrase}"/>
     </f:entry>
+    <f:entry title="${%Skip build commit author}" field="skipBuildCommitAuthor">
+  	  <f:textbox default="${descriptor.skipBuildCommitAuthor}"/>
+    </f:entry>
 	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
 	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
 	</f:entry>
