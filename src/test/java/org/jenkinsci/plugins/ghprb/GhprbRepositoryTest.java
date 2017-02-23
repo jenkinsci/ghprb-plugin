@@ -215,6 +215,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getUser();
         verify(ghPullRequest, times(2)).getBase();
         verify(ghPullRequest, times(1)).getComments();
+        verify(ghPullRequest, times(1)).listCommits();
 //        verify(ghPullRequest, times(1)).getCommentsCount();
         verifyNoMoreInteractions(ghPullRequest);
 
@@ -287,7 +288,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(2)).getLabels();
@@ -465,7 +466,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(4)).getLabels();
@@ -557,7 +558,7 @@ public class GhprbRepositoryTest {
 
         verify(ghPullRequest, times(2)).getComments();
 //        verify(ghPullRequest, times(2)).getCommentsCount();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(2)).getLabels();
@@ -659,7 +660,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(1)).getComments();
 //        verify(ghPullRequest, times(1)).getCommentsCount();
-        verify(ghPullRequest, times(2)).listCommits();
+        verify(ghPullRequest, times(4)).listCommits();
 
         verify(ghPullRequest, times(2)).getBody();
         verifyNoMoreInteractions(ghPullRequest);

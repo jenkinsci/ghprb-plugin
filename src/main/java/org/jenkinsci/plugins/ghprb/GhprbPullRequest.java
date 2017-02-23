@@ -166,6 +166,7 @@ public class GhprbPullRequest {
         }
         // Call update PR with the update PR info and no comment
         updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
+        commitAuthor = getPRCommitAuthor();
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
@@ -244,6 +245,8 @@ public class GhprbPullRequest {
         }
 
         updatePR(null /*GHPullRequest*/, comment, true);
+        // reset PR commit author
+        commitAuthor = null;
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
@@ -372,6 +375,19 @@ public class GhprbPullRequest {
         return true;
     }
 
+    private GitUser getPRCommitAuthor (){
+        try {
+            for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                if (commitDetails.getSha().equals(getHead())) {
+                    return commitDetails.getCommit().getCommitter();
+                }
+            }
+        } catch (Exception ex) {
+            logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+        }
+        return null;
+    }
+
     private void tryBuild() {
         synchronized (this) {
             if (helper.isProjectDisabled()) {
@@ -396,17 +412,7 @@ public class GhprbPullRequest {
                 if (pr != null) {
                     logger.log(Level.FINEST, "PR is not null, checking if mergable");
                     checkMergeable();
-                    try {
-                        for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-                            if (commitDetails.getSha().equals(getHead())) {
-                                commitAuthor = commitDetails.getCommit().getCommitter();
-                                break;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.log(Level.INFO, "Unable to get PR commits: ", ex);
-                    }
-
+                    getPRCommitAuthor();
                 }
 
                 logger.log(Level.FINEST, "Running build...");
