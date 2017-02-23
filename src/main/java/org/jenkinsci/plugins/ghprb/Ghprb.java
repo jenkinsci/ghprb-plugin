@@ -97,23 +97,57 @@ public class Ghprb {
     public Set<String> getSkipBuildPhrases() {
         return new HashSet<String>(Arrays.asList(getTrigger().getSkipBuildPhrase().split("[\\r\\n]+")));
     }
-    
+
+    public Set<String> getBlacklistedCommitAuthors() {
+        return new HashSet<String>(Arrays.asList(getTrigger().getBlackListCommitAuthor().split("[\\r\\n]+")));
+    }
+
+    /**
+     * Checks for skip build commit author.
+     *
+     * @param author The GitHub commit author
+     * @return the skip sender or null if should not skip
+     */
+    public String checkBlackListCommitAuthor(String author) {
+        Set<String> authors = getBlacklistedCommitAuthors();
+        authors.remove("");
+
+        Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
+        for (String s : authors) {
+            s = s.trim();
+            if (compilePattern(s).matcher(author).matches()) {
+                return s;
+            }
+        }
+        return null;
+    }
+
     /**
      * Checks for skip build phrase in pull request title and body. If present it updates shouldRun as false.
      * 
      * @param issue The GitHub issue
      * @return the skip phrase or null if should not skip
      */
-    public String checkSkipBuild(GHIssue issue) {
+    public String checkSkipBuildPhrase(GHIssue issue) {
+        Set<String> skipBuildPhrases = getSkipBuildPhrases();
+        skipBuildPhrases.remove("");
+
+        Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
+        for (String skipBuildPhrase : skipBuildPhrases) {
+            skipBuildPhrase = skipBuildPhrase.trim();
+            skipPatterns.put(compilePattern(skipBuildPhrase), skipBuildPhrase);
+        }
+
+
         // check in title
         String pullRequestTitle = issue.getTitle();
-        String skipBuildPhrase = checkSkipBuildInString(pullRequestTitle);
+        String skipBuildPhrase = checkSkipBuildInString(skipPatterns, pullRequestTitle);
         if (StringUtils.isNotBlank(skipBuildPhrase)) {
             return skipBuildPhrase;
         }
         // not found in title, check in body
         String pullRequestBody = issue.getBody();
-        skipBuildPhrase = checkSkipBuildInString(pullRequestBody);
+        skipBuildPhrase = checkSkipBuildInString(skipPatterns, pullRequestBody);
         if (StringUtils.isNotBlank(skipBuildPhrase)) {
             return skipBuildPhrase;
         }
@@ -121,23 +155,18 @@ public class Ghprb {
     }
 
     /**
-     * Checks for skip build phrase in the passed string
+     * Checks for skip pattern in the passed string
      *
+     * @param patterns The map of Patter to String values
      * @param string The string we're looking for the phrase in
-     * @return the skip phrase or null if we don't find it
+     * @return the skip value or null if we don't find it
      */
-    private String checkSkipBuildInString( String string ) {
+    private String checkSkipBuildInString(Map<Pattern, String> patterns, String string ) {
         // check for skip build phrase in the passed string
-        if (StringUtils.isNotBlank(string)) {
-            string = string.trim();
-            Set<String> skipBuildPhrases = getSkipBuildPhrases();
-            skipBuildPhrases.remove("");
-
-            for (String skipBuildPhrase : skipBuildPhrases) {
-                skipBuildPhrase = skipBuildPhrase.trim();
-                Pattern skipBuildPhrasePattern = compilePattern(skipBuildPhrase);
-                if (skipBuildPhrasePattern != null && skipBuildPhrasePattern.matcher(string).matches()) {
-                    return skipBuildPhrase;
+        if (!patterns.isEmpty() && StringUtils.isNotBlank(string)) {
+            for(Map.Entry<Pattern, String> e: patterns.entrySet()){
+                if(e.getKey().matcher(string).matches()){
+                    return e.getValue();
                 }
             }
         }

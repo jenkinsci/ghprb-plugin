@@ -157,6 +157,7 @@ public class GhprbPullRequest {
         }
         // Call update PR with the update PR info and no comment
         updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
+        commitAuthor = getPRCommitAuthor();
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
@@ -207,11 +208,22 @@ public class GhprbPullRequest {
 
     private void checkSkipBuild() {
         synchronized (this) {
-            String skipBuildPhrase = helper.checkSkipBuild(this.pr);
+            String skipBuildPhrase = helper.checkSkipBuildPhrase(this.pr);
             if (!StringUtils.isEmpty(skipBuildPhrase)) {
                 logger.log(Level.INFO,
-                           "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
-                           skipBuildPhrase);
+                        "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
+                        skipBuildPhrase);
+                shouldRun = false;
+                return;
+            }
+            if (commitAuthor == null){
+                return;
+            }
+            String blackListCommitAuthor = helper.checkBlackListCommitAuthor(commitAuthor.getName());
+            if (!StringUtils.isEmpty(blackListCommitAuthor)) {
+                logger.log(Level.FINE,
+                        "Pull request triggered by user: {0}. Skipping build because that user is blacklisted.",
+                        blackListCommitAuthor);
                 shouldRun = false;
             }
         }
@@ -224,6 +236,8 @@ public class GhprbPullRequest {
         }
 
         updatePR(null /*GHPullRequest*/, comment, true);
+        // reset PR commit author
+        commitAuthor = null;
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
@@ -352,6 +366,19 @@ public class GhprbPullRequest {
         return true;
     }
 
+    private GitUser getPRCommitAuthor (){
+        try {
+            for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                if (commitDetails.getSha().equals(getHead())) {
+                    return commitDetails.getCommit().getCommitter();
+                }
+            }
+        } catch (Exception ex) {
+            logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+        }
+        return null;
+    }
+
     private void tryBuild() {
         synchronized (this) {
             if (helper.isProjectDisabled()) {
@@ -376,17 +403,7 @@ public class GhprbPullRequest {
                 if (pr != null) {
                     logger.log(Level.FINEST, "PR is not null, checking if mergable");
                     checkMergeable();
-                    try {
-                        for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-                            if (commitDetails.getSha().equals(getHead())) {
-                                commitAuthor = commitDetails.getCommit().getCommitter();
-                                break;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.log(Level.INFO, "Unable to get PR commits: ", ex);
-                    }
-
+                    getPRCommitAuthor();
                 }
 
                 logger.log(Level.FINEST, "Running build...");
