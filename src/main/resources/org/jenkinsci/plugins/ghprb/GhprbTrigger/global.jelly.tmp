@@ -43,7 +43,7 @@
       <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
       	<f:textbox default=".*\[skip\W+ci\].*"/>
       </f:entry>
-      <f:entry title="${%Skip build sender}" field="skipBuildCommitAuthor">
+      <f:entry title="${%Blacklist commit authors}" field="blackListCommitAuthor">
       	<f:textbox default=""/>
       </f:entry>
       <f:entry title="${%Crontab line}" field="cron" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">

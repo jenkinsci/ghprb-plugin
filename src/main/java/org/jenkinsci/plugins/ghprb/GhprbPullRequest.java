@@ -228,11 +228,11 @@ public class GhprbPullRequest {
             if (commitAuthor == null){
                 return;
             }
-            String skipBuildCommitAuthor = helper.checkSkipBuildCommitAuthor(commitAuthor.getName());
-            if (!StringUtils.isEmpty(skipBuildCommitAuthor)) {
+            String blackListCommitAuthor = helper.checkBlackListCommitAuthor(commitAuthor.getName());
+            if (!StringUtils.isEmpty(blackListCommitAuthor)) {
                 logger.log(Level.INFO,
                         "Pull request triggered by {0} user. Hence skipping the build.",
-                        skipBuildCommitAuthor);
+                        blackListCommitAuthor);
                 shouldRun = false;
             }
         }

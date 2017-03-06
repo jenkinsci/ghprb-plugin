@@ -27,9 +27,6 @@
     <f:entry title="${%Skip build phrase}" field="skipBuildPhrase">
   	  <f:textbox default="${descriptor.skipBuildPhrase}"/>
     </f:entry>
-    <f:entry title="${%Skip build commit author}" field="skipBuildCommitAuthor">
-  	  <f:textbox default="${descriptor.skipBuildCommitAuthor}"/>
-    </f:entry>
 	<f:entry title="${%Display build errors on downstream builds?}" field="displayBuildErrorsOnDownstreamBuilds">
 	  <f:checkbox default="${descriptor.displayBuildErrorsOnDownstreamBuilds}"/>
 	</f:entry>
@@ -47,6 +44,9 @@
 	</f:entry>
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
       <f:checkbox />
+    </f:entry>
+    <f:entry title="${%Black list commit authors}" field="blackListCommitAuthor">
+  	  <f:textbox default="${descriptor.blackListCommitAuthor}"/>
     </f:entry>
     <f:entry title="${%Whitelist Target Branches:}" field="whiteListTargetBranches" >
       <f:repeatable field="whiteListTargetBranches" minimum="1"  add="Add Branch" >

@@ -111,8 +111,8 @@ public class Ghprb {
         return new HashSet<String>(Arrays.asList(getTrigger().getSkipBuildPhrase().split("[\\r\\n]+")));
     }
 
-    public Set<String> getSkipBuildCommitAuthors() {
-        return new HashSet<String>(Arrays.asList(getTrigger().getSkipBuildCommitAuthor().split("[\\r\\n]+")));
+    public Set<String> getBlacklistedCommitAuthors() {
+        return new HashSet<String>(Arrays.asList(getTrigger().getBlackListCommitAuthor().split("[\\r\\n]+")));
     }
 
     /**
@@ -121,12 +121,12 @@ public class Ghprb {
      * @param author The GitHub commit author
      * @return the skip sender or null if should not skip
      */
-    public String checkSkipBuildCommitAuthor(String author) {
-        Set<String> skipAuthors = getSkipBuildCommitAuthors();
-        skipAuthors.remove("");
+    public String checkBlackListCommitAuthor(String author) {
+        Set<String> authors = getBlacklistedCommitAuthors();
+        authors.remove("");
 
         Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
-        for (String s : skipAuthors) {
+        for (String s : authors) {
             s = s.trim();
             if (compilePattern(s).matcher(author).matches()) {
                 return s;

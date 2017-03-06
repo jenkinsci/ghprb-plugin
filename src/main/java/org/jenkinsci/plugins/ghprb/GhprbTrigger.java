@@ -83,7 +83,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String gitHubAuthId;
     private String triggerPhrase;
     private String skipBuildPhrase;
-    private String skipBuildCommitAuthor;
+    private String blackListCommitAuthor;
     private String blackListLabels;
     private String whiteListLabels;
     
@@ -133,7 +133,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             Boolean displayBuildErrorsOnDownstreamBuilds,
             String commentFilePath,
             String skipBuildPhrase,
-            String skipBuildCommitAuthor,
+            String blackListCommitAuthor,
             List<GhprbBranch> whiteListTargetBranches,
             List<GhprbBranch> blackListTargetBranches,
             Boolean allowMembersOfWhitelistedOrgsAsAdmin, 
@@ -158,7 +158,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
         this.skipBuildPhrase = skipBuildPhrase;
-        this.skipBuildCommitAuthor = skipBuildCommitAuthor;
+        this.blackListCommitAuthor = blackListCommitAuthor;
         this.whiteListTargetBranches = whiteListTargetBranches;
         this.blackListTargetBranches = blackListTargetBranches;
         this.gitHubAuthId = gitHubAuthId;
@@ -493,12 +493,12 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return skipBuildPhrase;
     }
 
-    public String getSkipBuildCommitAuthor() {
-        if (StringUtils.isEmpty(skipBuildCommitAuthor)) {
+    public String getBlackListCommitAuthor() {
+        if (StringUtils.isEmpty(blackListCommitAuthor)) {
             // if it's empty grab the global value
-            return getDescriptor().getSkipBuildCommitAuthor();
+            return getDescriptor().getBlackListCommitAuthor();
         }
-        return skipBuildCommitAuthor;
+        return blackListCommitAuthor;
     }
 
     public String getBlackListLabels() {
@@ -667,7 +667,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private String okToTestPhrase = ".*ok\\W+to\\W+test.*";
         private String retestPhrase = ".*test\\W+this\\W+please.*";
         private String skipBuildPhrase = ".*\\[skip\\W+ci\\].*";
-        private String skipBuildCommitAuthor = "";
+        private String blackListCommitAuthor = "";
         private String cron = "H/5 * * * *";
         private Boolean useComments = false;
         private Boolean useDetailedComments = false;
@@ -784,7 +784,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             okToTestPhrase = formData.getString("okToTestPhrase");
             retestPhrase = formData.getString("retestPhrase");
             skipBuildPhrase = formData.getString("skipBuildPhrase");
-            skipBuildCommitAuthor = formData.getString("skipBuildCommitAuthor");
+            blackListCommitAuthor = formData.getString("blackListCommitAuthor");
             cron = formData.getString("cron");
             useComments = formData.getBoolean("useComments");
             useDetailedComments = formData.getBoolean("useDetailedComments");
@@ -860,8 +860,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return skipBuildPhrase;
         }
 
-        public String getSkipBuildCommitAuthor() {
-            return skipBuildCommitAuthor;
+        public String getBlackListCommitAuthor() {
+            return blackListCommitAuthor;
         }
 
         public String getCron() {

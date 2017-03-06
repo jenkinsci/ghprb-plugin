@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -177,13 +176,13 @@ public class GhprbTriggerTest {
         prHelper.setAccessible(true);
         prHelper.set(pr, helper);
 
-        given(helper.getSkipBuildCommitAuthors()).willReturn(new HashSet<String>(Arrays.asList("bot1", "bot2")));
-        given(helper.checkSkipBuildCommitAuthor(user.getName())).willReturn(null);
+        given(helper.getBlacklistedCommitAuthors()).willReturn(new HashSet<String>(Arrays.asList("bot1", "bot2")));
+        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn(null);
         shouldRun.set(pr, true);
         checkSkip.invoke(pr);
         assertThat(shouldRun.get(pr)).isEqualTo(true);
 
-        given(helper.checkSkipBuildCommitAuthor(user.getName())).willReturn("bot2");
+        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn("bot2");
         shouldRun.set(pr, true);
         checkSkip.invoke(pr);
         assertThat(shouldRun.get(pr)).isEqualTo(false);

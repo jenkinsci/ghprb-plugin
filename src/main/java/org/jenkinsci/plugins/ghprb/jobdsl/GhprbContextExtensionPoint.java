@@ -32,7 +32,7 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 context.displayBuildErrorsOnDownstreamBuilds,
                 null,
                 context.skipBuildPhrase,
-                context.skipBuildCommitAuthor,
+                context.blackListCommitAuthor,
                 context.whiteListTargetBranches,
                 context.blackListTargetBranches,
                 context.allowMembersOfWhitelistedOrgsAsAdmin,

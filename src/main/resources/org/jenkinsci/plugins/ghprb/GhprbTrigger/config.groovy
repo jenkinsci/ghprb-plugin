@@ -24,9 +24,6 @@ f.advanced() {
   f.entry(field: "skipBuildPhrase", title: _("Skip build phrase")) {
     f.textbox(default: descriptor.skipBuildPhrase)
   }
-  f.entry(field: "skipBuildCommitAuthor", title: _("Skip build commit author")) {
-    f.textbox(default: descriptor.skipBuildCommitAuthor)
-  }
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
     f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds)
   }
@@ -53,6 +50,9 @@ f.advanced() {
   }
   f.entry(field: "buildDescTemplate", title: _("Build description template")) {
       f.textarea()
+  }
+  f.entry(field: "blackListCommitAuthor", title: _("Blacklist commit authors")) {
+    f.textbox(default: descriptor.blackListCommitAuthor)
   }
   f.entry(field: "whiteListTargetBranches", title: _("Whitelist Target Branches:")) {
     f.repeatable(field: "whiteListTargetBranches", minimum: "1", add: "Add Branch") {
