@@ -449,14 +449,18 @@ public class GhprbPullRequest {
         // return;
         // }
 
-        if (helper.isWhitelistPhrase(body) && helper.isAdmin(sender)) { // add to whitelist
-            GHIssue parent = comment.getParent();
-            GHUser author = parent.getUser();
-            if (!helper.isWhitelisted(author)) {
-                logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
-                helper.addWhitelist(author.getLogin());
+        if (helper.isWhitelistPhrase(body)) { // add to whitelist
+            if (helper.isAdmin(sender)) { // check if request is from an admin
+                GHIssue parent = comment.getParent();
+                GHUser author = parent.getUser();
+                if (!helper.isWhitelisted(author)) {
+                    logger.log(Level.FINEST, "Author {0} not whitelisted, adding to whitelist.", author);
+                    helper.addWhitelist(author.getLogin());
+                }
+                setAccepted(true);
+            } else {
+                logger.log(Level.FINEST, "Sender {0} is not an admin, rejecting whitelist request for {1}.", new Object[] { sender.getName(), author });
             }
-            setAccepted(true);
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) { // ok to test
             logger.log(Level.FINEST, "Admin {0} gave OK to test", sender);
             setAccepted(true);
