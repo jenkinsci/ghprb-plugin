@@ -1,20 +1,15 @@
 package org.jenkinsci.plugins.ghprb.extensions.comments;
 
-import java.io.IOException;
-import java.util.List;
-
 import hudson.Extension;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
-
 import org.jenkinsci.plugins.ghprb.Ghprb;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
+import org.jenkinsci.plugins.ghprb.extensions.*;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.IOException;
+import java.util.List;
 
 public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppender, GhprbProjectExtension, GhprbGlobalExtension {
 
@@ -32,7 +27,7 @@ public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppende
         return logExcerptLines == null ? 0 : logExcerptLines;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         
         StringBuilder msg = new StringBuilder();
         GHCommitState state = Ghprb.getState(build);

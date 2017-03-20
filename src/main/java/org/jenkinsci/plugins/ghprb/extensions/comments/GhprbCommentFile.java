@@ -1,12 +1,8 @@
 package org.jenkinsci.plugins.ghprb.extensions.comments;
 
-import java.io.File;
-import java.io.IOException;
-
 import hudson.Extension;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
-
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
@@ -14,6 +10,9 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.File;
+import java.io.IOException;
 
 public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppender, GhprbProjectExtension {
 
@@ -36,7 +35,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         return false;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
         if (commentFilePath != null && !commentFilePath.isEmpty()) {
             try {

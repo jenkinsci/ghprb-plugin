@@ -6,15 +6,7 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
-import hudson.model.CauseAction;
-import hudson.model.Item;
-import hudson.model.Job;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersDefinitionProperty;
-import hudson.model.Run;
-import hudson.model.Saveable;
-import hudson.model.StringParameterValue;
+import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 import hudson.triggers.TriggerDescriptor;
@@ -24,13 +16,10 @@ import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
-
+import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.ghprb.extensions.*;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
@@ -44,29 +33,20 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import net.sf.json.JSONObject;
-
+import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletException;
-
 /**
  * @author Honza Brázdil jbrazdil@redhat.com
  */
 public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
-    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
     private final String adminlist;
@@ -242,11 +222,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
         String name = project.getFullName();
 
-        // TODO: What is the candidate for `isDisabled`?
-//        if (project.isDisabled()) {
-//            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
-//            return;
-//        }
+        if (!project.isBuildable()) {
+            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
+            return;
+        }
         if (project.getProperty(GithubProjectProperty.class) == null) {
             logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + name);
             return;
@@ -379,9 +358,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         // note that this will be removed from the Actions list after the job is completed so that the old (and incorrect)
         // one isn't there
 
-        // TODO use standard method in 1.621+
         ParameterizedJobMixIn scheduledJob = new ParameterizedJobMixIn() {
-            @Override protected Job asJob() {
+            @Override
+            protected Job asJob() {
                 return job;
             }
         };
@@ -597,10 +576,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         if (super.job == null) {
             logger.log(Level.FINE, "Project was never set, start was never run");
             isActive = false;
-            // TODO: What is the candidate for `isDisabled`?
-//        } else if (super.job.isDisabled()) {
-//            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
-//            isActive = false;
+        } else if (!super.job.isBuildable()) {
+            logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
+            isActive = false;
         } else if (getRepository() == null) {
             logger.log(Level.SEVERE, "The ghprb trigger for {0} wasn''t properly started - repository is null", name);
             isActive = false;
@@ -610,7 +588,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public GhprbRepository getRepository() {
-        if (this.repository == null && super.job != null ){ // && !super.job.isDisabled()) { TODO: What is the candidate for `isDisabled`?
+        if (this.repository == null && super.job != null  && super.job.isBuildable()) {
             try {
                 this.initState();
             } catch (IOException e) {
@@ -651,6 +629,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
 
+    @Extension @Symbol("githubPullRequest")
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");

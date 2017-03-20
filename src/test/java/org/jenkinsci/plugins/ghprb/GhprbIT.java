@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.json.JSONObject;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.stapler.BindInterceptor;
 import org.kohsuke.stapler.RequestImpl;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -44,6 +46,17 @@ public class GhprbIT extends GhprbITBaseTestCase {
 
     @Before
     public void setUp() throws Exception {// GIVEN
+        req = Mockito.mock(RequestImpl.class);
+
+        given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.setBindInterceptpr(any(BindInterceptor.class))).willCallRealMethod();
+        given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
+        given(req.getBindInterceptor()).willReturn(BindInterceptor.NOOP);
+
+        req.setBindListener(BindInterceptor.NOOP);
+        req.setBindInterceptpr(BindInterceptor.NOOP);
+        req.setBindInterceptor(BindInterceptor.NOOP);
         project = jenkinsRule.createFreeStyleProject("PRJ");
         super.beforeTest(null, null, project);
     }

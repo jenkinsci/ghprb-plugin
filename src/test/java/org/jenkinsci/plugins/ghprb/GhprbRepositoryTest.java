@@ -1,5 +1,11 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.model.Job;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
+import hudson.util.Secret;
 import org.apache.commons.codec.binary.Hex;
 import org.fest.util.Collections;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
@@ -10,33 +16,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHLabel;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.TaskListener;
-import hudson.model.queue.QueueTaskFuture;
-import hudson.util.Secret;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -54,15 +40,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link GhprbRepository}.
@@ -95,7 +73,7 @@ public class GhprbRepositoryTest {
     private GhprbRepository ghprbRepository;
     private ConcurrentMap<Integer, GhprbPullRequest> pulls;
     private GhprbPullRequest ghprbPullRequest;
-    private AbstractProject<?, ?> project;
+    private Job<?, ?> project;
     private GHRateLimit rateLimit;
 
     @Rule
@@ -801,7 +779,7 @@ public class GhprbRepositoryTest {
         ghprbRepository = spy(new GhprbRepository(TEST_REPO_NAME, trigger));
 
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString());
-        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(Run.class), any(TaskListener.class));
         
         doReturn(ghprbRepository).when(trigger).getRepository();
         
