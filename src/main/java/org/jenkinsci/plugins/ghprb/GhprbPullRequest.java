@@ -1,18 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
-
-import hudson.model.AbstractBuild;
-
+import hudson.model.Run;
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHLabel;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitUser;
+import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -724,7 +715,7 @@ public class GhprbPullRequest {
         return authorEmail;
     }
 
-    public void setBuild(AbstractBuild<?, ?> build) {
+    public void setBuild(Run<?, ?> build) {
         lastBuildId = build.getId();
     }
 

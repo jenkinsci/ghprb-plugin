@@ -47,24 +47,26 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
         
         logger.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId + ", checking for queued items to cancel.");
         Queue queue = Jenkins.getInstance().getQueue();
-        for (Queue.Item item : queue.getItems()) {
+        Queue.Item queueItem = project.getQueueItem();
+        while (queueItem != null) {
             GhprbCause qcause = null;
-            for (Cause cause : item.getCauses()){
+
+            for (Cause cause : queueItem.getCauses()){
                 if (cause instanceof GhprbCause) {
                     qcause = (GhprbCause) cause;
                 }
             }
-            if (qcause == null) {
-                continue;
-            }
-            if (qcause.getPullID() == prId) {
+
+            if (qcause.getPullID() == prId && qcause != null) {
                 try {
                     logger.log(Level.FINER, "Cancelling queued build of " + project.getName() + " for PR # " + qcause.getPullID() + ", checking for queued items to cancel.");
-                    queue.cancel(item);
+                    queue.cancel(queueItem);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Unable to cancel queued build", e);
                 }
             }
+
+            queueItem = project.getQueueItem();
         }
 
         logger.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId);

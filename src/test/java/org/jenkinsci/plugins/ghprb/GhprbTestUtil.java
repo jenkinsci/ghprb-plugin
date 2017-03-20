@@ -14,8 +14,17 @@
 
 package org.jenkinsci.plugins.ghprb;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.BDDMockito.given;
+import hudson.model.Job;
+import hudson.plugins.git.BranchSpec;
+import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.UserRemoteConfig;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.kohsuke.github.*;
+import org.kohsuke.stapler.*;
+import org.kohsuke.stapler.lang.MethodRef;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -27,27 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
-import org.kohsuke.stapler.BindInterceptor;
-import org.kohsuke.stapler.MetaClass;
-import org.kohsuke.stapler.RequestImpl;
-import org.kohsuke.stapler.SingleLinkedList;
-import org.kohsuke.stapler.WebApp;
-import org.kohsuke.stapler.lang.MethodRef;
-import org.mockito.Mockito;
-
-import hudson.model.AbstractProject;
-import hudson.plugins.git.BranchSpec;
-import hudson.plugins.git.GitSCM;
-import hudson.plugins.git.UserRemoteConfig;
-import net.sf.json.JSONObject;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 
@@ -372,11 +362,12 @@ public class GhprbTestUtil {
         given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
         given(req.setBindInterceptpr(any(BindInterceptor.class))).willCallRealMethod();
         given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
-        given(req.getBindInterceptor()).willCallRealMethod();
+        given(req.getBindInterceptor()).willReturn(BindInterceptor.NOOP);
         given(req.getWebApp()).willReturn(webApp);
         
         req.setBindListener(BindInterceptor.NOOP);
         req.setBindInterceptpr(BindInterceptor.NOOP);
+        req.setBindInterceptor(BindInterceptor.NOOP);
 
     }
     
@@ -420,7 +411,7 @@ public class GhprbTestUtil {
         for ( Entry<String, Object> next: values.entrySet()) {
             defaults.put(next.getKey(), next.getValue());
         }
-        
+
         GhprbTrigger trigger = spy(req.bindJSON(GhprbTrigger.class, defaults));
         
         GHRateLimit limit = new GHRateLimit();
@@ -434,14 +425,14 @@ public class GhprbTestUtil {
         return trigger;
     }
     
-    public static void waitForBuildsToFinish(AbstractProject<?, ?> project) throws InterruptedException {
+    public static void waitForBuildsToFinish(Job<?, ?> project) throws InterruptedException {
         while (project.isBuilding() || project.isInQueue()) {
             // THEN
             Thread.sleep(500);
         }
     }
 
-    public static void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
+    public static void triggerRunAndWait(int numOfTriggers, GhprbTrigger trigger, Job<?, ?> project) throws InterruptedException {
         for (int i = 0; i < numOfTriggers; ++i) {
             trigger.run();
             waitForBuildsToFinish(project);
@@ -449,7 +440,7 @@ public class GhprbTestUtil {
 
     }
 
-    public static void triggerRunsAtOnceThenWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
+    public static void triggerRunsAtOnceThenWait(int numOfTriggers, GhprbTrigger trigger, Job<?, ?> project) throws InterruptedException {
         for (int i = 0; i < numOfTriggers; ++i) {
             trigger.run();
         }
