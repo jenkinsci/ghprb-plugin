@@ -136,7 +136,7 @@ public class GhprbBuilds {
         try {
             String template = trigger.getBuildDescTemplate();
             if (StringUtils.isEmpty(template)) {
-                template = "<a title=\"$title\" href=\"$url\">PR #$pullId</a>: $abbrTitle";
+                template = "PR #$pullId: $title";
             }
             Map<String, String> vars = getVariables(c);
             template = Util.replaceMacro(template, vars);
