@@ -47,6 +47,7 @@ import java.util.regex.Pattern;
  */
 public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
+    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
     private final String adminlist;
@@ -628,8 +629,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         repo.onPullRequestHook(pr);
     }
 
-
-    @Extension @Symbol("githubPullRequest")
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
