@@ -360,9 +360,8 @@ public class GhprbTestUtil {
         
         given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
         given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
-        given(req.setBindInterceptpr(any(BindInterceptor.class))).willCallRealMethod();
+        given(req.setBindInterceptor(any(BindInterceptor.class))).willCallRealMethod();
         given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
-        given(req.getBindInterceptor()).willReturn(BindInterceptor.NOOP);
         given(req.getWebApp()).willReturn(webApp);
         
         req.setBindListener(BindInterceptor.NOOP);
