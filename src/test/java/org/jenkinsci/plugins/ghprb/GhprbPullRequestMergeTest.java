@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.model.*;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -17,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
@@ -67,6 +70,11 @@ public class GhprbPullRequestMergeTest {
     @Mock
     private ItemGroup<?> parent;
 
+    @Mock
+    private Launcher launcher;
+
+    private FilePath mockFilePath;
+
     private final String triggerPhrase = "ok to merge";
     private final String nonTriggerPhrase = "This phrase is not the trigger phrase";
 
@@ -89,6 +97,10 @@ public class GhprbPullRequestMergeTest {
 
     @Before
     public void beforeTest() throws Exception {
+        launcher = mock(Launcher.class);
+
+        mockFilePath = new FilePath(new File(""));
+
         triggerValues = new HashMap<String, Object>(10);
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
@@ -229,35 +241,35 @@ public class GhprbPullRequestMergeTest {
         GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(2)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(2)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(3)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(4)).merge(mergeComment);
     }
 
@@ -270,11 +282,11 @@ public class GhprbPullRequestMergeTest {
         GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
     }
 
@@ -287,11 +299,11 @@ public class GhprbPullRequestMergeTest {
         GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
     }
 
@@ -304,11 +316,11 @@ public class GhprbPullRequestMergeTest {
         GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
     }
 
@@ -321,39 +333,39 @@ public class GhprbPullRequestMergeTest {
         GhprbPullRequestMerge merger = setupMerger(onlyAdminsMerge, disallowOwnCode);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
         
         setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
 
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
-        merger.perform(build, null, null, listener);
+        merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
         
     }
