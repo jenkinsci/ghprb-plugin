@@ -9,10 +9,13 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import hudson.util.FormValidation;
 import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.github.*;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -85,7 +88,7 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         listener = taskListener;
         Job<?, ?> project = run.getParent();
         if (run.getResult().isWorseThan(Result.SUCCESS)) {
-            taskListener.getLogger().println("Build did not succeed, merge will not be run");
+            listener.getLogger().println("Build did not succeed, merge will not be run");
             return;
         }
 
@@ -110,7 +113,7 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         // a PR when the 'request for testing' phrase contains the PR merge trigger phrase and
         // the bot is a member of a whitelisted organization
         if (helper.isBotUser(triggerSender)) {
-            taskListener.getLogger().println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
+            listener.getLogger().println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
             return;
         }
 
@@ -167,10 +170,10 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
             } catch (Exception e) {
                 e.printStackTrace(listener.getLogger());
             }
-            String mergeComment = Ghprb.replaceMacros(run, taskListener, getMergeComment());
+            String mergeComment = Ghprb.replaceMacros(run, listener, getMergeComment());
             pr.merge(mergeComment);
             listener.getLogger().println("Pull request successfully merged");
-            deleteBranch(run, launcher, taskListener);
+            deleteBranch(run, launcher, listener);
         }
 
         // We should only fail the build if there is an intent to merge
@@ -253,9 +256,10 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
             return true;
         }
 
-//        public FormValidation doCheck(@AncestorInPath Job<?, ?> project, @QueryParameter String value) throws IOException {
-//            return FilePath.validateFileMask(project.getBuildDir().toPath(), value);
-//        }
+        public FormValidation doCheck(@AncestorInPath Job<?, ?> project, @QueryParameter String value) throws IOException {
+            FilePath buildDirectory = new FilePath(project.getBuildDir());
+            return FilePath.validateFileMask(buildDirectory, value);
+        }
     }
 
 }
