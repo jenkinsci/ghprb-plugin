@@ -1,6 +1,10 @@
 package org.jenkinsci.plugins.ghprb;
 
-import com.cloudbees.plugins.credentials.*;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.domains.*;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
