@@ -53,7 +53,7 @@ public class GhprbBuildsTest {
     public void setup() throws Exception {
         // Mock trigger and add a mocked appender.
         trigger = GhprbTestUtil.getTrigger();
-        trigger.getDescriptor().getExtensions().add(appender);
+        trigger.getExtensions().add(appender);
 
         // Mocks for GhprbRepository
         doNothing().when(repo).addComment(anyInt(), anyString());
