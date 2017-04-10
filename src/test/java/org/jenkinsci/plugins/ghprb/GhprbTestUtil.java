@@ -365,7 +365,7 @@ public class GhprbTestUtil {
         given(req.getWebApp()).willReturn(webApp);
         
         req.setBindListener(BindInterceptor.NOOP);
-        req.setBindInterceptpr(BindInterceptor.NOOP);
+        req.setBindInterceptor(BindInterceptor.NOOP);
         req.setBindInterceptor(BindInterceptor.NOOP);
 
     }
