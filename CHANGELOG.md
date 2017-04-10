@@ -1,5 +1,9 @@
 ### Updates
 
+#### -> 1.36.0
+* Support Jenkins pipelines
+* Upgrades for Jenkins 2.0 support
+
 #### -> 1.35.0
 * Fix issue #354. (Multiple queued builds would be squashed into one.)
 
