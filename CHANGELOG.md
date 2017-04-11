@@ -1,5 +1,8 @@
 ### Updates
 
+#### -> 1.36.1
+* Consume the --none-- argument for GitHub comment configuration. (See #462)
+
 #### -> 1.36.0
 * Support Jenkins pipelines
 * Upgrades for Jenkins 2.0 support
