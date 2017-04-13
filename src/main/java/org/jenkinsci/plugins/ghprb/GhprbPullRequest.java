@@ -381,7 +381,7 @@ public class GhprbPullRequest {
         return null;
     }
 
-    private boolean containsWatchedPaths(GHPullRequest pr) {
+    boolean containsWatchedPaths(GHPullRequest pr) {
         synchronized (this) {
             List<Pattern> included = helper.getIncludedRegionPatterns();
             List<Pattern> excluded = helper.getExcludedRegionPatterns();
