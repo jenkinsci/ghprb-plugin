@@ -23,7 +23,7 @@ public abstract class GhprbTriggerBackwardsCompatible extends Trigger<Job<?, ?>>
     
     public abstract DescribableList<GhprbExtension, GhprbExtensionDescriptor> getExtensions();
     
-    protected final int latestVersion = 3;
+    protected final static int latestVersion = 3;
     
 
     protected Integer configVersion;

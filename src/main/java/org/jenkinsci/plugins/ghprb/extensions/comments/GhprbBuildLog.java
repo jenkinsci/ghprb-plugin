@@ -24,7 +24,7 @@ public class GhprbBuildLog extends GhprbExtension implements GhprbCommentAppende
     }
     
     public Integer getLogExcerptLines() {
-        return logExcerptLines == null ? 0 : logExcerptLines;
+        return logExcerptLines == null ? Integer.valueOf(0) : logExcerptLines;
     }
 
     public String postBuildComment(Run<?, ?> build, TaskListener listener) {
