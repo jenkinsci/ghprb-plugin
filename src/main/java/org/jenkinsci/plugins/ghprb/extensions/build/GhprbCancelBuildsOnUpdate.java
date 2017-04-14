@@ -32,11 +32,11 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
 
     @DataBoundConstructor
     public GhprbCancelBuildsOnUpdate(Boolean overrideGlobal) {
-        this.overrideGlobal = overrideGlobal == null ? false : overrideGlobal;
+        this.overrideGlobal = overrideGlobal == null ? Boolean.valueOf(false) : overrideGlobal;
     }
     
     public Boolean getOverrideGlobal() {
-        return overrideGlobal == null ? false : overrideGlobal;
+        return overrideGlobal == null ? Boolean.valueOf(false) : overrideGlobal;
     }
 
     private void cancelCurrentBuilds(Job<?, ?> project,
@@ -57,7 +57,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements GhprbBu
                 }
             }
 
-            if (qcause.getPullID() == prId && qcause != null) {
+            if (qcause != null && qcause.getPullID() == prId) {
                 try {
                     logger.log(Level.FINER, "Cancelling queued build of " + project.getName() + " for PR # " + qcause.getPullID() + ", checking for queued items to cancel.");
                     queue.cancel(queueItem);

@@ -278,7 +278,7 @@ public class GhprbRepository implements Saveable{
         return false;
     }
     
-    public static Object createHookLock = new Object();
+    public final static Object createHookLock = new Object();
 
     public boolean createHook() {
         try {

@@ -66,7 +66,7 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
     }
 
     public Boolean getAllowMergeWithoutTriggerPhrase() {
-        return allowMergeWithoutTriggerPhrase == null ? false : allowMergeWithoutTriggerPhrase;
+        return allowMergeWithoutTriggerPhrase == null ? Boolean.valueOf(false) : allowMergeWithoutTriggerPhrase;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
