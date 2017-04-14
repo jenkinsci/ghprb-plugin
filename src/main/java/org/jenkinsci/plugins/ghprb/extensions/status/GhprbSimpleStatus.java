@@ -92,7 +92,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     }
 
     public Boolean getAddTestResults() {
-        return addTestResults == null ? false : addTestResults;
+        return addTestResults == null ? Boolean.valueOf(false) : addTestResults;
     }
 
     public List<GhprbBuildResultMessage> getCompletedStatus() {
