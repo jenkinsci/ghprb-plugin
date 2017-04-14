@@ -2,7 +2,10 @@ package org.jenkinsci.plugins.ghprb.upstream;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.BuildListener;
+import hudson.model.Environment;
+import hudson.model.TaskListener;
+import hudson.model.AbstractBuild;
 import hudson.model.listeners.RunListener;
 
 import org.jenkinsci.plugins.ghprb.Ghprb;
@@ -15,7 +18,6 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +31,13 @@ import java.util.logging.Logger;
  */
 
 @Extension
-public class GhprbUpstreamStatusListener extends RunListener<Run<?, ?>> {
+public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>> {
     private static final Logger logger = Logger.getLogger(GhprbUpstreamStatusListener.class.getName());
     
     private GHRepository repo;
 
     // Gets all the custom env vars needed to send information to GitHub
-    private Map<String, String> returnEnvironmentVars(Run<?, ?> build, TaskListener listener){
+    private Map<String, String> returnEnvironmentVars(AbstractBuild<?, ?> build, TaskListener listener){
         Map<String, String> envVars = Ghprb.getEnvVars(build, listener);
 
         if (!envVars.containsKey("ghprbUpstreamStatus")) {
@@ -46,7 +48,7 @@ public class GhprbUpstreamStatusListener extends RunListener<Run<?, ?>> {
                 .getGitHubAuth(envVars.get("ghprbCredentialsId"));
 
         try {
-            GitHub gh = auth.getConnection(build.getParent());
+            GitHub gh = auth.getConnection(build.getProject());
             repo = gh.getRepository(envVars.get("ghprbGhRepository"));
             return envVars;
         } catch (Exception e) {
@@ -76,8 +78,25 @@ public class GhprbUpstreamStatusListener extends RunListener<Run<?, ?>> {
         );
     }
 
+    // Sets the status as pending when the job starts and then calls the createCommitStatus method to send it to GitHub
     @Override
-    public void onStarted(Run<?, ?> build, TaskListener listener) {
+    public Environment setUpEnvironment(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
+        Map<String, String> envVars = returnEnvironmentVars(build, listener);
+        if (envVars != null) {
+            logger.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
+
+            try {
+                returnGhprbSimpleStatus(envVars).onEnvironmentSetup(build, listener, repo);
+            } catch (GhprbCommitStatusException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return new Environment(){};
+    }
+
+    @Override
+    public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
         Map<String, String> envVars = returnEnvironmentVars(build, listener);
         if (envVars == null) {
             return;
@@ -92,7 +111,7 @@ public class GhprbUpstreamStatusListener extends RunListener<Run<?, ?>> {
 
     // Sets the status to the build result when the job is done, and then calls the createCommitStatus method to send it to GitHub
     @Override
-    public void onCompleted(Run<?, ?> build, TaskListener listener) {
+    public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
         Map<String, String> envVars = returnEnvironmentVars(build, listener);
         if (envVars == null) {
             return;
