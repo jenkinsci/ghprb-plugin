@@ -1,5 +1,8 @@
 ### Updates
 
+#### -> 1.36.2
+* Revert pipeline support for the upstream status capability (only). See #506.
+
 #### -> 1.36.1
 * Consume the --none-- argument for GitHub comment configuration. (See #462)
 
