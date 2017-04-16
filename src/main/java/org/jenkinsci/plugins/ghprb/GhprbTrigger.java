@@ -803,7 +803,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             for (GHCommitState nextResult : results) {
                 String text = StringUtils.capitalize(nextResult.toString().toLowerCase());
                 items.add(text, nextResult.toString());
-                if (unstableAs.toString().equals(nextResult)) {
+                if (unstableAs.toString().equals(nextResult.toString())) {
                     items.get(items.size()-1).selected = true;
                 } 
             }
