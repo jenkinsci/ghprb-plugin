@@ -81,7 +81,7 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
             for (GHCommitState nextResult : results) {
 
                 items.add(nextResult.toString(), nextResult.toString());
-                if (result.toString().equals(nextResult)) {
+                if (result.equals(nextResult.toString())) {
                     items.get(items.size() - 1).selected = true;
                 }
             }
