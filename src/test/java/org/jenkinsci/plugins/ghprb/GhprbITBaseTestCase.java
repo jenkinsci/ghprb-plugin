@@ -1,30 +1,21 @@
 package org.jenkinsci.plugins.ghprb;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.plugins.git.GitSCM;
+import org.joda.time.DateTime;
+import org.kohsuke.github.*;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.Map;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.TaskListener;
-import hudson.plugins.git.GitSCM;
-
-import org.joda.time.DateTime;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.kohsuke.github.GHIssueState;
-
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.*;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -87,8 +78,9 @@ public abstract class GhprbITBaseTestCase {
 
         GhprbRepository repo = Mockito.spy(new GhprbRepository("user/dropwizard", trigger));
         Mockito.doReturn(ghRepository).when(repo).getGitHubRepo();
-        Mockito.doNothing().when(repo).addComment(Mockito.anyInt(), Mockito.anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        Mockito.doNothing().when(repo).addComment(Mockito.anyInt(), Mockito.anyString(), any(Run.class), any(TaskListener.class));
         Mockito.doReturn(ghprbPullRequest).when(repo).getPullRequest(Mockito.anyInt());
+
         
         Mockito.doReturn(repo).when(trigger).getRepository();
 

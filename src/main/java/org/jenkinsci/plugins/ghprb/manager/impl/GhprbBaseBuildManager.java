@@ -1,5 +1,17 @@
 package org.jenkinsci.plugins.ghprb.manager.impl;
 
+import hudson.model.Job;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.tasks.junit.CaseResult;
+import hudson.tasks.junit.TestResult;
+import hudson.tasks.test.AbstractTestResultAction;
+import hudson.tasks.test.AggregatedTestResultAction;
+import hudson.tasks.test.AggregatedTestResultAction.ChildReport;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
+import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -7,32 +19,17 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jenkins.model.Jenkins;
-
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Result;
-import hudson.tasks.test.AbstractTestResultAction;
-import hudson.tasks.junit.TestResult;
-import hudson.tasks.junit.CaseResult;
-import hudson.tasks.test.AggregatedTestResultAction;
-import hudson.tasks.test.AggregatedTestResultAction.ChildReport;
-
-import org.jenkinsci.plugins.ghprb.GhprbTrigger;
-import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
-import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
-
 /**
  * @author mdelapenya (Manuel de la Peña)
  */
 public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
-    public GhprbBaseBuildManager(AbstractBuild<?, ?> build) {
+    public GhprbBaseBuildManager(Run<?, ?> build) {
         this.build = build;
         this.jobConfiguration = buildDefaultConfiguration();
     }
 
-    public GhprbBaseBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
+    public GhprbBaseBuildManager(Run<?, ?> build, JobConfiguration jobConfiguration) {
         this.build = build;
         this.jobConfiguration = jobConfiguration;
     }
@@ -58,7 +55,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
      * @return the downstream builds as an iterator
      */
     public Iterator<?> downstreamProjects() {
-        List<AbstractBuild<?, ?>> downstreamList = new ArrayList<AbstractBuild<?, ?>>();
+        List<Run<?, ?>> downstreamList = new ArrayList<Run<?, ?>>();
 
         downstreamList.add(build);
 
@@ -78,7 +75,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
         return getAggregatedTestResults(build);
     }
 
-    protected String getAggregatedTestResults(AbstractBuild<?, ?> build) {
+    protected String getAggregatedTestResults(Run<?, ?> build) {
         AggregatedTestResultAction testResultAction = build.getAction(AggregatedTestResultAction.class);
 
         if (testResultAction == null) {
@@ -119,7 +116,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
                 continue;
             }
 
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>) report.child.getProject();
+            Job<?, ?> project = (Job<?, ?>) report.child.getProject();
 
             String baseUrl = Jenkins.getInstance().getRootUrl() + build.getUrl() + project.getShortUrl() + "testReport";
 
@@ -180,7 +177,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
         return String.format("%d tests run, %d skipped, %d failed.", testResultAction.getTotalCount(), testResultAction.getSkipCount(), testResultAction.getFailCount());
     }
 
-    protected AbstractBuild<?, ?> build;
+    protected Run<?, ?> build;
 
     private static final int _MAX_LINES_COUNT = 25;
 

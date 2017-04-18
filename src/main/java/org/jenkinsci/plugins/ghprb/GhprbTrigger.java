@@ -1,22 +1,12 @@
 package org.jenkinsci.plugins.ghprb;
 
 import antlr.ANTLRException;
-
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.matrix.MatrixProject;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Item;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersAction;
-import hudson.model.ParametersDefinitionProperty;
-import hudson.model.Saveable;
-import hudson.model.StringParameterValue;
+import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 import hudson.triggers.TriggerDescriptor;
@@ -24,36 +14,28 @@ import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
+import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
 import net.sf.json.JSONObject;
-
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.ghprb.extensions.*;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
+import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,6 +66,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String gitHubAuthId;
     private String triggerPhrase;
     private String skipBuildPhrase;
+    private String blackListLabels;
+    private String whiteListLabels;
     
 
     private transient Ghprb helper;
@@ -139,6 +123,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String commitStatusContext,
             String gitHubAuthId,
             String buildDescTemplate,
+            String blackListLabels,
+            String whiteListLabels,
             List<GhprbExtension> extensions
             ) throws ANTLRException {
         super(cron);
@@ -158,6 +144,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.gitHubAuthId = gitHubAuthId;
         this.allowMembersOfWhitelistedOrgsAsAdmin = allowMembersOfWhitelistedOrgsAsAdmin;
         this.buildDescTemplate = buildDescTemplate;
+        this.blackListLabels = blackListLabels;
+        this.whiteListLabels = whiteListLabels;
         setExtensions(extensions);
         configVersion = latestVersion;
     }
@@ -229,13 +217,13 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     
 
     @Override
-    public void start(AbstractProject<?, ?> project, boolean newInstance) {
+    public void start(Job<?, ?> project, boolean newInstance) {
         // We should always start the trigger, and handle cases where we don't run in the run function.
         super.start(project, newInstance);
         
         String name = project.getFullName();
-        
-        if (project.isDisabled()) {
+
+        if (!project.isBuildable()) {
             logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
             return;
         }
@@ -296,13 +284,13 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     
 
     public QueueTaskFuture<?> scheduleBuild(GhprbCause cause, GhprbRepository repo) {
-        
+
         try {
-        for (GhprbExtension ext : Ghprb.getJobExtensions(this, GhprbBuildStep.class)) {
-            if (ext instanceof GhprbBuildStep) {
-                ((GhprbBuildStep)ext).onScheduleBuild(super.job, cause);
+            for (GhprbExtension ext : Ghprb.getJobExtensions(this, GhprbBuildStep.class)) {
+                if (ext instanceof GhprbBuildStep) {
+                    ((GhprbBuildStep) ext).onScheduleBuild(super.job, cause);
+                }
             }
-        }
         } catch(Exception e) {
             logger.log(Level.SEVERE, "Unable to execute extentions for scheduleBuild", e);
         }
@@ -321,7 +309,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         String lastBuildId = pr.getLastBuildId();
         BuildData buildData = null;
         if (!(job instanceof MatrixProject) && !StringUtils.isEmpty(lastBuildId)) {
-            AbstractBuild<?, ?> lastBuild = job.getBuild(lastBuildId);
+            Run<?, ?> lastBuild = job.getBuild(lastBuildId);
             if (lastBuild != null) {
                 buildData = lastBuild.getAction(BuildData.class);
             }
@@ -357,7 +345,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         values.add(new StringParameterValue("ghprbPullAuthorLoginMention", "@" + cause.getPullRequestAuthor().getLogin()));
         
         values.add(new StringParameterValue("ghprbPullDescription", escapeText(String.valueOf(cause.getShortDescription()))));
-        values.add(new StringParameterValue("ghprbPullTitle", String.valueOf(cause.getTitle())));
+        values.add(new StringParameterValue("ghprbPullTitle", escapeText(String.valueOf(cause.getTitle()))));
         values.add(new StringParameterValue("ghprbPullLink", String.valueOf(cause.getUrl())));
         values.add(new StringParameterValue("ghprbPullLongDescription", escapeText(String.valueOf(cause.getDescription()))));
         
@@ -366,11 +354,17 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         values.add(new StringParameterValue("ghprbGhRepository", getString(cause.getRepositoryName(), "")));
         values.add(new StringParameterValue("ghprbCredentialsId", getString(cause.getCredentialsId(), "")));
 
+        ParameterizedJobMixIn scheduledJob = new ParameterizedJobMixIn() {
+            @Override
+            protected Job asJob() {
+                return job;
+            }
+        };
 
         // add the previous pr BuildData as an action so that the correct change log is generated by the GitSCM plugin
         // note that this will be removed from the Actions list after the job is completed so that the old (and incorrect)
         // one isn't there
-        return this.job.scheduleBuild2(job.getQuietPeriod(), cause, new ParametersAction(values), buildData);
+        return scheduledJob.scheduleBuild2(Jenkins.getInstance().getQuietPeriod(),new CauseAction(cause),new GhprbParametersAction(values), buildData);
     }
 
     private void setCommitAuthor(GhprbCause cause, ArrayList<ParameterValue> values) {
@@ -425,7 +419,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return auth.getConnection(getActualProject());
     }
     
-    public AbstractProject<?, ?> getActualProject() {
+    public Job<?, ?> getActualProject() {
         return super.job;
     }
     public void addWhitelist(String author) {
@@ -483,6 +477,20 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return getDescriptor().getSkipBuildPhrase();
         }
         return skipBuildPhrase;
+    }
+
+    public String getBlackListLabels() {
+        if (blackListLabels == null) {
+            return "";
+        }
+        return blackListLabels;
+    }
+
+    public String getWhiteListLabels() {
+        if (whiteListLabels == null) {
+            return "";
+        }
+        return whiteListLabels;
     }
 
     public Boolean getOnlyTriggerPhrase() {
@@ -567,7 +575,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         if (super.job == null) {
             logger.log(Level.FINE, "Project was never set, start was never run");
             isActive = false;
-        } else if (super.job.isDisabled()) {
+        } else if (!super.job.isBuildable()) {
             logger.log(Level.FINE, "Project is disabled, ignoring trigger run call for job {0}", name);
             isActive = false;
         } else if (getRepository() == null) {
@@ -579,7 +587,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
     
     public GhprbRepository getRepository() {
-        if (this.repository == null && super.job != null && !super.job.isDisabled()) {
+        if (this.repository == null && super.job != null  && super.job.isBuildable()) {
             try {
                 this.initState();
             } catch (IOException e) {
@@ -619,7 +627,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         repo.onPullRequestHook(pr);
     }
 
-
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
         private static final Pattern adminlistPattern = Pattern.compile("((\\p{Alnum}[\\p{Alnum}-]*)|\\s)*");
@@ -646,7 +653,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private List<GhprbBranch> blackListTargetBranches;
         private Boolean autoCloseFailedPullRequests = false;
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-        
+        private String blackListLabels;
+        private String whiteListLabels;
+
         private List<GhprbGitHubAuth> githubAuth;
         
         public GhprbGitHubAuth getGitHubAuth(String gitHubAuthId) {
@@ -693,7 +702,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
          *  map of jobs (by the repo name);  No need to keep the projects from shutdown to startup.
          *  New triggers will register here, and ones that are stopping will remove themselves.
          */
-        private transient Map<String, Set<AbstractProject<?, ?>>> repoJobs;
+        private transient Map<String, Set<Job<?, ?>>> repoJobs;
         
         public List<GhprbExtensionDescriptor> getExtensionDescriptors() {
             return GhprbExtensionDescriptor.allProject();
@@ -716,7 +725,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             load();
             readBackFromLegacy();
             if (repoJobs == null) {
-                repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>();
+                repoJobs = new ConcurrentHashMap<String, Set<Job<?, ?>>>();
             }
             saveAfterPause();
         }
@@ -735,7 +744,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         @Override
         public boolean isApplicable(Item item) {
-            return item instanceof AbstractProject;
+            return item instanceof Job && item instanceof ParameterizedJobMixIn.ParameterizedJob;
         }
 
         @Override
@@ -758,6 +767,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
+            blackListLabels = formData.getString("blackListLabels");
+            whiteListLabels = formData.getString("whiteListLabels");
             
             githubAuth = req.bindJSONToList(GhprbGitHubAuth.class, formData.get("githubAuth"));
             
@@ -792,7 +803,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             for (GHCommitState nextResult : results) {
                 String text = StringUtils.capitalize(nextResult.toString().toLowerCase());
                 items.add(text, nextResult.toString());
-                if (unstableAs.toString().equals(nextResult)) {
+                if (unstableAs.toString().equals(nextResult.toString())) {
                     items.get(items.size()-1).selected = true;
                 } 
             }
@@ -834,6 +845,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Boolean getUseDetailedComments() {
             return useDetailedComments;
+        }
+
+        public String getBlackListLabels() {
+            return blackListLabels;
+        }
+
+        public String getWhiteListLabels() {
+            return whiteListLabels;
         }
 
         public Boolean getManageWebhooks() {
@@ -889,17 +908,17 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return ret;
         }
         
-        private void addRepoTrigger(String repo, AbstractProject<?, ?> project) {
+        private void addRepoTrigger(String repo, Job<?, ?> project) {
             if (project == null || StringUtils.isEmpty(repo)) {
                 return;
             }
             logger.log(Level.FINE, "Adding [{0}] to webhooks repo [{1}]", new Object[]{project.getFullName(), repo});
             
             synchronized (this) {
-                Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+                Set<Job<?, ?>> projects = repoJobs.get(repo);
                 if (projects == null) {
                     logger.log(Level.FINE, "No other projects found, creating new repo set");
-                    projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>());
+                    projects = Collections.newSetFromMap(new WeakHashMap<Job<?, ?>, Boolean>());
                     repoJobs.put(repo, projects);
                 } else {
                     logger.log(Level.FINE, "Adding project to current repo set, length: {0}", new Object[]{projects.size()});
@@ -909,27 +928,27 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             }
         }
         
-        private void removeRepoTrigger(String repo, AbstractProject<?, ?> project) {
-            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+        private void removeRepoTrigger(String repo, Job<?, ?> project) {
+            Set<Job<?, ?>> projects = repoJobs.get(repo);
             if (project != null && projects != null) {
                 logger.log(Level.FINE, "Removing [{0}] from webhooks repo [{1}]", new Object[]{repo, project.getFullName()});
                 projects.remove(project);
             }
         }
         
-        public Set<AbstractProject<?, ?>> getRepoTriggers(String repo) {
+        public Set<Job<?, ?>> getRepoTriggers(String repo) {
             if (repoJobs == null) {
-                repoJobs = new ConcurrentHashMap<String, Set<AbstractProject<?, ?>>>(5);
+                repoJobs = new ConcurrentHashMap<String, Set<Job<?, ?>>>(5);
             }
             logger.log(Level.FINE, "Retrieving triggers for repo [{0}]", new Object[]{repo});
             
-            Set<AbstractProject<?, ?>> projects = repoJobs.get(repo);
+            Set<Job<?, ?>> projects = repoJobs.get(repo);
             if (projects != null) {
-                for (AbstractProject<?, ?> project : projects) {
+                for (Job<?, ?> project : projects) {
                     logger.log(Level.FINE, "Found project [{0}] for webhook repo [{1}]", new Object[]{project.getFullName(), repo});
                 }
             } else {
-                projects = Collections.newSetFromMap(new WeakHashMap<AbstractProject<?, ?>, Boolean>(0));
+                projects = Collections.newSetFromMap(new WeakHashMap<Job<?, ?>, Boolean>(0));
             }
             
             return projects;

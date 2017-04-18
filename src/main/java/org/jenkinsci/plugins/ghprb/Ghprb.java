@@ -1,33 +1,20 @@
 package org.jenkinsci.plugins.ghprb;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.domains.DomainSpecification;
-import com.cloudbees.plugins.credentials.domains.HostnamePortSpecification;
-import com.cloudbees.plugins.credentials.domains.HostnameSpecification;
-import com.cloudbees.plugins.credentials.domains.PathSpecification;
-import com.cloudbees.plugins.credentials.domains.SchemeSpecification;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.cloudbees.plugins.credentials.domains.*;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Cause;
-import hudson.model.Item;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.Saveable;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.security.ACL;
+import hudson.triggers.Trigger;
 import hudson.util.DescribableList;
 import hudson.util.Secret;
-
+import jenkins.model.ParameterizedJobMixIn;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
@@ -156,7 +143,27 @@ public class Ghprb {
         }
         return null;
     }
-    
+
+    public Set<String> getBlackListLabels() {
+        return spiltLabels(getTrigger().getBlackListLabels());
+    }
+
+    public Set<String> getWhiteListLabels() {
+        return spiltLabels(getTrigger().getWhiteListLabels());
+    }
+
+    private Set<String> spiltLabels(String labelsField) {
+        Set<String> labels = new HashSet<String>();
+        if (labelsField != null && !labelsField.trim().isEmpty()) {
+            String[] split = labelsField.split("\\n+");
+            for (int i = 0; i < split.length; i++) {
+                split[i] = split[i].trim();
+            }
+            Collections.addAll(labels, split);
+        }
+        return labels;
+    }
+
     private Pattern whitelistPhrasePattern() {
         return compilePattern(trigger.getDescriptor().getWhitelistPhrase());
     }
@@ -244,7 +251,7 @@ public class Ghprb {
         return trigger.getWhiteListTargetBranches();
     }
 
-    public static String replaceMacros(AbstractBuild<?, ?> build, TaskListener listener, String inputString) {
+    public static String replaceMacros(Run<?, ?> build, TaskListener listener, String inputString) {
         String returnString = inputString;
         if (build != null && inputString != null) {
             try {
@@ -259,11 +266,15 @@ public class Ghprb {
         return returnString;
     }
     
-    public static Map<String, String> getEnvVars(AbstractBuild<?, ?> build, TaskListener listener) {
+    public static Map<String, String> getEnvVars(Run<?, ?> build, TaskListener listener) {
         Map<String, String> messageEnvVars = new HashMap<String, String>();
         if (build != null) {
                 messageEnvVars.putAll(build.getCharacteristicEnvVars());
-                messageEnvVars.putAll(build.getBuildVariables());
+
+                if (build instanceof AbstractBuild) {
+                    messageEnvVars.putAll( ((AbstractBuild) build).getBuildVariables());
+                }
+
                 try {
                     messageEnvVars.putAll(build.getEnvironment(listener));
                 } catch (Exception e) {
@@ -274,7 +285,7 @@ public class Ghprb {
     }
     
 
-    public static String replaceMacros(AbstractProject<?, ?> project, String inputString) {
+    public static String replaceMacros(Job<?, ?> project, String inputString) {
         String returnString = inputString;
         if (project != null && inputString != null) {
             try {
@@ -291,7 +302,7 @@ public class Ghprb {
         return returnString;
     }
     
-    public static GHCommitState getState(AbstractBuild<?, ?> build) {
+    public static GHCommitState getState(Run<?, ?> build) {
 
         GHCommitState state;
         if (build.getResult() == Result.SUCCESS) {
@@ -322,16 +333,24 @@ public class Ghprb {
     }
     
 
-    public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
-        return extractTrigger(build.getProject());
+    public static GhprbTrigger extractTrigger(Run<?, ?> build) {
+        return extractTrigger(build.getParent());
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
+    public static GhprbTrigger extractTrigger(Job<?, ?> p) {
+
+        ParameterizedJobMixIn.ParameterizedJob pJob = (ParameterizedJobMixIn.ParameterizedJob) p;
+        GhprbTrigger ghprbTrigger = null;
+        if (p instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            for (Trigger trigger : pJob.getTriggers().values()) {
+                if (trigger instanceof GhprbTrigger) {
+                    ghprbTrigger = (GhprbTrigger) trigger;
+                    break;
+                }
+            }
         }
-        return trigger;
+
+        return ghprbTrigger;
     }
     
     private static List<Predicate> createPredicate(Class<?> ...types) {
@@ -444,7 +463,7 @@ public class Ghprb {
         
         List<StandardCredentials> credentials;
         
-        logger.log(Level.FINE, "Using null context because of issues not getting all credentias");
+        logger.log(Level.FINE, "Using null context because of issues not getting all credentials");
         
         credentials = CredentialsProvider.lookupCredentials(StandardCredentials.class, (Item) null, ACL.SYSTEM,
                 URIRequirementBuilder.fromUri(uri).build());
