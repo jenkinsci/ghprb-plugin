@@ -2,9 +2,8 @@ package org.jenkinsci.plugins.ghprb.extensions.comments;
 
 import hudson.Extension;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
-
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
@@ -32,7 +31,7 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
         return publishedURL;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
 
         msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
@@ -46,7 +45,7 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
         return false;
     }
 
-    private String generateCustomizedMessage(AbstractBuild<?, ?> build) {
+    private String generateCustomizedMessage(Run<?, ?> build) {
         GhprbTrigger trigger = Ghprb.extractTrigger(build);
         if (trigger == null) {
             return "";

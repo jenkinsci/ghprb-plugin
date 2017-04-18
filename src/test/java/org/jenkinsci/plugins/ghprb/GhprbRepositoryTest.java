@@ -1,6 +1,13 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.model.Job;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
+import hudson.util.Secret;
 import org.apache.commons.codec.binary.Hex;
+import org.fest.util.Collections;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -9,37 +16,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.TaskListener;
-import hudson.model.queue.QueueTaskFuture;
-import hudson.util.Secret;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,15 +40,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link GhprbRepository}.
@@ -92,7 +73,7 @@ public class GhprbRepositoryTest {
     private GhprbRepository ghprbRepository;
     private ConcurrentMap<Integer, GhprbPullRequest> pulls;
     private GhprbPullRequest ghprbPullRequest;
-    private AbstractProject<?, ?> project;
+    private Job<?, ?> project;
     private GHRateLimit rateLimit;
 
     @Rule
@@ -103,7 +84,7 @@ public class GhprbRepositoryTest {
     public void setUp() throws Exception {
         project = jenkinsRule.createFreeStyleProject("GhprbRepoTest");
         project.addProperty(new GithubProjectProperty("https://github.com/" + TEST_REPO_NAME));
-        
+
         getNewTrigger();
         startTrigger();
         
@@ -125,14 +106,14 @@ public class GhprbRepositoryTest {
 
     private void getNewTrigger() throws Exception{
         trigger = GhprbTestUtil.getTrigger(null);
-        
+
         gt = trigger.getGitHub();
-        
+
         rateLimit = gt.getRateLimit();
         verify(gt).getRateLimit();
-        
+
         given(gt.getRepository(anyString())).willReturn(ghRepository);
-        
+
     }
     
     private void startTrigger() throws IOException{
@@ -220,6 +201,8 @@ public class GhprbRepositoryTest {
         verify(helper).getBlackListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
         verify(helper).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(1)).getBlackListLabels();
+        verify(helper, times(1)).getWhiteListLabels();
         verifyNoMoreInteractions(helper);
         verifyNoMoreInteractions(gt);
 
@@ -256,6 +239,8 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getBlackListLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getWhiteListLabels()).willReturn(null);
 
         // WHEN
         ghprbRepository.check();
@@ -283,6 +268,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
+        verify(ghPullRequest, times(2)).getLabels();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -292,6 +278,186 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).getBlackListLabels();
+        verify(helper, times(2)).getWhiteListLabels();
+        verifyNoMoreInteractions(helper);
+
+        verify(ghUser, times(1)).getEmail(); // Call to Github API
+        verify(ghUser, times(1)).getLogin();
+        verifyNoMoreInteractions(ghUser);
+    }
+
+    @Test
+    public void testShouldSkipBuildIfLabelInBlackListWithNewPR() throws Exception {
+        // GIVEN
+        GHLabel label1 = mock(GHLabel.class);
+        given(label1.getName()).willReturn("in progress");
+        GHLabel label2 = mock(GHLabel.class);
+        given(label2.getName()).willReturn("testing");
+        List<GHLabel> ghLabels = Arrays.asList(label1, label2);
+
+        List<GHPullRequest> ghPullRequests = createListWithMockPR();
+        ghPullRequests.add(ghPullRequest);
+
+        GhprbBuilds builds = mockBuilds();
+
+        mockHeadAndBase();
+        mockCommitList();
+
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
+        given(ghPullRequest.getUpdatedAt()).willReturn(UPDATE_DATE);
+        given(ghPullRequest.getNumber()).willReturn(100);
+        given(ghPullRequest.getMergeable()).willReturn(true);
+        given(ghPullRequest.getTitle()).willReturn("title");
+        given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghPullRequest.getLabels()).willReturn(ghLabels);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+
+        given(ghUser.getEmail()).willReturn("email");
+
+        given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getBlackListLabels()).willReturn(Collections.set("in progress"));
+        given(helper.getWhiteListLabels()).willReturn(null);
+
+        // WHEN
+        ghprbRepository.check();
+
+        // THEN
+        verifyGetGithub(2, 2, 1);
+        verifyNoMoreInteractions(gt);
+
+        /** Verify no attempt was made to start a build */
+        verifyNoMoreInteractions(builds);
+    }
+
+    @Test
+    public void testShouldSkipBuildIfWhiteListLabelIsSetAndLabelNotInWhiteListWithNewPR() throws Exception {
+        // GIVEN
+        GHLabel label1 = mock(GHLabel.class);
+        given(label1.getName()).willReturn("Whitelist Label Not Included");
+        List<GHLabel> ghLabels = Arrays.asList(label1);
+
+        List<GHPullRequest> ghPullRequests = createListWithMockPR();
+        ghPullRequest.setLabels("Whitelist Label Not Included");
+        ghPullRequests.add(ghPullRequest);
+
+        GhprbBuilds builds = mockBuilds();
+
+        mockHeadAndBase();
+        mockCommitList();
+
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
+        given(ghPullRequest.getUpdatedAt()).willReturn(UPDATE_DATE);
+        given(ghPullRequest.getNumber()).willReturn(100);
+        given(ghPullRequest.getMergeable()).willReturn(true);
+        given(ghPullRequest.getTitle()).willReturn("title");
+        given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghPullRequest.getLabels()).willReturn(ghLabels);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+
+        given(ghUser.getEmail()).willReturn("email");
+
+        given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getBlackListLabels()).willReturn(null);
+        given(helper.getWhiteListLabels()).willReturn(Collections.set("Whitelist Label"));
+
+        // WHEN
+        ghprbRepository.check();
+
+        // THEN
+        verifyGetGithub(2, 2, 1);
+        verifyNoMoreInteractions(gt);
+
+        /** Verify no attempt was made to start a build */
+        verifyNoMoreInteractions(builds);
+    }
+
+    @Test
+    public void testCheckBuildWithBlackWhiteLabelsSet() throws Exception {
+        // GIVEN
+        GHLabel label1 = mock(GHLabel.class);
+        given(label1.getName()).willReturn("Whitelist Label");
+        List<GHLabel> ghLabels = Arrays.asList(label1);
+
+        List<GHPullRequest> ghPullRequests = createListWithMockPR();
+        ghPullRequests.add(ghPullRequest);
+
+        GhprbBuilds builds = mockBuilds();
+
+        mockHeadAndBase();
+        mockCommitList();
+
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
+
+        given(ghPullRequest.getUpdatedAt()).willReturn(UPDATE_DATE);
+        given(ghPullRequest.getNumber()).willReturn(100);
+        given(ghPullRequest.getMergeable()).willReturn(true);
+        given(ghPullRequest.getTitle()).willReturn("title");
+        given(ghPullRequest.getUser()).willReturn(ghUser);
+        given(ghPullRequest.getHtmlUrl()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getApiURL()).willReturn(new URL("https://github.com/org/repo/pull/100"));
+        given(ghPullRequest.getId()).willReturn(100);
+        given(ghPullRequest.getLabels()).willReturn(ghLabels);
+        given(ghRepository.getPullRequest(ghPullRequest.getId())).willReturn(ghPullRequest);
+
+        given(ghUser.getEmail()).willReturn("email");
+
+        given(helper.ifOnlyTriggerPhrase()).willReturn(false);
+        given(helper.isWhitelisted(ghUser)).willReturn(true);
+        given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getBlackListLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getWhiteListLabels()).willReturn(Collections.set("Whitelist Label"));
+
+        // WHEN
+        ghprbRepository.check();
+
+        // THEN
+        verifyGetGithub(2, 2, 1);
+        verifyNoMoreInteractions(gt);
+
+        /** GH PR verifications */
+        verify(builds, times(1)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
+        verify(ghRepository, times(1)).getPullRequests(OPEN); // Call to Github API
+        verify(ghRepository, times(1)).createCommitStatus(eq("head sha"), eq(PENDING), eq(""), eq(msg), eq("default")); // Call to Github API
+        verify(ghRepository, times(1)).getPullRequest(Mockito.anyInt());
+        verifyNoMoreInteractions(ghRepository);
+
+        verify(ghPullRequest, times(1)).getTitle();
+        verify(ghPullRequest, times(3)).getUser();
+        verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
+        verify(ghPullRequest, times(7)).getHead();
+        verify(ghPullRequest, times(6)).getBase();
+        verify(ghPullRequest, times(5)).getNumber();
+        verify(ghPullRequest, times(2)).getUpdatedAt();
+        verify(ghPullRequest, times(1)).getCreatedAt();
+        verify(ghPullRequest, times(1)).getHtmlUrl();
+        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(1)).getBody();
+        verify(ghPullRequest, times(1)).getId();
+        verify(ghPullRequest, times(4)).getLabels();
+        verifyNoMoreInteractions(ghPullRequest);
+
+        verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
+        verify(helper, times(2)).ifOnlyTriggerPhrase();
+        verify(helper, times(1)).getBuilds();
+        verify(helper, times(2)).getWhiteListTargetBranches();
+        verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(4)).isProjectDisabled();
+        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).getBlackListLabels();
+        verify(helper, times(2)).getWhiteListLabels();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -337,6 +503,8 @@ public class GhprbRepositoryTest {
         given(helper.ifOnlyTriggerPhrase()).willReturn(false);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getBlackListLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getWhiteListLabels()).willReturn(null);
 
         // WHEN
         ghprbRepository.check(); // PR was created
@@ -370,6 +538,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
+        verify(ghPullRequest, times(2)).getLabels();
         verifyNoMoreInteractions(ghPullRequest);
 
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
@@ -377,6 +546,8 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(2)).getBlackListLabels();
+        verify(helper, times(2)).getWhiteListLabels();
 
         // verify(helper).isBotUser(eq(ghUser));
         verify(helper).isWhitelistPhrase(eq("comment body"));
@@ -431,6 +602,8 @@ public class GhprbRepositoryTest {
         given(helper.isRetestPhrase(eq("test this please"))).willReturn(true);
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getTrigger()).willReturn(trigger);
+        given(helper.getBlackListLabels()).willReturn(Collections.set("bug", "help wanted"));
+        given(helper.getWhiteListLabels()).willReturn(null);
 
         // WHEN
         ghprbRepository.check(); // PR was created
@@ -460,6 +633,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(2)).getHtmlUrl();
+        verify(ghPullRequest, times(2)).getLabels();
 
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(1)).getComments();
@@ -474,6 +648,8 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBuilds();
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(2)).getBlackListLabels();
+        verify(helper, times(2)).getWhiteListLabels();
 
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));
@@ -605,7 +781,7 @@ public class GhprbRepositoryTest {
         ghprbRepository = spy(new GhprbRepository(TEST_REPO_NAME, trigger));
 
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString());
-        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(Run.class), any(TaskListener.class));
         
         doReturn(ghprbRepository).when(trigger).getRepository();
         

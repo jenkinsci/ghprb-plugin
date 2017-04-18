@@ -142,17 +142,21 @@ public class GhprbRootActionTest {
         GHIssueComment ghIssueComment = spy(issueComment.getComment());
         
         Mockito.when(issueComment.getComment()).thenReturn(ghIssueComment);
-        Mockito.when(ghIssueComment.getUser()).thenReturn(ghUser);
+        Mockito.doReturn(ghUser).when(ghIssueComment).getUser();
         
         
         given(trigger.getGitHub().parseEventPayload(Mockito.any(Reader.class), Mockito.eq(IssueComment.class))).willReturn(issueComment);
 
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
-        while(ra.getThreadCount() > 0) {
-            Thread.sleep(500);
+        // handles race condition around starting and finishing builds. Give the system time
+        // to finish indexing, create a build, queue it, and run it.
+        int count = 0;
+        while (count < 5 && project.getBuilds().toArray().length == 0) {
+            GhprbTestUtil.waitForBuildsToFinish(project);
+            Thread.sleep(50);
+            count = count + 1;
         }
-        GhprbTestUtil.waitForBuildsToFinish(project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }

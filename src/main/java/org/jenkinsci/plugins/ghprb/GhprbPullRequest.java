@@ -1,22 +1,15 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
-
-import hudson.model.AbstractBuild;
-
+import hudson.model.Run;
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitUser;
+import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -165,7 +158,51 @@ public class GhprbPullRequest {
         // Call update PR with the update PR info and no comment
         updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
         checkSkipBuild();
+        checkBlackListLabels();
+        checkWhiteListLabels();
         tryBuild();
+    }
+
+    private void checkBlackListLabels() {
+        Set<String> labelsToIgnore = helper.getBlackListLabels();
+        if (labelsToIgnore != null && !labelsToIgnore.isEmpty()) {
+            try {
+                for (GHLabel label : pr.getLabels()) {
+                    if (labelsToIgnore.contains(label.getName())) {
+                        logger.log(Level.INFO,
+                                "Found label {0} in ignore list, pull request will be ignored.",
+                                label.getName());
+                        shouldRun = false;
+                    }
+                }
+            } catch(IOException e) {
+                logger.log(Level.SEVERE, "Failed to read blacklist labels", e);
+            }
+        }
+    }
+
+    private void checkWhiteListLabels() {
+        Set<String> labelsMustContain = helper.getWhiteListLabels();
+        if (labelsMustContain != null && !labelsMustContain.isEmpty()) {
+            boolean containsWhiteListLabel = false;
+            try {
+                for (GHLabel label : pr.getLabels()) {
+                    if (labelsMustContain.contains(label.getName())) {
+                        logger.log(Level.INFO,
+                                "Found label {0} in whitelist",
+                                label.getName());
+                        containsWhiteListLabel = true;
+                    }
+                }
+
+                if (!containsWhiteListLabel) {
+                    logger.log(Level.INFO, "Can't find any of whitelist label.");
+                    shouldRun = false;
+                }
+            } catch(IOException e) {
+                logger.log(Level.SEVERE, "Failed to read whitelist labels", e);
+            }
+        }
     }
 
     private void checkSkipBuild() {
@@ -188,6 +225,8 @@ public class GhprbPullRequest {
 
         updatePR(null /*GHPullRequest*/, comment, true);
         checkSkipBuild();
+        checkBlackListLabels();
+        checkWhiteListLabels();
         tryBuild();
     }
     
@@ -217,7 +256,7 @@ public class GhprbPullRequest {
                 logger.log(Level.INFO, "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})", new Object[] { this.id, this.repo.getName(), updatedDate, user,
                     comment != null ? "comment" : "PR update"});
             }
-        
+
             synchronized (this) {
                 boolean wasUpdated = setUpdated(updatedDate);
 
@@ -227,11 +266,10 @@ public class GhprbPullRequest {
                 if (ghpr != null) {
                     setPullRequest(ghpr);
                 }
-                
+
                 // Grab the pull request for use in this method (in case we came in through the comment path)
                 GHPullRequest pullRequest = getPullRequest();
-                
-                
+
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
                     logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
@@ -251,10 +289,10 @@ public class GhprbPullRequest {
                     checkComment(comment);
                     commentsChecked = 1;
                 }
-                
+
                 // Check the commit on the PR against the recorded version.
                 boolean newCommit = checkCommit(pullRequest);
-            
+
                 // Log some info.
                 if (!newCommit && commentsChecked == 0) {
                     logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
@@ -673,7 +711,7 @@ public class GhprbPullRequest {
         return authorEmail;
     }
 
-    public void setBuild(AbstractBuild<?, ?> build) {
+    public void setBuild(Run<?, ?> build) {
         lastBuildId = build.getId();
     }
 

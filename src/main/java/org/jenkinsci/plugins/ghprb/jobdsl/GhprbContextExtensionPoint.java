@@ -40,6 +40,8 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 null,
                 null,
                 context.buildDescriptionTemplate,
+                Joiner.on("\n").join(context.blackListLabels),
+                Joiner.on("\n").join(context.whiteListLabels),
                 context.extensionContext.extensions
         );
     }

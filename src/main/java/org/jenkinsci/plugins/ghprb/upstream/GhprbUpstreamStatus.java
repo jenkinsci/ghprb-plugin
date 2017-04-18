@@ -111,11 +111,11 @@ public class GhprbUpstreamStatus extends BuildWrapper {
     }
 
     public Boolean getAddTestResults() {
-        return addTestResults == null ? false : addTestResults;
+        return addTestResults == null ? Boolean.valueOf(false) : addTestResults;
     }
 
     public Boolean getShowMatrixStatus(){
-        return showMatrixStatus == null ? false : showMatrixStatus;
+        return showMatrixStatus == null ? Boolean.valueOf(false) : showMatrixStatus;
     }
 
 

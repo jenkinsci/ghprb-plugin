@@ -1,10 +1,7 @@
 package org.jenkinsci.plugins.ghprb.extensions.comments;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.TaskListener;
-import hudson.model.Descriptor;
+import hudson.model.*;
 import hudson.util.ListBoxModel;
 
 import org.apache.commons.lang.StringUtils;
@@ -36,7 +33,7 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
         return result;
     }
 
-    public String postBuildComment(AbstractBuild<?, ?> build, TaskListener listener) {
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
 
         GHCommitState state = Ghprb.getState(build);
@@ -84,7 +81,7 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
             for (GHCommitState nextResult : results) {
 
                 items.add(nextResult.toString(), nextResult.toString());
-                if (result.toString().equals(nextResult)) {
+                if (result.equals(nextResult.toString())) {
                     items.get(items.size() - 1).selected = true;
                 }
             }
