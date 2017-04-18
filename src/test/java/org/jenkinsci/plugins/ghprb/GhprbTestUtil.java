@@ -319,14 +319,16 @@ public class GhprbTestUtil {
         jsonObject.put("msgSuccess", "Success");
         jsonObject.put("msgFailure", "Failure");
         jsonObject.put("commitStatusContext", "Status Context");
-        
+        jsonObject.put("blackListLabels", "in progress");
+        jsonObject.put("whiteListLabels", "");
+
         JSONObject githubAuth = new JSONObject();
         githubAuth.put("credentialsId", getCredentialsId());
         githubAuth.put("serverAPIUrl", apiUrl);
         githubAuth.put("secret", null);
         
         jsonObject.put("githubAuth", githubAuth);
-        
+
 
         for ( Entry<String, Object> next: config.entrySet()) {
             jsonObject.put(next.getKey(), next.getValue());
@@ -446,7 +448,14 @@ public class GhprbTestUtil {
         }
 
     }
-    
+
+    public static void triggerRunsAtOnceThenWait(int numOfTriggers, GhprbTrigger trigger, AbstractProject<?, ?> project) throws InterruptedException {
+        for (int i = 0; i < numOfTriggers; ++i) {
+            trigger.run();
+        }
+        waitForBuildsToFinish(project);
+
+    }
 
     public static List<String> checkClassForGetters(Class<?> clazz) {
         Field[] fields = clazz.getDeclaredFields();
