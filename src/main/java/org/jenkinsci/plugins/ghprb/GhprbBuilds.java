@@ -1,12 +1,9 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.google.common.annotations.VisibleForTesting;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.Action;
-import hudson.model.BuildListener;
-import hudson.model.Result;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.git.util.BuildData;
 
@@ -96,7 +93,7 @@ public class GhprbBuilds {
         }
     }
     
-    public void onStarted(AbstractBuild<?, ?> build, TaskListener listener) {
+    public void onStarted(Run<?, ?> build, TaskListener listener) {
         PrintStream logger = listener.getLogger();
         GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
@@ -175,7 +172,7 @@ public class GhprbBuilds {
         return vars;
     }
 
-    public void onCompleted(AbstractBuild<?, ?> build, TaskListener listener) {
+    public void onCompleted(Run<?, ?> build, TaskListener listener) {
         GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
             return;
@@ -232,12 +229,17 @@ public class GhprbBuilds {
         }
     }
 
-    private void commentOnBuildResult(AbstractBuild<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
+    @VisibleForTesting
+    void commentOnBuildResult(Run<?, ?> build, TaskListener listener, GHCommitState state, GhprbCause c) {
         StringBuilder msg = new StringBuilder();
 
         for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommentAppender.class)) {
             if (ext instanceof GhprbCommentAppender) {
-                msg.append(((GhprbCommentAppender) ext).postBuildComment(build, listener));
+                String cmt = ((GhprbCommentAppender) ext).postBuildComment(build, listener);
+                if ("--none--".equals(cmt)) {
+                    return;
+                }
+                msg.append(cmt);
             }
         }
 
@@ -247,7 +249,7 @@ public class GhprbBuilds {
         }
     }
 
-    public void onEnvironmentSetup(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void onEnvironmentSetup(@SuppressWarnings("rawtypes") Run build, Launcher launcher, TaskListener listener) {
         GhprbCause c = Ghprb.getCause(build);
         if (c == null) {
             return;
