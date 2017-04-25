@@ -5,6 +5,7 @@ import static hudson.Util.fixEmptyAndTrim;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -131,7 +132,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             String expected = signature.substring(5);
             String algorithm = "HmacSHA1";
             try {
-                SecretKeySpec keySpec = new SecretKeySpec(secret.getPlainText().getBytes(), algorithm);
+                SecretKeySpec keySpec = new SecretKeySpec(secret.getPlainText().getBytes(Charset.forName("UTF-8")), algorithm);
                 Mac mac = Mac.getInstance(algorithm);
                 mac.init(keySpec);
                 byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));
