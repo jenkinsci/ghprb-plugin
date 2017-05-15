@@ -559,7 +559,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
+        verify(ghUser, times(2)).getLogin();
         verify(ghUser, times(3)).getName();
         verifyNoMoreInteractions(ghUser);
     }
@@ -659,7 +659,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
+        verify(ghUser, times(2)).getLogin();
         verify(ghUser, times(2)).getName();
         verifyNoMoreInteractions(ghUser);
 

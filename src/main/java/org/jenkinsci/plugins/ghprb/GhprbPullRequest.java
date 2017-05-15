@@ -429,7 +429,8 @@ public class GhprbPullRequest {
         GHUser sender = comment.getUser();
         String body = comment.getBody();
 
-        logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { sender.getName(), body });
+        String senderName = sender.getName();
+        logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { senderName != null ? senderName : sender.getLogin(), body });
 
         // Disabled until more advanced configs get set up
         // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
