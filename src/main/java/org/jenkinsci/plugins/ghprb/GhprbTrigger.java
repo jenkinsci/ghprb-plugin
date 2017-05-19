@@ -5,6 +5,7 @@ import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.Util;
+import hudson.init.InitMilestone;
 import hudson.matrix.MatrixProject;
 import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
@@ -18,7 +19,6 @@ import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.ghprb.extensions.*;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
@@ -57,6 +57,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private final String buildDescTemplate;
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
+    private final Boolean manageWebhooksOnStartup;
     private final Boolean permitAll;
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
@@ -110,6 +111,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             String triggerPhrase,
             Boolean onlyTriggerPhrase, 
             Boolean useGitHubHooks,
+            Boolean manageWebhooksOnStartup,
             Boolean permitAll,
             Boolean autoCloseFailedPullRequests,
             Boolean displayBuildErrorsOnDownstreamBuilds,
@@ -135,6 +137,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.triggerPhrase = triggerPhrase;
         this.onlyTriggerPhrase = onlyTriggerPhrase;
         this.useGitHubHooks = useGitHubHooks;
+        this.manageWebhooksOnStartup = manageWebhooksOnStartup;
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
@@ -215,42 +218,71 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.ghprbGitHub = new GhprbGitHub(this);
     }
     
-
     @Override
     public void start(Job<?, ?> project, boolean newInstance) {
         // We should always start the trigger, and handle cases where we don't run in the run function.
         super.start(project, newInstance);
-        
+
         String name = project.getFullName();
 
         if (!project.isBuildable()) {
-            logger.log(Level.FINE, "Project is disabled, not starting trigger for job " + name);
+            logger.log(Level.FINE, "Project is disabled, not starting trigger for job {0}", name);
             return;
         }
         if (project.getProperty(GithubProjectProperty.class) == null) {
-            logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job " + name);
+            logger.log(Level.INFO, "GitHub project property is missing the URL, cannot start ghprb trigger for job {0}", name);
             return;
         }
         try {
             initState();
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, "Can't start ghprb trigger", ex);
             return;
         }
 
-        logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}", 
-                new String[] { name, String.valueOf(newInstance) });
+        logger.log(Level.INFO, "Starting the ghprb trigger for the {0} job; newInstance is {1}",
+                new String[]{name, String.valueOf(newInstance)});
 
         helper = new Ghprb(this);
 
         if (getUseGitHubHooks()) {
             if (GhprbTrigger.getDscp().getManageWebhooks()) {
-                this.repository.createHook();
+                // always attempt to create the hook when Jenkins is already
+                // up and running
+                if (jenkinsHasBooted()) {
+                    logger.log(
+                            Level.INFO,
+                            "Jenkins already running; checking for webhooks for {0} job.",
+                            name
+                    );
+                    this.repository.createHook();
+                }
+                else if (getManageWebhooksOnStartup()) {
+                    logger.log(
+                            Level.INFO,
+                            "ManageWebhooksOnStartup = true; checking for webhooks for {0} job.",
+                            name
+                    );
+                    this.repository.createHook();
+                }
+                else {
+                    logger.log(
+                            Level.INFO,
+                            "ManageWebhooksOnStartup = false; not checking for webhooks for {0} job on startup.",
+                            name
+                    );
+                }
             }
+
             DESCRIPTOR.addRepoTrigger(getRepository().getName(), super.job);
         }
     }
-    
+
+    protected Boolean jenkinsHasBooted() {
+        final Jenkins instance = Jenkins.getInstance();
+        InitMilestone currentState = instance.getInitLevel();
+        return currentState != null && currentState != InitMilestone.EXTENSIONS_AUGMENTED;
+    }
 
     @Override
     public void stop() {
@@ -495,6 +527,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public Boolean getOnlyTriggerPhrase() {
         return onlyTriggerPhrase != null && onlyTriggerPhrase;
+    }
+
+    public Boolean getManageWebhooksOnStartup() {
+        return manageWebhooksOnStartup != null && manageWebhooksOnStartup;
     }
 
     public Boolean getUseGitHubHooks() {
