@@ -153,7 +153,7 @@ public class GhprbTriggerTest {
     @Issue("JENKINS-42148")
     public void testNoBacktracking() throws ServletException {
         assertThat(GhprbTrigger.getDscp().doCheckAdminlist("one two three four five six seven eight nine ten.eleven")).isNotEqualTo(FormValidation.ok());
-        assertThat(GhprbTrigger.getDscp().doCheckAdminlist("one two   three four five six seven eight nine ten eleven")).isEqualTo(FormValidation.ok());
+        assertThat(GhprbTrigger.getDscp().doCheckAdminlist("one two \tthree \nfour five six seven eight nine ten eleven")).isEqualTo(FormValidation.ok());
         assertThat(GhprbTrigger.getDscp().doCheckAdminlist("")).isEqualTo(FormValidation.ok());
         assertThat(GhprbTrigger.getDscp().doCheckAdminlist("       ")).isEqualTo(FormValidation.ok());
     }

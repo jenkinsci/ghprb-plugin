@@ -803,7 +803,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         
 
         public FormValidation doCheckAdminlist(@QueryParameter String value) throws ServletException {
-            for (String admin : value.split("\\s")) {
+            for (String admin : value.split("\\p{Space}")) {
                 if (!admin.trim().isEmpty() && !adminlistPattern.matcher(admin).matches()) {
                     return FormValidation.error("GitHub username may only contain alphanumeric characters or dashes "
                             + "and cannot begin with a dash. Separate them with whitespaces.");
