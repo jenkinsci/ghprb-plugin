@@ -45,6 +45,9 @@
     <f:entry title="Build every pull request automatically without asking (Dangerous!)." field="permitAll">
       <f:checkbox />
     </f:entry>
+    <f:entry title="${%Black list commit authors}" field="blackListCommitAuthor">
+  	  <f:textbox default="${descriptor.blackListCommitAuthor}"/>
+    </f:entry>
     <f:entry title="${%Whitelist Target Branches:}" field="whiteListTargetBranches" >
       <f:repeatable field="whiteListTargetBranches" minimum="1"  add="Add Branch" >
         <table width="100%">

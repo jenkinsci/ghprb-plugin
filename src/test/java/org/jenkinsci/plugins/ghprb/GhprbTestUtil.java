@@ -297,6 +297,7 @@ public class GhprbTestUtil {
         jsonObject.put("okToTestPhrase", "ok to test");
         jsonObject.put("retestPhrase", "retest this please");
         jsonObject.put("skipBuildPhrase", "[skip ci]");
+        jsonObject.put("blackListCommitAuthor", "[bot1 bot2]");
         jsonObject.put("cron", "0 0 31 2 0");
         jsonObject.put("useComments", "true");
         jsonObject.put("useDetailedComments", "false");
