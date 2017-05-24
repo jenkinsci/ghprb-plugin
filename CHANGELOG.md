@@ -1,5 +1,9 @@
 ### Updates
 
+#### -> 1.37.0
+* Add user blacklist capability
+* Small but powerful docs cleanup
+
 #### -> 1.36.2
 * Revert pipeline support for the upstream status capability (only). See #506.
 
