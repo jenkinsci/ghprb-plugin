@@ -293,7 +293,7 @@ public class GhprbRepository implements Saveable{
                 config.put("url", new URL(getHookUrl()).toExternalForm());
                 config.put("insecure_ssl", "1");
                 if (!StringUtils.isEmpty(secret)) {
-                 config.put("secret",secret);
+                    config.put("secret",secret);
                 }
                 getGitHubRepo().createHook("web", config, HOOK_EVENTS, true);
                 return true;
