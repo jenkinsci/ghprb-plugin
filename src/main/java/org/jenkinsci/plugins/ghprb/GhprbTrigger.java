@@ -53,6 +53,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -66,6 +68,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
+
+    private static final ExecutorService pool = Executors.newFixedThreadPool(
+        Integer.parseInt(System.getProperty("GhprbTrigger.poolSize", "5"))
+    );
+
     private final String adminlist;
     private final Boolean allowMembersOfWhitelistedOrgsAsAdmin;
     private final String orgslist;
@@ -74,6 +81,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private final Boolean onlyTriggerPhrase;
     private final Boolean useGitHubHooks;
     private final Boolean permitAll;
+
     private String whitelist;
     private Boolean autoCloseFailedPullRequests;
     private Boolean displayBuildErrorsOnDownstreamBuilds;
@@ -84,7 +92,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     private String skipBuildPhrase;
     private String blackListCommitAuthor;
     private String blackListLabels;
-    private String whiteListLabels;    
+    private String whiteListLabels;
     private String includedRegions;
     private String excludedRegions;
 
@@ -268,7 +276,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         if (getUseGitHubHooks()) {
             if (GhprbTrigger.getDscp().getManageWebhooks()) {
-                this.repository.createHook();
+                pool.submit(new StartHookRunnable(this.repository));
             }
             DESCRIPTOR.addRepoTrigger(getRepository().getName(), super.job);
         }
@@ -769,6 +777,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (repoJobs == null) {
                 repoJobs = new ConcurrentHashMap<String, Set<Job<?, ?>>>();
             }
+
             saveAfterPause();
         }
 
@@ -1094,6 +1103,26 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             if (getExtensions().get(ext.getClass()) == null) {
                 getExtensions().add(ext);
             }
+        }
+    }
+
+    class StartHookRunnable implements Runnable
+    {
+        private final Logger logger = Logger.getLogger(StartHookRunnable.class.getName());
+
+        private final GhprbRepository repository;
+
+        StartHookRunnable(GhprbRepository repository)
+        {
+            this.repository = repository;
+        }
+
+        @Override
+        public void run()
+        {
+            this.repository.createHook();
+
+            logger.log(Level.INFO, "Created hook for {0}", new String[] { this.repository.getName() });
         }
     }
 
