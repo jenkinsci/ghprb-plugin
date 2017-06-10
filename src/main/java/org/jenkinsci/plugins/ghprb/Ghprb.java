@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * @author janinko
  */
 public class Ghprb {
-    private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
+    private static final Logger logger = Logger.getLogger(Ghprb.class.getPackage().getName());
     public static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*/[^/]*).*");
 
     private final GhprbTrigger trigger;
@@ -244,6 +244,10 @@ public class Ghprb {
 
     public boolean ifOnlyTriggerPhrase() {
         return trigger.getOnlyTriggerPhrase();
+    }
+    
+    public boolean suppressTestingRequest() {
+        return trigger.getSuppressTestingRequest();
     }
 
     public boolean isWhitelisted(GHUser user) {

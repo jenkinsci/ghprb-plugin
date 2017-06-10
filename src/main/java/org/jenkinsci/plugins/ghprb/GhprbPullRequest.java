@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public class GhprbPullRequest {
 
-    private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getName());
+    private static final Logger logger = Logger.getLogger(GhprbPullRequest.class.getPackage().getName());
 
     @Deprecated
     @SuppressWarnings("unused")
@@ -111,6 +111,11 @@ public class GhprbPullRequest {
         this.shouldRun = shouldRun;
     }
 
+    private void unsetAccepted() {
+        this.accepted = false;
+        this.shouldRun = false;
+    }
+
     public GhprbPullRequest(GHPullRequest pr,
                             Ghprb ghprb,
                             GhprbRepository repo) {
@@ -127,7 +132,7 @@ public class GhprbPullRequest {
 
         if (ghprb.isWhitelisted(author)) {
             setAccepted(true);
-        } else {
+        } else if (!helper.suppressTestingRequest()) {
             logger.log(Level.INFO,
                        "Author of #{0} {1} on {2} not in whitelist!",
                        new Object[] { id, author.getLogin(), reponame });
@@ -290,6 +295,15 @@ public class GhprbPullRequest {
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
                     logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
                     setAccepted(false);
+                }
+
+                // the author of the PR could have been unwhitelsited since its creation
+                if (accepted && !helper.isWhitelisted(getPullRequestAuthor())) {
+                    logger.log(Level.INFO, "Pull request #{0}'s author has not been whitelisted", new Object[]{id});
+                    unsetAccepted();
+                    if (!helper.suppressTestingRequest()) {
+                        repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
+                    }
                 }
 
                 // If we were passed a comment and are receiving all the comments

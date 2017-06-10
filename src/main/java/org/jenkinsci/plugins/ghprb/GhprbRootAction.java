@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 @Extension
 public class GhprbRootAction implements UnprotectedRootAction {
     static final String URL = "ghprbhook";
-    private static final Logger logger = Logger.getLogger(GhprbRootAction.class.getName());
+    private static final Logger logger = Logger.getLogger(GhprbRootAction.class.getPackage().getName());
     
     private Set<StartTrigger> triggerThreads;
     private ExecutorService pool;

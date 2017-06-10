@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
-    private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
+    private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getPackage().getName());
 
     public BuildFlowBuildManager(Run<?, ?> build) {
         super(build);
