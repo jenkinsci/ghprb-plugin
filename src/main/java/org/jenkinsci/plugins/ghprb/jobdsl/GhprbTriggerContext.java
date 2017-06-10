@@ -21,6 +21,7 @@ class GhprbTriggerContext implements Context {
     String blackListCommitAuthor;
     boolean onlyTriggerPhrase;
     boolean useGitHubHooks;
+    boolean manageWebhooksOnStartup;
     boolean permitAll;
     boolean autoCloseFailedPullRequests;
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
@@ -201,7 +202,19 @@ class GhprbTriggerContext implements Context {
     public void useGitHubHooks() {
         useGitHubHooks(true);
     }
+    /**
+     * Checking this option will disable regular polling for changes in GitHub and will try to create a GitHub hook.
+     */
+    public void manageWebhooksOnStartup(boolean manageWebhooksOnStartup) {
+        this.manageWebhooksOnStartup = manageWebhooksOnStartup;
+    }
 
+    /**
+     * Checking this option will disable regular polling for changes in GitHub and will try to create a GitHub hook.
+     */
+    public void manageWebhooksOnStartup() {
+        manageWebhooksOnStartup(true);
+    }
     /**
      * Build every pull request automatically without asking.
      */
