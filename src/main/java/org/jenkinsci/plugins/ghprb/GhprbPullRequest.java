@@ -7,11 +7,13 @@ import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * Maintains state about a Pull Request for a particular Jenkins job. This is what understands the current state of a PR
@@ -157,6 +159,7 @@ public class GhprbPullRequest {
         }
         // Call update PR with the update PR info and no comment
         updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
+        commitAuthor = getPRCommitAuthor();
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
@@ -207,11 +210,22 @@ public class GhprbPullRequest {
 
     private void checkSkipBuild() {
         synchronized (this) {
-            String skipBuildPhrase = helper.checkSkipBuild(this.pr);
+            String skipBuildPhrase = helper.checkSkipBuildPhrase(this.pr);
             if (!StringUtils.isEmpty(skipBuildPhrase)) {
                 logger.log(Level.INFO,
-                           "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
-                           skipBuildPhrase);
+                        "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
+                        skipBuildPhrase);
+                shouldRun = false;
+                return;
+            }
+            if (commitAuthor == null){
+                return;
+            }
+            String blackListCommitAuthor = helper.checkBlackListCommitAuthor(commitAuthor.getName());
+            if (!StringUtils.isEmpty(blackListCommitAuthor)) {
+                logger.log(Level.FINE,
+                        "Pull request triggered by user: {0}. Skipping build because that user is blacklisted.",
+                        blackListCommitAuthor);
                 shouldRun = false;
             }
         }
@@ -224,6 +238,8 @@ public class GhprbPullRequest {
         }
 
         updatePR(null /*GHPullRequest*/, comment, true);
+        // reset PR commit author
+        commitAuthor = null;
         checkSkipBuild();
         checkBlackListLabels();
         checkWhiteListLabels();
@@ -352,6 +368,75 @@ public class GhprbPullRequest {
         return true;
     }
 
+    private GitUser getPRCommitAuthor (){
+        try {
+            for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                if (commitDetails.getSha().equals(getHead())) {
+                    return commitDetails.getCommit().getCommitter();
+                }
+            }
+        } catch (Exception ex) {
+            logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+        }
+        return null;
+    }
+
+    boolean containsWatchedPaths(GHPullRequest pr) {
+        synchronized (this) {
+            List<Pattern> included = helper.getIncludedRegionPatterns();
+            List<Pattern> excluded = helper.getExcludedRegionPatterns();
+
+            // No need to perform a check if no regions are defined
+            if(included.isEmpty() && excluded.isEmpty()) {
+                return true;
+            }
+
+            List<String> paths = new ArrayList<String>();
+            for (GHPullRequestFileDetail fileDetail : pr.listFiles()) {
+                paths.add(fileDetail.getFilename());
+            }
+
+            // Assemble the list of included paths
+            List<String> includedPaths = new ArrayList<String>(paths.size());
+            if (!included.isEmpty()) {
+                for (String path : paths) {
+                    for (Pattern pattern : included) {
+                        if (pattern.matcher(path).matches()) {
+                            includedPaths.add(path);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                includedPaths.addAll(paths);
+            }
+
+            // Assemble the list of excluded paths
+            List<String> excludedPaths = new ArrayList<String>();
+            if (!excluded.isEmpty()) {
+                for (String path : includedPaths) {
+                    for (Pattern pattern : excluded) {
+                        if (pattern.matcher(path).matches()) {
+                            excludedPaths.add(path);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (excluded.isEmpty() && !included.isEmpty() && includedPaths.isEmpty()) {
+                logger.log(Level.FINEST, "No paths matched included region whitelist in the pull request");
+                return false;
+            } else if (includedPaths.size() == excludedPaths.size()) {
+                // If every affected path is excluded, return true.
+                logger.log(Level.FINEST, "Found only excluded paths in the pull request");
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     private void tryBuild() {
         synchronized (this) {
             if (helper.isProjectDisabled()) {
@@ -369,6 +454,12 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "Branch is not whitelisted or is blacklisted, skipping the build");
                 return;
             }
+
+            if(shouldRun && !containsWatchedPaths(pr)) {
+                logger.log(Level.FINEST, "Pull request contains no watched paths, skipping the build");
+                shouldRun = false;
+            }
+
             if (shouldRun) {
                 shouldRun = false; // Change the shouldRun flag as soon as we decide to build.
                 logger.log(Level.FINEST, "Running the build");
@@ -376,17 +467,7 @@ public class GhprbPullRequest {
                 if (pr != null) {
                     logger.log(Level.FINEST, "PR is not null, checking if mergable");
                     checkMergeable();
-                    try {
-                        for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-                            if (commitDetails.getSha().equals(getHead())) {
-                                commitAuthor = commitDetails.getCommit().getCommitter();
-                                break;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.log(Level.INFO, "Unable to get PR commits: ", ex);
-                    }
-
+                    getPRCommitAuthor();
                 }
 
                 logger.log(Level.FINEST, "Running build...");
@@ -429,7 +510,8 @@ public class GhprbPullRequest {
         GHUser sender = comment.getUser();
         String body = comment.getBody();
 
-        logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { sender.getName(), body });
+        String senderName = sender.getName();
+        logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { senderName != null ? senderName : sender.getLogin(), body });
 
         if (helper.isIgnoreBotUser() && helper.isBotUser(sender)) {
             logger.log(Level.INFO, "Comment from bot user {0} ignored.", sender);

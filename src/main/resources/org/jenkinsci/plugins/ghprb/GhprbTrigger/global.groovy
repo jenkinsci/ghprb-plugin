@@ -49,6 +49,9 @@ f.section(title: descriptor.displayName) {
     f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
       f.textbox(default: "H/5 * * * *", checkUrl: "'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)") 
     }
+    f.entry(field: "blackListCommitAuthor", title: _("Blacklist commit authors")) {
+      f.textbox(default: "")
+    }
     f.entry(field: "blackListLabels", title: _("List of GitHub labels for which the build should not be triggered.")) {
       f.textarea()
     }

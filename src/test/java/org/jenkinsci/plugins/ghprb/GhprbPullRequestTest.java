@@ -3,16 +3,15 @@ package org.jenkinsci.plugins.ghprb;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.OngoingStubbing;
 
 import java.io.IOException;
-import java.util.Date;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -24,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit test for {@link org.jenkinsci.plugins.ghprb.GhprbPullRequest}.
@@ -58,6 +58,43 @@ public class GhprbPullRequestTest {
         given(pr.getTitle()).willReturn("title");
         given(pr.getHead()).willReturn(head);
         given(pr.getBase()).willReturn(base);
+
+        // Mocks for listing file details in the GHPullRequest
+        @SuppressWarnings("unchecked")
+        PagedIterable<GHPullRequestFileDetail> pagedIterable = mock(PagedIterable.class);
+        @SuppressWarnings("unchecked")
+        PagedIterator<GHPullRequestFileDetail> pagedIterator = mock(PagedIterator.class);
+        given(pagedIterable.iterator()).willReturn(pagedIterator);
+        given(pr.listFiles()).willReturn(pagedIterable);
+
+        // Create the list of file paths to return
+        List<String> filePaths = Arrays.asList(
+                "path1/file1.txt",
+                "path1/file2.exe",
+                "path1/file3.py",
+                "path2/file1.java",
+                "path2/file2.rb",
+                "path3/file1.yaml",
+                ".gitignore");
+        List<GHPullRequestFileDetail> fileDetails = new ArrayList<GHPullRequestFileDetail>();
+
+        for(String filePath : filePaths) {
+            GHPullRequestFileDetail fileDetail = mock(GHPullRequestFileDetail.class);
+            given(fileDetail.getFilename()).willReturn(filePath);
+            fileDetails.add(fileDetail);
+        }
+
+        // Mock the iterator return calls
+        OngoingStubbing<GHPullRequestFileDetail> stubbingNext = when(pagedIterator.next());
+        for(GHPullRequestFileDetail fileDetail : fileDetails) {
+            stubbingNext = stubbingNext.thenReturn(fileDetail);
+        }
+
+        OngoingStubbing<Boolean> stubbingHasNext = when(pagedIterator.hasNext());
+        for(int i = 0; i < fileDetails.size(); i++) {
+            stubbingHasNext = stubbingHasNext.thenReturn(true);
+        }
+        stubbingHasNext.thenReturn(false);
         
         given(ghUser.getEmail()).willReturn("email");
         
@@ -158,5 +195,124 @@ public class GhprbPullRequestTest {
 
         // THEN
         assertThat(ghprbPullRequest.getAuthorRepoGitUrl()).isEqualTo(expectedAuthorRepoGitUrl);
+    }
+
+    @Test
+    public void testContainsWatchedPathsNoRegionsDefined() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(true);
+    }
+
+    @Test
+    public void testContainsWatchedPathsMatchingIncludedRegion() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("path2/.*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(true);
+    }
+
+    @Test
+    public void testContainsWatchedPathsNotMatchingIncludedRegions() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("unknown/.*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(false);
+    }
+
+    @Test
+    public void testContainsWatchedPathAllExcluded() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile(".*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(false);
+    }
+
+    @Test
+    public void testContainsWatchedPathPartialExclusion() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("path1/.*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(true);
+    }
+
+    @Test
+    public void testContainsWatchedPathAllExcludedWithInclude() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("path1/.*")));
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile(".*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(false);
+    }
+
+    @Test
+    public void testContainsWatchedPathSomeExcludedWithInclude() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("path1/.*")));
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("path2/.*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(true);
+    }
+
+    @Test
+    public void testContainsWatchedPathIncludeFileExtension() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile(".*\\.java")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(true);
+    }
+
+    @Test
+    public void testContainsWatchedPathIncludeFileExtensionExcludeFolder() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile(".*\\.java")));
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("path2/.*")));
+
+        // WHEN
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // THEN
+        assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(false);
     }
 }
