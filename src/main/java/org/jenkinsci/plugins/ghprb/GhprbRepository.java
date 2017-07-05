@@ -2,11 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import hudson.BulkChange;
 import hudson.XmlFile;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Items;
-import hudson.model.Saveable;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.model.listeners.SaveableListener;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
@@ -63,11 +59,11 @@ public class GhprbRepository implements Saveable{
         this.reponame = reponame;
         this.trigger = trigger;
     }
-    
+
     public void addPullRequests(Map<Integer, GhprbPullRequest> prs) {
         pullRequests.putAll(prs);
     }
-    
+
     public void init() {
         for (Entry<Integer, GhprbPullRequest> next : pullRequests.entrySet()) {
             GhprbPullRequest pull = next.getValue();
@@ -79,16 +75,16 @@ public class GhprbRepository implements Saveable{
         if (ghRepository != null) {
             return true;
         }
-        
+
         GitHub gitHub = null;
-        
+
         try {
             gitHub = trigger.getGitHub();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error while accessing rate limit API", ex);
             return false;
         }
-        
+
         if (gitHub == null) {
             logger.log(Level.SEVERE, "No connection returned to GitHub server!");
             return false;
@@ -106,7 +102,7 @@ public class GhprbRepository implements Saveable{
             logger.log(Level.SEVERE, "Error while accessing rate limit API", ex);
             return false;
         }
-        
+
 
         try {
             ghRepository = gitHub.getRepository(reponame);
@@ -121,16 +117,16 @@ public class GhprbRepository implements Saveable{
     // active PRs for the repo associated with the trigger and check the
     // comments/hashes that have been added since the last time we checked.
     public void check() {
-        
+
         if (!trigger.isActive()) {
             logger.log(Level.FINE, "Project is not active, not checking github state");
             return;
         }
-        
+
         if (!initGhRepository()) {
             return;
         }
-        
+
         GHRepository repo = getGitHubRepo();
 
         List<GHPullRequest> openPulls;
@@ -140,8 +136,8 @@ public class GhprbRepository implements Saveable{
             logger.log(Level.SEVERE, "Could not retrieve open pull requests.", ex);
             return;
         }
-        
-        
+
+
         Set<Integer> closedPulls = new HashSet<Integer>(pullRequests.keySet());
 
         for (GHPullRequest pr : openPulls) {
@@ -156,7 +152,7 @@ public class GhprbRepository implements Saveable{
             check(pr);
             closedPulls.remove(pr.getNumber());
         }
-        
+
 
         // remove closed pulls so we don't check them again
         for (Integer id : closedPulls) {
@@ -184,7 +180,7 @@ public class GhprbRepository implements Saveable{
         }
     }
 
-    public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
+    public void commentOnFailure(Run<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
         PrintStream stream = null;
         if (listener != null) {
             stream = listener.getLogger();
@@ -234,7 +230,7 @@ public class GhprbRepository implements Saveable{
         addComment(id, comment, null, null);
     }
 
-    public void addComment(int id, String comment, AbstractBuild<?, ?> build, TaskListener listener) {
+    public void addComment(int id, String comment, Run<?, ?> build, TaskListener listener) {
         if (comment.trim().isEmpty())
             return;
 
@@ -281,7 +277,7 @@ public class GhprbRepository implements Saveable{
         }
         return false;
     }
-    
+
     public static Object createHookLock = new Object();
 
     public boolean createHook() {
@@ -324,7 +320,7 @@ public class GhprbRepository implements Saveable{
     public GhprbPullRequest getPullRequest(int id) {
         return pullRequests.get(id);
     }
-    
+
     public GHPullRequest getActualPullRequest(int id) throws IOException {
         return getGitHubRepo().getPullRequest(id);
     }
@@ -337,7 +333,7 @@ public class GhprbRepository implements Saveable{
         int number = issueComment.getIssue().getNumber();
         logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}",
                 new Object[] { number, issueComment.getComment().getUser(), issueComment.getComment().getBody() });
-        
+
         if (!"created".equals(issueComment.getAction())) {
             return;
         }
@@ -350,7 +346,7 @@ public class GhprbRepository implements Saveable{
            logger.log(Level.SEVERE, "Unable to save repository!", e);
         }
     }
-    
+
     private GhprbPullRequest getPullRequest(GHPullRequest ghpr, Integer number) throws IOException {
         if (number == null) {
             number = ghpr.getNumber();
@@ -365,7 +361,7 @@ public class GhprbRepository implements Saveable{
                 pr = new GhprbPullRequest(ghpr, trigger.getHelper(), this);
                 pullRequests.put(number, pr);
             }
-            
+
             return pr;
         }
     }
@@ -396,7 +392,7 @@ public class GhprbRepository implements Saveable{
             }
         }
     }
-    
+
     public GHRepository getGitHubRepo() {
         if (ghRepository == null && !initGhRepository()) {
             logger.log(Level.SEVERE, "Unable to get repository [ {0} ]", reponame);
@@ -421,7 +417,7 @@ public class GhprbRepository implements Saveable{
         SaveableListener.fireOnChange(this, config);
     }
 
-    protected XmlFile getConfigXml(AbstractProject<?, ?> project) throws IOException {
+    protected XmlFile getConfigXml(Job<?, ?> project) throws IOException {
         try {
             String escapedRepoName = URLEncoder.encode(reponame, "UTF8");
             File file = new File(project.getBuildDir() + "/pullrequests", escapedRepoName);

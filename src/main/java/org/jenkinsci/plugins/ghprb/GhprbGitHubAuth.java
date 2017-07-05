@@ -5,6 +5,7 @@ import static hudson.Util.fixEmptyAndTrim;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,15 +64,15 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private final String id;
     private final String description;
     private final Secret secret;
-    
+
     private transient GitHub gh;
 
     @DataBoundConstructor
     public GhprbGitHubAuth(
-            String serverAPIUrl, 
-            String jenkinsUrl, 
-            String credentialsId, 
-            String description, 
+            String serverAPIUrl,
+            String jenkinsUrl,
+            String credentialsId,
+            String description,
             String id,
             Secret secret
             ) {
@@ -84,7 +85,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         if (StringUtils.isEmpty(id)) {
             id = UUID.randomUUID().toString();
         }
-        
+
         this.id = IdCredentials.Helpers.fixEmptyId(id);
         this.description = description;
         this.secret = secret;
@@ -104,34 +105,34 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     public String getCredentialsId() {
         return credentialsId;
     }
-    
+
     @Exported
     public String getDescription() {
         return description;
     }
-    
+
     @Exported
     public String getId() {
         return id;
     }
-    
+
 
     @Exported
     public Secret getSecret() {
         return secret;
     }
-    
+
 
     public boolean checkSignature(String body, String signature) {
         if (secret == null || StringUtils.isEmpty(secret.getPlainText())) {
             return true;
         }
-        
+
         if (signature != null && signature.startsWith("sha1=")) {
             String expected = signature.substring(5);
             String algorithm = "HmacSHA1";
             try {
-                SecretKeySpec keySpec = new SecretKeySpec(secret.getPlainText().getBytes(), algorithm);
+                SecretKeySpec keySpec = new SecretKeySpec(secret.getPlainText().getBytes(Charset.forName("UTF-8")), algorithm);
                 Mac mac = Mac.getInstance(algorithm);
                 mac.init(keySpec);
                 byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));
@@ -159,7 +160,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             .withEndpoint(serverAPIUrl)
             .withConnector(new HttpConnectorWithJenkinsProxy());
         String contextName = context == null ? "(Jenkins.instance)" : context.getFullDisplayName();
-        
+
         if (StringUtils.isEmpty(credentialsId)) {
             logger.log(Level.WARNING, "credentialsId not set for context {0}, using anonymous connection", contextName);
             return builder;
@@ -184,7 +185,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
         }
         return builder;
     }
-    
+
     private void buildConnection(Item context) {
         GitHubBuilder builder = getBuilder(context, serverAPIUrl, credentialsId);
         if (builder == null) {
@@ -203,7 +204,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             if (gh == null) {
                 buildConnection(context);
             }
-            
+
             return gh;
         }
     }
@@ -231,7 +232,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
          */
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context, @QueryParameter String serverAPIUrl, @QueryParameter String credentialsId) throws URISyntaxException {
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(serverAPIUrl).build();
-            
+
             List<CredentialsMatcher> matchers = new ArrayList<CredentialsMatcher>(3);
             if (!StringUtils.isEmpty(credentialsId)) {
                 matchers.add(0, CredentialsMatchers.withId(credentialsId));
@@ -239,14 +240,14 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
 
             matchers.add(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
             matchers.add(CredentialsMatchers.instanceOf(StringCredentials.class));
-            
+
             List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(
                     StandardCredentials.class,
                     context,
                     ACL.SYSTEM,
                     domainRequirements
-                ); 
-            
+                );
+
             return new StandardListBoxModel()
                     .withMatching(
                             CredentialsMatchers.anyOf(
@@ -254,19 +255,19 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                                 credentials
                     );
         }
-        
+
 
         public FormValidation doCreateApiToken(
-                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
-                @QueryParameter("credentialsId") final String credentialsId, 
-                @QueryParameter("username") final String username, 
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl,
+                @QueryParameter("credentialsId") final String credentialsId,
+                @QueryParameter("username") final String username,
                 @QueryParameter("password") final String password) {
             try {
 
                 GitHubBuilder builder = new GitHubBuilder()
                             .withEndpoint(serverAPIUrl)
                             .withConnector(new HttpConnectorWithJenkinsProxy());
-                
+
                 if (StringUtils.isEmpty(credentialsId)) {
                     if (StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {
                         return FormValidation.error("Username and Password required");
@@ -283,7 +284,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                     }
                 }
                 GitHub gh = builder.build();
-                GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS, 
+                GHAuthorization token = gh.createToken(Arrays.asList(GHAuthorization.REPO_STATUS,
                         GHAuthorization.REPO), "Jenkins GitHub Pull Request Builder", null);
                 String tokenId;
                 try {
@@ -291,13 +292,13 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 } catch (Exception e) {
                     tokenId = "Unable to create credentials: " + e.getMessage();
                 }
-                
+
                 return FormValidation.ok("Access token created: " + token.getToken() + " token CredentialsID: " + tokenId);
             } catch (IOException ex) {
                 return FormValidation.error("GitHub API token couldn't be created: " + ex.getMessage());
             }
         }
-        
+
         public FormValidation doCheckServerAPIUrl(@QueryParameter String value) {
             if ("https://api.github.com".equals(value)) {
                 return FormValidation.ok();
@@ -307,9 +308,9 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             }
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
-        
+
         public FormValidation doCheckRepoAccess(
-                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId,
                 @QueryParameter("repo") final String repo) {
             try {
@@ -332,15 +333,15 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                     permissions.add("Pull");
                 }
                 sb.append(Joiner.on(", ").join(permissions));
-                
+
                 return FormValidation.ok(sb.toString());
             } catch (Exception ex) {
                 return FormValidation.error("Unable to connect to GitHub API: " + ex);
             }
         }
-        
+
         public FormValidation doTestGithubAccess(
-                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId) {
             try {
                 GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
@@ -352,17 +353,17 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 String name = me.getName();
                 String email = me.getEmail();
                 String login = me.getLogin();
-                
+
                 String comment = String.format("Connected to %s as %s (%s) login: %s", serverAPIUrl, name, email, login);
                 return FormValidation.ok(comment);
             } catch (Exception ex) {
                 return FormValidation.error("Unable to connect to GitHub API: " + ex);
             }
         }
-        
+
 
         public FormValidation doTestComment(
-                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId,
                 @QueryParameter("repo") final String repoName,
                 @QueryParameter("issueId") final int issueId,
@@ -376,15 +377,15 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 GHRepository repo = gh.getRepository(repoName);
                 GHIssue issue = repo.getIssue(issueId);
                 issue.comment(comment);
-                
+
                 return FormValidation.ok("Issued comment to issue: " + issue.getHtmlUrl());
             } catch (Exception ex) {
                 return FormValidation.error("Unable to issue comment: " + ex);
             }
         }
-        
+
         public FormValidation doTestUpdateStatus(
-                @QueryParameter("serverAPIUrl") final String serverAPIUrl, 
+                @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId,
                 @QueryParameter("repo") final String repoName,
                 @QueryParameter("sha1") final String sha1,
@@ -419,7 +420,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             return items;
         }
     }
-    
-    
+
+
 
 }

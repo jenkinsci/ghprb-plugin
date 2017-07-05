@@ -1,41 +1,32 @@
 package org.jenkinsci.plugins.ghprb;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHPullRequestCommitDetail;
-import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
-import org.kohsuke.github.GHRef;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.GitUser;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-
 import com.google.common.annotations.VisibleForTesting;
-
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
+import jenkins.tasks.SimpleBuildStep;
+import org.kohsuke.github.*;
+import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
-public class GhprbPullRequestMerge extends Recorder {
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
+public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
     private transient PrintStream logger;
+    private transient TaskListener listener;
     private final Boolean onlyAdminsMerge;
 
     private final Boolean disallowOwnCode;
@@ -77,7 +68,7 @@ public class GhprbPullRequestMerge extends Recorder {
     }
 
     public Boolean getAllowMergeWithoutTriggerPhrase() {
-        return allowMergeWithoutTriggerPhrase == null ? false : allowMergeWithoutTriggerPhrase;
+        return allowMergeWithoutTriggerPhrase == null ? Boolean.valueOf(false) : allowMergeWithoutTriggerPhrase;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -95,21 +86,21 @@ public class GhprbPullRequestMerge extends Recorder {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        logger = listener.getLogger();
-        AbstractProject<?, ?> project = build.getProject();
-        if (build.getResult().isWorseThan(Result.SUCCESS)) {
-            logger.println("Build did not succeed, merge will not be run");
-            return true;
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
+        listener = taskListener;
+        Job<?, ?> project = run.getParent();
+        if (run.getResult().isWorseThan(Result.SUCCESS)) {
+            listener.getLogger().println("Build did not succeed, merge will not be run");
+            return;
         }
 
         trigger = Ghprb.extractTrigger(project);
         if (trigger == null)
-            return false;
+            return;
 
-        cause = Ghprb.getCause(build);
+        cause = Ghprb.getCause(run);
         if (cause == null) {
-            return true;
+            return;
         }
 
         pr = trigger.getRepository().getActualPullRequest(cause.getPullID());
@@ -124,8 +115,8 @@ public class GhprbPullRequestMerge extends Recorder {
         // a PR when the 'request for testing' phrase contains the PR merge trigger phrase and
         // the bot is a member of a whitelisted organization
         if (helper.isBotUser(triggerSender)) {
-            logger.println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
-            return false;
+            listener.getLogger().println("Comment from bot user " + triggerSender.getLogin() + " ignored.");
+            return;
         }
 
         boolean intendToMerge = false;
@@ -135,6 +126,7 @@ public class GhprbPullRequestMerge extends Recorder {
         // If merge can only be triggered by a comment and there is a comment
         if (!getAllowMergeWithoutTriggerPhrase() && (commentBody == null || !helper.isTriggerPhrase(commentBody))) {
             logger.println("The comment does not contain the required trigger phrase.");
+            listener.getLogger().println("The comment does not contain the required trigger phrase.");
         } else {
             intendToMerge = true;
         }
@@ -142,7 +134,7 @@ public class GhprbPullRequestMerge extends Recorder {
         // If there is no intention to merge there is no point checking
         if (intendToMerge && getOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender))) {
             canMerge = false;
-            logger.println("Only admins can merge this pull request, " + (triggerSender != null ? triggerSender.getLogin() + " is not an admin" : " and build was triggered via automation") + ".");
+            listener.getLogger().println("Only admins can merge this pull request, " + (triggerSender != null ? triggerSender.getLogin() + " is not an admin" : " and build was triggered via automation") + ".");
             if (triggerSender != null) {
                 commentOnRequest(String.format("Code not merged because @%s (%s) is not in the Admin list.", triggerSender.getLogin(), triggerSender.getName()));
             }
@@ -152,7 +144,7 @@ public class GhprbPullRequestMerge extends Recorder {
         if (intendToMerge && getDisallowOwnCode() && (triggerSender == null || isOwnCode(pr, triggerSender))) {
             canMerge = false;
             if (triggerSender != null) {
-                logger.println("The commentor is also one of the contributors.");
+                listener.getLogger().println("The commentor is also one of the contributors.");
                 commentOnRequest(String.format("Code not merged because @%s (%s) has committed code in the request.", triggerSender.getLogin(), triggerSender.getName()));
             }
         }
@@ -161,14 +153,14 @@ public class GhprbPullRequestMerge extends Recorder {
 
         // The build should not fail if no merge is expected
         if (intendToMerge && canMerge && (isMergeable == null || !isMergeable)) {
-            logger.println("Pull request cannot be automerged.");
+            listener.getLogger().println("Pull request cannot be automerged.");
             commentOnRequest("Pull request is not mergeable.");
-            listener.finished(Result.FAILURE);
-            return false;
+            listener.error(Result.FAILURE.toString());
+            return;
         }
 
         if (intendToMerge && canMerge) {
-            logger.println("Merging the pull request");
+            listener.getLogger().println("Merging the pull request");
 
             try {
                 Field ghRootField = GHIssue.class.getDeclaredField("root");
@@ -177,26 +169,24 @@ public class GhprbPullRequestMerge extends Recorder {
                 Method anonMethod = GitHub.class.getMethod("isAnonymous");
                 anonMethod.setAccessible(true);
                 Boolean isAnonymous = (Boolean) (anonMethod.invoke(ghRoot));
-                logger.println("Merging PR[" + pr + "] is anonymous: " + isAnonymous);
+                listener.getLogger().println("Merging PR[" + pr + "] is anonymous: " + isAnonymous);
             } catch (Exception e) {
-                e.printStackTrace(logger);
+                e.printStackTrace(listener.getLogger());
             }
-            String mergeComment = Ghprb.replaceMacros(build, listener, getMergeComment());
+            String mergeComment = Ghprb.replaceMacros(run, listener, getMergeComment());
             pr.merge(mergeComment);
-            logger.println("Pull request successfully merged");
-            deleteBranch(build, launcher, listener);
+            listener.getLogger().println("Pull request successfully merged");
+            deleteBranch(run, launcher, listener);
         }
 
         // We should only fail the build if there is an intent to merge
         if (intendToMerge && !canMerge && getFailOnNonMerge()) {
-            listener.finished(Result.FAILURE);
-        } else {
-            listener.finished(Result.SUCCESS);
+            listener.error(Result.FAILURE.toString());
+            return;
         }
-        return canMerge;
     }
 
-    private void deleteBranch(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
+    private void deleteBranch(Run<?, ?> build, Launcher launcher, final TaskListener listener) {
         if (!getDeleteOnMerge()) {
             return;
         }
@@ -217,8 +207,8 @@ public class GhprbPullRequestMerge extends Recorder {
         try {
             trigger.getRepository().addComment(pr.getNumber(), comment);
         } catch (Exception e) {
-            logger.println("Failed to add comment");
-            e.printStackTrace(logger);
+            listener.getLogger().println("Failed to add comment");
+            e.printStackTrace(listener.getLogger());
         }
     }
 
@@ -230,7 +220,7 @@ public class GhprbPullRequestMerge extends Recorder {
 
             GHUser prUser = pr.getUser();
             if (prUser.getLogin().equals(commentorLogin)) {
-                logger.println(commentorName + " (" + commentorLogin + ")  has submitted the PR[" + pr.getNumber() + pr.getNumber() + "] that is to be merged");
+                listener.getLogger().println(commentorName + " (" + commentorLogin + ")  has submitted the PR[" + pr.getNumber() + pr.getNumber() + "] that is to be merged");
                 return true;
             }
 
@@ -246,13 +236,13 @@ public class GhprbPullRequestMerge extends Recorder {
                 isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
 
                 if (isSame) {
-                    logger.println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber() + "] that is to be merged");
+                    listener.getLogger().println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber() + "] that is to be merged");
                     return isSame;
                 }
             }
         } catch (IOException e) {
-            logger.println("Unable to get committer name");
-            e.printStackTrace(logger);
+            listener.getLogger().println("Unable to get committer name");
+            e.printStackTrace(listener.getLogger());
         }
         return false;
     }
@@ -265,14 +255,14 @@ public class GhprbPullRequestMerge extends Recorder {
         }
 
         @Override
-        public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
+        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
         }
 
-        public FormValidation doCheck(@AncestorInPath AbstractProject<?, ?> project, @QueryParameter String value) throws IOException {
-            return FilePath.validateFileMask(project.getSomeWorkspace(), value);
+        public FormValidation doCheck(@AncestorInPath Job<?, ?> project, @QueryParameter String value) throws IOException {
+            FilePath buildDirectory = new FilePath(project.getBuildDir());
+            return FilePath.validateFileMask(buildDirectory, value);
         }
-
     }
 
 }

@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 @Extension
 public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>> {
     private static final Logger logger = Logger.getLogger(GhprbUpstreamStatusListener.class.getName());
-    
+
     private GHRepository repo;
 
     // Gets all the custom env vars needed to send information to GitHub
@@ -42,8 +42,8 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
 
         if (!envVars.containsKey("ghprbUpstreamStatus")) {
             return null;
-        }        
-        
+        }
+
         GhprbGitHubAuth auth = GhprbTrigger.getDscp()
                 .getGitHubAuth(envVars.get("ghprbCredentialsId"));
 
@@ -55,7 +55,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
             logger.log(Level.SEVERE, "Unable to connect to GitHub repo", e);
             return null;
         }
-        
+
     }
 
     private GhprbSimpleStatus returnGhprbSimpleStatus(Map<String, String> envVars) {

@@ -1,18 +1,16 @@
 package org.jenkinsci.plugins.ghprb.manager.impl.downstreambuilds;
 
+import com.cloudbees.plugins.flow.FlowRun;
+import com.cloudbees.plugins.flow.JobInvocation;
+import hudson.model.Run;
+import hudson.tasks.test.AggregatedTestResultAction;
+import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
+import org.jenkinsci.plugins.ghprb.manager.impl.GhprbBaseBuildManager;
+import org.jgrapht.DirectedGraph;
+
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.jenkinsci.plugins.ghprb.manager.impl.GhprbBaseBuildManager;
-import org.jenkinsci.plugins.ghprb.manager.configuration.JobConfiguration;
-import org.jgrapht.DirectedGraph;
-
-import com.cloudbees.plugins.flow.FlowRun;
-import com.cloudbees.plugins.flow.JobInvocation;
-
-import hudson.model.AbstractBuild;
-import hudson.tasks.test.AggregatedTestResultAction;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -21,11 +19,11 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
     private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
 
-    public BuildFlowBuildManager(AbstractBuild<?, ?> build) {
+    public BuildFlowBuildManager(Run<?, ?> build) {
         super(build);
     }
 
-    public BuildFlowBuildManager(AbstractBuild<?, ?> build, JobConfiguration jobConfiguration) {
+    public BuildFlowBuildManager(Run<?, ?> build, JobConfiguration jobConfiguration) {
         super(build, jobConfiguration);
     }
 
@@ -85,7 +83,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
             JobInvocation jobInvocation = iterator.next();
 
             try {
-                AbstractBuild<?, ?> build = (AbstractBuild<?, ?>) jobInvocation.getBuild();
+                Run<?, ?> build = (Run<?, ?>) jobInvocation.getBuild();
 
                 AggregatedTestResultAction testResultAction = build.getAction(AggregatedTestResultAction.class);
 

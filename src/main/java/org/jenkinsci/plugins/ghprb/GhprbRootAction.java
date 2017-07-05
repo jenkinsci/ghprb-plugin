@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.ghprb;
 
 import hudson.Extension;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import hudson.security.csrf.CrumbExclusion;
@@ -33,8 +33,8 @@ import java.util.logging.Logger;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Honza Brázdil jbrazdil@redhat.com
@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 public class GhprbRootAction implements UnprotectedRootAction {
     static final String URL = "ghprbhook";
     private static final Logger logger = Logger.getLogger(GhprbRootAction.class.getName());
-    
+
     private Set<StartTrigger> triggerThreads;
     private ExecutorService pool;
 
@@ -58,11 +58,11 @@ public class GhprbRootAction implements UnprotectedRootAction {
     public String getUrlName() {
         return URL;
     }
-    
+
     public int getThreadCount() {
         return triggerThreads == null ? 0 : triggerThreads.size();
     }
-    
+
     public GhprbRootAction() {
         triggerThreads = Collections.newSetFromMap(new WeakHashMap<StartTrigger, Boolean>());
         this.pool = Executors.newCachedThreadPool();
@@ -293,9 +293,9 @@ public class GhprbRootAction implements UnprotectedRootAction {
                                           String signature) {
         Set<GhprbTrigger> triggers = new HashSet<GhprbTrigger>();
 
-        Set<AbstractProject<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
+        Set<Job<?, ?>> projects = GhprbTrigger.getDscp().getRepoTriggers(repoName);
         if (projects != null) {
-            for (AbstractProject<?, ?> project : projects) {
+            for (Job<?, ?> project : projects) {
                 GhprbTrigger trigger = Ghprb.extractTrigger(project);
                 if (trigger == null) {
                     logger.log(Level.WARNING,

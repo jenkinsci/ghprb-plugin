@@ -44,7 +44,7 @@ import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbRootActionTest {
-    
+
 
     @Mock
     protected GHCommitPointer commitPointer;
@@ -56,7 +56,7 @@ public class GhprbRootActionTest {
     protected GHRepository ghRepository;
     @Mock
     protected GHUser ghUser;
-    
+
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
@@ -65,9 +65,9 @@ public class GhprbRootActionTest {
     private StaplerRequest req;
 
     private BufferedReader br;
-    
+
     private GhprbTrigger trigger;
-    
+
 
     private final int prId = 1;
 
@@ -75,7 +75,7 @@ public class GhprbRootActionTest {
     public void setup() throws Exception {
         trigger = GhprbTestUtil.getTrigger();
         GitHub gitHub = trigger.getGitHub();
-        
+
         given(gitHub.getRepository(anyString())).willReturn(ghRepository);
         given(commitPointer.getRef()).willReturn("ref");
         given(ghRepository.getName()).willReturn("dropwizard");
@@ -97,10 +97,10 @@ public class GhprbRootActionTest {
     public void testUrlEncoded() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("testUrlEncoded");
-        
+
         doReturn(project).when(trigger).getActualProject();
         doReturn(true).when(trigger).getUseGitHubHooks();
-        
+
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
@@ -110,10 +110,10 @@ public class GhprbRootActionTest {
         Ghprb ghprb = spy(new Ghprb(trigger));
         doReturn(ghprbGitHub).when(ghprb).getGitHub();
         doReturn(true).when(ghprb).isAdmin(Mockito.any(GHUser.class));
-        
+
         trigger.start(project, true);
         trigger.setHelper(ghprb);
-        
+
         project.addTrigger(trigger);
         GitSCM scm = GhprbTestUtil.provideGitSCM();
         project.setScm(scm);
@@ -124,7 +124,7 @@ public class GhprbRootActionTest {
 
         BufferedReader br = new BufferedReader(new StringReader(
                 "payload=" + URLEncoder.encode(GhprbTestUtil.PAYLOAD, "UTF-8")));
-        
+
 
 
         given(req.getContentType()).willReturn("application/x-www-form-urlencoded");
@@ -135,34 +135,37 @@ public class GhprbRootActionTest {
 
 
         StringReader brTest = new StringReader(GhprbTestUtil.PAYLOAD);
-        
+
         IssueComment issueComment = spy(GitHub.connectAnonymously().parseEventPayload(brTest, IssueComment.class));
         brTest.close();
-        
+
         GHIssueComment ghIssueComment = spy(issueComment.getComment());
-        
+
         Mockito.when(issueComment.getComment()).thenReturn(ghIssueComment);
-        Mockito.when(ghIssueComment.getUser()).thenReturn(ghUser);
-        
-        
+        Mockito.doReturn(ghUser).when(ghIssueComment).getUser();
+
+
         given(trigger.getGitHub().parseEventPayload(Mockito.any(Reader.class), Mockito.eq(IssueComment.class))).willReturn(issueComment);
 
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
-        while(ra.getThreadCount() > 0) {
-            Thread.sleep(500);
+        // handles race condition around starting and finishing builds. Give the system time
+        // to finish indexing, create a build, queue it, and run it.
+        int count = 0;
+        while (count < 5 && project.getBuilds().toArray().length == 0) {
+            GhprbTestUtil.waitForBuildsToFinish(project);
+            Thread.sleep(50);
+            count = count + 1;
         }
-        GhprbTestUtil.waitForBuildsToFinish(project);
-
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
-    
+
     @Test
     public void disabledJobsDontBuild() throws Exception {
         // GIVEN
         FreeStyleProject project = jenkinsRule.createFreeStyleProject("disabledJobsDontBuild");
         doReturn(project).when(trigger).getActualProject();
-        
+
         given(commitPointer.getSha()).willReturn("sha1");
         GhprbTestUtil.setupGhprbTriggerDescriptor(null);
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
@@ -181,7 +184,7 @@ public class GhprbRootActionTest {
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
-        
+
         project.disable();
 
         BufferedReader br = new BufferedReader(new StringReader(
@@ -196,7 +199,7 @@ public class GhprbRootActionTest {
         GhprbRootAction ra = new GhprbRootAction();
         ra.doIndex(req, null);
         GhprbTestUtil.waitForBuildsToFinish(project);
-        
+
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
     }
 

@@ -2,13 +2,16 @@ package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.*;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -192,17 +195,73 @@ public class GhprbPullRequest {
         }
         // Call update PR with the update PR info and no comment
         updatePR(ghpr, null /*GHIssueComment*/, isWebhook);
+        commitAuthor = getPRCommitAuthor();
         checkSkipBuild();
+        checkBlackListLabels();
+        checkWhiteListLabels();
         tryBuild();
+    }
+
+    private void checkBlackListLabels() {
+        Set<String> labelsToIgnore = helper.getBlackListLabels();
+        if (labelsToIgnore != null && !labelsToIgnore.isEmpty()) {
+            try {
+                for (GHLabel label : pr.getLabels()) {
+                    if (labelsToIgnore.contains(label.getName())) {
+                        logger.log(Level.INFO,
+                                "Found label {0} in ignore list, pull request will be ignored.",
+                                label.getName());
+                        shouldRun = false;
+                    }
+                }
+            } catch(IOException e) {
+                logger.log(Level.SEVERE, "Failed to read blacklist labels", e);
+            }
+        }
+    }
+
+    private void checkWhiteListLabels() {
+        Set<String> labelsMustContain = helper.getWhiteListLabels();
+        if (labelsMustContain != null && !labelsMustContain.isEmpty()) {
+            boolean containsWhiteListLabel = false;
+            try {
+                for (GHLabel label : pr.getLabels()) {
+                    if (labelsMustContain.contains(label.getName())) {
+                        logger.log(Level.INFO,
+                                "Found label {0} in whitelist",
+                                label.getName());
+                        containsWhiteListLabel = true;
+                    }
+                }
+
+                if (!containsWhiteListLabel) {
+                    logger.log(Level.INFO, "Can't find any of whitelist label.");
+                    shouldRun = false;
+                }
+            } catch(IOException e) {
+                logger.log(Level.SEVERE, "Failed to read whitelist labels", e);
+            }
+        }
     }
 
     private void checkSkipBuild() {
         synchronized (this) {
-            String skipBuildPhrase = helper.checkSkipBuild(this.pr);
+            String skipBuildPhrase = helper.checkSkipBuildPhrase(this.pr);
             if (!StringUtils.isEmpty(skipBuildPhrase)) {
                 logger.log(Level.INFO,
-                           "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
-                           skipBuildPhrase);
+                        "Pull request commented with {0} skipBuildPhrase. Hence skipping the build.",
+                        skipBuildPhrase);
+                shouldRun = false;
+                return;
+            }
+            if (commitAuthor == null){
+                return;
+            }
+            String blackListCommitAuthor = helper.checkBlackListCommitAuthor(commitAuthor.getName());
+            if (!StringUtils.isEmpty(blackListCommitAuthor)) {
+                logger.log(Level.FINE,
+                        "Pull request triggered by user: {0}. Skipping build because that user is blacklisted.",
+                        blackListCommitAuthor);
                 shouldRun = false;
             }
         }
@@ -215,14 +274,18 @@ public class GhprbPullRequest {
         }
 
         updatePR(null /*GHPullRequest*/, comment, true);
+        // reset PR commit author
+        commitAuthor = null;
         checkSkipBuild();
+        checkBlackListLabels();
+        checkWhiteListLabels();
         tryBuild();
     }
-    
+
     // Reconcile the view of the PR we have locally with the one that was sent to us by GH.
     // We can reach this method in one of three ways, and the comment indicates what
     // we should do in each case:
-    //      1. With webhooks + new trigger/PR initialization - 
+    //      1. With webhooks + new trigger/PR initialization -
     //         This could happen if a new job was added, new trigger was enabled, or if Jenkins
     //         was restarted.  In this case, our view of the PR is out of date.  We need to
     //         compare hashes and check the comments going back to when the last update was (which could be
@@ -245,7 +308,7 @@ public class GhprbPullRequest {
                 logger.log(Level.INFO, "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})", new Object[] { this.id, this.repo.getName(), updatedDate, user,
                     comment != null ? "comment" : "PR update"});
             }
-        
+
             synchronized (this) {
                 boolean wasUpdated = setUpdated(updatedDate);
 
@@ -255,11 +318,10 @@ public class GhprbPullRequest {
                 if (ghpr != null) {
                     setPullRequest(ghpr);
                 }
-                
+
                 // Grab the pull request for use in this method (in case we came in through the comment path)
                 GHPullRequest pullRequest = getPullRequest();
-                
-                
+
                 // the author of the PR could have been whitelisted since its creation
                 if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
                     logger.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[]{id});
@@ -279,14 +341,14 @@ public class GhprbPullRequest {
                     checkComment(comment);
                     commentsChecked = 1;
                 }
-                
+
                 // Check the commit on the PR against the recorded version.
                 boolean newCommit = checkCommit(pullRequest);
-            
+
                 // Log some info.
                 if (!newCommit && commentsChecked == 0) {
                     logger.log(Level.INFO, "Pull request #{0} was updated on repo {1} but there aren''t any new comments nor commits; "
-                            + "that may mean that commit status was updated.", 
+                            + "that may mean that commit status was updated.",
                             new Object[] { this.id, this.repo.getName() }
                     );
                 }
@@ -345,6 +407,87 @@ public class GhprbPullRequest {
         return true;
     }
 
+    private GitUser getPRCommitAuthor (){
+        try {
+            for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
+                if (commitDetails.getSha().equals(getHead())) {
+                    return commitDetails.getCommit().getCommitter();
+                }
+            }
+        } catch (Exception ex) {
+            logger.log(Level.INFO, "Unable to get PR commits: ", ex);
+        }
+        return null;
+    }
+
+    boolean containsWatchedPaths(GHPullRequest pr) {
+        List<GhprbBranch> whiteListBranches = helper.getWhiteListTargetBranches();
+        List<GhprbBranch> blackListBranches = helper.getBlackListTargetBranches();
+        // We matched something in the whitelist, now check the blacklist. It must
+        // not match any branch in the blacklist
+        if (!blackListBranches.isEmpty()) {
+            if(matchesAnyBranch(target, blackListBranches)) {
+                logger.log(Level.FINEST,
+                   "PR #{0} target branch: {1} is in our blacklist of target branches: {2}",
+                   new Object[] { id, target, Joiner.on(',').skipNulls().join(blackListBranches) });
+                return false;
+            }
+        }
+        synchronized (this) {
+            List<Pattern> included = helper.getIncludedRegionPatterns();
+            List<Pattern> excluded = helper.getExcludedRegionPatterns();
+
+            // No need to perform a check if no regions are defined
+            if(included.isEmpty() && excluded.isEmpty()) {
+                return true;
+            }
+
+            List<String> paths = new ArrayList<String>();
+            for (GHPullRequestFileDetail fileDetail : pr.listFiles()) {
+                paths.add(fileDetail.getFilename());
+            }
+
+            // Assemble the list of included paths
+            List<String> includedPaths = new ArrayList<String>(paths.size());
+            if (!included.isEmpty()) {
+                for (String path : paths) {
+                    for (Pattern pattern : included) {
+                        if (pattern.matcher(path).matches()) {
+                            includedPaths.add(path);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                includedPaths.addAll(paths);
+            }
+
+            // Assemble the list of excluded paths
+            List<String> excludedPaths = new ArrayList<String>();
+            if (!excluded.isEmpty()) {
+                for (String path : includedPaths) {
+                    for (Pattern pattern : excluded) {
+                        if (pattern.matcher(path).matches()) {
+                            excludedPaths.add(path);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (excluded.isEmpty() && !included.isEmpty() && includedPaths.isEmpty()) {
+                logger.log(Level.FINEST, "No paths matched included region whitelist in the pull request");
+                return false;
+            } else if (includedPaths.size() == excludedPaths.size()) {
+                // If every affected path is excluded, return true.
+                logger.log(Level.FINEST, "Found only excluded paths in the pull request");
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     private void tryBuild() {
         synchronized (this) {
             checkSkipBuild();
@@ -353,7 +496,6 @@ public class GhprbPullRequest {
                 logger.finest("Verifying regions for exclusion or inclusion to determine build condition");
                 shouldRun = isBuildRegionAccepted();
             }
-
             if (helper.isProjectDisabled()) {
                 logger.log(Level.FINEST, "Project is disabled, not trying to build");
                 shouldRun = false;
@@ -369,23 +511,19 @@ public class GhprbPullRequest {
                 logger.log(Level.FINEST, "Branch is not whitelisted or is blacklisted, skipping the build");
                 return;
             }
+
+            if(shouldRun && !containsWatchedPaths(pr)) {
+                logger.log(Level.FINEST, "Pull request contains no watched paths, skipping the build");
+                shouldRun = false;
+            }
+
             if (shouldRun) {
                 shouldRun = false; // Change the shouldRun flag as soon as we decide to build.
                 logger.log(Level.FINEST, "Running the build");
                 if (pr != null) {
                     logger.log(Level.FINEST, "PR is not null, checking if mergable");
                     checkMergeable();
-                    try {
-                        for (GHPullRequestCommitDetail commitDetails : pr.listCommits()) {
-                            if (commitDetails.getSha().equals(getHead())) {
-                                commitAuthor = commitDetails.getCommit().getCommitter();
-                                break;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.log(Level.INFO, "Unable to get PR commits: ", ex);
-                    }
-
+                    getPRCommitAuthor();
                 }
 
                 logger.log(Level.FINEST, "Running build...");
@@ -428,7 +566,8 @@ public class GhprbPullRequest {
         GHUser sender = comment.getUser();
         String body = comment.getBody();
 
-        logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { sender.getName(), body });
+        String senderName = sender.getName();
+        logger.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] { senderName != null ? senderName : sender.getLogin(), body });
 
         // Disabled until more advanced configs get set up
         // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
@@ -569,7 +708,7 @@ public class GhprbPullRequest {
 
     /**
      * Base and Ref are part of the PullRequest object
-     * 
+     *
      * @return the sha to the base
      */
     public String getTarget() {
@@ -582,7 +721,7 @@ public class GhprbPullRequest {
 
     /**
      * Head and Ref are part of the PullRequest object
-     * 
+     *
      * @return the sha for the head.
      */
     public String getSource() {
@@ -595,7 +734,7 @@ public class GhprbPullRequest {
 
     /**
      * Title is part of the PullRequest object
-     * 
+     *
      * @return the title of the pull request.
      */
     public String getTitle() {
@@ -619,7 +758,7 @@ public class GhprbPullRequest {
 
     /**
      * The description body is part of the PullRequest object
-     * 
+     *
      * @return the description from github
      */
     public String getDescription() {
@@ -636,7 +775,7 @@ public class GhprbPullRequest {
 
     /**
      * Author is part of the PullRequest Object
-     * 
+     *
      * @return The GitHub user that created the PR
      * @throws IOException Unable to connect to GitHub
      */
@@ -646,17 +785,17 @@ public class GhprbPullRequest {
 
     /**
      * Get the PullRequest object for this PR
-     * 
+     *
      * @return a copy of the pull request
      * @throws IOException if unable to connect to GitHub
      */
     public GHPullRequest getPullRequest() throws IOException {
         return getPullRequest(false);
     }
-    
+
     /**
      * Get the PullRequest object for this PR
-     * 
+     *
      * @param force If true, forces retrieval of the PR info from the github API. Use sparingly.
      * @return a copy of the pull request
      * @throws IOException if unable to connect to GitHub
@@ -667,7 +806,7 @@ public class GhprbPullRequest {
         }
         return pr;
     }
-    
+
     private void setPullRequest(GHPullRequest pr) {
         if (pr == null) {
             return;
@@ -695,10 +834,10 @@ public class GhprbPullRequest {
             }
         }
     }
-    
+
     /**
      * Email address is collected from GitHub as extra information, so lets cache it.
-     * 
+     *
      * @return The PR authors email address
      */
     public String getAuthorEmail() {
@@ -714,7 +853,7 @@ public class GhprbPullRequest {
         return authorEmail;
     }
 
-    public void setBuild(AbstractBuild<?, ?> build) {
+    public void setBuild(Run<?, ?> build) {
         lastBuildId = build.getId();
     }
 
