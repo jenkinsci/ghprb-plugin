@@ -1,4 +1,7 @@
 ### Updates
+#### -> 1.39.0
+* Startup optimization. Startup for ghprb will be split into a pool size of 5 threads, which
+can be overridden via JVM args.
 
 #### -> 1.38.0
 * Add ability to decide whether to build based on regions (or repository file paths as defined by regex)
