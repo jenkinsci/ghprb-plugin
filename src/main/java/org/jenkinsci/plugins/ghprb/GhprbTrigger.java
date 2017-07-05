@@ -20,10 +20,11 @@ import hudson.plugins.git.util.BuildData;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
+import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
@@ -44,7 +45,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +59,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.servlet.ServletException;
 
 /**
  * @author Honza Brázdil jbrazdil@redhat.com
@@ -69,9 +70,25 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private static final Logger logger = Logger.getLogger(GhprbTrigger.class.getName());
 
+    /**
+      pool is a thread pool which is used to service registering hooks with
+      GitHub.  The number of threads defined can be customized with the system
+      property org.jenkinsci.plugins.ghprb.GhprbTrigger.poolSize=N where N is
+      an integer for number of threads.  (default pool size: 5)
+     */
     private static final ExecutorService pool = Executors.newFixedThreadPool(
-        Integer.parseInt(System.getProperty("GhprbTrigger.poolSize", "5"))
+        SystemProperties.getInteger(GhprbTrigger.class.getName() + ".poolSize", 5)
     );
+    /**
+      disableRegisterOnStartup system property allows an admin to disable
+      registering GitHub hooks during Jenkins startup.  This assumes hooks are
+      already properly registered when a job is first created.  Configured via
+      system property:
+
+      org.jenkinsci.plugins.ghprb.GhprbTrigger.disableRegisterOnStartup=true
+      (default: false)
+     */
+    private static final boolean disableRegisterOnStartup = SystemProperties.getBoolean(GhprbTrigger.class.getName() + ".disableRegisterOnStartup", false);
 
     private final String adminlist;
     private final Boolean allowMembersOfWhitelistedOrgsAsAdmin;
@@ -247,6 +264,16 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
 
+    /**
+     * Called when a {@link hudson.triggers.Trigger} is loaded into memory and started.
+     *
+     * @param project
+     *      given so that the persisted form of this object won't have to have a back pointer.
+     * @param newInstance
+     *      True if this may be a newly created trigger first attached to the {@link hudson.model.Project} (generally if the project is being created or configured).
+     *      False if this is invoked for a {@link hudson.model.Project} loaded from disk.
+     * @see hudson.model.Items#currentlyUpdatingByXml
+     */
     @Override
     public void start(Job<?, ?> project, boolean newInstance) {
         // We should always start the trigger, and handle cases where we don't run in the run function.
@@ -275,7 +302,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         helper = new Ghprb(this);
 
         if (getUseGitHubHooks()) {
-            if (GhprbTrigger.getDscp().getManageWebhooks()) {
+            logger.log(Level.FINEST, "Disable registering hooks on startup: {0}",
+                    new String[] { String.valueOf(disableRegisterOnStartup) });
+            if (GhprbTrigger.getDscp().getManageWebhooks() && (newInstance || !disableRegisterOnStartup)) {
+                logger.log(Level.FINEST, "Registering hook with GitHub.  Thread pool size: {0}",
+                    new String[] { String.valueOf(SystemProperties.getInteger(GhprbTrigger.class.getName() + ".poolSize", 5)) });
                 pool.submit(new StartHookRunnable(this.repository));
             }
             DESCRIPTOR.addRepoTrigger(getRepository().getName(), super.job);
