@@ -17,6 +17,7 @@ Arcadiy Ivanov
 AtkinsChang
 Ben Patterson
 Benjamin Hipple
+Björn Häuser
 Brandon Turner
 C Nelson
 Callum
@@ -91,6 +92,7 @@ Shannon Carey
 Szymon Acedański
 Tamas Flamich
 Thomas Heute
+Timothy Lusk
 Todd Tomkinson
 Travis Johnson
 Trevor Baker
