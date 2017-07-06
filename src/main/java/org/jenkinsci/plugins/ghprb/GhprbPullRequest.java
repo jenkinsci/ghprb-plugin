@@ -149,34 +149,40 @@ public class GhprbPullRequest {
     // this method returns true or false based on results of included and excluded regions
     // excluded regions take precedence over included regions.
     public boolean isBuildRegionAccepted() {
-        boolean buildIncl = false;
+        boolean buildIncl = true;
         boolean buildExcl = true;
         PagedIterable<GHPullRequestFileDetail> files = pr.listFiles();
 
         if (!helper.getIncludedRegion().isEmpty()) {
             Pattern includedRegion = Pattern.compile(helper.getIncludedRegion());
+            logger.info("Region check INCLUDE: " + includedRegion);
             for (GHPullRequestFileDetail file : files) {
-                logger.info("Checking if file: " + file.getFilename() + " matches regex: " + helper.getIncludedRegion());
+                logger.info("Checking if file: " + file.getFilename() + " matches regex: " + includedRegion);
                 // if path is found in files, set buildable to true so the build runs
                 // a build should run if any files match included region
                 if (includedRegion.matcher(file.getFilename()).matches()) {
-                    logger.info("Matched Included Region for " + file.getFilename() + " with regex " + helper.getIncludedRegion());
+                    logger.info("Matched Included Region for " + file.getFilename() + " with regex " + includedRegion);
                     buildIncl = true;
                 }
             }
         }
 
         if (!helper.getExcludedRegion().isEmpty()) {
-            buildIncl = true;
             Pattern excludedRegion = Pattern.compile(helper.getExcludedRegion());
+            logger.info("Region check EXClUDE: " + excludedRegion);
             for (GHPullRequestFileDetail file : files) {
-                logger.info("Checking if file: " + file.getFilename() + " matches excluded region");
+                logger.info("Checking if file: " + file.getFilename() + " matches excluded region " + excludedRegion);
                 // if path is present in any file, then build should not run
                 if (excludedRegion.matcher(file.getFilename()).matches()) {
                     logger.info("Matched Excluded Region for " + file.getFilename() + " with regex " + helper.getExcludedRegion());
                     buildExcl = false;
                 }
             }
+        }
+
+        if (helper.getIncludedRegion().isEmpty() && helper.getExcludedRegion().isEmpty()) {
+            buildIncl = false;
+            logger.info("Include and Exclude regions are empty - return false");
         }
         return buildIncl && buildExcl;
     }

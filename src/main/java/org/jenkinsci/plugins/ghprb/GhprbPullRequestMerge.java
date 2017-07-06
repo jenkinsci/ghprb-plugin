@@ -125,7 +125,6 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
         // If merge can only be triggered by a comment and there is a comment
         if (!getAllowMergeWithoutTriggerPhrase() && (commentBody == null || !helper.isTriggerPhrase(commentBody))) {
-            logger.println("The comment does not contain the required trigger phrase.");
             listener.getLogger().println("The comment does not contain the required trigger phrase.");
         } else {
             intendToMerge = true;

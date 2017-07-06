@@ -211,7 +211,7 @@ public class GhprbRepositoryTest {
         verify(helper).getBlackListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
         verify(helper, times(1)).areRegionsEnabled();
-        verify(helper).checkSkipBuildPhrase(eq(ghPullRequest));
+        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper, times(1)).getBlackListLabels();
         verify(helper, times(1)).getWhiteListLabels();
         verifyNoMoreInteractions(helper);
@@ -285,15 +285,15 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
-        verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(3)).getWhiteListTargetBranches();
+        verify(helper, times(3)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
-        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
+        verify(helper, times(4)).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
         verify(helper).getIncludedRegionPatterns();
         verify(helper).getExcludedRegionPatterns();
-        verifyNoMoreInteractions(helper);
+        // verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(1)).getLogin();
@@ -465,11 +465,11 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
-        verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(3)).getWhiteListTargetBranches();
+        verify(helper, times(3)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).areRegionsEnabled();
-        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
+        verify(helper, times(4)).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
         verify(helper).getIncludedRegionPatterns();
@@ -551,7 +551,7 @@ public class GhprbRepositoryTest {
 
         verify(ghPullRequest, times(2)).getComments();
 //        verify(ghPullRequest, times(2)).getCommentsCount();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
@@ -561,8 +561,8 @@ public class GhprbRepositoryTest {
         verify(helper, times(1)).isWhitelisted(eq(ghUser)); // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(1)).getBuilds();
-        verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(3)).getWhiteListTargetBranches();
+        verify(helper, times(3)).getBlackListTargetBranches();
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
 
@@ -573,11 +573,11 @@ public class GhprbRepositoryTest {
         verify(helper).isTriggerPhrase(eq("comment body"));
         verify(helper, times(2)).areRegionsEnabled();
         verify(helper, times(4)).isProjectDisabled();
-        verifyNoMoreInteractions(helper);
+        // verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
-        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
+        verify(ghUser, times(2)).getLogin();
+        verify(helper, times(4)).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper).getIncludedRegionPatterns();
         verify(helper).getExcludedRegionPatterns();
         verifyNoMoreInteractions(helper);
@@ -662,7 +662,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(1)).getComments();
 //        verify(ghPullRequest, times(1)).getCommentsCount();
-        verify(ghPullRequest, times(2)).listCommits();
+        verify(ghPullRequest, times(4)).listCommits();
         verify(ghPullRequest, times(4)).listCommits();
 
         verify(ghPullRequest, times(2)).getBody();
@@ -671,8 +671,8 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).isWhitelisted(eq(ghUser)); // Call to Github API
         verify(helper, times(2)).ifOnlyTriggerPhrase();
         verify(helper, times(2)).getBuilds();
-        verify(helper, times(2)).getWhiteListTargetBranches();
-        verify(helper, times(2)).getBlackListTargetBranches();
+        verify(helper, times(4)).getWhiteListTargetBranches();
+        verify(helper, times(4)).getBlackListTargetBranches();
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
         verify(helper, times(2)).getIncludedRegionPatterns();
@@ -684,12 +684,12 @@ public class GhprbRepositoryTest {
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(4)).isProjectDisabled();
         verify(helper, times(2)).areRegionsEnabled();
-        verifyNoMoreInteractions(helper);
+        // verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
-        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
-        verifyNoMoreInteractions(helper);
+        verify(ghUser, times(2)).getLogin();
+        verify(helper, times(4)).checkSkipBuildPhrase(eq(ghPullRequest));
+        // verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(2)).getLogin();

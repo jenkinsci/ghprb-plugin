@@ -85,7 +85,7 @@ public class GhprbPullRequestMergeTest {
 
     private final String committerName = "committer";
     private final String nonCommitterName = "noncommitter";
-    
+
     private final String committerEmail = "committer@mail.com";
     private final String nonCommitterEmail = "noncommitter@mail.com";
 
@@ -104,12 +104,12 @@ public class GhprbPullRequestMergeTest {
         triggerValues = new HashMap<String, Object>(10);
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
-        
+
         final GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
         Mockito.doReturn(repo).when(trigger).getRepository();
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
-        
+
         pulls.put(pullId, pullRequest);
         Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>(1);
         jobs.put("project", pulls);
@@ -119,8 +119,8 @@ public class GhprbPullRequestMergeTest {
         repo.addPullRequests(pulls);
         Mockito.doReturn(pullRequest).when(repo).getPullRequest(pullId);
         Mockito.doReturn(pr).when(repo).getActualPullRequest(pullId);
-        
-        
+
+
         GithubProjectProperty projectProperty = new GithubProjectProperty("https://github.com/jenkinsci/ghprb-plugin");
         DescriptorImpl descriptor = trigger.getDescriptor();
 
@@ -177,7 +177,7 @@ public class GhprbPullRequestMergeTest {
         given(triggerSender.getName()).willReturn(committerName);
         given(triggerSender.getEmail()).willReturn(committerEmail);
         given(committer.getName()).willReturn(this.committerName);
-        
+
         given(prCreator.getLogin()).willReturn(prUserLogin);
         given(pr.getUser()).willReturn(prCreator);
 
@@ -199,13 +199,13 @@ public class GhprbPullRequestMergeTest {
 
         given(cause.getCommentBody()).willReturn(comment);
     }
-    
+
     private void setupConditions(String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
         setupConditions(nonCommitterName, triggerLogin, committerName, committerEmail, comment);
     }
-    
+
     private GhprbPullRequestMerge setupMerger(
-            boolean onlyAdminsMerge, 
+            boolean onlyAdminsMerge,
             boolean disallowOwnCode,
             boolean failOnNonMerge,
             boolean deleteOnMerge,
@@ -213,8 +213,8 @@ public class GhprbPullRequestMergeTest {
             ) {
 
         GhprbPullRequestMerge merger = spy(new GhprbPullRequestMerge(
-                mergeComment, 
-                onlyAdminsMerge, 
+                mergeComment,
+                onlyAdminsMerge,
                 disallowOwnCode,
                 failOnNonMerge,
                 deleteOnMerge,
@@ -227,7 +227,7 @@ public class GhprbPullRequestMergeTest {
     }
 
     private GhprbPullRequestMerge setupMerger(
-            boolean onlyAdminsMerge, 
+            boolean onlyAdminsMerge,
             boolean disallowOwnCode) {
         return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false, false);
     }
@@ -359,7 +359,7 @@ public class GhprbPullRequestMergeTest {
         setupConditions(nonAdminLogin, nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
-        
+
         setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
@@ -367,7 +367,7 @@ public class GhprbPullRequestMergeTest {
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
-        
+
     }
 
 }

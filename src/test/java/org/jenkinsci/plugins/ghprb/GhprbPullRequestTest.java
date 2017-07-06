@@ -97,6 +97,7 @@ public class GhprbPullRequestTest {
                 "path2/file1.java",
                 "path2/file2.rb",
                 "path3/file1.yaml",
+                // "/foo/bar",
                 ".gitignore");
         List<GHPullRequestFileDetail> fileDetails = new ArrayList<GHPullRequestFileDetail>();
 
@@ -261,22 +262,22 @@ public class GhprbPullRequestTest {
         ghprbPullRequest.init(helper, ghprbRepository);
 
         //THEN
-        assertThat(ghprbPullRequest.isBuildRegionAccepted()).isFalse();
+        assertThat(ghprbPullRequest.isBuildRegionAccepted()).isTrue();
     }
 
     @Test
     public void fileInPathIncludeAndExcludedRegionEnabledAndMatch() throws Exception{
 
         // GIVEN
-        given(helper.getExcludedRegion()).willReturn("/foo/.*");
-        given(helper.getIncludedRegion()).willReturn("/foo/.*");
+        given(helper.getExcludedRegion()).willReturn(".githubignore");
+        given(helper.getIncludedRegion()).willReturn(".githubignore");
 
         // WHEN
         GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
         ghprbPullRequest.init(helper, ghprbRepository);
 
         //THEN
-        assertThat(ghprbPullRequest.isBuildRegionAccepted()).isFalse();
+        assertThat(ghprbPullRequest.isBuildRegionAccepted()).isTrue();
     }
 
     @Test
