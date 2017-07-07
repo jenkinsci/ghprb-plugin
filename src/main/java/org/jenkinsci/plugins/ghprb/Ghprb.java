@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
  */
 public class Ghprb {
     private static final Logger logger = Logger.getLogger(Ghprb.class.getName());
+    private static final String ghprbCredentialsIdPattern = "^cycle-ghprb-auth[0-9]+.*";
     public static final Pattern githubUserRepoPattern = Pattern.compile("^(http[s]?://[^/]*)/([^/]*/[^/]*).*");
 
     private final GhprbTrigger trigger;
@@ -525,8 +526,9 @@ public class Ghprb {
         
         logger.log(Level.FINE, "Found {0} credentials", new Object[]{credentials.size()});
         
-        return (credentialId == null) ? null : CredentialsMatchers.firstOrNull(credentials,
-                    CredentialsMatchers.withId(credentialId));
+        return (credentialId == null) ? null : CredentialsMatchers.cyclic(credentials, 
+                                                       CredentialsMatchers.withIdPrefix(ghprbCredentialsIdPattern), 
+                                                     CredentialsMatchers.withId(credentialId));
     }
     
     public static String createCredentials(String serverAPIUrl, String token) throws Exception {

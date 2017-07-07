@@ -115,6 +115,8 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
             <version>1.21</version>
+            <scope>system</scope>
+            <systemPath>/codebase/credentials-plugin/target/credentials.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
