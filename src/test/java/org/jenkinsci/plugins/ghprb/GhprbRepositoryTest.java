@@ -1,5 +1,11 @@
 package org.jenkinsci.plugins.ghprb;
 
+import com.coravy.hudson.plugins.github.GithubProjectProperty;
+import hudson.model.Job;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
+import hudson.util.Secret;
 import org.apache.commons.codec.binary.Hex;
 import org.fest.util.Collections;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
@@ -10,33 +16,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.GHCommitPointer;
-import org.kohsuke.github.GHCommitState;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHLabel;
-import org.kohsuke.github.GHPullRequest;
-import org.kohsuke.github.GHRateLimit;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
-import org.kohsuke.github.PagedIterable;
-import org.kohsuke.github.PagedIterator;
+import org.kohsuke.github.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.coravy.hudson.plugins.github.GithubProjectProperty;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.TaskListener;
-import hudson.model.queue.QueueTaskFuture;
-import hudson.util.Secret;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -54,15 +40,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link GhprbRepository}.
@@ -95,7 +73,7 @@ public class GhprbRepositoryTest {
     private GhprbRepository ghprbRepository;
     private ConcurrentMap<Integer, GhprbPullRequest> pulls;
     private GhprbPullRequest ghprbPullRequest;
-    private AbstractProject<?, ?> project;
+    private Job<?, ?> project;
     private GHRateLimit rateLimit;
 
     @Rule
@@ -215,6 +193,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getUser();
         verify(ghPullRequest, times(2)).getBase();
         verify(ghPullRequest, times(1)).getComments();
+        verify(ghPullRequest, times(1)).listCommits();
 //        verify(ghPullRequest, times(1)).getCommentsCount();
         verifyNoMoreInteractions(ghPullRequest);
 
@@ -222,7 +201,7 @@ public class GhprbRepositoryTest {
         verify(helper).getWhiteListTargetBranches();
         verify(helper).getBlackListTargetBranches();
         verify(helper, times(2)).isProjectDisabled();
-        verify(helper).checkSkipBuild(eq(ghPullRequest));
+        verify(helper).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper, times(1)).getBlackListLabels();
         verify(helper, times(1)).getWhiteListLabels();
         verifyNoMoreInteractions(helper);
@@ -287,7 +266,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(2)).getLabels();
@@ -299,9 +278,11 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
-        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
+        verify(helper).getIncludedRegionPatterns();
+        verify(helper).getExcludedRegionPatterns();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -465,7 +446,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getUpdatedAt();
         verify(ghPullRequest, times(1)).getCreatedAt();
         verify(ghPullRequest, times(1)).getHtmlUrl();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(4)).getLabels();
@@ -477,9 +458,11 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getWhiteListTargetBranches();
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(4)).isProjectDisabled();
-        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
+        verify(helper).getIncludedRegionPatterns();
+        verify(helper).getExcludedRegionPatterns();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
@@ -557,7 +540,7 @@ public class GhprbRepositoryTest {
 
         verify(ghPullRequest, times(2)).getComments();
 //        verify(ghPullRequest, times(2)).getCommentsCount();
-        verify(ghPullRequest, times(1)).listCommits();
+        verify(ghPullRequest, times(3)).listCommits();
         verify(ghPullRequest, times(1)).getBody();
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(2)).getLabels();
@@ -577,11 +560,13 @@ public class GhprbRepositoryTest {
         verify(helper).isRetestPhrase(eq("comment body"));
         verify(helper).isTriggerPhrase(eq("comment body"));
         verify(helper, times(4)).isProjectDisabled();
-        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
+        verify(helper).getIncludedRegionPatterns();
+        verify(helper).getExcludedRegionPatterns();
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
+        verify(ghUser, times(2)).getLogin();
         verify(ghUser, times(3)).getName();
         verifyNoMoreInteractions(ghUser);
     }
@@ -659,7 +644,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(1)).getId();
         verify(ghPullRequest, times(1)).getComments();
 //        verify(ghPullRequest, times(1)).getCommentsCount();
-        verify(ghPullRequest, times(2)).listCommits();
+        verify(ghPullRequest, times(4)).listCommits();
 
         verify(ghPullRequest, times(2)).getBody();
         verifyNoMoreInteractions(ghPullRequest);
@@ -671,17 +656,19 @@ public class GhprbRepositoryTest {
         verify(helper, times(2)).getBlackListTargetBranches();
         verify(helper, times(2)).getBlackListLabels();
         verify(helper, times(2)).getWhiteListLabels();
+        verify(helper, times(2)).getIncludedRegionPatterns();
+        verify(helper, times(2)).getExcludedRegionPatterns();
 
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));
         verify(helper).isRetestPhrase(eq("test this please"));
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(4)).isProjectDisabled();
-        verify(helper, times(2)).checkSkipBuild(eq(ghPullRequest));
+        verify(helper, times(2)).checkSkipBuildPhrase(eq(ghPullRequest));
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
+        verify(ghUser, times(2)).getLogin();
         verify(ghUser, times(2)).getName();
         verifyNoMoreInteractions(ghUser);
 
@@ -801,7 +788,7 @@ public class GhprbRepositoryTest {
         ghprbRepository = spy(new GhprbRepository(TEST_REPO_NAME, trigger));
 
         Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString());
-        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(AbstractBuild.class), any(TaskListener.class));
+        Mockito.doNothing().when(ghprbRepository).addComment(Mockito.anyInt(), anyString(), any(Run.class), any(TaskListener.class));
         
         doReturn(ghprbRepository).when(trigger).getRepository();
         

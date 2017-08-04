@@ -1,33 +1,20 @@
 package org.jenkinsci.plugins.ghprb;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.domains.DomainSpecification;
-import com.cloudbees.plugins.credentials.domains.HostnamePortSpecification;
-import com.cloudbees.plugins.credentials.domains.HostnameSpecification;
-import com.cloudbees.plugins.credentials.domains.PathSpecification;
-import com.cloudbees.plugins.credentials.domains.SchemeSpecification;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import com.cloudbees.plugins.credentials.domains.*;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Cause;
-import hudson.model.Item;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.Saveable;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.security.ACL;
+import hudson.triggers.Trigger;
 import hudson.util.DescribableList;
 import hudson.util.Secret;
-
+import jenkins.model.ParameterizedJobMixIn;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
@@ -110,23 +97,57 @@ public class Ghprb {
     public Set<String> getSkipBuildPhrases() {
         return new HashSet<String>(Arrays.asList(getTrigger().getSkipBuildPhrase().split("[\\r\\n]+")));
     }
-    
+
+    public Set<String> getBlacklistedCommitAuthors() {
+        return new HashSet<String>(Arrays.asList(getTrigger().getBlackListCommitAuthor().split("[\\r\\n]+")));
+    }
+
+    /**
+     * Checks for skip build commit author.
+     *
+     * @param author The GitHub commit author
+     * @return the skip sender or null if should not skip
+     */
+    public String checkBlackListCommitAuthor(String author) {
+        Set<String> authors = getBlacklistedCommitAuthors();
+        authors.remove("");
+
+        Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
+        for (String s : authors) {
+            s = s.trim();
+            if (compilePattern(s).matcher(author).matches()) {
+                return s;
+            }
+        }
+        return null;
+    }
+
     /**
      * Checks for skip build phrase in pull request title and body. If present it updates shouldRun as false.
      * 
      * @param issue The GitHub issue
      * @return the skip phrase or null if should not skip
      */
-    public String checkSkipBuild(GHIssue issue) {
+    public String checkSkipBuildPhrase(GHIssue issue) {
+        Set<String> skipBuildPhrases = getSkipBuildPhrases();
+        skipBuildPhrases.remove("");
+
+        Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
+        for (String skipBuildPhrase : skipBuildPhrases) {
+            skipBuildPhrase = skipBuildPhrase.trim();
+            skipPatterns.put(compilePattern(skipBuildPhrase), skipBuildPhrase);
+        }
+
+
         // check in title
         String pullRequestTitle = issue.getTitle();
-        String skipBuildPhrase = checkSkipBuildInString(pullRequestTitle);
+        String skipBuildPhrase = checkSkipBuildInString(skipPatterns, pullRequestTitle);
         if (StringUtils.isNotBlank(skipBuildPhrase)) {
             return skipBuildPhrase;
         }
         // not found in title, check in body
         String pullRequestBody = issue.getBody();
-        skipBuildPhrase = checkSkipBuildInString(pullRequestBody);
+        skipBuildPhrase = checkSkipBuildInString(skipPatterns, pullRequestBody);
         if (StringUtils.isNotBlank(skipBuildPhrase)) {
             return skipBuildPhrase;
         }
@@ -134,23 +155,18 @@ public class Ghprb {
     }
 
     /**
-     * Checks for skip build phrase in the passed string
+     * Checks for skip pattern in the passed string
      *
+     * @param patterns The map of Patter to String values
      * @param string The string we're looking for the phrase in
-     * @return the skip phrase or null if we don't find it
+     * @return the skip value or null if we don't find it
      */
-    private String checkSkipBuildInString( String string ) {
+    private String checkSkipBuildInString(Map<Pattern, String> patterns, String string ) {
         // check for skip build phrase in the passed string
-        if (StringUtils.isNotBlank(string)) {
-            string = string.trim();
-            Set<String> skipBuildPhrases = getSkipBuildPhrases();
-            skipBuildPhrases.remove("");
-
-            for (String skipBuildPhrase : skipBuildPhrases) {
-                skipBuildPhrase = skipBuildPhrase.trim();
-                Pattern skipBuildPhrasePattern = compilePattern(skipBuildPhrase);
-                if (skipBuildPhrasePattern != null && skipBuildPhrasePattern.matcher(string).matches()) {
-                    return skipBuildPhrase;
+        if (!patterns.isEmpty() && StringUtils.isNotBlank(string)) {
+            for(Map.Entry<Pattern, String> e: patterns.entrySet()){
+                if(e.getKey().matcher(string).matches()){
+                    return e.getValue();
                 }
             }
         }
@@ -264,7 +280,33 @@ public class Ghprb {
         return trigger.getWhiteListTargetBranches();
     }
 
-    public static String replaceMacros(AbstractBuild<?, ?> build, TaskListener listener, String inputString) {
+    public List<Pattern> getIncludedRegionPatterns() {
+        List<String> regions = Arrays.asList(trigger.getIncludedRegions().split("\\s+"));
+        List<Pattern> patterns = new ArrayList<Pattern>(regions.size());
+
+        for (String region : regions) {
+            if(StringUtils.isNotEmpty(region)) {
+                patterns.add(Pattern.compile(region));
+            }
+        }
+
+        return patterns;
+    }
+
+    public List<Pattern> getExcludedRegionPatterns() {
+        List<String> regions = Arrays.asList(trigger.getExcludedRegions().split("\\s+"));
+        List<Pattern> patterns = new ArrayList<Pattern>(regions.size());
+
+        for (String region : regions) {
+            if(StringUtils.isNotEmpty(region)) {
+                patterns.add(Pattern.compile(region));
+            }
+        }
+
+        return patterns;
+    }
+
+    public static String replaceMacros(Run<?, ?> build, TaskListener listener, String inputString) {
         String returnString = inputString;
         if (build != null && inputString != null) {
             try {
@@ -279,11 +321,15 @@ public class Ghprb {
         return returnString;
     }
     
-    public static Map<String, String> getEnvVars(AbstractBuild<?, ?> build, TaskListener listener) {
+    public static Map<String, String> getEnvVars(Run<?, ?> build, TaskListener listener) {
         Map<String, String> messageEnvVars = new HashMap<String, String>();
         if (build != null) {
                 messageEnvVars.putAll(build.getCharacteristicEnvVars());
-                messageEnvVars.putAll(build.getBuildVariables());
+
+                if (build instanceof AbstractBuild) {
+                    messageEnvVars.putAll( ((AbstractBuild) build).getBuildVariables());
+                }
+
                 try {
                     messageEnvVars.putAll(build.getEnvironment(listener));
                 } catch (Exception e) {
@@ -294,7 +340,7 @@ public class Ghprb {
     }
     
 
-    public static String replaceMacros(AbstractProject<?, ?> project, String inputString) {
+    public static String replaceMacros(Job<?, ?> project, String inputString) {
         String returnString = inputString;
         if (project != null && inputString != null) {
             try {
@@ -311,7 +357,7 @@ public class Ghprb {
         return returnString;
     }
     
-    public static GHCommitState getState(AbstractBuild<?, ?> build) {
+    public static GHCommitState getState(Run<?, ?> build) {
 
         GHCommitState state;
         if (build.getResult() == Result.SUCCESS) {
@@ -342,16 +388,24 @@ public class Ghprb {
     }
     
 
-    public static GhprbTrigger extractTrigger(AbstractBuild<?, ?> build) {
-        return extractTrigger(build.getProject());
+    public static GhprbTrigger extractTrigger(Run<?, ?> build) {
+        return extractTrigger(build.getParent());
     }
 
-    public static GhprbTrigger extractTrigger(AbstractProject<?, ?> p) {
-        GhprbTrigger trigger = p.getTrigger(GhprbTrigger.class);
-        if (trigger == null || (!(trigger instanceof GhprbTrigger))) {
-            return null;
+    public static GhprbTrigger extractTrigger(Job<?, ?> p) {
+
+        ParameterizedJobMixIn.ParameterizedJob pJob = (ParameterizedJobMixIn.ParameterizedJob) p;
+        GhprbTrigger ghprbTrigger = null;
+        if (p instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            for (Trigger trigger : pJob.getTriggers().values()) {
+                if (trigger instanceof GhprbTrigger) {
+                    ghprbTrigger = (GhprbTrigger) trigger;
+                    break;
+                }
+            }
         }
-        return trigger;
+
+        return ghprbTrigger;
     }
     
     private static List<Predicate> createPredicate(Class<?> ...types) {

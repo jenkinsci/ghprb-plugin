@@ -18,6 +18,7 @@ class GhprbTriggerContext implements Context {
     String cron = "H/5 * * * *";
     String triggerPhrase;
     String skipBuildPhrase;
+    String blackListCommitAuthor;
     boolean onlyTriggerPhrase;
     boolean useGitHubHooks;
     boolean permitAll;
@@ -25,6 +26,8 @@ class GhprbTriggerContext implements Context {
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
     boolean displayBuildErrorsOnDownstreamBuilds;
     String buildDescriptionTemplate;
+    String includedRegions;
+    String excludedRegions;
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
 
     /**
@@ -163,11 +166,20 @@ class GhprbTriggerContext implements Context {
     }
 
     /**
+     * When filled, pull requests comits from this user will be skipped.
+     */
+    public void blackListCommitAuthor(String blackListCommitAuthor) {
+        this.blackListCommitAuthor = blackListCommitAuthor;
+    }
+
+    /**
      * When set, only commenting the trigger phrase in the pull request will trigger a build.
      */
     public void onlyTriggerPhrase(boolean onlyTriggerPhrase) {
         this.onlyTriggerPhrase = onlyTriggerPhrase;
     }
+
+
 
     /**
      * When set, only commenting the trigger phrase in the pull request will trigger a build.
@@ -259,4 +271,28 @@ class GhprbTriggerContext implements Context {
     public void extensions(Runnable closure) {
         ContextExtensionPoint.executeInContext(closure, extensionContext);
     }
+ 
+    public void includedRegions(String regions){
+    	this.includedRegions = regions;
+    }
+
+    public void excludedRegions(String regions){
+        this.excludedRegions = regions;
+    }
+    public void includedRegions(Iterable<String> regions){
+	String includedRegionsStr = "";
+	for (String region: regions) {
+             includedRegionsStr += (region + "\n");    
+        }
+	includedRegions(includedRegionsStr);
+    }
+    public void excludedRegions(Iterable<String> regions){
+        String excludedRegionsStr = "";
+	for (String region: regions) {
+             excludedRegionsStr += (region+ "\n");
+        }
+        excludedRegions(excludedRegionsStr);
+
+    }
+
 }

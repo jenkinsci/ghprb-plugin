@@ -2,11 +2,7 @@ package org.jenkinsci.plugins.ghprb;
 
 import hudson.BulkChange;
 import hudson.XmlFile;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Items;
-import hudson.model.Saveable;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.model.listeners.SaveableListener;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
@@ -184,7 +180,7 @@ public class GhprbRepository implements Saveable{
         }
     }
 
-    public void commentOnFailure(AbstractBuild<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
+    public void commentOnFailure(Run<?, ?> build, TaskListener listener, GhprbCommitStatusException ex) {
         PrintStream stream = null;
         if (listener != null) {
             stream = listener.getLogger();
@@ -234,7 +230,7 @@ public class GhprbRepository implements Saveable{
         addComment(id, comment, null, null);
     }
 
-    public void addComment(int id, String comment, AbstractBuild<?, ?> build, TaskListener listener) {
+    public void addComment(int id, String comment, Run<?, ?> build, TaskListener listener) {
         if (comment.trim().isEmpty())
             return;
 
@@ -282,7 +278,7 @@ public class GhprbRepository implements Saveable{
         return false;
     }
     
-    public static Object createHookLock = new Object();
+    public final static Object createHookLock = new Object();
 
     public boolean createHook() {
         try {
@@ -297,7 +293,7 @@ public class GhprbRepository implements Saveable{
                 config.put("url", new URL(getHookUrl()).toExternalForm());
                 config.put("insecure_ssl", "1");
                 if (!StringUtils.isEmpty(secret)) {
-                 config.put("secret",secret);
+                    config.put("secret",secret);
                 }
                 getGitHubRepo().createHook("web", config, HOOK_EVENTS, true);
                 return true;
@@ -421,7 +417,7 @@ public class GhprbRepository implements Saveable{
         SaveableListener.fireOnChange(this, config);
     }
 
-    protected XmlFile getConfigXml(AbstractProject<?, ?> project) throws IOException {
+    protected XmlFile getConfigXml(Job<?, ?> project) throws IOException {
         try {
             String escapedRepoName = URLEncoder.encode(reponame, "UTF8");
             File file = new File(project.getBuildDir() + "/pullrequests", escapedRepoName);

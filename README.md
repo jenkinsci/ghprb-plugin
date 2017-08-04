@@ -26,7 +26,7 @@ a smoke test job and a full test job, you can configure the full test job to onl
 
 For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
 
-### Master status:
+### Build status (regardless of branch):
 
 [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/ghprb-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/ghprb-plugin/)
 
@@ -88,8 +88,8 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * Select Git SCM.
 * Add your GitHub ``Repository URL``.
 * Under Advanced, set ``Name`` to ``origin`` and:
-  * If you **just** want to build PRs, set ``refspec`` to ``+refs/pull/*:refs/remotes/origin/pr/*``
-  * If you want to build PRs **and** branches, set ``refspec`` to ``+refs/heads/*:refs/remotes/origin/* +refs/pull/*:refs/remotes/origin/pr/*`` (see note below about [parameterized builds](#parameterized-builds))
+  * If you **just** want to build PRs, set ``refspec`` to ``+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*``
+  * If you want to build PRs **and** branches, set ``refspec`` to ``+refs/heads/*:refs/remotes/origin/* +refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*`` (see note below about [parameterized builds](#parameterized-builds))
 * In ``Branch Specifier``, enter ``${sha1}`` instead of the default ``*/master``.
 * If you want to use the actual commit in the pull request, use ``${ghprbActualCommit}`` instead of ``${sha1}``
 * Under ``Build Triggers``, check ``GitHub Pull Request Builder``.
@@ -137,7 +137,7 @@ job('upstreamJob') {
             orgWhitelist('my_github_org')
             orgWhitelist(['your_github_org', 'another_org'])
             cron('H/5 * * * *')
-            triggerPhrase('OK to test')
+            triggerPhrase('special trigger phrase')
             onlyTriggerPhrase()
             useGitHubHooks()
             permitAll()
@@ -197,3 +197,7 @@ job('downstreamJob') {
 ### Updates
 
 See [CHANGELOG](CHANGELOG.md)
+
+### FAQ
+
+See [FAQ](FAQ.md)

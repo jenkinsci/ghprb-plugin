@@ -1,4 +1,24 @@
 ### Updates
+#### -> 1.39.0
+* Startup optimization. Startup for ghprb will be split into a pool size of 5 threads, which
+can be overridden via JVM args.
+
+#### -> 1.38.0
+* Add ability to decide whether to build based on regions (or repository file paths as defined by regex)
+
+#### -> 1.37.0
+* Add user blacklist capability
+* Small but powerful docs cleanup
+
+#### -> 1.36.2
+* Revert pipeline support for the upstream status capability (only). See #506.
+
+#### -> 1.36.1
+* Consume the --none-- argument for GitHub comment configuration. (See #462)
+
+#### -> 1.36.0
+* Support Jenkins pipelines
+* Upgrades for Jenkins 2.0 support
 
 #### -> 1.35.0
 * Fix issue #354. (Multiple queued builds would be squashed into one.)

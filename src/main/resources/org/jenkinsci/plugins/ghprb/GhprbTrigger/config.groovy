@@ -25,7 +25,7 @@ f.advanced() {
     f.textbox(default: descriptor.skipBuildPhrase)
   }
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
-    f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds) 
+    f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds)
   }
   f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
     f.textbox(default: descriptor.cron, checkUrl: "'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)") 
@@ -50,6 +50,9 @@ f.advanced() {
   }
   f.entry(field: "buildDescTemplate", title: _("Build description template")) {
       f.textarea()
+  }
+  f.entry(field: "blackListCommitAuthor", title: _("Blacklist commit authors")) {
+    f.textbox(default: descriptor.blackListCommitAuthor)
   }
   f.entry(field: "whiteListTargetBranches", title: _("Whitelist Target Branches:")) {
     f.repeatable(field: "whiteListTargetBranches", minimum: "1", add: "Add Branch") {
@@ -78,6 +81,12 @@ f.advanced() {
         }
       }
     }
+  }
+  f.entry(field: "includedRegions", title: _("Included regions")) {
+    f.textarea()
+  }
+  f.entry(field: "excludedRegions", title: _("Excluded regions")) {
+    f.textarea()
   }
 }
 f.advanced(title: _("Trigger Setup")) {

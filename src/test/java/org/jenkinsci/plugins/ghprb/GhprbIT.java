@@ -1,13 +1,11 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.collect.Lists;
-
-import hudson.model.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import hudson.model.Action;
+import hudson.model.FreeStyleProject;
+import hudson.model.ParameterValue;
+import hudson.model.Run;
+import net.sf.json.JSONObject;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,34 +14,48 @@ import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.stapler.BindInterceptor;
 import org.kohsuke.stapler.RequestImpl;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 
-
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbIT extends GhprbITBaseTestCase {
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
-    
+
     @Mock
     private RequestImpl req;
+
     @Mock
     private GHIssueComment comment;
 
-    
     private FreeStyleProject project;
-    
 
     @Before
     public void setUp() throws Exception {// GIVEN
+        req = Mockito.mock(RequestImpl.class);
+
+        given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.bindJSON(any(Class.class), any(Class.class), any(JSONObject.class))).willCallRealMethod();
+        given(req.setBindInterceptor(any(BindInterceptor.class))).willCallRealMethod();
+        given(req.setBindListener(any(BindInterceptor.class))).willCallRealMethod();
+        given(req.getBindInterceptor()).willReturn(BindInterceptor.NOOP);
+
+        req.setBindListener(BindInterceptor.NOOP);
+        req.setBindInterceptor(BindInterceptor.NOOP);
+        req.setBindInterceptor(BindInterceptor.NOOP);
         project = jenkinsRule.createFreeStyleProject("PRJ");
         super.beforeTest(null, null, project);
     }
@@ -51,7 +63,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
     @Test
     public void shouldBuildTriggersOnNewPR() throws Exception {
         given(ghPullRequest.getNumber()).willReturn(1);
-        
+
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
@@ -96,7 +108,6 @@ public class GhprbIT extends GhprbITBaseTestCase {
     @Test
     public void shouldNotBuildDisabledBuild() throws Exception {
         // GIVEN
-        
         given(commitPointer.getSha()).willReturn("sha");
 
         given(comment.getBody()).willReturn("retest this please");

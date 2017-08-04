@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GitUser;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -131,7 +132,7 @@ public class GhprbTriggerTest {
                     }
                 }
                 
-                given(helper.checkSkipBuild(issue)).willReturn(skipPhrase);
+                given(helper.checkSkipBuildPhrase(issue)).willReturn(skipPhrase);
                 
                 shouldRun.set(pr, true);
                 checkSkip.invoke(pr);
@@ -147,6 +148,49 @@ public class GhprbTriggerTest {
 
             }
         }
+    }
+
+    @Test
+    public void testCheckSkipBuildCommitAuthor() throws Exception {
+        GHPullRequest issue = mock(GHPullRequest.class);
+        GitUser user = mock(GitUser.class);
+
+        Field userNameField = GitUser.class.getDeclaredField("name");
+        userNameField.setAccessible(true);
+        userNameField.set(user, "foo");
+
+        boolean skipBuild = false;
+        boolean build = true;
+
+        Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild");
+        checkSkip.setAccessible(true);
+
+        Field prField = GhprbPullRequest.class.getDeclaredField("pr");
+        prField.setAccessible(true);
+        prField.set(pr, issue);
+
+        Field commitAuthorField = GhprbPullRequest.class.getDeclaredField("commitAuthor");
+        commitAuthorField.setAccessible(true);
+        commitAuthorField.set(pr, user);
+
+        Field shouldRun = GhprbPullRequest.class.getDeclaredField("shouldRun");
+        shouldRun.setAccessible(true);
+
+        Field prHelper = GhprbPullRequest.class.getDeclaredField("helper");
+        prHelper.setAccessible(true);
+        prHelper.set(pr, helper);
+
+        given(helper.getBlacklistedCommitAuthors()).willReturn(new HashSet<String>(Arrays.asList("bot1", "bot2")));
+        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn(null);
+        shouldRun.set(pr, true);
+        checkSkip.invoke(pr);
+        assertThat(shouldRun.get(pr)).isEqualTo(true);
+
+        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn("bot2");
+        shouldRun.set(pr, true);
+        checkSkip.invoke(pr);
+        assertThat(shouldRun.get(pr)).isEqualTo(false);
+
     }
 
     @Test
