@@ -38,7 +38,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
-    private final String commitStatusContext;
+    private String commitStatusContext;
     private final Boolean showMatrixStatus;
     private final String triggeredStatus;
     private final String startedStatus;
@@ -118,7 +118,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements GhprbCommitStat
         }
 
         String statusUrl = getDescriptor().getStatusUrlDefault(this);
-        String commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        if (commitStatusContext == "")
+        {
+           commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        }
+        
 
         String context = Util.fixEmpty(commitStatusContext);
         context = Ghprb.replaceMacros(project, context);
