@@ -178,6 +178,8 @@ public class GhprbPullRequest {
                         shouldRun = false;
                     }
                 }
+            } catch(Error e) {
+                logger.log(Level.SEVERE, "Failed to read blacklist labels", e);
             } catch(IOException e) {
                 logger.log(Level.SEVERE, "Failed to read blacklist labels", e);
             }
@@ -202,6 +204,8 @@ public class GhprbPullRequest {
                     logger.log(Level.INFO, "Can't find any of whitelist label.");
                     shouldRun = false;
                 }
+            } catch(Error e) {
+                logger.log(Level.SEVERE, "Failed to read whitelist labels", e);
             } catch(IOException e) {
                 logger.log(Level.SEVERE, "Failed to read whitelist labels", e);
             }
@@ -317,8 +321,9 @@ public class GhprbPullRequest {
                     );
                 }
             }
-        }
-        catch (IOException ex) {
+        } catch (Error e) {
+            logger.log(Level.SEVERE, "Exception caught while updating the PR", e);
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, "Exception caught while updating the PR", ex);
         }
     }
@@ -375,6 +380,8 @@ public class GhprbPullRequest {
                     return commitDetails.getCommit().getCommitter();
                 }
             }
+        } catch (Error e) {
+            logger.log(Level.INFO, "Unable to get PR commits: ", e);
         } catch (Exception ex) {
             logger.log(Level.INFO, "Unable to get PR commits: ", ex);
         }
@@ -584,6 +591,8 @@ public class GhprbPullRequest {
                     }
                 }
             }
+        } catch (Error e) {
+            logger.log(Level.SEVERE, "Couldn't obtain comments.", e);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Couldn't obtain comments.", e);
         }
@@ -606,6 +615,8 @@ public class GhprbPullRequest {
                 isMergeable = pr.getMergeable();
             }
             mergeable = isMergeable != null && isMergeable;
+        } catch (Error e) {
+            logger.log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
         }

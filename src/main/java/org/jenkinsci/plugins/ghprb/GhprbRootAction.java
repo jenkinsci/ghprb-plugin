@@ -250,13 +250,13 @@ public class GhprbRootAction implements UnprotectedRootAction {
             public void run() {
                 try {
                     trigger.handlePR(pr);
-                } catch (Exception e) {
+                } catch (Throwable th) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Unable to handle PR# ");
                     sb.append(pr.getNumber());
                     sb.append(" for repo: ");
                     sb.append(pr.getRepository().getFullName());
-                    logger.log(Level.SEVERE, sb.toString(), e);
+                    logger.log(Level.SEVERE, sb.toString(), th);
                 }
             }
         }.start();
