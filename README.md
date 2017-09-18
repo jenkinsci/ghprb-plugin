@@ -197,3 +197,7 @@ job('downstreamJob') {
 ### Updates
 
 See [CHANGELOG](CHANGELOG.md)
+
+### FAQ
+
+See [FAQ](FAQ.md)
