@@ -678,7 +678,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public static final class DescriptorImpl extends TriggerDescriptor {
         // GitHub username may only contain alphanumeric characters or dashes and cannot begin with a dash
-        private static final Pattern adminlistPattern = Pattern.compile("(\\p{Alnum}[\\p{Alnum}-]*+|\\s)*+");
+        private static final Pattern adminlistPattern = Pattern.compile("(\\p{Alnum}(-?+\\p{Alnum})*+|\\s)*+");
 
         private Integer configVersion;
 
@@ -843,7 +843,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         public FormValidation doCheckAdminlist(@QueryParameter String value) throws ServletException {
             if (!adminlistPattern.matcher(value).matches()) {
                 return FormValidation.error("GitHub username may only contain alphanumeric characters or dashes "
-                        + "and cannot begin with a dash. Separate them with whitespaces.");
+                                            + "and cannot have multiple consecutive dashes "
+                                            + "and cannot begin or end with a dash. "
+                                            + "Separate them with whitespaces.");
             }
             return FormValidation.ok();
         }
