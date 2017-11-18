@@ -121,8 +121,12 @@ public class GhprbPullRequest {
         this.helper = ghprb;
 
         this.repo = repo;
-
-        GHUser author = pr.getUser();
+        GHUser author;
+        try {
+            author = pr.getUser();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         String reponame = repo.getName();
 
         if (ghprb.isWhitelisted(author)) {
