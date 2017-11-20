@@ -38,5 +38,4 @@ public class JobConfiguration {
             return this;
         }
     }
-
 }
