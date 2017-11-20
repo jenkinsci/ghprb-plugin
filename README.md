@@ -91,8 +91,8 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
   * If you **just** want to build PRs, set ``refspec`` to ``+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*``
   * If you want to build PRs **and** branches, set ``refspec`` to ``+refs/heads/*:refs/remotes/origin/* +refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*`` (see note below about [parameterized builds](#parameterized-builds))
 * In ``Branch Specifier``, instead of the default ``*/master``, enter
-  * ``${ghprbActualCommit}`` if you want to use the head of the pull request branch (e.g. ``/origin/pr/4/head``); or
-  * ``${sha1}``, to use GitHub's tentative merge of the compare and base branches (e.g. ``/origin/pr/4/merge``) if the PR can be automatically merged or the head of the pull request branch (e.g. ``/origin/pr/4/head``) if they can not be automatically merged.
+  * ``${ghprbActualCommit}`` if you want to use the head of the pull request branch (e.g. ``refs/pull/4/head``); or
+  * ``${sha1}``, to use GitHub's tentative merge of the compare and base branches (e.g. ``refs/pull/4/merge``) if the PR can be automatically merged or the head of the pull request branch (e.g. ``refs/pull/4/head``) if they can not be automatically merged.
 * Under ``Build Triggers``, check ``GitHub Pull Request Builder``.
   * Add admins for this specific job.
   * If you want to use GitHub hooks for automatic testing, read the help for ``Use github hooks for build triggering`` in job configuration. Then you can check the checkbox.
