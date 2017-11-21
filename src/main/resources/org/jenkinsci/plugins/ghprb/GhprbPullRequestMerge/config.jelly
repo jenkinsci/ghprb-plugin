@@ -16,6 +16,6 @@
         <f:checkbox />
     </f:entry>
     <f:entry title="Allow merge without trigger phrase?" field="allowMergeWithoutTriggerPhrase">
-            <f:checkbox />
-        </f:entry>
+        <f:checkbox />
+    </f:entry>
 </j:jelly>
