@@ -11,7 +11,6 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import hudson.Util;
 import hudson.model.*;
 import hudson.security.ACL;
-import hudson.triggers.Trigger;
 import hudson.util.DescribableList;
 import hudson.util.Secret;
 import jenkins.model.ParameterizedJobMixIn;
@@ -397,7 +396,7 @@ public class Ghprb {
         ParameterizedJobMixIn.ParameterizedJob pJob = (ParameterizedJobMixIn.ParameterizedJob) p;
         GhprbTrigger ghprbTrigger = null;
         if (p instanceof ParameterizedJobMixIn.ParameterizedJob) {
-            for (Trigger trigger : pJob.getTriggers().values()) {
+            for (Object trigger : pJob.getTriggers().values()) {
                 if (trigger instanceof GhprbTrigger) {
                     ghprbTrigger = (GhprbTrigger) trigger;
                     break;
