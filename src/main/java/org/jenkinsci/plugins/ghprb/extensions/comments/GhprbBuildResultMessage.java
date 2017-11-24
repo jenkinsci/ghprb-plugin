@@ -1,9 +1,11 @@
 package org.jenkinsci.plugins.ghprb.extensions.comments;
 
 import hudson.Extension;
-import hudson.model.*;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
-
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
@@ -11,29 +13,35 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildResultMessage> implements GhprbCommentAppender {
+public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildResultMessage> implements GhprbCommentAppender
+{
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-    
+
     private final String message;
+
     private final GHCommitState result;
 
     @DataBoundConstructor
-    public GhprbBuildResultMessage(GHCommitState result, String message) {
+    public GhprbBuildResultMessage(GHCommitState result, String message)
+    {
         this.result = result;
         this.message = message;
     }
 
-    public String getMessage() {
+    public String getMessage()
+    {
         return message;
     }
 
-    public GHCommitState getResult() {
+    public GHCommitState getResult()
+    {
         return result;
     }
 
-    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
+    public String postBuildComment(Run<?, ?> build, TaskListener listener)
+    {
         StringBuilder msg = new StringBuilder();
 
         GHCommitState state = Ghprb.getState(build);
@@ -60,24 +68,28 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
     }
 
     @Override
-    public DescriptorImpl getDescriptor() {
+    public DescriptorImpl getDescriptor()
+    {
         return DESCRIPTOR;
     }
-    
-    public static class DescriptorImpl extends Descriptor<GhprbBuildResultMessage> {
 
-        public boolean isApplicable(Class<?> type) {
+    public static class DescriptorImpl extends Descriptor<GhprbBuildResultMessage>
+    {
+        public boolean isApplicable(Class<?> type)
+        {
             return true;
         }
 
         @Override
-        public String getDisplayName() {
+        public String getDisplayName()
+        {
             return "Add message on Build Status";
         }
 
-        public ListBoxModel doFillResultItems(@QueryParameter String result) {
+        public ListBoxModel doFillResultItems(@QueryParameter String result)
+        {
             ListBoxModel items = new ListBoxModel();
-            GHCommitState[] results = new GHCommitState[] { GHCommitState.SUCCESS, GHCommitState.ERROR, GHCommitState.FAILURE };
+            GHCommitState[] results = new GHCommitState[]{GHCommitState.SUCCESS, GHCommitState.ERROR, GHCommitState.FAILURE};
             for (GHCommitState nextResult : results) {
 
                 items.add(nextResult.toString(), nextResult.toString());
