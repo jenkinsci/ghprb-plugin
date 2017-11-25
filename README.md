@@ -202,3 +202,7 @@ See [CHANGELOG](CHANGELOG.md)
 ### FAQ
 
 See [FAQ](FAQ.md)
+
+### Style Guide
+
+See [STYLE GUIDE](STYLE_GUIDE.md)
