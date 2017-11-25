@@ -14,17 +14,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
 import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GitUser;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import javax.servlet.ServletException;
 
 /**
  * Unit test for {@link org.jenkinsci.plugins.ghprb.GhprbTriggerTest}.
@@ -188,6 +192,13 @@ public class GhprbTriggerTest {
         assertThat(shouldRun.get(pr)).isEqualTo(false);
 
     }
-    
 
+    @Test
+    @Issue("JENKINS-42148")
+    public void testNoBacktracking() throws ServletException {
+        assertThat(GhprbTrigger.getDscp().doCheckAdminlist("one two three four five six seven eight nine ten.eleven")).isNotEqualTo(FormValidation.ok());
+        assertThat(GhprbTrigger.getDscp().doCheckAdminlist("one two \tthree \nfour five six seven eight nine ten eleven")).isEqualTo(FormValidation.ok());
+        assertThat(GhprbTrigger.getDscp().doCheckAdminlist("")).isEqualTo(FormValidation.ok());
+        assertThat(GhprbTrigger.getDscp().doCheckAdminlist("       ")).isEqualTo(FormValidation.ok());
+    }
 }
