@@ -11,6 +11,7 @@ import java.io.IOException;
 
 /**
  * Excludes {@link GhprbRootAction} from the CSRF protection.
+ *
  * @since 1.28
  */
 @Extension

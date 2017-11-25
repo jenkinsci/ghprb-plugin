@@ -13,8 +13,7 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildResultMessage> implements GhprbCommentAppender
-{
+public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildResultMessage> implements GhprbCommentAppender {
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -24,24 +23,20 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
     private final GHCommitState result;
 
     @DataBoundConstructor
-    public GhprbBuildResultMessage(GHCommitState result, String message)
-    {
+    public GhprbBuildResultMessage(GHCommitState result, String message) {
         this.result = result;
         this.message = message;
     }
 
-    public String getMessage()
-    {
+    public String getMessage() {
         return message;
     }
 
-    public GHCommitState getResult()
-    {
+    public GHCommitState getResult() {
         return result;
     }
 
-    public String postBuildComment(Run<?, ?> build, TaskListener listener)
-    {
+    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
 
         GHCommitState state = Ghprb.getState(build);
@@ -68,28 +63,23 @@ public class GhprbBuildResultMessage extends AbstractDescribableImpl<GhprbBuildR
     }
 
     @Override
-    public DescriptorImpl getDescriptor()
-    {
+    public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
     }
 
-    public static class DescriptorImpl extends Descriptor<GhprbBuildResultMessage>
-    {
-        public boolean isApplicable(Class<?> type)
-        {
+    public static class DescriptorImpl extends Descriptor<GhprbBuildResultMessage> {
+        public boolean isApplicable(Class<?> type) {
             return true;
         }
 
         @Override
-        public String getDisplayName()
-        {
+        public String getDisplayName() {
             return "Add message on Build Status";
         }
 
-        public ListBoxModel doFillResultItems(@QueryParameter String result)
-        {
+        public ListBoxModel doFillResultItems(@QueryParameter String result) {
             ListBoxModel items = new ListBoxModel();
-            GHCommitState[] results = new GHCommitState[]{GHCommitState.SUCCESS, GHCommitState.ERROR, GHCommitState.FAILURE};
+            GHCommitState[] results = new GHCommitState[] {GHCommitState.SUCCESS, GHCommitState.ERROR, GHCommitState.FAILURE};
             for (GHCommitState nextResult : results) {
 
                 items.add(nextResult.toString(), nextResult.toString());

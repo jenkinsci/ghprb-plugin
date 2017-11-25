@@ -12,49 +12,46 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class GhprbNoCommitStatus extends GhprbExtension implements GhprbCommitStatus, GhprbProjectExtension
-{
+public class GhprbNoCommitStatus extends GhprbExtension implements GhprbCommitStatus, GhprbProjectExtension {
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public GhprbNoCommitStatus()
-    {
+    public GhprbNoCommitStatus() {
 
     }
 
-    public void onBuildStart(Run<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException
-    {
+    public void onBuildStart(Run<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
 
     }
 
-    public void onBuildComplete(Run<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException
-    {
+    public void onBuildComplete(Run<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
 
     }
 
-    public void onEnvironmentSetup(Run<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException
-    {
+    public void onEnvironmentSetup(Run<?, ?> build, TaskListener listener, GHRepository repo) throws GhprbCommitStatusException {
 
     }
 
-    public void onBuildTriggered(Job<?, ?> project, String commitSha, boolean isMergeable, int prId, GHRepository ghRepository) throws GhprbCommitStatusException
-    {
+    public void onBuildTriggered(
+            Job<?, ?> project,
+            String commitSha,
+            boolean isMergeable,
+            int prId,
+            GHRepository ghRepository
+    ) throws GhprbCommitStatusException {
 
     }
 
     @Override
-    public DescriptorImpl getDescriptor()
-    {
+    public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
     }
 
-    public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbProjectExtension
-    {
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbProjectExtension {
 
         @Override
-        public String getDisplayName()
-        {
+        public String getDisplayName() {
             return "Do not update commit status";
         }
 
