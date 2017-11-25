@@ -28,7 +28,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 
 ### Build status (regardless of branch):
 
-[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/ghprb-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/ghprb-plugin/)
+[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/ghprb-plugin/master)](https://ci.jenkins.io/job/Plugins/ghprb-plugin/master)
 
 ### Required Jenkins Plugins:
 * github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
@@ -202,3 +202,7 @@ See [CHANGELOG](CHANGELOG.md)
 ### FAQ
 
 See [FAQ](FAQ.md)
+
+### Style Guide
+
+See [STYLE GUIDE](STYLE_GUIDE.md)

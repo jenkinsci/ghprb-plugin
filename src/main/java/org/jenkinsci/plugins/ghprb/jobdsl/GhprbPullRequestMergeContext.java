@@ -4,10 +4,15 @@ import javaposse.jobdsl.dsl.Context;
 
 public class GhprbPullRequestMergeContext implements Context {
     String mergeComment;
+
     boolean onlyAdminsMerge;
+
     boolean disallowOwnCode;
+
     boolean failOnNonMerge;
+
     boolean deleteOnMerge;
+
     boolean allowMergeWithoutTriggerPhrase;
 
     /**
@@ -18,7 +23,7 @@ public class GhprbPullRequestMergeContext implements Context {
     }
 
     /**
-     * @param onlyAdminsMerge Allows only admin users to trigger a pull request merge. Defaults to {@code false}. 
+     * @param onlyAdminsMerge Allows only admin users to trigger a pull request merge. Defaults to {@code false}.
      */
     public void onlyAdminsMerge(boolean onlyAdminsMerge) {
         this.onlyAdminsMerge = onlyAdminsMerge;
@@ -75,6 +80,7 @@ public class GhprbPullRequestMergeContext implements Context {
 
     /**
      * Allows merging the PR even if the trigger phrase was not present. Defaults to {@code false}
+     *
      * @param allowMergeWithoutTriggerPhrase Allow the merge to happen without the trigger phrase
      */
     public void allowMergeWithoutTriggerPhrase(boolean allowMergeWithoutTriggerPhrase) {

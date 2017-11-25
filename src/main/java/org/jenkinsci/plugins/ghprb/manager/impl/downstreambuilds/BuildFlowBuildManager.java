@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
-    private static final Logger logger = Logger.getLogger(BuildFlowBuildManager.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(BuildFlowBuildManager.class.getName());
 
     public BuildFlowBuildManager(Run<?, ?> build) {
         super(build);
@@ -29,7 +29,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
     /**
      * Calculate the build URL of a build of BuildFlow type, traversing its downstream builds graph
-     * 
+     *
      * @return the build URL of a BuildFlow build, with all its downstream builds
      */
     @SuppressWarnings("unchecked")
@@ -55,7 +55,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
 
     /**
      * Return a downstream iterator of a build of default type. This will be overriden by specific build types.
-     * 
+     *
      * @return the downstream builds as an iterator
      */
     @Override
@@ -94,7 +94,7 @@ public class BuildFlowBuildManager extends GhprbBaseBuildManager {
                     sb.append(getAggregatedTestResults(build));
                 }
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Job execution has failed", e);
+                LOGGER.log(Level.SEVERE, "Job execution has failed", e);
             }
         }
 

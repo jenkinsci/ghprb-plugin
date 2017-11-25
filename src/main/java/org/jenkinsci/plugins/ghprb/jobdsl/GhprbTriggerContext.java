@@ -9,25 +9,45 @@ import java.util.List;
 
 class GhprbTriggerContext implements Context {
     List<String> admins = new ArrayList<String>();
+
     List<String> userWhitelist = new ArrayList<String>();
+
     List<String> orgWhitelist = new ArrayList<String>();
+
     List<GhprbBranch> whiteListTargetBranches = new ArrayList<GhprbBranch>();
+
     List<GhprbBranch> blackListTargetBranches = new ArrayList<GhprbBranch>();
+
     List<String> blackListLabels = new ArrayList<String>();
+
     List<String> whiteListLabels = new ArrayList<String>();
+
     String cron = "H/5 * * * *";
+
     String triggerPhrase;
+
     String skipBuildPhrase;
+
     String blackListCommitAuthor;
+
     boolean onlyTriggerPhrase;
+
     boolean useGitHubHooks;
+
     boolean permitAll;
+
     boolean autoCloseFailedPullRequests;
+
     boolean allowMembersOfWhitelistedOrgsAsAdmin;
+
     boolean displayBuildErrorsOnDownstreamBuilds;
+
     String buildDescriptionTemplate;
+
     String includedRegions;
+
     String excludedRegions;
+
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
 
     /**
@@ -121,7 +141,7 @@ class GhprbTriggerContext implements Context {
      * Set label lists which are considered whitelisted for this specific job
      */
     public void whiteListLabels(Iterable<String> labels) {
-        for (String label: labels) {
+        for (String label : labels) {
             whiteListLabel(label);
         }
 
@@ -138,7 +158,7 @@ class GhprbTriggerContext implements Context {
      * Set label lists which are considered blacklisted for this specific job
      */
     public void blackListLabels(Iterable<String> labels) {
-        for (String label: labels) {
+        for (String label : labels) {
             blackListLabel(label);
         }
 
@@ -178,7 +198,6 @@ class GhprbTriggerContext implements Context {
     public void onlyTriggerPhrase(boolean onlyTriggerPhrase) {
         this.onlyTriggerPhrase = onlyTriggerPhrase;
     }
-
 
 
     /**
@@ -262,7 +281,7 @@ class GhprbTriggerContext implements Context {
      * When filled, changes the default build description template
      */
     public void buildDescriptionTemplate(String template) {
-       this.buildDescriptionTemplate = template;
+        this.buildDescriptionTemplate = template;
     }
 
     /**
@@ -282,16 +301,16 @@ class GhprbTriggerContext implements Context {
 
     public void includedRegions(Iterable<String> regions) {
         String includedRegionsStr = "";
-        for (String region: regions) {
-             includedRegionsStr += (region + "\n");
+        for (String region : regions) {
+            includedRegionsStr += (region + "\n");
         }
         includedRegions(includedRegionsStr);
     }
 
     public void excludedRegions(Iterable<String> regions) {
         String excludedRegionsStr = "";
-        for (String region: regions) {
-             excludedRegionsStr += (region+ "\n");
+        for (String region : regions) {
+            excludedRegionsStr += (region + "\n");
         }
         excludedRegions(excludedRegionsStr);
     }
