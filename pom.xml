@@ -270,8 +270,9 @@
                         <configuration>
                             <configLocation>${basedir}/checkstyle.xml</configLocation>
                             <encoding>UTF-8</encoding>
-                            <failsOnError>true</failsOnError>
+                            <failsOnError>false</failsOnError>
                             <failOnViolation>true</failOnViolation>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
                             <logViolationsToConsole>true</logViolationsToConsole>
                         </configuration>
                         <goals>

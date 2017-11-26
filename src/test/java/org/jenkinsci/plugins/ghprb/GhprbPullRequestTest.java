@@ -3,20 +3,30 @@ package org.jenkinsci.plugins.ghprb;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHCommitPointer;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestFileDetail;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.PagedIterable;
+import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.OngoingStubbing;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -33,19 +43,28 @@ public class GhprbPullRequestTest {
 
     @Mock
     private GHPullRequest pr;
+
     @Mock
     private Ghprb helper;
+
     @Mock
     private GhprbRepository repo;
+
     @Mock
-    private GHCommitPointer head, base;
+    private GHCommitPointer head;
+
+    @Mock
+    private GHCommitPointer base;
+
     @Mock
     private GhprbRepository ghprbRepository;
+
     @Mock
     private GHUser ghUser;
+
     @Mock
     private GhprbBuilds builds;
-    
+
     @Before
     public void setup() throws IOException {
         given(head.getSha()).willReturn("some sha");
@@ -78,7 +97,7 @@ public class GhprbPullRequestTest {
                 ".gitignore");
         List<GHPullRequestFileDetail> fileDetails = new ArrayList<GHPullRequestFileDetail>();
 
-        for(String filePath : filePaths) {
+        for (String filePath : filePaths) {
             GHPullRequestFileDetail fileDetail = mock(GHPullRequestFileDetail.class);
             given(fileDetail.getFilename()).willReturn(filePath);
             fileDetails.add(fileDetail);
@@ -86,30 +105,30 @@ public class GhprbPullRequestTest {
 
         // Mock the iterator return calls
         OngoingStubbing<GHPullRequestFileDetail> stubbingNext = when(pagedIterator.next());
-        for(GHPullRequestFileDetail fileDetail : fileDetails) {
+        for (GHPullRequestFileDetail fileDetail : fileDetails) {
             stubbingNext = stubbingNext.thenReturn(fileDetail);
         }
 
         OngoingStubbing<Boolean> stubbingHasNext = when(pagedIterator.hasNext());
-        for(int i = 0; i < fileDetails.size(); i++) {
+        for (int i = 0; i < fileDetails.size(); i++) {
             stubbingHasNext = stubbingHasNext.thenReturn(true);
         }
         stubbingHasNext.thenReturn(false);
-        
+
         given(ghUser.getEmail()).willReturn("email");
-        
+
         given(ghprbRepository.getActualPullRequest(10)).willReturn(pr);
         given(ghprbRepository.getName()).willReturn("name");
-        
+
         given(pr.getHead()).willReturn(head);
         given(pr.getUser()).willReturn(ghUser);
-        
+
         // Mocks for Ghprb
         given(helper.isWhitelisted(ghUser)).willReturn(true);
         given(helper.getBuilds()).willReturn(builds);
-        
+
         doNothing().when(builds).build(any(GhprbPullRequest.class), any(GHUser.class), anyString());
-        
+
         // Mocks for GhprbRepository
         given(repo.getName()).willReturn("repoName");
 
