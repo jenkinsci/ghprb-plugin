@@ -24,6 +24,8 @@ import java.util.logging.Logger;
  */
 public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
+    private static final Logger LOGGER = Logger.getLogger(GhprbBaseBuildManager.class.getName());
+
     public GhprbBaseBuildManager(Run<?, ?> build) {
         this.build = build;
         this.jobConfiguration = buildDefaultConfiguration();
@@ -40,7 +42,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
     /**
      * Calculate the build URL of a build of default type. This will be overriden by specific build types.
-     * 
+     *
      * @return the build URL of a build of default type
      */
     public String calculateBuildUrl(String publishedURL) {
@@ -49,7 +51,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
 
     /**
      * Return a downstream iterator of a build of default type. This will be overriden by specific build types.
-     *
+     * <p>
      * If the receiver of the call has no child projects, it will return an iterator over itself
      *
      * @return the downstream builds as an iterator
@@ -90,7 +92,7 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
             sb.append("</span></h2>");
 
             try {
-                List<String> buildLog = build.getLog(_MAX_LINES_COUNT);
+                List<String> buildLog = build.getLog(MAX_LINES_COUNT);
 
                 for (String buildLogLine : buildLog) {
                     sb.append(buildLogLine);
@@ -165,8 +167,6 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
         return sb.toString();
     }
 
-    protected static final Logger LOGGER = Logger.getLogger(GhprbBaseBuildManager.class.getName());
-
     public String getOneLineTestResults() {
 
         AbstractTestResultAction testResultAction = build.getAction(AbstractTestResultAction.class);
@@ -174,12 +174,17 @@ public abstract class GhprbBaseBuildManager implements GhprbBuildManager {
         if (testResultAction == null) {
             return "No test results found.";
         }
-        return String.format("%d tests run, %d skipped, %d failed.", testResultAction.getTotalCount(), testResultAction.getSkipCount(), testResultAction.getFailCount());
+        return String.format(
+                "%d tests run, %d skipped, %d failed.",
+                testResultAction.getTotalCount(),
+                testResultAction.getSkipCount(),
+                testResultAction.getFailCount()
+        );
     }
 
     protected Run<?, ?> build;
 
-    private static final int _MAX_LINES_COUNT = 25;
+    private static final int MAX_LINES_COUNT = 25;
 
     private JobConfiguration jobConfiguration;
 

@@ -19,26 +19,21 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-    
+
     private final String publishedURL;
-    
+
     @DataBoundConstructor
     public GhprbPublishJenkinsUrl(String publishedURL) {
         this.publishedURL = publishedURL;
     }
-    
+
     public String getPublishedURL() {
         return publishedURL;
     }
 
     public String postBuildComment(Run<?, ?> build, TaskListener listener) {
-        StringBuilder msg = new StringBuilder();
-
-        msg.append("\nRefer to this link for build results (access rights to CI server needed): \n");
-        msg.append(generateCustomizedMessage(build));
-        msg.append("\n");
-        
-        return msg.toString();
+        return "\nRefer to this link for build results (access rights to CI server needed): \n"
+                + generateCustomizedMessage(build) + "\n";
     }
 
     public boolean addIfMissing() {
@@ -72,7 +67,6 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
     }
 
     public static final class DescriptorImpl extends GhprbExtensionDescriptor implements GhprbGlobalExtension {
-
         @Override
         public String getDisplayName() {
             return "Add link to Jenkins";
@@ -81,6 +75,5 @@ public class GhprbPublishJenkinsUrl extends GhprbExtension implements GhprbComme
         public boolean addIfMissing() {
             return false;
         }
-        
     }
 }

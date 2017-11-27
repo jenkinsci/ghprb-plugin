@@ -23,12 +23,22 @@ public class GhprbTokenMacro extends DataBoundTokenMacro {
     }
 
     @Override
-    public String evaluate(AbstractBuild<?, ?> abstractBuild, TaskListener taskListener, String s) throws MacroEvaluationException, IOException, InterruptedException {
+    public String evaluate(
+            AbstractBuild<?, ?> abstractBuild,
+            TaskListener taskListener,
+            String s
+    ) throws MacroEvaluationException, IOException, InterruptedException {
         return null;
     }
 
     @Override
-    public String evaluate(AbstractBuild<?, ?> context, TaskListener listener, String macroName, Map<String, String> arguments, ListMultimap<String, String> argumentMultimap) throws MacroEvaluationException, IOException, InterruptedException {
+    public String evaluate(
+            AbstractBuild<?, ?> context,
+            TaskListener listener,
+            String macroName,
+            Map<String, String> arguments,
+            ListMultimap<String, String> argumentMultimap
+    ) throws MacroEvaluationException, IOException, InterruptedException {
         GhprbCause cause = (GhprbCause) context.getCause(GhprbCause.class);
         if (cause == null) {
             return "";
