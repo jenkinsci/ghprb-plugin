@@ -4,15 +4,26 @@ import com.google.common.annotations.VisibleForTesting;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
 import jenkins.tasks.SimpleBuildStep;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHRef;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitUser;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -23,14 +34,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
-
     private transient TaskListener listener;
+
     private final Boolean onlyAdminsMerge;
 
     private final Boolean disallowOwnCode;
+
     private final String mergeComment;
+
     private final Boolean failOnNonMerge;
+
     private final Boolean deleteOnMerge;
+
     private final Boolean allowMergeWithoutTriggerPhrase;
 
     @DataBoundConstructor
@@ -74,8 +89,11 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
     }
 
     private transient GhprbTrigger trigger;
+
     private transient Ghprb helper;
+
     private transient GhprbCause cause;
+
     private transient GHPullRequest pr;
 
     @VisibleForTesting
@@ -84,7 +102,12 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
+    public void perform(
+            @Nonnull Run<?, ?> run,
+            @Nonnull FilePath filePath,
+            @Nonnull Launcher launcher,
+            @Nonnull TaskListener taskListener
+    ) throws InterruptedException, IOException {
         listener = taskListener;
         Job<?, ?> project = run.getParent();
         if (run.getResult().isWorseThan(Result.SUCCESS)) {
@@ -93,8 +116,9 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         }
 
         trigger = Ghprb.extractTrigger(project);
-        if (trigger == null)
+        if (trigger == null) {
             return;
+        }
 
         cause = Ghprb.getCause(run);
         if (cause == null) {
@@ -131,9 +155,18 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         // If there is no intention to merge there is no point checking
         if (intendToMerge && getOnlyAdminsMerge() && (triggerSender == null || !helper.isAdmin(triggerSender))) {
             canMerge = false;
-            listener.getLogger().println("Only admins can merge this pull request, " + (triggerSender != null ? triggerSender.getLogin() + " is not an admin" : " and build was triggered via automation") + ".");
+            final String msg = "Only admins can merge this pull request, "
+                    + (triggerSender != null ? triggerSender.getLogin()
+                    + " is not an admin" : " and build was triggered via automation") + ".";
+            listener.getLogger().println(msg);
             if (triggerSender != null) {
-                commentOnRequest(String.format("Code not merged because @%s (%s) is not in the Admin list.", triggerSender.getLogin(), triggerSender.getName()));
+                commentOnRequest(
+                        String.format(
+                                "Code not merged because @%s (%s) is not in the Admin list.",
+                                triggerSender.getLogin(),
+                                triggerSender.getName()
+                        )
+                );
             }
         }
 
@@ -142,7 +175,13 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
             canMerge = false;
             if (triggerSender != null) {
                 listener.getLogger().println("The commentor is also one of the contributors.");
-                commentOnRequest(String.format("Code not merged because @%s (%s) has committed code in the request.", triggerSender.getLogin(), triggerSender.getName()));
+                commentOnRequest(
+                        String.format(
+                                "Code not merged because @%s (%s) has committed code in the request.",
+                                triggerSender.getLogin(),
+                                triggerSender.getName()
+                        )
+                );
             }
         }
 
@@ -209,15 +248,17 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         }
     }
 
-    private boolean isOwnCode(GHPullRequest pr, GHUser commentor) {
+    private boolean isOwnCode(GHPullRequest pr, GHUser commenter) {
         try {
-            String commentorName = commentor.getName();
-            String commentorEmail = commentor.getEmail();
-            String commentorLogin = commentor.getLogin();
+            String commenterName = commenter.getName();
+            String commenterEmail = commenter.getEmail();
+            String commenterLogin = commenter.getLogin();
 
             GHUser prUser = pr.getUser();
-            if (prUser.getLogin().equals(commentorLogin)) {
-                listener.getLogger().println(commentorName + " (" + commentorLogin + ")  has submitted the PR[" + pr.getNumber() + pr.getNumber() + "] that is to be merged");
+            if (prUser.getLogin().equals(commenterLogin)) {
+                final String msg = commenterName + " (" + commenterLogin + ")  has submitted "
+                        + "the PR[" + pr.getNumber() + pr.getNumber() + "] that is to be merged";
+                listener.getLogger().println(msg);
                 return true;
             }
 
@@ -229,11 +270,13 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
                 boolean isSame = false;
 
-                isSame |= commentorName != null && commentorName.equals(committerName);
-                isSame |= commentorEmail != null && commentorEmail.equals(committerEmail);
+                isSame |= commenterName != null && commenterName.equals(committerName);
+                isSame |= commenterEmail != null && commenterEmail.equals(committerEmail);
 
                 if (isSame) {
-                    listener.getLogger().println(commentorName + " (" + commentorEmail + ")  has commits in PR[" + pr.getNumber() + "] that is to be merged");
+                    final String msg = commenterName + " (" + commenterEmail + ")  has commits in "
+                            + "PR[" + pr.getNumber() + "] that is to be merged";
+                    listener.getLogger().println(msg);
                     return isSame;
                 }
             }

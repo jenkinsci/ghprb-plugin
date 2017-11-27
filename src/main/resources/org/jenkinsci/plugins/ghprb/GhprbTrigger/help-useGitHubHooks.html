@@ -5,6 +5,9 @@
 	admin rights to the specified repository.<br/>
 	If you want to create a hook manually set it for event types:
 		<code>issue_comment</code>,	<code>pull_request</code>
-	and url <code>http://yourserver.com/jenkins/ghprbhook/</code>.<br/>
+	and url <code>< your jenkins server url >/ghprbhook/</code>.  The url should be composed of your full jenkins server url plus
+	the ending <code>/ghprbhook/</code> path.  If your jenkins server is just a domain like https://jenkins.yourcompany.com then the url would look like 
+	https://jenkins.yourcompany.com/ghprbhook/.  If your jenkins server is accessed at a path off of a domain like https://yourcompany.com/jenkins 
+	then the url would look like https://yourcompany.com/jenkins/ghprbhook/<br/>.  
 	Your Jenkins server must be accessible from internet.
 </div>

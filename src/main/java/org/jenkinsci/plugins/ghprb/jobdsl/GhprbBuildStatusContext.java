@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class GhprbBuildStatusContext implements Context {
-    List<GhprbBuildResultMessage> completedStatus = new ArrayList<GhprbBuildResultMessage>();
+    private List<GhprbBuildResultMessage> completedStatus = new ArrayList<GhprbBuildResultMessage>();
 
     /**
      * Use a custom status for when a build is completed. Can be called multiple times to set messages for different
@@ -19,5 +19,9 @@ class GhprbBuildStatusContext implements Context {
                 GHCommitState.valueOf(buildResult),
                 message
         ));
+    }
+
+    public List<GhprbBuildResultMessage> getCompletedStatus() {
+        return completedStatus;
     }
 }

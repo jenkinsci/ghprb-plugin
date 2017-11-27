@@ -3,14 +3,14 @@ package org.jenkinsci.plugins.ghprb.jobdsl;
 import javaposse.jobdsl.dsl.Context;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
+import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class GhprbExtensionContext implements Context {
-    List<GhprbExtension> extensions = new ArrayList<GhprbExtension>();
+    private List<GhprbExtension> extensions = new ArrayList<GhprbExtension>();
 
     /**
      * Updates the commit status during the build.
@@ -29,16 +29,18 @@ class GhprbExtensionContext implements Context {
                 context.completedStatus
         ));
     }
-    
+
     /**
      * Adds build result messages
      */
     void buildStatus(Runnable closure) {
         GhprbBuildStatusContext context = new GhprbBuildStatusContext();
         ContextExtensionPoint.executeInContext(closure, context);
-        
-        extensions.add(new GhprbBuildStatus(
-                context.completedStatus
-        ));
+
+        extensions.add(new GhprbBuildStatus(context.getCompletedStatus()));
+    }
+
+    public List<GhprbExtension> getExtensions() {
+        return extensions;
     }
 }

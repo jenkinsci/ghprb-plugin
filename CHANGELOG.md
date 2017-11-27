@@ -1,4 +1,11 @@
 ### Updates
+#### -> 1.40.0
+* Handle 64-bit commit status id with github-api 1.90
+* Remove the hard dependency on Jenkins 2.68
+* Disable register hooks on startup via property
+* Remove ssh-agent dependency (#520)
+* Fix regex backtrack (#597)
+
 #### -> 1.39.0
 * Startup optimization. Startup for ghprb will be split into a pool size of 5 threads, which
 can be overridden via JVM args.
