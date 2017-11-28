@@ -14,6 +14,7 @@ import org.jenkinsci.plugins.ghprb.GhprbTrigger;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
@@ -34,7 +35,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    public static final DescriptorImpl /*GhprbSimpleStatusDescriptor*/ DESCRIPTOR = new DescriptorImpl();
 
     private String commitStatusContext;
 
@@ -286,11 +287,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements
     }
 
     @Override
-    public DescriptorImpl getDescriptor() {
+    public DescriptorImpl /*GhprbSimpleStatusDescriptor*/ getDescriptor() {
         return DESCRIPTOR;
     }
 
-    public static final class DescriptorImpl extends GhprbExtensionDescriptor
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor /*GhprbSimpleStatusDescriptor*/
             implements GhprbGlobalExtension, GhprbProjectExtension {
 
         @Override
