@@ -74,21 +74,21 @@ public class GhprbTriggerTest {
 
         Map<String, Map<String, Boolean>> stringsToTest = new HashMap<String, Map<String, Boolean>>(10);
 
-        Map<String, Boolean> comment = new HashMap<String, Boolean>(5);
+        Map<String, Boolean> comment = new HashMap<>(5);
         comment.put(nonMatch, build);
         comment.put(multiLine, skipBuild);
         comment.put(justSkipCi, build);
         comment.put(fullSkipCi, skipBuild);
         stringsToTest.put(".*\\[skip\\W+ci\\].*", comment);
 
-        comment = new HashMap<String, Boolean>(5);
+        comment = new HashMap<>(5);
         comment.put(nonMatch, build);
         comment.put(multiLine, build);
         comment.put(justSkipCi, build);
         comment.put(fullSkipCi, skipBuild);
         stringsToTest.put("\\[skip ci\\]", comment);
 
-        comment = new HashMap<String, Boolean>(5);
+        comment = new HashMap<>(5);
         comment.put(nonMatch, build);
         comment.put(multiLine, skipBuild);
         comment.put(justSkipCi, skipBuild);
@@ -97,7 +97,6 @@ public class GhprbTriggerTest {
 
         Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild");
         checkSkip.setAccessible(true);
-
 
         Field prField = GhprbPullRequest.class.getDeclaredField("pr");
         prField.setAccessible(true);
@@ -138,7 +137,12 @@ public class GhprbTriggerTest {
 
                 shouldRun.set(pr, true);
                 checkSkip.invoke(pr);
-                String errorMessage = String.format("Comment does %scontain skip phrase \n(\n%s\n)\n[\n%s\n]", shouldBuild ? "not " : "", nextComment, skipPhrases);
+                String errorMessage = String.format(
+                        "Comment does %scontain skip phrase \n(\n%s\n)\n[\n%s\n]",
+                        shouldBuild ? "not " : "",
+                        nextComment,
+                        skipPhrases
+                );
 
                 if (shouldBuild) {
                     assertThat(skipPhrase).overridingErrorMessage(errorMessage).isEmpty();
@@ -147,7 +151,6 @@ public class GhprbTriggerTest {
                 }
 
                 assertThat(shouldRun.get(pr)).overridingErrorMessage(errorMessage).isEqualTo(shouldBuild);
-
             }
         }
     }
@@ -160,9 +163,6 @@ public class GhprbTriggerTest {
         Field userNameField = GitUser.class.getDeclaredField("name");
         userNameField.setAccessible(true);
         userNameField.set(user, "foo");
-
-        boolean skipBuild = false;
-        boolean build = true;
 
         Method checkSkip = GhprbPullRequest.class.getDeclaredMethod("checkSkipBuild");
         checkSkip.setAccessible(true);

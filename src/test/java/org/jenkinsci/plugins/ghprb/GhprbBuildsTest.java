@@ -32,14 +32,19 @@ public class GhprbBuildsTest {
 
     @Mock
     private GhprbRepository repo;
+
     @Mock
     private GhprbCause cause;
+
     @Mock
     private GhprbBuildStatus appender;
+
     @Mock
     private TaskListener listener;
+
     @Mock
     private Build build;
+
     @Mock
     private PrintStream stream;
 
@@ -47,6 +52,7 @@ public class GhprbBuildsTest {
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
     private GhprbTrigger trigger;
+
     private GHCommitState state = GHCommitState.SUCCESS;
 
     @Before

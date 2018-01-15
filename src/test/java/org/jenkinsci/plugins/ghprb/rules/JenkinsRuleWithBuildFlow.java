@@ -1,10 +1,9 @@
 package org.jenkinsci.plugins.ghprb.rules;
 
-import java.io.IOException;
-
+import com.cloudbees.plugins.flow.BuildFlow;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import com.cloudbees.plugins.flow.BuildFlow;
+import java.io.IOException;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -16,8 +15,6 @@ public class JenkinsRuleWithBuildFlow extends JenkinsRule {
     }
 
     public BuildFlow createBuildFlowProject(String name) throws IOException {
-
         return jenkins.createProject(BuildFlow.class, name);
     }
-
 }
