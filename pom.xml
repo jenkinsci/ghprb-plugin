@@ -6,7 +6,8 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.32</version>
+        <version>3.2</version>
+        <relativePath />
     </parent>
 
     <artifactId>ghprb</artifactId>
@@ -52,7 +53,6 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <workflow.version>1.4</workflow.version>
         <jenkins.version>2.7</jenkins.version>
-        <jenkins-test-harness.version>2.17</jenkins-test-harness.version>
         <java.level>7</java.level>
         <findbugs.failOnError>false</findbugs.failOnError>
         <checkstyle.version>6.7</checkstyle.version>
@@ -84,11 +84,6 @@
             <version>1.25</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.12</version>
-        </dependency>
-        <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
             <version>2.4.11</version>
@@ -97,16 +92,6 @@
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
             <version>1.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-            <version>9.2.15.v20160210</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-io</artifactId>
-            <version>9.2.15.v20160210</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
