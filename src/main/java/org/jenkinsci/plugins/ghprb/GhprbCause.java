@@ -30,13 +30,13 @@ public class GhprbCause extends Cause {
 
     private final URL url;
 
-    private final GHUser triggerSender;
+    private final transient GHUser triggerSender;
 
     private final String commentBody;
 
-    private final GitUser commitAuthor;
+    private final transient GitUser commitAuthor;
 
-    private final GHUser pullRequestAuthor;
+    private final transient GHUser pullRequestAuthor;
 
     private final String description;
 
