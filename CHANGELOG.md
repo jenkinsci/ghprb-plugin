@@ -1,5 +1,27 @@
 ### Updates
 
+#### -> 1.40.0
+
+* Feature: Disable register hooks on startup via property
+* Improvement: Documentation improvements.
+* Improvement: Remove ssh-agent dependency (#520)
+* Improvement: Remove the hard dependency on Jenkins 2.68
+* Bugfix: Stop trying to serialize github-api types (#616, JEP-200, JENKINS-48950)
+* Bugfix: GitHub username checking (#597)
+* Bugfix: unhandled exception (#570)
+* Bugfix: Handle 64-bit commit status id with github-api 1.90 (#589)
+
+#### -> 1.39.0
+* Startup optimization. Startup for ghprb will be split into a pool size of 5 threads, which
+can be overridden via JVM args.
+
+#### -> 1.38.0
+* Add ability to decide whether to build based on regions (or repository file paths as defined by regex)
+
+#### -> 1.37.0
+* Add user blacklist capability
+* Small but powerful docs cleanup
+
 #### -> 1.36.2
 * Revert pipeline support for the upstream status capability (only). See #506.
 

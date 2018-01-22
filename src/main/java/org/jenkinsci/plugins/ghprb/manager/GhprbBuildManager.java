@@ -9,15 +9,15 @@ public interface GhprbBuildManager {
 
     /**
      * Calculate the build URL of a build
+     *
      * @param publishedURL the public jenkins url
-     * 
      * @return the build URL
      */
     String calculateBuildUrl(String publishedURL);
 
     /**
      * Returns downstream builds as an iterator
-     * 
+     *
      * @return the iterator
      */
     Iterator<?> downstreamProjects();
@@ -35,5 +35,4 @@ public interface GhprbBuildManager {
      * @return the tests result
      */
     String getTestResults();
-
 }

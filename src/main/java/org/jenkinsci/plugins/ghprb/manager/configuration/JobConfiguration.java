@@ -3,7 +3,7 @@ package org.jenkinsci.plugins.ghprb.manager.configuration;
 /**
  * @author Miguel Pastor
  */
-public class JobConfiguration {
+public final class JobConfiguration {
 
     public static PrintStackTrace builder() {
         return new JobConfigurationBuilder();
@@ -11,17 +11,18 @@ public class JobConfiguration {
 
     private boolean printStacktrace;
 
-    private JobConfiguration() {}
+    private JobConfiguration() {
+    }
 
     public boolean printStackTrace() {
         return this.printStacktrace;
     }
 
-    public static interface PrintStackTrace {
+    public interface PrintStackTrace {
         Build printStackTrace(boolean print);
     }
 
-    public static interface Build {
+    public interface Build {
         JobConfiguration build();
     }
 
@@ -38,5 +39,4 @@ public class JobConfiguration {
             return this;
         }
     }
-
 }

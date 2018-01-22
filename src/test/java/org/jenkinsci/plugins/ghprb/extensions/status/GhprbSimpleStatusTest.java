@@ -13,32 +13,32 @@ import org.kohsuke.github.GHRepository;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.BDDMockito.given;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbSimpleStatusTest {
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
-    
+
     @Mock
     private GHRepository ghRepository;
+
     @Mock
     private GhprbPullRequest ghprbPullRequest;
 
     private GhprbTrigger trigger;
-    
 
     @Before
     public void setUp() throws Exception {
         trigger = GhprbTestUtil.getTrigger(null);
     }
-    
+
     @Test
     public void testMergedMessage() throws Exception {
         String mergedMessage = "Build triggered. sha1 is merged.";
@@ -47,13 +47,13 @@ public class GhprbSimpleStatusTest {
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
         status.onBuildTriggered(trigger.getActualProject(), "sha", true, 1, ghRepository);
-        
+
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
 
         verifyNoMoreInteractions(ghprbPullRequest);
     }
-    
+
     @Test
     public void testMergeConflictMessage() throws Exception {
         String mergedMessage = "Build triggered. sha1 is original commit.";
@@ -62,13 +62,13 @@ public class GhprbSimpleStatusTest {
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus("default"));
         status.onBuildTriggered(trigger.getActualProject(), "sha", false, 1, ghRepository);
-        
+
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), eq("default"));
         verifyNoMoreInteractions(ghRepository);
 
         verifyNoMoreInteractions(ghprbPullRequest);
     }
-    
+
     @Test
     public void testDoesNotSendEmptyContext() throws Exception {
         String mergedMessage = "Build triggered. sha1 is original commit.";
@@ -77,7 +77,7 @@ public class GhprbSimpleStatusTest {
 
         GhprbSimpleStatus status = spy(new GhprbSimpleStatus(""));
         status.onBuildTriggered(trigger.getActualProject(), "sha", false, 1, ghRepository);
-        
+
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), isNull(String.class));
         verifyNoMoreInteractions(ghRepository);
 

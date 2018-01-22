@@ -1,0 +1,17 @@
+<div>
+    Each inclusion uses regular expression pattern matching, and must be separated by a new line.
+    An empty list implies that everything is included.
+    <br/>
+    <pre>
+        myapp/src/main/web/.*\.html
+        myapp/src/main/web/.*\.jpeg
+        myapp/src/main/web/.*\.gif
+    </pre>
+    <br/>
+    The example above illustrates that a build will only occur, if html/jpeg/gif files
+    have been committed to the GitHub repository. Exclusions take precedence over
+    inclusions, if there is an overlap between included and excluded regions.
+    <br/>
+    More information on regular expressions can be found
+    <a href="http://www.regular-expressions.info/" target="_blank">here</a>.
+</div>

@@ -1,13 +1,10 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.collect.Lists;
-
-import hudson.model.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import hudson.model.Action;
+import hudson.model.FreeStyleProject;
+import hudson.model.ParameterValue;
+import hudson.model.Run;
 import net.sf.json.JSONObject;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -23,29 +20,31 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
-
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbIT extends GhprbITBaseTestCase {
 
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
-    
+
     @Mock
     private RequestImpl req;
+
     @Mock
     private GHIssueComment comment;
 
-    
     private FreeStyleProject project;
-    
 
     @Before
-    public void setUp() throws Exception {// GIVEN
+    public void setUp() throws Exception {
         req = Mockito.mock(RequestImpl.class);
 
         given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
@@ -64,7 +63,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
     @Test
     public void shouldBuildTriggersOnNewPR() throws Exception {
         given(ghPullRequest.getNumber()).willReturn(1);
-        
+
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
 
         assertThat(project.getBuilds().toArray().length).isEqualTo(1);
@@ -74,8 +73,8 @@ public class GhprbIT extends GhprbITBaseTestCase {
     public void shouldBuildTriggersOnUpdatingNewCommitsPR() throws Exception {
         // GIVEN
         given(commitPointer.getSha()).willReturn("sha").willReturn("newOne").willReturn("newOne");
-        given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment> newArrayList());
-        
+        given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
+
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
 
         // Also verify that uniquely different builds do not get commingled
@@ -109,7 +108,6 @@ public class GhprbIT extends GhprbITBaseTestCase {
     @Test
     public void shouldNotBuildDisabledBuild() throws Exception {
         // GIVEN
-        
         given(commitPointer.getSha()).willReturn("sha");
 
         given(comment.getBody()).willReturn("retest this please");
@@ -117,13 +115,14 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(comment.getUser()).willReturn(ghUser);
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5);
-        
+
         project.disable();
 
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(0);
-        
-        Mockito.verify(ghRepository, Mockito.times(0)).createCommitStatus(any(String.class), any(GHCommitState.class), any(String.class), any(String.class));
+
+        Mockito.verify(ghRepository, Mockito.times(0))
+                .createCommitStatus(any(String.class), any(GHCommitState.class), any(String.class), any(String.class));
     }
 
     @Test
@@ -166,7 +165,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
 
     @Test
     public void triggerIsRemovedFromListWhenProjectChanges() {
-        
+
     }
 
 }
