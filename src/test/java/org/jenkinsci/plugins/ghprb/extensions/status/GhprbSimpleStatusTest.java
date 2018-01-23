@@ -33,8 +33,8 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import java.util.ArrayList;
-import java.util.List; 
-*/ 
+import java.util.List;
+*/
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extensions.GhprbExtension {
@@ -51,7 +51,7 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
     private GhprbTrigger trigger;
 
     //private FreeStyleProject project;
-    
+
     @Before
     public void setUp() throws Exception {
         trigger = GhprbTestUtil.getTrigger(null);
@@ -155,7 +155,8 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
         given(ghprbPullRequest.getHead()).willReturn("sha");
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
-        GhprbSimpleStatus globalStatus = new GhprbSimpleStatus(true, context, statusUrl, "test1", "test2", false, new ArrayList<GhprbBuildResultMessage>(0));
+        GhprbSimpleStatus globalStatus =
+            new GhprbSimpleStatus(true, context, statusUrl, "test1", "test2", false, new ArrayList<GhprbBuildResultMessage>(0));
         GhprbTrigger.getDscp().getExtensions().add(globalStatus);
         GhprbTrigger localTrigger = GhprbTestUtil.getTrigger(null);
 
