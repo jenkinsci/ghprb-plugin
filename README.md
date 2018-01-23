@@ -4,16 +4,16 @@ This Jenkins plugin builds pull requests from GitHub and will report the results
 the [GitHub Commit Status API](http://developer.github.com/v3/repos/statuses/)
 
 When a new pull request is opened in the project and the author of the pull
-request isn't whitelisted, builder will ask ``Can one of the
-admins verify this patch?``. One of the admins can comment ``ok to test``
-to accept this pull request for testing, ``test this please`` for one time
-test run and ``add to whitelist`` to add the author to the whitelist.
+request isn't whitelisted, builder will ask `Can one of the
+admins verify this patch?`. One of the admins can comment `ok to test`
+to accept this pull request for testing, `test this please` for one time
+test run and `add to whitelist` to add the author to the whitelist.
 
 If an author of a pull request is whitelisted, adding a new pull
 request or new commit to an existing pull request will start a new
 build.
 
-A new build can also be started with a comment: ``retest this please``.
+A new build can also be started with a comment: `retest this please`, with or without additional text in the comment.
 
 You can extend the standard build comment message on github
 creating a comment file from shell console or any other
@@ -22,13 +22,13 @@ This is useful for posting some build dependent urls for users without
 access to the jenkins UI console.
 
 Jobs can be configured to only build if a matching comment is added to a pull request.  For instance, if you have two job you want to run against a pull request,
-a smoke test job and a full test job, you can configure the full test job to only run if someone adds the comment ``full test please`` on the pull request.
+a smoke test job and a full test job, you can configure the full test job to only run if someone adds the comment `full test please` on the pull request.
 
 For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin
 
-### Build status (regardless of branch):
+### Build status:
 
-[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/ghprb-plugin/master)](https://ci.jenkins.io/job/Plugins/ghprb-plugin/master)
+[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/ghprb-plugin/master)](https://ci.jenkins.io/job/Plugins/job/ghprb-plugin/job/master/)
 
 ### Required Jenkins Plugins:
 * github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
@@ -44,7 +44,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 
 ### Installation:
 * Install the plugin.
-* Go to ``Manage Jenkins`` -> ``Configure System`` -> ``GitHub Pull Request Builder`` section.
+* Go to `Manage Jenkins` -> `Configure System` -> `GitHub Pull Request Builder` section.
 
 * Add GitHub usernames of admins (these usernames will be used as defaults in new jobs).
 * Under Advanced, you can modify:
@@ -62,21 +62,21 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * Save to preserve your changes.
 
 ### Credentials
-* If you are using Enterprise GitHub set the server api URL in ``GitHub server api URL``. Otherwise leave there ``https://api.github.com``.
+* If you are using Enterprise GitHub set the server api URL in `GitHub server api URL`. Otherwise leave there `https://api.github.com`.
 * Set the Jenkins URL if you need to override the default (e.g. it's behind a firewall)
 * A GitHub API token or username password can be used for access to the GitHub API
 * To setup credentials for a given GitHub Server API URL:
-  * Click Add next to the ``Credentials`` drop down
-    * For a token select ``Kind`` -> ``Secret text``
-      * If you haven't generated an access token you can generate one in ``Test Credentials...``.
+  * Click Add next to the `Credentials` drop down
+    * For a token select `Kind` -> `Secret text`
+      * If you haven't generated an access token you can generate one in `Test Credentials...`.
         * Set your 'bot' user's GitHub username and password.
-        * Press the ``Create Access Token`` button
-        * Jenkins will create a token credential, and give you the id of the newly created credentials.  The default description is: ``serverAPIUrl + " GitHub auto generated token credentials"``.
-    * For username/password us ``Kind`` -> ``Username with password``
+        * Press the `Create Access Token` button
+        * Jenkins will create a token credential, and give you the id of the newly created credentials.  The default description is: `serverAPIUrl + " GitHub auto generated token credentials"`.
+    * For username/password us `Kind` -> `Username with password`
       * The scope determines what has access to the credentials you are about to create
     * The first part of the description is used to show different credentials in the drop down, so use something semi-descriptive
-    * Click ``Add``
-  * Credentials will automatically be created in the domain given by the ``GitHub Server API URL`` field.
+    * Click `Add`
+  * Credentials will automatically be created in the domain given by the `GitHub Server API URL` field.
   * Select the credentials you just created in the drop down.
   * The first fifty characters in the Description are used to differentiate credentials per job, so again use something semi-descriptive
 * Add as many GitHub auth sections as you need, even duplicate server URLs
@@ -84,28 +84,28 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 
 ### Creating a job:
 * Create a new job.
-* Add the project's GitHub URL to the ``GitHub project`` field (the one you can enter into browser. eg: ``https://github.com/janinko/ghprb``)
+* Add the project's GitHub URL to the `GitHub project` field (the one you can enter into browser. eg: `https://github.com/janinko/ghprb`)
 * Select Git SCM.
-* Add your GitHub ``Repository URL``.
-* Under Advanced, set ``Name`` to ``origin`` and:
-  * If you **just** want to build PRs, set ``refspec`` to ``+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*``
-  * If you want to build PRs **and** branches, set ``refspec`` to ``+refs/heads/*:refs/remotes/origin/* +refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*`` (see note below about [parameterized builds](#parameterized-builds))
-* In ``Branch Specifier``, instead of the default ``*/master``, enter
-  * ``${ghprbActualCommit}`` if you want to use the head of the pull request branch (e.g. ``refs/pull/4/head``); or
-  * ``${sha1}``, to use GitHub's tentative merge of the compare and base branches (e.g. ``refs/pull/4/merge``) if the PR can be automatically merged or the head of the pull request branch (e.g. ``refs/pull/4/head``) if they can not be automatically merged.
-* Under ``Build Triggers``, check ``GitHub Pull Request Builder``.
+* Add your GitHub `Repository URL`.
+* Under Advanced, set `Name` to `origin` and:
+  * If you **just** want to build PRs, set `refspec` to `+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*`
+  * If you want to build PRs **and** branches, set `refspec` to `+refs/heads/*:refs/remotes/origin/* +refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/*` (see note below about [parameterized builds](#parameterized-builds))
+* In `Branch Specifier`, instead of the default `*/master`, enter
+  * `${ghprbActualCommit}` if you want to use the head of the pull request branch (e.g. `refs/pull/4/head`); or
+  * `${sha1}`, to use GitHub's tentative merge of the compare and base branches (e.g. `refs/pull/4/merge`) if the PR can be automatically merged or the head of the pull request branch (e.g. `refs/pull/4/head`) if they can not be automatically merged.
+* Under `Build Triggers`, check `GitHub Pull Request Builder`.
   * Add admins for this specific job.
-  * If you want to use GitHub hooks for automatic testing, read the help for ``Use github hooks for build triggering`` in job configuration. Then you can check the checkbox.
+  * If you want to use GitHub hooks for automatic testing, read the help for `Use github hooks for build triggering` in job configuration. Then you can check the checkbox.
   * In Advanced, you can modify:
     * The crontab line for this specific job. This schedules polling to GitHub for new changes in Pull Requests.
     * The whitelisted users for this specific job.
     * The organisation names whose members are considered whitelisted for this specific job.
 * Save to preserve your changes.
 
-Make sure you **DON'T** have ``Prune remote branches before build`` advanced option selected, since it will prune the branch created to test this build.
+Make sure you **DON'T** have `Prune remote branches before build` advanced option selected, since it will prune the branch created to test this build.
 
 #### Parameterized Builds
-If you want to manually build the job, in the job setting check ``This build is parameterized`` and add string parameter named ``sha1`` with a default value of ``master``. When starting build give the ``sha1`` parameter commit id you want to build or refname (eg: ``origin/pr/9/head``).
+If you want to manually build the job, in the job setting check `This build is parameterized` and add string parameter named `sha1` with a default value of `master`. When starting build give the `sha1` parameter commit id you want to build or refname (eg: `origin/pr/9/head`).
 
 ### Job DSL Support
 

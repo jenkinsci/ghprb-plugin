@@ -31,27 +31,36 @@ public abstract class GhprbITBaseTestCase {
 
     @Mock
     protected GHCommitPointer commitPointer;
+
     @Mock
     protected GHPullRequest ghPullRequest;
+
     @Mock
     protected GhprbGitHub ghprbGitHub;
+
     @Mock
     protected GHRepository ghRepository;
+
     @Mock
     protected GHUser ghUser;
+
     @Mock
     protected Ghprb helper;
+
     @Mock
     protected GhprbPullRequest ghprbPullRequest;
-    
+
     protected GhprbBuilds builds;
-    
+
     protected GhprbTrigger trigger;
 
-    // Stubs
     protected GHRateLimit ghRateLimit = new GHRateLimit();
 
-    protected void beforeTest(Map<String, Object> globalConfig, Map<String, Object> triggerConfig, AbstractProject<?, ?> project) throws Exception {
+    protected void beforeTest(
+            Map<String, Object> globalConfig,
+            Map<String, Object> triggerConfig,
+            AbstractProject<?, ?> project
+    ) throws Exception {
         project.addProperty(new GithubProjectProperty("https://github.com/user/dropwizard"));
         GhprbTestUtil.setupGhprbTriggerDescriptor(globalConfig);
 
@@ -71,7 +80,9 @@ public abstract class GhprbITBaseTestCase {
 
         GhprbTestUtil.mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
 
-        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(newArrayList(ghPullRequest)).willReturn(newArrayList(ghPullRequest));
+        given(ghRepository.getPullRequests(eq(GHIssueState.OPEN)))
+                .willReturn(newArrayList(ghPullRequest))
+                .willReturn(newArrayList(ghPullRequest));
         given(ghRepository.getPullRequest(Mockito.anyInt())).willReturn(ghPullRequest);
 
         given(ghUser.getEmail()).willReturn("email@email.com");

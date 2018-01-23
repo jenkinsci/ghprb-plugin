@@ -35,8 +35,8 @@ public class GhprbBuildStatus extends GhprbExtension implements GhprbCommentAppe
 
         List<GhprbBuildResultMessage> messages = getDescriptor().getMessagesDefault(this);
 
-        for (GhprbBuildResultMessage messager : messages) {
-            msg.append(messager.postBuildComment(build, listener));
+        for (GhprbBuildResultMessage message : messages) {
+            msg.append(message.postBuildComment(build, listener));
         }
 
         return msg.toString();

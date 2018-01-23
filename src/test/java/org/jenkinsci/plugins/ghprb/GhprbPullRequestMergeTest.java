@@ -3,7 +3,11 @@ package org.jenkinsci.plugins.ghprb;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.FreeStyleProject;
+import hudson.model.ItemGroup;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger.DescriptorImpl;
@@ -13,8 +17,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.github.*;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitUser;
+import org.kohsuke.github.PagedIterable;
+import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -28,12 +38,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbPullRequestMergeTest {
@@ -42,25 +55,33 @@ public class GhprbPullRequestMergeTest {
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
     private FreeStyleProject project = mock(FreeStyleProject.class);
+
     private Run<?, ?> build = mock(Run.class);
 
     @Mock
     private GhprbPullRequest pullRequest;
+
     @Mock
     private GHPullRequest pr;
 
     @Mock
     private GitUser committer;
+
     @Mock
     private GHUser triggerSender;
+
     @Mock
     private GHUser prCreator;
+
     @Mock
     private GhprbCause cause;
+
     @Mock
     private Ghprb helper;
+
     @Mock
     private GhprbRepository repo;
+
     @Mock
     private GHRepository ghRepo;
 
@@ -76,17 +97,21 @@ public class GhprbPullRequestMergeTest {
     private FilePath mockFilePath;
 
     private final String triggerPhrase = "ok to merge";
+
     private final String nonTriggerPhrase = "This phrase is not the trigger phrase";
 
     private final String adminList = "admin";
 
     private final String adminLogin = "admin";
+
     private final String nonAdminLogin = "nonadmin";
 
     private final String committerName = "committer";
+
     private final String nonCommitterName = "noncommitter";
-    
+
     private final String committerEmail = "committer@mail.com";
+
     private final String nonCommitterEmail = "noncommitter@mail.com";
 
     private final String mergeComment = "merge";
@@ -104,12 +129,12 @@ public class GhprbPullRequestMergeTest {
         triggerValues = new HashMap<String, Object>(10);
         triggerValues.put("adminlist", adminList);
         triggerValues.put("triggerPhrase", triggerPhrase);
-        
+
         final GhprbTrigger trigger = GhprbTestUtil.getTrigger(triggerValues);
         Mockito.doReturn(repo).when(trigger).getRepository();
 
         ConcurrentMap<Integer, GhprbPullRequest> pulls = new ConcurrentHashMap<Integer, GhprbPullRequest>(1);
-        
+
         pulls.put(pullId, pullRequest);
         Map<String, ConcurrentMap<Integer, GhprbPullRequest>> jobs = new HashMap<String, ConcurrentMap<Integer, GhprbPullRequest>>(1);
         jobs.put("project", pulls);
@@ -119,8 +144,7 @@ public class GhprbPullRequestMergeTest {
         repo.addPullRequests(pulls);
         Mockito.doReturn(pullRequest).when(repo).getPullRequest(pullId);
         Mockito.doReturn(pr).when(repo).getActualPullRequest(pullId);
-        
-        
+
         GithubProjectProperty projectProperty = new GithubProjectProperty("https://github.com/jenkinsci/ghprb-plugin");
         DescriptorImpl descriptor = trigger.getDescriptor();
 
@@ -129,7 +153,7 @@ public class GhprbPullRequestMergeTest {
         given(parent.getFullName()).willReturn("");
 
         Map<TriggerDescriptor, Trigger<?>> map = new HashMap<TriggerDescriptor, Trigger<?>>();
-        map.put(descriptor,trigger);
+        map.put(descriptor, trigger);
 
         given(project.getParent()).willReturn(parent);
         given(project.getTriggers()).willReturn(map);
@@ -172,12 +196,18 @@ public class GhprbPullRequestMergeTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void setupConditions(String prUserLogin, String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
+    private void setupConditions(
+            String prUserLogin,
+            String triggerLogin,
+            String committerName,
+            String committerEmail,
+            String comment
+    ) throws IOException {
         given(triggerSender.getLogin()).willReturn(triggerLogin);
         given(triggerSender.getName()).willReturn(committerName);
         given(triggerSender.getEmail()).willReturn(committerEmail);
         given(committer.getName()).willReturn(this.committerName);
-        
+
         given(prCreator.getLogin()).willReturn(prUserLogin);
         given(pr.getUser()).willReturn(prCreator);
 
@@ -199,22 +229,22 @@ public class GhprbPullRequestMergeTest {
 
         given(cause.getCommentBody()).willReturn(comment);
     }
-    
+
     private void setupConditions(String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
         setupConditions(nonCommitterName, triggerLogin, committerName, committerEmail, comment);
     }
-    
+
     private GhprbPullRequestMerge setupMerger(
-            boolean onlyAdminsMerge, 
+            boolean onlyAdminsMerge,
             boolean disallowOwnCode,
             boolean failOnNonMerge,
             boolean deleteOnMerge,
             boolean allowMergeWithoutTriggerPhrase
-            ) {
+    ) {
 
         GhprbPullRequestMerge merger = spy(new GhprbPullRequestMerge(
-                mergeComment, 
-                onlyAdminsMerge, 
+                mergeComment,
+                onlyAdminsMerge,
                 disallowOwnCode,
                 failOnNonMerge,
                 deleteOnMerge,
@@ -227,7 +257,7 @@ public class GhprbPullRequestMergeTest {
     }
 
     private GhprbPullRequestMerge setupMerger(
-            boolean onlyAdminsMerge, 
+            boolean onlyAdminsMerge,
             boolean disallowOwnCode) {
         return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false, false);
     }
@@ -359,7 +389,7 @@ public class GhprbPullRequestMergeTest {
         setupConditions(nonAdminLogin, nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
-        
+
         setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(0)).merge(mergeComment);
@@ -367,7 +397,5 @@ public class GhprbPullRequestMergeTest {
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
-        
     }
-
 }
