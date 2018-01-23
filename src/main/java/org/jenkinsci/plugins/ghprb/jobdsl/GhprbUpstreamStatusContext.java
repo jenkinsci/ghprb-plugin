@@ -9,11 +9,17 @@ import java.util.List;
 
 class GhprbUpstreamStatusContext implements Context {
     Boolean showMatrixStatus = false;
+
     String context;
+
     String triggeredStatus;
+
     String startedStatus;
+
     String statusUrl;
+
     Boolean addTestResults;
+
     List<GhprbBuildResultMessage> completedStatus = new ArrayList<GhprbBuildResultMessage>();
 
     /**
@@ -57,7 +63,7 @@ class GhprbUpstreamStatusContext implements Context {
     void statusUrl(String statusUrl) {
         this.statusUrl = statusUrl;
     }
-    
+
     /**
      * Add the test results as one line if available
      */

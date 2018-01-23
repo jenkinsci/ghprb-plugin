@@ -2,12 +2,11 @@ package org.jenkinsci.plugins.ghprb.upstream;
 
 import hudson.Extension;
 import hudson.Launcher;
+import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Environment;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
 import hudson.model.listeners.RunListener;
-
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbGitHubAuth;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
@@ -29,21 +28,23 @@ import java.util.logging.Logger;
  * This class is responsible for sending the custom status and message on
  * downstream jobs that have the option configured.
  */
-
 @Extension
 public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>> {
-    private static final Logger logger = Logger.getLogger(GhprbUpstreamStatusListener.class.getName());
-    
+
+    private static final Logger LOGGER = Logger.getLogger(GhprbUpstreamStatusListener.class.getName());
+
+    private static final int INITIAL_CAPACITY = 5;
+
     private GHRepository repo;
 
     // Gets all the custom env vars needed to send information to GitHub
-    private Map<String, String> returnEnvironmentVars(AbstractBuild<?, ?> build, TaskListener listener){
+    private Map<String, String> returnEnvironmentVars(AbstractBuild<?, ?> build, TaskListener listener) {
         Map<String, String> envVars = Ghprb.getEnvVars(build, listener);
 
         if (!envVars.containsKey("ghprbUpstreamStatus")) {
             return null;
-        }        
-        
+        }
+
         GhprbGitHubAuth auth = GhprbTrigger.getDscp()
                 .getGitHubAuth(envVars.get("ghprbCredentialsId"));
 
@@ -52,14 +53,14 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
             repo = gh.getRepository(envVars.get("ghprbGhRepository"));
             return envVars;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unable to connect to GitHub repo", e);
+            LOGGER.log(Level.SEVERE, "Unable to connect to GitHub repo", e);
             return null;
         }
-        
+
     }
 
     private GhprbSimpleStatus returnGhprbSimpleStatus(Map<String, String> envVars) {
-        List<GhprbBuildResultMessage> statusMessages = new ArrayList<GhprbBuildResultMessage>(5);
+        List<GhprbBuildResultMessage> statusMessages = new ArrayList<GhprbBuildResultMessage>(INITIAL_CAPACITY);
 
         for (GHCommitState state : GHCommitState.values()) {
             String envVar = String.format("ghprb%sMessage", state.name());
@@ -83,7 +84,7 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
     public Environment setUpEnvironment(@SuppressWarnings("rawtypes") AbstractBuild build, Launcher launcher, BuildListener listener) {
         Map<String, String> envVars = returnEnvironmentVars(build, listener);
         if (envVars != null) {
-            logger.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
+            LOGGER.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
 
             try {
                 returnGhprbSimpleStatus(envVars).onEnvironmentSetup(build, listener, repo);
@@ -92,7 +93,8 @@ public class GhprbUpstreamStatusListener extends RunListener<AbstractBuild<?, ?>
             }
         }
 
-        return new Environment(){};
+        return new Environment() {
+        };
     }
 
     @Override

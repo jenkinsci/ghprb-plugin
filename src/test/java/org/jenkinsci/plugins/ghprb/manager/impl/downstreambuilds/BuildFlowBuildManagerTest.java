@@ -1,27 +1,23 @@
 package org.jenkinsci.plugins.ghprb.manager.impl.downstreambuilds;
 
-import static org.fest.assertions.Assertions.assertThat;
-
-import static org.mockito.BDDMockito.given;
-
 import com.cloudbees.plugins.flow.BuildFlow;
 import com.cloudbees.plugins.flow.FlowRun;
 import com.cloudbees.plugins.flow.JobInvocation;
-
-import java.util.Iterator;
-
 import org.jenkinsci.plugins.ghprb.GhprbITBaseTestCase;
 import org.jenkinsci.plugins.ghprb.GhprbTestUtil;
 import org.jenkinsci.plugins.ghprb.manager.GhprbBuildManager;
 import org.jenkinsci.plugins.ghprb.manager.factory.GhprbBuildManagerFactoryUtil;
 import org.jenkinsci.plugins.ghprb.rules.JenkinsRuleWithBuildFlow;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Iterator;
+
+import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 
 /**
  * @author mdelapenya (Manuel de la Peña)
@@ -31,12 +27,12 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
 
     @Rule
     public JenkinsRuleWithBuildFlow jenkinsRule = new JenkinsRuleWithBuildFlow();
-    
+
     private BuildFlow buildFlowProject;
 
     @Before
     public void setUp() throws Exception {
-        
+
         buildFlowProject = jenkinsRule.createBuildFlowProject();
 
         jenkinsRule.createFreeStyleProject("downstreamProject1");
@@ -62,7 +58,6 @@ public class BuildFlowBuildManagerTest extends GhprbITBaseTestCase {
     @Test
     public void shouldCalculateUrlWithDownstreamBuilds() throws Exception {
         // GIVEN
-
         GhprbTestUtil.triggerRunAndWait(10, trigger, buildFlowProject);
 
         // THEN

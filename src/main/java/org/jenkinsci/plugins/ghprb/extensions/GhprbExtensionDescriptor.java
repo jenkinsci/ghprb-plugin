@@ -1,20 +1,18 @@
 package org.jenkinsci.plugins.ghprb.extensions;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
+import hudson.DescriptorExtensionList;
+import hudson.model.Descriptor;
+import jenkins.model.Jenkins;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.commons.collections.functors.InstanceofPredicate;
 
-import jenkins.model.Jenkins;
-import hudson.DescriptorExtensionList;
-import hudson.model.Descriptor;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 @SuppressWarnings("unchecked")
 public abstract class GhprbExtensionDescriptor extends Descriptor<GhprbExtension> {
-
     public boolean isApplicable(Class<?> type) {
         return true;
     }
@@ -40,13 +38,14 @@ public abstract class GhprbExtensionDescriptor extends Descriptor<GhprbExtension
             }
         }
     }
-    
+
     private static DescriptorExtensionList<GhprbExtension, GhprbExtensionDescriptor> getExtensionList() {
         return Jenkins.getInstance().getDescriptorList(GhprbExtension.class);
     }
-    
+
     /**
      * Don't mutate the list from Jenkins, they will persist;
+     *
      * @return list of extensions
      */
     private static List<GhprbExtensionDescriptor> getExtensions() {

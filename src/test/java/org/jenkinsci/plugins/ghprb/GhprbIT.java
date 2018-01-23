@@ -44,7 +44,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
     private FreeStyleProject project;
 
     @Before
-    public void setUp() throws Exception {// GIVEN
+    public void setUp() throws Exception {
         req = Mockito.mock(RequestImpl.class);
 
         given(req.bindJSON(any(Class.class), any(JSONObject.class))).willCallRealMethod();
@@ -73,8 +73,8 @@ public class GhprbIT extends GhprbITBaseTestCase {
     public void shouldBuildTriggersOnUpdatingNewCommitsPR() throws Exception {
         // GIVEN
         given(commitPointer.getSha()).willReturn("sha").willReturn("newOne").willReturn("newOne");
-        given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment> newArrayList());
-        
+        given(ghPullRequest.getComments()).willReturn(Lists.<GHIssueComment>newArrayList());
+
         given(ghPullRequest.getNumber()).willReturn(2).willReturn(2).willReturn(3).willReturn(3);
 
         // Also verify that uniquely different builds do not get commingled
@@ -115,13 +115,14 @@ public class GhprbIT extends GhprbITBaseTestCase {
         given(comment.getUser()).willReturn(ghUser);
         given(ghPullRequest.getComments()).willReturn(newArrayList(comment));
         given(ghPullRequest.getNumber()).willReturn(5);
-        
+
         project.disable();
 
         GhprbTestUtil.triggerRunAndWait(10, trigger, project);
         assertThat(project.getBuilds().toArray().length).isEqualTo(0);
-        
-        Mockito.verify(ghRepository, Mockito.times(0)).createCommitStatus(any(String.class), any(GHCommitState.class), any(String.class), any(String.class));
+
+        Mockito.verify(ghRepository, Mockito.times(0))
+                .createCommitStatus(any(String.class), any(GHCommitState.class), any(String.class), any(String.class));
     }
 
     @Test
@@ -164,7 +165,7 @@ public class GhprbIT extends GhprbITBaseTestCase {
 
     @Test
     public void triggerIsRemovedFromListWhenProjectChanges() {
-        
+
     }
 
 }
