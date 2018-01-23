@@ -34,13 +34,13 @@
             <timezone>America/Los_Angeles</timezone>
         </developer>
     </developers>
+
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/ghprb-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/ghprb-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/ghprb-plugin</url>
         <tag>HEAD</tag>
     </scm>
-
 
     <issueManagement>
         <system>GitHub</system>
@@ -57,6 +57,18 @@
         <checkstyle.version>6.7</checkstyle.version>
         <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
     </properties>
+
+    <!--
+        Activate profiles which override properties.
+    -->
+    <profiles>
+        <profile>
+            <id>release</id>
+            <properties>
+                <checkstyle.skip>true</checkstyle.skip>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
 
@@ -219,6 +231,10 @@
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5</version>
+                <configuration>
+                    <!-- During release:perform, enable the "release" profile -->
+                    <releaseProfiles>release</releaseProfiles>
+                </configuration>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.scm</groupId>
