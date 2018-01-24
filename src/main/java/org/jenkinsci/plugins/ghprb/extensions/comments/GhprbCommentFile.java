@@ -49,7 +49,10 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
                     if (path.exists()) {
                         content = path.readToString();
                     } else {
-                        listener.getLogger().println("Didn't find comment file in workspace at "+path.absolutize().getRemote()+", falling back to file operations on master.");
+                        listener.getLogger().println(
+                            "Didn't find comment file in workspace at " + path.absolutize().getRemote()
+                            + ", falling back to file operations on master."
+                        );
                     }
                 }
 
@@ -62,12 +65,12 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
                 msg.append("\n--------------\n");
             } catch (IOException e) {
                 msg.append("\n!!! Couldn't read commit file !!!\n");
-                listener.getLogger().println("Couldn't read comment file at "+scriptFilePathResolved);
+                listener.getLogger().println("Couldn't read comment file at " + scriptFilePathResolved);
                 e.printStackTrace(listener.getLogger());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();  // set interrupt flag
                 msg.append("\n!!! Couldn't read commit file !!!\n");
-                listener.getLogger().println("Reading comment file at "+scriptFilePathResolved+" was interrupted");
+                listener.getLogger().println("Reading comment file at " + scriptFilePathResolved + " was interrupted");
                 e.printStackTrace(listener.getLogger());
             }
         }
