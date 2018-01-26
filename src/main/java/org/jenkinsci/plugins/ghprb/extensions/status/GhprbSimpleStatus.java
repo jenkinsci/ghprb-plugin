@@ -132,11 +132,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         if (!StringUtils.isEmpty(triggeredStatus)) {
             sb.append(Ghprb.replaceMacros(project, triggeredStatus));
         } else {
-            sb.append("Build triggered.");
+            sb.append("Build triggered");
             if (isMergeable) {
-                sb.append(" sha1 is merged.");
+                sb.append(" for merge commit.");
             } else {
-                sb.append(" sha1 is original commit.");
+                sb.append(" for original commit.");
             }
         }
 
@@ -184,7 +184,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         if (StringUtils.isEmpty(startedStatus)) {
             sb.append("Build started");
             if (c != null) {
-                sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
+                sb.append(c.isMerged() ? " for merge commit." : " for original commit.");
             }
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
