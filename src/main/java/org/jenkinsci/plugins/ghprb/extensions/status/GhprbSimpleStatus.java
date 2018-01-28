@@ -35,9 +35,9 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    public static final DescriptorImpl /*GhprbSimpleStatusDescriptor*/ DESCRIPTOR = new DescriptorImpl();
 
-    private final String commitStatusContext;
+    private String commitStatusContext;
 
     private final Boolean showMatrixStatus;
 
@@ -124,7 +124,9 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         }
 
         String statusUrl = getDescriptor().getStatusUrlDefault(this);
-        String commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        if (commitStatusContext == "") {
+            commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        }
 
         String context = Util.fixEmpty(commitStatusContext);
         context = Ghprb.replaceMacros(project, context);
@@ -285,11 +287,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements
     }
 
     @Override
-    public DescriptorImpl getDescriptor() {
+    public DescriptorImpl /*GhprbSimpleStatusDescriptor*/ getDescriptor() {
         return DESCRIPTOR;
     }
 
-    public static final class DescriptorImpl extends GhprbExtensionDescriptor
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor /*GhprbSimpleStatusDescriptor*/
             implements GhprbGlobalExtension, GhprbProjectExtension {
 
         @Override
