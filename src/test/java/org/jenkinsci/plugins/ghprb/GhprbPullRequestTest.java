@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHCommitPointer;
+import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHRepository;
@@ -12,8 +13,10 @@ import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.OngoingStubbing;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,8 +28,9 @@ import java.util.regex.Pattern;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -38,7 +42,8 @@ import static org.mockito.Mockito.when;
 /**
  * Unit test for {@link org.jenkinsci.plugins.ghprb.GhprbPullRequest}.
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({GhprbPullRequest.class})
 public class GhprbPullRequestTest {
 
     @Mock
@@ -64,6 +69,9 @@ public class GhprbPullRequestTest {
 
     @Mock
     private GhprbBuilds builds;
+
+    @Mock
+    private GHIssueComment ghIssueComment;
 
     @Before
     public void setup() throws IOException {
@@ -122,6 +130,9 @@ public class GhprbPullRequestTest {
 
         given(pr.getHead()).willReturn(head);
         given(pr.getUser()).willReturn(ghUser);
+
+        given(pr.getComments()).willReturn(new ArrayList<GHIssueComment>(Arrays.asList(ghIssueComment)));
+        given(ghIssueComment.getBody()).willReturn("My phrase: request for testing");
 
         // Mocks for Ghprb
         given(helper.isWhitelisted(ghUser)).willReturn(true);
@@ -333,5 +344,19 @@ public class GhprbPullRequestTest {
 
         // THEN
         assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(false);
+    }
+
+    @Test
+    public void shouldNotAddDuplicateRequestForTestingComment() throws Exception {
+        PowerMockito.mockStatic(GhprbPullRequest.class);
+        // GIVEN
+        given(GhprbPullRequest.getRequestForTestingPhrase()).willReturn("My phrase: request for testing");
+        given(helper.isWhitelisted(ghUser)).willReturn(false);
+
+        // WHEN
+        new GhprbPullRequest(pr, helper, repo);
+
+        // THEN
+        verify(repo, never()).addComment(anyInt(), anyString());
     }
 }

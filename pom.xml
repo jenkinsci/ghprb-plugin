@@ -52,6 +52,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <workflow.version>1.4</workflow.version>
         <jenkins.version>2.7</jenkins.version>
+        <powermock.version>1.6.2</powermock.version>
         <java.level>7</java.level>
         <findbugs.failOnError>false</findbugs.failOnError>
         <checkstyle.version>6.7</checkstyle.version>
@@ -164,6 +165,18 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
