@@ -72,7 +72,7 @@ public class GhprbRepositoryTest {
 
     private static final Date UPDATE_DATE = new Date();
 
-    private static final String MSG = "Build triggered. sha1 is merged.";
+    private static final String MSG = "Build triggered for merge commit.";
 
     @Mock
     private GHRepository ghRepository;

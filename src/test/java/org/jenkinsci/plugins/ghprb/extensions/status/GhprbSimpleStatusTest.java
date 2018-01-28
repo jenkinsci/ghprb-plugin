@@ -59,7 +59,7 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
 
     @Test
     public void testMergedMessage() throws Exception {
-        String mergedMessage = "Build triggered. sha1 is merged.";
+        String mergedMessage = "Build triggered for merge commit.";
         given(ghprbPullRequest.getHead()).willReturn("sha");
         given(ghprbPullRequest.isMergeable()).willReturn(true);
 
@@ -74,7 +74,7 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
 
     @Test
     public void testMergeConflictMessage() throws Exception {
-        String mergedMessage = "Build triggered. sha1 is original commit.";
+        String mergedMessage = "Build triggered for original commit.";
         given(ghprbPullRequest.getHead()).willReturn("sha");
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
@@ -89,7 +89,7 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
 
     @Test
     public void testDoesNotSendEmptyContext() throws Exception {
-        String mergedMessage = "Build triggered. sha1 is original commit.";
+        String mergedMessage = "Build triggered for original commit.";
         given(ghprbPullRequest.getHead()).willReturn("sha");
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
