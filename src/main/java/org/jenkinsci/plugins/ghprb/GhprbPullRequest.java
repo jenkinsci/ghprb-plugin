@@ -367,6 +367,8 @@ public class GhprbPullRequest {
                 // check that comment.  Otherwise check the full set since the last
                 // time we updated (which might have just happened).
                 int commentsChecked = 0;
+                //Setting to null fixes ghprbCommentBody containing stale values; ref https://github.com/jenkinsci/ghprb-plugin/pull/504
+                commentBody = null;
                 if (wasUpdated && (!isWebhook || !initialCommentCheckDone)) {
                     initialCommentCheckDone = true;
                     commentsChecked = checkComments(pullRequest, lastUpdateTime);
