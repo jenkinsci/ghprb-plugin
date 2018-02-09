@@ -14,14 +14,14 @@ import org.kohsuke.github.GHRepository;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.ArrayList;
+
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-
-import java.util.ArrayList;
 // Needed for testing commit context
 /*
 import hudson.Extension;
@@ -149,7 +149,7 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
 
     @Test
     public void testUseDefaultContext() throws Exception {
-        String mergedMessage = "Build triggered. sha1 is original commit.";
+        String mergedMessage = "Build triggered for original commit.";
         String statusUrl = "http://someserver.com";
         String context = "testing context";
         given(ghprbPullRequest.getHead()).willReturn("sha");
