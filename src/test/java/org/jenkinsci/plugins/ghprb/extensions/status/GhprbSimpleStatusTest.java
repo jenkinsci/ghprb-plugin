@@ -22,19 +22,6 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-// Needed for testing commit context
-/*
-import hudson.Extension;
-import hudson.model.TaskListener;
-import hudson.model.FreeStyleProject;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalExtension;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbProjectExtension;
-import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
-import java.util.ArrayList;
-import java.util.List;
-*/
 
 @RunWith(MockitoJUnitRunner.class)
 public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extensions.GhprbExtension {
@@ -49,8 +36,6 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
     private GhprbPullRequest ghprbPullRequest;
 
     private GhprbTrigger trigger;
-
-    //private FreeStyleProject project;
 
     @Before
     public void setUp() throws Exception {
@@ -102,51 +87,6 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
         verifyNoMoreInteractions(ghprbPullRequest);
     }
 
-    /*
-    public static final GhprbSimpleStatusDescriptor TEST_DESCRIPTOR = new DescriptorImpl();
-
-    public static final class DescriptorImpl extends GhprbSimpleStatusDescriptor
-                                             implements GhprbGlobalExtension, GhprbProjectExtension {
-
-        @Override
-        public String getDisplayName() {
-            return "Update commit status during build";
-        }
-
-        public String getTriggeredStatusDefault(GhprbSimpleStatus local) {
-            return "Build triggered. sha1 is original commit.";
-        }
-
-        public String getStatusUrlDefault(GhprbSimpleStatus local) {
-            return "http://someserver.com";
-        }
-
-        public String getStartedStatusDefault(GhprbSimpleStatus local) {
-            return "getStartedStatus";
-        }
-
-        public Boolean getAddTestResultsDefault(GhprbSimpleStatus local) {
-            return true;
-        }
-
-        public List<GhprbBuildResultMessage> getCompletedStatusDefault(GhprbSimpleStatus local) {
-            return new ArrayList<GhprbBuildResultMessage>(0);
-        }
-
-        public String getCommitStatusContextDefault(GhprbSimpleStatus local) {
-            return "testing context";
-        }
-
-        public Boolean getShowMatrixStatusDefault(GhprbSimpleStatus local){
-            return true;
-        }
-
-        public boolean addIfMissing() {
-            return false;
-        }
-
-    } */
-
     @Test
     public void testUseDefaultContext() throws Exception {
         String mergedMessage = "Build triggered for original commit.";
@@ -156,19 +96,14 @@ public class GhprbSimpleStatusTest extends org.jenkinsci.plugins.ghprb.extension
         given(ghprbPullRequest.isMergeable()).willReturn(false);
 
         GhprbSimpleStatus globalStatus =
-            new GhprbSimpleStatus(true, context, statusUrl, "test1", "test2", false, new ArrayList<GhprbBuildResultMessage>(0));
+                new GhprbSimpleStatus(true, context, statusUrl, "test1", "test2", false, new ArrayList<GhprbBuildResultMessage>(0));
         GhprbTrigger.getDscp().getExtensions().add(globalStatus);
-        GhprbTrigger localTrigger = GhprbTestUtil.getTrigger(null);
 
         GhprbSimpleStatus status = new GhprbSimpleStatus("");
         GhprbSimpleStatus statusSpy = spy(status);
 
         statusSpy.onBuildTriggered(trigger.getActualProject(), "sha", false, 1, ghRepository);
-        //verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(statusUrl), eq(mergedMessage), eq(context));
         verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(""), eq(mergedMessage), isNull(String.class));
-
-        //statusSpy.onBuildStart(<what goes here>, <can listener be null>, ghRepository);
-        //verify(ghRepository).createCommitStatus(eq("sha"), eq(GHCommitState.PENDING), eq(statusUrl), eq(mergedMessage), eq(context));
 
         verifyNoMoreInteractions(ghRepository);
 
