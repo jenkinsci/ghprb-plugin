@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHCommitPointer;
+import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
@@ -28,13 +29,15 @@ import java.util.regex.Pattern;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -344,6 +347,68 @@ public class GhprbPullRequestTest {
 
         // THEN
         assertThat(ghprbPullRequest.containsWatchedPaths(pr)).isEqualTo(false);
+    }
+
+    @Test
+    public void testSkipBuildForWatchedPathsNotCalledWhenIncluded() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = spy(new GhprbPullRequest(pr, helper, repo));
+
+        // WHEN
+        ghprbPullRequest.tryBuild();
+
+        // THEN
+        verify(ghprbPullRequest, never()).skipBuildForWatchedPaths();
+    }
+
+    @Test
+    public void testSkipBuildForWatchedPathsCalledWhenExcluded() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = spy(new GhprbPullRequest(pr, helper, repo));
+        // Mockito throws exception if getExcludedRegionPatterns is not stubbed.
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("")));
+        given(ghprbPullRequest.containsWatchedPaths(pr)).willReturn(false);
+
+        // WHEN
+        ghprbPullRequest.tryBuild();
+
+        // THEN
+        verify(ghprbPullRequest).skipBuildForWatchedPaths();
+    }
+
+    @Test
+    public void testSuccessPostedWhenBuildSkippedForNoWatchedPaths() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = spy(new GhprbPullRequest(pr, helper, repo));
+        // Mockito throws exception if getExcludedRegionPatterns is not stubbed.
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("")));
+        given(helper.getReportSuccessIfNotRegion()).willReturn(true);
+        doNothing().when(ghprbPullRequest).createCommitStatus(isA(GHCommitState.class), isA(String.class));
+        given(ghprbPullRequest.containsWatchedPaths(pr)).willReturn(false);
+
+        // WHEN
+        ghprbPullRequest.tryBuild();
+
+        // THEN
+        verify(ghprbPullRequest).skipBuildForWatchedPaths();
+        verify(ghprbPullRequest).createCommitStatus(any(GHCommitState.class), anyString());
+    }
+
+    @Test
+    public void testNothingPostedWhenBuildSkippedForNoWatchedPaths() {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = spy(new GhprbPullRequest(pr, helper, repo));
+        // Mockito throws exception if getExcludedRegionPatterns is not stubbed.
+        given(helper.getExcludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("")));
+        given(helper.getReportSuccessIfNotRegion()).willReturn(false);
+        given(ghprbPullRequest.containsWatchedPaths(pr)).willReturn(false);
+
+        // WHEN
+        ghprbPullRequest.tryBuild();
+
+        // THEN
+        verify(ghprbPullRequest).skipBuildForWatchedPaths();
+        verify(ghprbPullRequest, never()).createCommitStatus(any(GHCommitState.class), anyString());
     }
 
     @Test
