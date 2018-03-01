@@ -1,5 +1,7 @@
 ### Updates
 
+* Feature: Enable commentFilePath in the DSL (#514)
+
 #### -> 1.40.0
 
 * Feature: Disable register hooks on startup via property

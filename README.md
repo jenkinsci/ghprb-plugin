@@ -144,6 +144,7 @@ job('upstreamJob') {
             permitAll()
             autoCloseFailedPullRequests()
             displayBuildErrorsOnDownstreamBuilds()
+            commentFilePath("relative/path/to/file")
             whiteListTargetBranches(['master','test', 'test2'])
             blackListTargetBranches(['master','test', 'test2'])
             whiteListLabels(['foo', 'bar'])
