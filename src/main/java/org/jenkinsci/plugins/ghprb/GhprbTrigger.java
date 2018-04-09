@@ -214,7 +214,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
 
         if (commentFilePath != null) {
-          extensions.add(new GhprbCommentFile(commentFilePath));
+            extensions.add(new GhprbCommentFile(commentFilePath));
         }
 
         this.skipBuildPhrase = skipBuildPhrase;
