@@ -1,4 +1,4 @@
-# GitHub Pull Request Builder Plugin
+# GitHub Pull Request Builder Plugin - ITHAKA fork
 
 This Jenkins plugin builds pull requests from GitHub and will report the results directly to the pull request via
 the [GitHub Commit Status API](http://developer.github.com/v3/repos/statuses/)
