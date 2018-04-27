@@ -59,10 +59,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
                 if (content == null) {
                     content = FileUtils.readFileToString(new File(scriptFilePathResolved));
                 }
-
-                msg.append("Build comment file: \n--------------\n");
                 msg.append(content);
-                msg.append("\n--------------\n");
             } catch (IOException e) {
                 msg.append("\n!!! Couldn't read commit file !!!\n");
                 listener.getLogger().println("Couldn't read comment file at " + scriptFilePathResolved);
