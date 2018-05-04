@@ -115,6 +115,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     private Boolean displayBuildErrorsOnDownstreamBuilds;
 
+    private Boolean dontPublishTestingPhrase;
+
     private List<GhprbBranch> whiteListTargetBranches;
 
     private List<GhprbBranch> blackListTargetBranches;
@@ -183,6 +185,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                         Boolean permitAll,
                         Boolean autoCloseFailedPullRequests,
                         Boolean displayBuildErrorsOnDownstreamBuilds,
+                        Boolean dontPublishTestingPhrase,
                         String commentFilePath,
                         String skipBuildPhrase,
                         String blackListCommitAuthor,
@@ -211,6 +214,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
+        this.dontPublishTestingPhrase = dontPublishTestingPhrase;
         this.skipBuildPhrase = skipBuildPhrase;
         this.blackListCommitAuthor = blackListCommitAuthor;
         this.whiteListTargetBranches = whiteListTargetBranches;
@@ -794,6 +798,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
 
+        private Boolean dontPublishTestingPhrase = false;
+
         private String blackListLabels;
 
         private String whiteListLabels;
@@ -911,6 +917,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
+            dontPublishTestingPhrase = formData.getBoolean("dontPublishTestingPhrase");
             blackListLabels = formData.getString("blackListLabels");
             whiteListLabels = formData.getString("whiteListLabels");
 
@@ -1014,6 +1021,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Boolean getDisplayBuildErrorsOnDownstreamBuilds() {
             return displayBuildErrorsOnDownstreamBuilds;
+        }
+
+        public Boolean getDontPublishTestingPhrase() {
+            return dontPublishTestingPhrase;
         }
 
         public GHCommitState getUnstableAs() {

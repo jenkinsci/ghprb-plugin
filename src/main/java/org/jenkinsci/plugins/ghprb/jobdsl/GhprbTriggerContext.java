@@ -42,6 +42,8 @@ class GhprbTriggerContext implements Context {
 
     boolean displayBuildErrorsOnDownstreamBuilds;
 
+    boolean dontPublishTestingPhrase;
+
     String buildDescriptionTemplate;
 
     String includedRegions;
@@ -275,6 +277,20 @@ class GhprbTriggerContext implements Context {
      */
     public void displayBuildErrorsOnDownstreamBuilds() {
         displayBuildErrorsOnDownstreamBuilds(true);
+    }
+
+    /**
+     * Disallow this job to comment on github asking for the testing phrase
+     */
+    public void dontPublishTestingPhrase(boolean dontPublishTestingPhrase) {
+        this.dontPublishTestingPhrase = dontPublishTestingPhrase;
+    }
+
+    /**
+     * Disallow this job to comment on github asking for the testing phrase
+     */
+    public void dontPublishTestingPhrase(boolean dontPublishTestingPhrase) {
+        dontPublishTestingPhrase(false);
     }
 
     /**
