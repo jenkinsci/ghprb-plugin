@@ -27,6 +27,9 @@ f.advanced() {
   f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
     f.checkbox(default: descriptor.displayBuildErrorsOnDownstreamBuilds)
   }
+  f.entry(field: "dontPublishTestingPhrase", title: _("Do not publish request for testing phrase on github comments")) {
+    f.checkbox(default: descriptor.dontPublishTestingPhrase)
+  }
   f.entry(field: "cron", title: _("Crontab line"), help: "/descriptor/hudson.triggers.TimerTrigger/help/spec") {
     f.textbox(default: descriptor.cron, checkUrl: "'descriptorByName/hudson.triggers.TimerTrigger/checkSpec?value=' + encodeURIComponent(this.value)") 
   }

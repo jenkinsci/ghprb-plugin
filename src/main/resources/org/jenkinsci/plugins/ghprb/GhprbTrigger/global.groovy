@@ -28,6 +28,9 @@ f.section(title: descriptor.displayName) {
     f.entry(field: "displayBuildErrorsOnDownstreamBuilds", title: _("Display build errors on downstream builds?")) {
       f.checkbox() 
     }
+    f.entry(field: "dontPublishTestingPhrase", title: _("Do not publish request for testing phrase on github comments")) {
+      f.checkbox()
+    }
     f.entry(field: "requestForTestingPhrase", title: _("Request for testing phrase")) {
       f.textarea(default: "Can one of the admins verify this patch?") 
     }
