@@ -35,7 +35,6 @@ import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildLog;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildResultMessage;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
-import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbPublishJenkinsUrl;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.kohsuke.github.GHCommitState;
@@ -212,11 +211,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.permitAll = permitAll;
         this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
         this.displayBuildErrorsOnDownstreamBuilds = displayBuildErrorsOnDownstreamBuilds;
-
-        if (commentFilePath != null) {
-            extensions.add(new GhprbCommentFile(commentFilePath));
-        }
-
         this.skipBuildPhrase = skipBuildPhrase;
         this.blackListCommitAuthor = blackListCommitAuthor;
         this.whiteListTargetBranches = whiteListTargetBranches;

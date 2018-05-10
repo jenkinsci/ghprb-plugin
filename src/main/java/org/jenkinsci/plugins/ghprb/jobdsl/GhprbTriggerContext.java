@@ -42,8 +42,6 @@ class GhprbTriggerContext implements Context {
 
     boolean displayBuildErrorsOnDownstreamBuilds;
 
-    String commentFilePath;
-
     String buildDescriptionTemplate;
 
     String includedRegions;
@@ -277,20 +275,6 @@ class GhprbTriggerContext implements Context {
      */
     public void displayBuildErrorsOnDownstreamBuilds() {
         displayBuildErrorsOnDownstreamBuilds(true);
-    }
-
-    /**
-     * Pubilsh this comment file to the github PR
-     */
-    public void commentFilePath(String commentFilePath) {
-        this.commentFilePath = commentFilePath;
-    }
-
-    /**
-     * Pubilsh this comment file to the github PR
-     */
-    public void commentFilePath() {
-        commentFilePath("");
     }
 
     /**
