@@ -300,7 +300,7 @@ public class GhprbRepository implements Saveable {
                 Map<String, String> config = new HashMap<String, String>();
                 String secret = getSecret();
                 config.put("url", new URL(getHookUrl()).toExternalForm());
-                config.put("insecure_ssl", "1");
+                config.put("insecure_ssl", "0");
                 if (!StringUtils.isEmpty(secret)) {
                     config.put("secret", secret);
                 }
