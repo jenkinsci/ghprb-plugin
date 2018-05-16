@@ -38,14 +38,13 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * plain credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Plain+Credentials+Plugin)
 
 ### Pre-installation:
-* I recommend to create GitHub 'bot' user that will be used for communication with GitHub (however you can use your own account if you want).
-* The user needs to have push rights for your repository (must be collaborator (user repo) or must have Push & Pull rights (organization repo)).
-* If you want to use GitHub hooks have them set automatically the user needs to have administrator rights for your repository (must be owner (user repo) or must have Push, Pull & Administrative rights (organization repo))
+* I recommend to create a GitHub 'bot' user that will be used for communication with GitHub.
+* The user needs to have push rights for your repository (in a personal repository the user must be a collaborator and in an organization repo the user must have Push & Pull rights).
+* If you want to use GitHub hooks, have them set automatically, the user needs to have administrator rights for your repository ("owner" in a personal repo) or must have Push, Pull & Administrative rights (organization repo))
 
 ### Installation:
 * Install the plugin.
 * Go to `Manage Jenkins` -> `Configure System` -> `GitHub Pull Request Builder` section.
-
 * Add GitHub usernames of admins (these usernames will be used as defaults in new jobs).
 * Under Advanced, you can modify:
   * The phrase for adding users to the whitelist via comment. (Java regexp)
