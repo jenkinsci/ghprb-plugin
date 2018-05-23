@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb.jobdsl;
 import javaposse.jobdsl.dsl.Context;
 
 public class GhprbPullRequestMergeContext implements Context {
+
     String mergeComment;
 
     boolean onlyAdminsMerge;
@@ -14,6 +15,8 @@ public class GhprbPullRequestMergeContext implements Context {
     boolean deleteOnMerge;
 
     boolean allowMergeWithoutTriggerPhrase;
+
+    boolean onlyApprovedCode;
 
     /**
      * @param mergeComment Sets a comment that should show up when the merge command is sent to GitHub.
@@ -92,5 +95,19 @@ public class GhprbPullRequestMergeContext implements Context {
      */
     public void allowMergeWithoutTriggerPhrase() {
         allowMergeWithoutTriggerPhrase(false);
+    }
+
+    /**
+     * @param onlyApprovedCode Allows only approved changes to be merged. Defaults to {@code false}.
+     */
+    public void onlyApprovedCode(boolean onlyApprovedCode) {
+        this.onlyApprovedCode = onlyApprovedCode;
+    }
+
+    /**
+     * Allows only approved changes to be merged. Defaults to {@code false}.
+     */
+    public void onlyApprovedCode() {
+        onlyApprovedCode(false);
     }
 }
