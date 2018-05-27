@@ -1,5 +1,17 @@
 ### Updates
 
+### -> 1.41.0
+
+* Fix for stale ghprbCommentBody values ([#504][#504])
+* Improve "Build triggered/started" messages ([#607][#607])
+* Avoid posting a comment for empty comment files ([#662][#662])
+* Use ssl validation for webhook ([#663][#663])
+
+[#504]: https://github.com/jenkinsci/ghprb-plugin/pull/504
+[#607]: https://github.com/jenkinsci/ghprb-plugin/pull/607
+[#662]: https://github.com/jenkinsci/ghprb-plugin/pull/662
+[#663]: https://github.com/jenkinsci/ghprb-plugin/pull/663
+
 #### -> 1.40.0
 
 * Feature: Disable register hooks on startup via property
