@@ -195,6 +195,25 @@ job('downstreamJob') {
 }
 ```
 
+### Pipeline support
+
+The plugin supports use with the Jenkins pipeline plugin, but pipeline scripts that use the Comment File trigger should ensure that they stash and unstash files appropriately as stages triggered on remote nodes such as containers will be inaccessible unless explicitly transferred to master at the end of a pipeline using similar to the following:
+
+```
+node(myNode) {
+    stage('plan'){
+        sh: "command > outfile.txt"
+        stash name: "my-stash", includes: "outfile.txt"
+    }
+}
+node("master") {
+    unstash "my-stash"
+}
+
+```
+
+If the job is configured appropriately, the contents of outfile.txt will be posted as a comment to the PR.
+
 ### Updates
 
 See [CHANGELOG](CHANGELOG.md)
