@@ -33,6 +33,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +53,8 @@ public class GhprbRepository implements Saveable {
     private static final transient Logger LOGGER = Logger.getLogger(GhprbRepository.class.getName());
 
     private static final transient EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
+
+    private static final List<String> ALLOWED_ACTIONS = Arrays.asList("edited", "opened", "reopened", "synchronize");
 
     private static final transient boolean INSECURE_WEBHOOKS = SystemProperties.getBoolean(
             GhprbRepository.class.getName() + ".webhook.insecure", false);
@@ -393,7 +396,7 @@ public class GhprbRepository implements Saveable {
             doSave = true;
         } else if (!trigger.isActive()) {
             LOGGER.log(Level.FINE, "Not processing Pull request since the build is disabled");
-        } else if ("edited".equals(action) || "opened".equals(action) || "reopened".equals(action) || "synchronize".equals(action)) {
+        } else if (ALLOWED_ACTIONS.contains(action)) {
             GhprbPullRequest pull = getPullRequest(ghpr, number);
             pull.check(ghpr, true);
             doSave = true;
