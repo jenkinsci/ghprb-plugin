@@ -54,7 +54,8 @@ public class GhprbRepository implements Saveable {
 
     private static final transient EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
-    private static final List<String> ALLOWED_ACTIONS = Arrays.asList("edited", "opened", "reopened", "synchronize");
+    private static final List<String> ALLOWED_ACTIONS = Arrays.asList("edited", "labeled", "opened", "reopened", "synchronize",
+            "unlabeled");
 
     private static final transient boolean INSECURE_WEBHOOKS = SystemProperties.getBoolean(
             GhprbRepository.class.getName() + ".webhook.insecure", false);
