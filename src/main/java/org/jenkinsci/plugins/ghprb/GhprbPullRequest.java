@@ -522,16 +522,16 @@ public class GhprbPullRequest {
                 LOGGER.log(Level.FINEST, "Trigger only phrase but we are not triggered");
                 shouldRun = false;
             }
+
+            if (shouldRun && !triggered && !containsWatchedPaths(pr)) {
+                LOGGER.log(Level.FINEST, "Pull request contains no watched paths, skipping the build");
+                shouldRun = false;
+            }
             triggered = false; // Once we have decided that we are triggered then the flag should be set to false.
 
             if (!isAllowedTargetBranch()) {
                 LOGGER.log(Level.FINEST, "Branch is not whitelisted or is blacklisted, skipping the build");
                 return;
-            }
-
-            if (shouldRun && !containsWatchedPaths(pr)) {
-                LOGGER.log(Level.FINEST, "Pull request contains no watched paths, skipping the build");
-                shouldRun = false;
             }
 
             if (shouldRun) {
