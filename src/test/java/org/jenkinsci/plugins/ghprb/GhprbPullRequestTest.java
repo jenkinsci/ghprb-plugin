@@ -1,11 +1,14 @@
 package org.jenkinsci.plugins.ghprb;
 
+import org.joda.time.Duration;
+import org.joda.time.Instant;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
@@ -13,6 +16,8 @@ import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.OngoingStubbing;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -23,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -59,6 +65,9 @@ public class GhprbPullRequestTest {
     private GHCommitPointer head;
 
     @Mock
+    private GHPullRequestCommitDetail headDetail;
+
+    @Mock
     private GHCommitPointer base;
 
     @Mock
@@ -75,16 +84,24 @@ public class GhprbPullRequestTest {
 
     @Before
     public void setup() throws IOException {
-        given(head.getSha()).willReturn("some sha");
+        String headSha = "some sha";
+        given(head.getSha()).willReturn(headSha);
         given(base.getRef()).willReturn("some ref");
 
+        given(headDetail.getSha()).willReturn(headSha);
+        given(headDetail.getCommit()).willReturn(mock(GHPullRequestCommitDetail.Commit.class));
+
+
         // Mocks for GHPullRequest
+        Date prDate = Instant.now().minus(Duration.standardHours(1)).toDate();
         given(pr.getNumber()).willReturn(10);
-        given(pr.getCreatedAt()).willReturn(new Date());
-        given(pr.getUpdatedAt()).willReturn(new Date());
+        given(pr.getCreatedAt()).willReturn(prDate);
+        given(pr.getUpdatedAt()).willReturn(prDate);
         given(pr.getTitle()).willReturn("title");
         given(pr.getHead()).willReturn(head);
         given(pr.getBase()).willReturn(base);
+        given(pr.listCommits()).willReturn(iterableAsPaged(Collections.singletonList(headDetail)));
+
 
         // Mocks for listing file details in the GHPullRequest
         @SuppressWarnings("unchecked")
@@ -133,6 +150,7 @@ public class GhprbPullRequestTest {
 
         given(pr.getComments()).willReturn(new ArrayList<GHIssueComment>(Arrays.asList(ghIssueComment)));
         given(ghIssueComment.getBody()).willReturn("My phrase: request for testing");
+        given(ghIssueComment.getUpdatedAt()).willReturn(prDate);
 
         // Mocks for Ghprb
         given(helper.isWhitelisted(ghUser)).willReturn(true);
@@ -347,6 +365,53 @@ public class GhprbPullRequestTest {
     }
 
     @Test
+    public void testCommentMatchingPhraseTrigger() throws IOException {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // WHEN
+        String phrase = "abracadabra";
+        given(helper.isTriggerPhrase(phrase)).willReturn(true);
+
+        GHIssueComment comment = createMockComment(phrase);
+        given(pr.getComments()).willReturn(Arrays.asList(ghIssueComment, comment));
+
+        ghprbPullRequest.check(comment);
+
+        // THEN
+        verify(builds).build(eq(ghprbPullRequest), eq(ghUser), anyString());
+    }
+
+    @Test
+    public void testTriggeredWithNoMatchingWatchedPaths() throws IOException {
+        // GIVEN
+        GhprbPullRequest ghprbPullRequest = new GhprbPullRequest(pr, helper, repo);
+        given(helper.getIncludedRegionPatterns()).willReturn(Collections.singletonList(Pattern.compile("unknown/.*")));
+        ghprbPullRequest.init(helper, ghprbRepository);
+
+        // WHEN
+        String phrase = "abracadabra";
+        given(helper.isTriggerPhrase(phrase)).willReturn(true);
+
+        GHIssueComment comment = createMockComment(phrase);
+        given(pr.getComments()).willReturn(Arrays.asList(ghIssueComment, comment));
+
+        ghprbPullRequest.check(comment);
+
+        // THEN
+        verify(builds).build(eq(ghprbPullRequest), eq(ghUser), anyString());
+    }
+
+    private GHIssueComment createMockComment(String body) throws IOException {
+        GHIssueComment comment = mock(GHIssueComment.class);
+        given(comment.getBody()).willReturn(body);
+        given(comment.getUpdatedAt()).willReturn(new Date());
+        given(comment.getUser()).willReturn(ghUser);
+        return comment;
+    }
+
+    @Test
     public void shouldNotAddDuplicateRequestForTestingComment() throws Exception {
         PowerMockito.mockStatic(GhprbPullRequest.class);
         // GIVEN
@@ -358,5 +423,43 @@ public class GhprbPullRequestTest {
 
         // THEN
         verify(repo, never()).addComment(anyInt(), anyString());
+    }
+
+    /**
+     * Create a {@link PagedIterable} from an {@link Iterable}. PagedIterable is closed for extension, making it
+     * difficult to create instances for testing. This works around the limitations using mocks.
+     */
+    private static <T> PagedIterable<T> iterableAsPaged(final Iterable<T> input) {
+        return new PagedIterable<T>() {
+            @Override
+            public PagedIterator<T> _iterator(final int pageSize) {
+                final Iterator<T> base = input.iterator();
+                @SuppressWarnings("unchecked")
+                PagedIterator<T> iterator = mock(PagedIterator.class);
+                given(iterator.hasNext()).willAnswer(new Answer<Boolean>() {
+                    @Override
+                    public Boolean answer(InvocationOnMock invocation) {
+                        return base.hasNext();
+                    }
+                });
+                given(iterator.next()).willAnswer(new Answer<T>() {
+                    @Override
+                    public T answer(InvocationOnMock invocation) {
+                        return base.next();
+                    }
+                });
+                given(iterator.nextPage()).willAnswer(new Answer<List<T>>() {
+                    @Override
+                    public List<T> answer(InvocationOnMock invocation) {
+                        ArrayList<T> list = new ArrayList<>();
+                        for (int i = 0; i < pageSize && base.hasNext(); i++) {
+                            list.add(base.next());
+                        }
+                        return list;
+                    }
+                });
+                return iterator;
+            }
+        };
     }
 }
