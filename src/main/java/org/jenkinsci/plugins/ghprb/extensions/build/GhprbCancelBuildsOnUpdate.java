@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.ghprb.extensions.build;
 
 import hudson.Extension;
+import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Job;
 import hudson.model.Queue;
@@ -52,31 +53,30 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements
                         + ", checking for queued items to cancel."
         );
 
-        Queue queue = Jenkins.getInstance().getQueue();
-        Queue.Item queueItem = project.getQueueItem();
-        while (queueItem != null) {
-            GhprbCause qcause = null;
+        if (project instanceof AbstractProject<?, ?>) {
+            Queue queue = Jenkins.getInstance().getQueue();
+            for (Queue.Item queueItem : queue.getItems((AbstractProject<?, ?>) project)) {
+                GhprbCause qcause = null;
 
-            for (Cause cause : queueItem.getCauses()) {
-                if (cause instanceof GhprbCause) {
-                    qcause = (GhprbCause) cause;
+                for (Cause cause : queueItem.getCauses()) {
+                    if (cause instanceof GhprbCause) {
+                        qcause = (GhprbCause) cause;
+                    }
+                }
+
+                if (qcause != null && qcause.getPullID() == prId) {
+                    try {
+                        LOGGER.log(
+                                Level.FINER,
+                                "Cancelling queued build of " + project.getName() + " for PR # "
+                                        + qcause.getPullID() + ", checking for queued items to cancel."
+                        );
+                        queue.cancel(queueItem);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Unable to cancel queued build", e);
+                    }
                 }
             }
-
-            if (qcause != null && qcause.getPullID() == prId) {
-                try {
-                    LOGGER.log(
-                            Level.FINER,
-                            "Cancelling queued build of " + project.getName() + " for PR # "
-                                    + qcause.getPullID() + ", checking for queued items to cancel."
-                    );
-                    queue.cancel(queueItem);
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Unable to cancel queued build", e);
-                }
-            }
-
-            queueItem = project.getQueueItem();
         }
 
         LOGGER.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId);
