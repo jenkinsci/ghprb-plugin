@@ -398,4 +398,21 @@ public class GhprbPullRequestMergeTest {
         merger.perform(build, mockFilePath, launcher, listener);
         verify(pr, times(1)).merge(mergeComment);
     }
+
+    @Test
+    public void testFailOnNonMerge() throws Exception {
+
+        GhprbPullRequestMerge merger = setupMerger(
+            true,
+            true,
+            true,
+            false,
+            false
+        );
+
+        setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
+        merger.perform(build, mockFilePath, launcher, listener);
+
+        verify(build).setResult(Result.FAILURE);
+    }
 }
