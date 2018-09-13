@@ -18,6 +18,7 @@ import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -32,11 +33,11 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.verb.POST;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +58,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
 
     private static final int SHA1_PREFIX_LENGTH = 5;
 
-    static final int INITIAL_CAPACITY = 3;
+    private static final int INITIAL_CAPACITY = 3;
 
     private final String serverAPIUrl;
 
@@ -241,16 +242,15 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
          * @param serverAPIUrl  the github api server url.
          * @param credentialsId the credentialsId from the credentials plugin
          * @return list box model.
-         * @throws URISyntaxException If the url is bad
          */
         public ListBoxModel doFillCredentialsIdItems(
                 @AncestorInPath Item context,
                 @QueryParameter String serverAPIUrl,
                 @QueryParameter String credentialsId
-        ) throws URISyntaxException {
+        ) {
             List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(serverAPIUrl).build();
 
-            List<CredentialsMatcher> matchers = new ArrayList<CredentialsMatcher>(INITIAL_CAPACITY);
+            List<CredentialsMatcher> matchers = new ArrayList<>(INITIAL_CAPACITY);
             if (!StringUtils.isEmpty(credentialsId)) {
                 matchers.add(0, CredentialsMatchers.withId(credentialsId));
             }
@@ -273,13 +273,15 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                     );
         }
 
-
+        @POST
         public FormValidation doCreateApiToken(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId,
                 @QueryParameter("username") final String username,
                 @QueryParameter("password") final String password) {
             try {
+
+                Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
 
                 GitHubBuilder builder = new GitHubBuilder()
                         .withEndpoint(serverAPIUrl)
@@ -326,10 +328,14 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             return FormValidation.warning("GitHub API URI is \"https://api.github.com\". GitHub Enterprise API URL ends with \"/api/v3\"");
         }
 
+        @POST
         public FormValidation doCheckRepoAccess(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId,
                 @QueryParameter("repo") final String repo) {
+
+            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+
             try {
                 GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
                 if (builder == null) {
@@ -339,7 +345,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 GHRepository repository = gh.getRepository(repo);
                 StringBuilder sb = new StringBuilder();
                 sb.append("User has access to: ");
-                List<String> permissions = new ArrayList<String>(INITIAL_CAPACITY);
+                List<String> permissions = new ArrayList<>(INITIAL_CAPACITY);
                 if (repository.hasAdminAccess()) {
                     permissions.add("Admin");
                 }
@@ -357,9 +363,13 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
             }
         }
 
+        @POST
         public FormValidation doTestGithubAccess(
                 @QueryParameter("serverAPIUrl") final String serverAPIUrl,
                 @QueryParameter("credentialsId") final String credentialsId) {
+
+            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+
             try {
                 GitHubBuilder builder = getBuilder(null, serverAPIUrl, credentialsId);
                 if (builder == null) {

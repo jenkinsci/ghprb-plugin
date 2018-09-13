@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.ghprb.jobdsl;
 import javaposse.jobdsl.dsl.Context;
 import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
+import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
@@ -49,6 +50,16 @@ class GhprbExtensionContext implements Context {
         ContextExtensionPoint.executeInContext(closure, context);
 
         extensions.add(new GhprbCommentFile(context.getCommentFilePath()));
+    }
+
+    /**
+     * Overrides global settings for cancelling builds when a PR was updated
+     */
+    void cancelBuildsOnUpdate(Runnable closure) {
+        GhprbCancelBuildsOnUpdateContext context = new GhprbCancelBuildsOnUpdateContext();
+        ContextExtensionPoint.executeInContext(closure, context);
+
+        extensions.add(new GhprbCancelBuildsOnUpdate(context.getOverrideGlobal()));
     }
 
     public List<GhprbExtension> getExtensions() {
