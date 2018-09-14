@@ -144,13 +144,15 @@ job('upstreamJob') {
             permitAll()
             autoCloseFailedPullRequests()
             displayBuildErrorsOnDownstreamBuilds()
-            commentFilePath("relative/path/to/file")
             whiteListTargetBranches(['master','test', 'test2'])
             blackListTargetBranches(['master','test', 'test2'])
             whiteListLabels(['foo', 'bar'])
             blackListLabels(['baz'])
             allowMembersOfWhitelistedOrgsAsAdmin()
             extensions {
+                commentFilePath {
+                    commentFilePath("relative/path/to/file")
+                }
                 commitStatus {
                     context('deploy to staging site')
                     triggeredStatus('starting deployment to staging site...')
