@@ -61,6 +61,29 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
     * etc.
 * Save to preserve your changes.
 
+#### Using Groovy
+
+If you wish to configure your Jenkins master using Groovy, you can use a script such as the one below to configure the plugin:
+
+```groovy
+import jenkins.model.*
+import org.jenkinsci.plugins.ghprb.*
+
+GhprbTrigger.DescriptorImpl descriptor = Jenkins.instance.getDescriptorByType(org.jenkinsci.plugins.ghprb.GhprbTrigger.DescriptorImpl.class)
+
+List<GhprbGitHubAuth> githubAuths = descriptor.getGithubAuth()
+
+String serverAPIUrl = 'https://api.github.com'
+String jenkinsUrl = 'https://your.jenkins.url/'
+String credentialsId = 'credentials-id'
+String description = 'Anonymous connection'
+String id = 'github-auth-id'
+String secret = null
+githubAuths.add(new GhprbGitHubAuth(serverAPIUrl, jenkinsUrl, credentialsId, description, id, secret))
+
+descriptor.save()
+```
+
 ### Credentials
 * If you are using Enterprise GitHub set the server api URL in `GitHub server api URL`. Otherwise leave there `https://api.github.com`.
 * Set the Jenkins URL if you need to override the default (e.g. it's behind a firewall)
