@@ -29,6 +29,7 @@ import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.RateLimitHandler;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -172,7 +173,8 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private static GitHubBuilder getBuilder(Item context, String serverAPIUrl, String credentialsId) {
         GitHubBuilder builder = new GitHubBuilder()
                 .withEndpoint(serverAPIUrl)
-                .withConnector(new HttpConnectorWithJenkinsProxy());
+                .withConnector(new HttpConnectorWithJenkinsProxy())
+                .withRateLimitHandler(RateLimitHandler.FAIL);
         String contextName = context == null ? "(Jenkins.instance)" : context.getFullDisplayName();
 
         if (StringUtils.isEmpty(credentialsId)) {
