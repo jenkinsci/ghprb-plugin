@@ -51,9 +51,6 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
 
             try {
                 String content = null;
-                FilePath workspace;
-                FilePath path;
-
                 // On custom pipelines, build will be an instance of WorkflowRun
                 if (build instanceof WorkflowRun) {
                     FlowExecution exec = ((WorkflowRun) build).getExecution();
@@ -76,7 +73,7 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
                                         continue;
                                     }
 
-                                    path = action.getWorkspace().child(scriptFilePathResolved);
+                                    FilePath path = action.getWorkspace().child(scriptFilePathResolved);
 
                                     if (path.exists()) {
                                         content = path.readToString();
@@ -93,8 +90,8 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
                     }
                 } else if (build instanceof Build<?, ?>) {
                     // When using workers on hosts other than master, we simply get the workspace here.
-                    workspace = ((Build<?, ?>) build).getWorkspace();
-                    path = workspace.child(scriptFilePathResolved);
+                    FilePath workspace = ((Build<?, ?>) build).getWorkspace();
+                    FilePath path = workspace.child(scriptFilePathResolved);
 
                     if (path.exists()) {
                         content = path.readToString();
