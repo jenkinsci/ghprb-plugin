@@ -113,6 +113,10 @@ public class GhprbPullRequest {
 
     private String lastBuildId;
 
+    public static String getRequestForTestingPhrase() {
+        return GhprbTrigger.getDscp().getRequestForTestingPhrase();
+    }
+
     // Sets the updated time of the PR.  If the updated time is newer,
     // return true, false otherwise.
     private boolean setUpdated(Date lastUpdateTime) {
@@ -163,12 +167,36 @@ public class GhprbPullRequest {
             LOGGER.log(Level.INFO,
                     "Author of #{0} {1} on {2} not in whitelist!",
                     new Object[] {id, author.getLogin(), reponame});
-            repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
+            if (!containsComment(pr, getRequestForTestingPhrase())) {
+                repo.addComment(id, GhprbTrigger.getDscp().getRequestForTestingPhrase());
+            }
         }
 
         LOGGER.log(Level.INFO,
                 "Created Pull Request #{0} on {1} by {2} ({3}) updated at: {4} SHA: {5}",
                 new Object[] {id, reponame, author.getLogin(), getAuthorEmail(), updated, this.head});
+    }
+
+    /**
+     * Checks whether the specific PR contains a comment with the expected body.
+     *
+     * @return true if the PR contains comment with the specified body, otherwise false
+     */
+    private boolean containsComment(GHPullRequest ghPullRequest, String expectedBody) {
+        List<GHIssueComment> prComments;
+        try {
+            prComments = ghPullRequest.getComments();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to get comments for PR " + ghPullRequest, e);
+            // return false in case of an error - probably safer to have multiple comments than possibly none
+            return false;
+        }
+        for (GHIssueComment comment : prComments) {
+            if (comment.getBody() != null && comment.getBody().equals(expectedBody)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void init(Ghprb helper,
@@ -339,6 +367,8 @@ public class GhprbPullRequest {
                 // check that comment.  Otherwise check the full set since the last
                 // time we updated (which might have just happened).
                 int commentsChecked = 0;
+                //Setting to null fixes ghprbCommentBody containing stale values; ref https://github.com/jenkinsci/ghprb-plugin/pull/504
+                commentBody = null;
                 if (wasUpdated && (!isWebhook || !initialCommentCheckDone)) {
                     initialCommentCheckDone = true;
                     commentsChecked = checkComments(pullRequest, lastUpdateTime);

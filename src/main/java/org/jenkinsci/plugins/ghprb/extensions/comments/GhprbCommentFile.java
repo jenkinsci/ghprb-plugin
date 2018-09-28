@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.ghprb.extensions.comments;
 
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.model.Build;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.apache.commons.io.FileUtils;
@@ -36,16 +38,40 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
     public String postBuildComment(Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
         if (commentFilePath != null && !commentFilePath.isEmpty()) {
-            try {
-                String scriptFilePathResolved = Ghprb.replaceMacros(build, listener, commentFilePath);
+            String scriptFilePathResolved = Ghprb.replaceMacros(build, listener, commentFilePath);
 
-                String content = FileUtils.readFileToString(new File(scriptFilePathResolved));
-                msg.append("Build comment file: \n--------------\n");
-                msg.append(content);
-                msg.append("\n--------------\n");
+            try {
+                String content = null;
+                if (build instanceof Build<?, ?>) {
+                    final FilePath workspace = ((Build<?, ?>) build).getWorkspace();
+                    final FilePath path = workspace.child(scriptFilePathResolved);
+
+                    if (path.exists()) {
+                        content = path.readToString();
+                    } else {
+                        listener.getLogger().println(
+                            "Didn't find comment file in workspace at " + path.absolutize().getRemote()
+                            + ", falling back to file operations on master."
+                        );
+                    }
+                }
+
+                if (content == null) {
+                    content = FileUtils.readFileToString(new File(scriptFilePathResolved));
+                }
+
+                if (content.length() > 0) {
+                    msg.append(content);
+                }
+
             } catch (IOException e) {
                 msg.append("\n!!! Couldn't read commit file !!!\n");
-                listener.getLogger().println("Couldn't read comment file");
+                listener.getLogger().println("Couldn't read comment file at " + scriptFilePathResolved);
+                e.printStackTrace(listener.getLogger());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();  // set interrupt flag
+                msg.append("\n!!! Couldn't read commit file !!!\n");
+                listener.getLogger().println("Reading comment file at " + scriptFilePathResolved + " was interrupted");
                 e.printStackTrace(listener.getLogger());
             }
         }

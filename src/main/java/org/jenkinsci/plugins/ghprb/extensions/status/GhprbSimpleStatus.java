@@ -35,9 +35,9 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    public static final DescriptorImpl /*GhprbSimpleStatusDescriptor*/ DESCRIPTOR = new DescriptorImpl();
 
-    private final String commitStatusContext;
+    private String commitStatusContext;
 
     private final Boolean showMatrixStatus;
 
@@ -124,7 +124,9 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         }
 
         String statusUrl = getDescriptor().getStatusUrlDefault(this);
-        String commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        if (commitStatusContext == "") {
+            commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        }
 
         String context = Util.fixEmpty(commitStatusContext);
         context = Ghprb.replaceMacros(project, context);
@@ -132,11 +134,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         if (!StringUtils.isEmpty(triggeredStatus)) {
             sb.append(Ghprb.replaceMacros(project, triggeredStatus));
         } else {
-            sb.append("Build triggered.");
+            sb.append("Build triggered");
             if (isMergeable) {
-                sb.append(" sha1 is merged.");
+                sb.append(" for merge commit.");
             } else {
-                sb.append(" sha1 is original commit.");
+                sb.append(" for original commit.");
             }
         }
 
@@ -184,7 +186,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         if (StringUtils.isEmpty(startedStatus)) {
             sb.append("Build started");
             if (c != null) {
-                sb.append(c.isMerged() ? " sha1 is merged." : " sha1 is original commit.");
+                sb.append(c.isMerged() ? " for merge commit." : " for original commit.");
             }
         } else {
             sb.append(Ghprb.replaceMacros(build, listener, startedStatus));
@@ -285,11 +287,11 @@ public class GhprbSimpleStatus extends GhprbExtension implements
     }
 
     @Override
-    public DescriptorImpl getDescriptor() {
+    public DescriptorImpl /*GhprbSimpleStatusDescriptor*/ getDescriptor() {
         return DESCRIPTOR;
     }
 
-    public static final class DescriptorImpl extends GhprbExtensionDescriptor
+    public static final class DescriptorImpl extends GhprbExtensionDescriptor /*GhprbSimpleStatusDescriptor*/
             implements GhprbGlobalExtension, GhprbProjectExtension {
 
         @Override
