@@ -13,7 +13,7 @@ If an author of a pull request is whitelisted, adding a new pull
 request or new commit to an existing pull request will start a new
 build.
 
-A new build can also be started with a comment: `retest this please`, with or without additional text in the comment.
+A new build can also be started with a comment which contains, `retest this please`; with or without additional lines in the comment. A review summary comment will not start a new build.
 
 You can extend the standard build comment message on github
 creating a comment file from shell console or any other
