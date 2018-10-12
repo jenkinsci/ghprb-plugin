@@ -62,7 +62,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 * Save to preserve your changes.
 
 ### Credentials
-* If you are using Enterprise GitHub set the server api URL in `GitHub server api URL`. Otherwise leave there `https://api.github.com`.
+* If you are using Enterprise GitHub set the Server API URL in `GitHub Server API URL`. Otherwise leave there `https://api.github.com`.
 * Set the Jenkins URL if you need to override the default (e.g. it's behind a firewall)
 * A GitHub API token or username password can be used for access to the GitHub API
 * To setup credentials for a given GitHub Server API URL:
@@ -72,7 +72,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
         * Set your 'bot' user's GitHub username and password.
         * Press the `Create Access Token` button
         * Jenkins will create a token credential, and give you the id of the newly created credentials.  The default description is: `serverAPIUrl + " GitHub auto generated token credentials"`.
-    * For username/password us `Kind` -> `Username with password`
+    * For username/password use `Kind` -> `Username with password`
       * The scope determines what has access to the credentials you are about to create
     * The first part of the description is used to show different credentials in the drop down, so use something semi-descriptive
     * Click `Add`
