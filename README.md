@@ -174,6 +174,9 @@ job('upstreamJob') {
             blackListLabels(['baz'])
             allowMembersOfWhitelistedOrgsAsAdmin()
             extensions {
+                commentFilePath {
+                    commentFilePath("relative/path/to/file")
+                }
                 commitStatus {
                     context('deploy to staging site')
                     triggeredStatus('starting deployment to staging site...')

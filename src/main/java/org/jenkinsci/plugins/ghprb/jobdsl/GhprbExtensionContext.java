@@ -5,6 +5,7 @@ import javaposse.jobdsl.plugin.ContextExtensionPoint;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.build.GhprbCancelBuildsOnUpdate;
 import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbBuildStatus;
+import org.jenkinsci.plugins.ghprb.extensions.comments.GhprbCommentFile;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 
 import java.util.ArrayList;
@@ -39,6 +40,16 @@ class GhprbExtensionContext implements Context {
         ContextExtensionPoint.executeInContext(closure, context);
 
         extensions.add(new GhprbBuildStatus(context.getCompletedStatus()));
+    }
+
+    /**
+     * Adds comment file path handling
+     */
+    void commentFilePath(Runnable closure) {
+        GhprbCommentFilePathContext context = new GhprbCommentFilePathContext();
+        ContextExtensionPoint.executeInContext(closure, context);
+
+        extensions.add(new GhprbCommentFile(context.getCommentFilePath()));
     }
 
     /**
