@@ -116,6 +116,7 @@ descriptor.save()
 * In `Branch Specifier`, instead of the default `*/master`, enter
   * `${ghprbActualCommit}` if you want to use the head of the pull request branch (e.g. `refs/pull/4/head`); or
   * `${sha1}`, to use GitHub's tentative merge of the compare and base branches (e.g. `refs/pull/4/merge`) if the PR can be automatically merged or the head of the pull request branch (e.g. `refs/pull/4/head`) if they can not be automatically merged.
+* In the Pipeline SCM section, uncheck `Lightweight checkout`.
 * Under `Build Triggers`, check `GitHub Pull Request Builder`.
   * Add admins for this specific job.
   * If you want to use GitHub hooks for automatic testing, read the help for `Use github hooks for build triggering` in job configuration. Then you can check the checkbox.
