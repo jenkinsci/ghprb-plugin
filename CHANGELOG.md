@@ -2,7 +2,7 @@
 
 ### -> 1.43.0
 
-* NOTE: Changed RateLimitHandler from WAIT to FAIL for GitHub rate limiter
+* NOTE: Changed RateLimitHandler from WAIT to FAIL for GitHub rate limiter [#714]
 
 [#714]: https://github.com/jenkinsci/ghprb-plugin/pull/714
 
