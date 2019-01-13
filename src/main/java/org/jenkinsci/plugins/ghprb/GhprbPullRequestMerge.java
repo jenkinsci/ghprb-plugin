@@ -191,7 +191,13 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         if (intendToMerge && canMerge && (isMergeable == null || !isMergeable)) {
             listener.getLogger().println("Pull request cannot be automerged.");
             commentOnRequest("Pull request is not mergeable.");
-            listener.error(Result.FAILURE.toString());
+
+            listener.error(
+                "%: Pull request is not mergeable. isMergeable=%s",
+                Result.FAILURE.toString(),
+                isMergeable
+            );
+
             return;
         }
 
@@ -217,7 +223,7 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
         // We should only fail the build if there is an intent to merge
         if (intendToMerge && !canMerge && getFailOnNonMerge()) {
-            listener.error(Result.FAILURE.toString());
+            run.setResult(Result.FAILURE);
             return;
         }
     }
