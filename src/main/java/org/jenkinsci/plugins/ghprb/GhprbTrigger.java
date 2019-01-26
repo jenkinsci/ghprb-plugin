@@ -42,6 +42,7 @@ import org.kohsuke.github.GHEventPayload.IssueComment;
 import org.kohsuke.github.GHEventPayload.PullRequest;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -883,6 +884,81 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                     },
                     DELAY
             );
+        }
+
+        @DataBoundSetter
+        public void setWhitelistPhrase(String whitelistPhrase) {
+            this.whitelistPhrase = whitelistPhrase;
+        }
+
+        @DataBoundSetter
+        public void setOkToTestPhrase(String okToTestPhrase) {
+            this.okToTestPhrase = okToTestPhrase;
+        }
+
+        @DataBoundSetter
+        public void setRetestPhrase(String retestPhrase) {
+            this.retestPhrase = retestPhrase;
+        }
+
+        @DataBoundSetter
+        public void setSkipBuildPhrase(String skipBuildPhrase) {
+            this.skipBuildPhrase = skipBuildPhrase;
+        }
+
+        @DataBoundSetter
+        public void setBlackListCommitAuthor(String blackListCommitAuthor) {
+            this.blackListCommitAuthor = blackListCommitAuthor;
+        }
+
+        @DataBoundSetter
+        public void setCron(String cron) {
+            this.cron = cron;
+        }
+
+        @DataBoundSetter
+        public void setUseComments(Boolean useComments) {
+            this.useComments = useComments;
+        }
+
+        @DataBoundSetter
+        public void setUseDetailedComments(Boolean useDetailedComments) {
+            this.useDetailedComments = useDetailedComments;
+        }
+
+        @DataBoundSetter
+        public void setManageWebhooks(Boolean manageWebhooks) {
+            this.manageWebhooks = manageWebhooks;
+        }
+
+        @DataBoundSetter
+        public void setAutoCloseFailedPullRequests(Boolean autoCloseFailedPullRequests) {
+            this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
+        }
+
+        @DataBoundSetter
+        public void setBlackListLabels(String blackListLabels) {
+            this.blackListLabels = blackListLabels;
+        }
+
+        @DataBoundSetter
+        public void setWhiteListLabels(String whiteListLabels) {
+            this.whiteListLabels = whiteListLabels;
+        }
+
+        @DataBoundSetter
+        public void setGithubAuth(List<GhprbGitHubAuth> githubAuth) {
+            this.githubAuth = githubAuth;
+        }
+
+        @DataBoundSetter
+        public void setAdminlist(String adminlist) {
+            this.adminlist = adminlist;
+        }
+
+        @DataBoundSetter
+        public void setRequestForTestingPhrase(String requestForTestingPhrase) {
+            this.requestForTestingPhrase = requestForTestingPhrase;
         }
 
         @Override
