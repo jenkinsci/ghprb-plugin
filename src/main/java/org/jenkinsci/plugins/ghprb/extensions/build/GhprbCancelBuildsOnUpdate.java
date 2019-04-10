@@ -40,7 +40,7 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements
         return overrideGlobal == null ? Boolean.valueOf(false) : overrideGlobal;
     }
 
-    private void cancelCurrentBuilds(Job<?, ?> project,
+    protected void cancelCurrentBuilds(Job<?, ?> project,
                                      Integer prId) {
         if (getOverrideGlobal()) {
             return;
@@ -53,8 +53,8 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements
         );
 
         Queue queue = Jenkins.getInstance().getQueue();
-        Queue.Item queueItem = project.getQueueItem();
-        while (queueItem != null) {
+        Queue.Item[] queueItems = queue.getItems();
+        for (Queue.Item queueItem : queueItems) {
             GhprbCause qcause = null;
 
             for (Cause cause : queueItem.getCauses()) {
@@ -75,8 +75,6 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements
                     LOGGER.log(Level.SEVERE, "Unable to cancel queued build", e);
                 }
             }
-
-            queueItem = project.getQueueItem();
         }
 
         LOGGER.log(Level.FINER, "New build scheduled for " + project.getName() + " on PR # " + prId);
