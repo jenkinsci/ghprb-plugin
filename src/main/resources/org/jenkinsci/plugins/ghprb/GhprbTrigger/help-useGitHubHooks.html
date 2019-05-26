@@ -3,6 +3,10 @@
 	and will try to create a GitHub hook. Creating a GitHub hook requires that the user
 	which is specified in the <em>GitHub Pull Request Builder</em> configuration has
 	admin rights to the specified repository.<br/>
+	By default, GitHub hooks created this way will have SSL certificate verification enabled.
+	To disable SSL certificate verification in these GitHub hooks, start Jenkins with system
+	property <code>org.jenkinsci.plugins.ghprb.GhprbRepository.webhook.insecure</code> set
+	to <code>true</code>.<br/>
 	If you want to create a hook manually set it for event types:
 		<code>issue_comment</code>,	<code>pull_request</code>
 	and url <code>< your jenkins server url >/ghprbhook/</code>.  The url should be composed of your full jenkins server url plus
