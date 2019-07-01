@@ -92,6 +92,7 @@ public class GhprbPullRequestTest {
         @SuppressWarnings("unchecked")
         PagedIterator<GHPullRequestFileDetail> pagedIterator = mock(PagedIterator.class);
         given(pagedIterable.iterator()).willReturn(pagedIterator);
+        given(pagedIterable.withPageSize(100)).willReturn(pagedIterable);
         given(pr.listFiles()).willReturn(pagedIterable);
 
         // Create the list of file paths to return

@@ -466,7 +466,7 @@ public class GhprbPullRequest {
             }
 
             List<String> paths = new ArrayList<String>();
-            for (GHPullRequestFileDetail fileDetail : pr.listFiles()) {
+            for (GHPullRequestFileDetail fileDetail : pr.listFiles().withPageSize(100)) {
                 paths.add(fileDetail.getFilename());
             }
 
