@@ -14,7 +14,9 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
@@ -42,6 +44,8 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
     private final String mergeComment;
 
+    private final String mergeMethod;
+
     private final Boolean failOnNonMerge;
 
     private final Boolean deleteOnMerge;
@@ -49,10 +53,11 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
     private final Boolean allowMergeWithoutTriggerPhrase;
 
     @DataBoundConstructor
-    public GhprbPullRequestMerge(String mergeComment, boolean onlyAdminsMerge, boolean disallowOwnCode, boolean failOnNonMerge,
-                                 boolean deleteOnMerge, boolean allowMergeWithoutTriggerPhrase) {
+    public GhprbPullRequestMerge(String mergeComment, String mergeMethod, boolean onlyAdminsMerge, boolean disallowOwnCode,
+                                 boolean failOnNonMerge, boolean deleteOnMerge, boolean allowMergeWithoutTriggerPhrase) {
 
         this.mergeComment = mergeComment;
+        this.mergeMethod = mergeMethod;
         this.onlyAdminsMerge = onlyAdminsMerge;
         this.disallowOwnCode = disallowOwnCode;
         this.failOnNonMerge = failOnNonMerge;
@@ -62,6 +67,10 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
     public String getMergeComment() {
         return mergeComment;
+    }
+
+    public String getMergeMethod() {
+        return mergeMethod;
     }
 
     public boolean getOnlyAdminsMerge() {
@@ -216,7 +225,7 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
                 e.printStackTrace(listener.getLogger());
             }
             String mergeComment = Ghprb.replaceMacros(run, listener, getMergeComment());
-            pr.merge(mergeComment);
+            pr.merge(mergeComment, null, GHPullRequest.MergeMethod.valueOf(getMergeMethod()));
             listener.getLogger().println("Pull request successfully merged");
             deleteBranch(run, launcher, listener);
         }
@@ -308,6 +317,18 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         public FormValidation doCheck(@AncestorInPath Job<?, ?> project, @QueryParameter String value) throws IOException {
             FilePath buildDirectory = new FilePath(project.getBuildDir());
             return FilePath.validateFileMask(buildDirectory, value);
+        }
+
+        public ListBoxModel doFillMergeMethodItems() {
+            ListBoxModel items = new ListBoxModel();
+            for (GHPullRequest.MergeMethod mergeMethod: GHPullRequest.MergeMethod.values()) {
+                items.add(StringUtils.capitalize(mergeMethod.name().toLowerCase()), mergeMethod.name());
+            }
+            return items;
+        }
+
+        public String defaultMergeMethod() {
+            return GHPullRequest.MergeMethod.MERGE.toString();
         }
     }
 

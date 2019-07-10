@@ -116,6 +116,8 @@ public class GhprbPullRequestMergeTest {
 
     private final String mergeComment = "merge";
 
+    private final GHPullRequest.MergeMethod mergeMethod = GHPullRequest.MergeMethod.MERGE;
+
     private final Integer pullId = 1;
 
     private Map<String, Object> triggerValues;
@@ -244,6 +246,7 @@ public class GhprbPullRequestMergeTest {
 
         GhprbPullRequestMerge merger = spy(new GhprbPullRequestMerge(
                 mergeComment,
+                mergeMethod.name(),
                 onlyAdminsMerge,
                 disallowOwnCode,
                 failOnNonMerge,
@@ -272,35 +275,35 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(2)).merge(mergeComment);
+        verify(pr, times(2)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(2)).merge(mergeComment);
+        verify(pr, times(2)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(3)).merge(mergeComment);
+        verify(pr, times(3)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(3)).merge(mergeComment);
+        verify(pr, times(3)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(3)).merge(mergeComment);
+        verify(pr, times(3)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(3)).merge(mergeComment);
+        verify(pr, times(3)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(4)).merge(mergeComment);
+        verify(pr, times(4)).merge(mergeComment, null, mergeMethod);
     }
 
     @Test
@@ -313,11 +316,11 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
     }
 
     @Test
@@ -330,11 +333,11 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, committerName, committerEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
     }
 
     @Test
@@ -347,11 +350,11 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
     }
 
     @Test
@@ -364,39 +367,39 @@ public class GhprbPullRequestMergeTest {
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, nonAdminLogin, nonCommitterName, nonCommitterEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, adminLogin, committerName, committerEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, nonAdminLogin, committerName, committerEmail, nonTriggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(adminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(0)).merge(mergeComment);
+        verify(pr, times(0)).merge(mergeComment, null, mergeMethod);
 
         setupConditions(nonAdminLogin, adminLogin, nonCommitterName, nonCommitterEmail, triggerPhrase);
         merger.perform(build, mockFilePath, launcher, listener);
-        verify(pr, times(1)).merge(mergeComment);
+        verify(pr, times(1)).merge(mergeComment, null, mergeMethod);
     }
 
     @Test
