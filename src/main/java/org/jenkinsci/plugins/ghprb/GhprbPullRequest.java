@@ -607,16 +607,11 @@ public class GhprbPullRequest {
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) { // ok to test
             LOGGER.log(Level.FINEST, "Admin {0} gave OK to test", sender);
             setAccepted(true);
-        } else if (helper.isRetestPhrase(body)) { // test this please
-            LOGGER.log(Level.FINEST, "Retest phrase");
-            if (helper.isAdmin(sender)) {
-                LOGGER.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
-                shouldRun = true;
-            } else if (accepted && helper.isWhitelisted(sender)) {
-                LOGGER.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
-                shouldRun = true;
-            }
         } else if (helper.isTriggerPhrase(body)) { // trigger phrase
+            // The trigger phrase is prioritized over retest phrase because it
+            // encomposes the logic of retestPhrase (shouldRun = true), but also
+            // sets the triggered flag, which is important when the job is
+            // configured to "Only use trigger phrase for build triggering"
             LOGGER.log(Level.FINEST, "Trigger phrase");
             if (helper.isAdmin(sender)) {
                 LOGGER.log(Level.FINEST, "Admin {0} ran trigger phrase", sender);
@@ -626,6 +621,15 @@ public class GhprbPullRequest {
                 LOGGER.log(Level.FINEST, "Trigger accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
                 triggered = true;
+            }
+        } else if (helper.isRetestPhrase(body)) { // test this please
+            LOGGER.log(Level.FINEST, "Retest phrase");
+            if (helper.isAdmin(sender)) {
+                LOGGER.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
+                shouldRun = true;
+            } else if (accepted && helper.isWhitelisted(sender)) {
+                LOGGER.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
+                shouldRun = true;
             }
         }
 
