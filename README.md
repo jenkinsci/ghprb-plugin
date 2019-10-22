@@ -1,3 +1,5 @@
+**NOTE**: this plugin is currently maintained at https://github.com/jenkinsci/ghprb-plugin
+
 # GitHub Pull Request Builder Plugin
 
 This Jenkins plugin builds pull requests from GitHub and will report the results directly to the pull request via
