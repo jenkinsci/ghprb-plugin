@@ -1,5 +1,11 @@
 ### Updates
 
+### -> 1.43.0
+
+* NOTE: Changed RateLimitHandler from WAIT to FAIL for GitHub rate limiter [#714]
+
+[#714]: https://github.com/jenkinsci/ghprb-plugin/pull/714
+
 ### -> 1.41.0
 
 * Fix for stale ghprbCommentBody values ([#504][#504])

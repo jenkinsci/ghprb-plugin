@@ -294,6 +294,14 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <configuration>
+                    <compatibleSinceVersion>1.43.0</compatibleSinceVersion>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
