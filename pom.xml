@@ -55,7 +55,7 @@
         <powermock.version>1.6.2</powermock.version>
         <java.level>7</java.level>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <checkstyle.version>6.7</checkstyle.version>
+        <checkstyle.version>8.29</checkstyle.version>
         <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
     </properties>
 
