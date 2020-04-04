@@ -719,7 +719,7 @@ public class GhprbPullRequest {
         String authorRepoGitUrl = "";
 
         if (prHead != null && prHead.getRepository() != null) {
-            authorRepoGitUrl = prHead.getRepository().gitHttpTransportUrl();
+            authorRepoGitUrl = prHead.getRepository().getHttpTransportUrl();
         }
         return authorRepoGitUrl;
     }
