@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.57</version>
+        <version>3.2</version>
         <relativePath />
     </parent>
 
@@ -78,12 +78,12 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>scm-api</artifactId>
-            <version>2.6.3</version>
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci</groupId>
             <artifactId>symbol-annotation</artifactId>
-            <version>1.20</version>
+            <version>1.9</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci</groupId>
@@ -93,12 +93,12 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.66</version>
+            <version>1.25</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
-            <version>2.4.12</version>
+            <version>2.4.11</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
@@ -120,48 +120,33 @@
             <artifactId>bouncycastle-api</artifactId>
             <version>2.16.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-            <version>1.61</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <version>2.2</version>
-        </dependency>
 
         <!-- end added dependencies because of maven enforcer plugin -->
 
         <dependency>
             <groupId>com.coravy.hudson.plugins.github</groupId>
             <artifactId>github</artifactId>
-            <version>1.29.5</version>
+            <version>1.27.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>matrix-project</artifactId>
-            <version>1.14</version>
+            <version>1.11</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.109</version>
+            <version>1.92</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>4.2.2</version>
+            <version>3.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>job-dsl</artifactId>
-            <version>1.77</version>
+            <version>1.63</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -197,7 +182,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>token-macro</artifactId>
-            <version>2.12</version>
+            <version>2.1</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -209,17 +194,17 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.3.5</version>
+            <version>2.1.14</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
-            <version>1.7</version>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
-            <version>1.20</version>
+            <version>1.9</version>
         </dependency>
     </dependencies>
 
