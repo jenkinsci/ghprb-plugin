@@ -218,7 +218,7 @@ public class GhprbPullRequestTest {
         // GIVEN
         String expectedAuthorRepoGitUrl = "https://github.com/jenkinsci/ghprb-plugin";
         GHRepository repository = mock(GHRepository.class);
-        given(repository.gitHttpTransportUrl()).willReturn(expectedAuthorRepoGitUrl);
+        given(repository.getHttpTransportUrl()).willReturn(expectedAuthorRepoGitUrl);
 
         given(head.getRepository()).willReturn(repository);
 

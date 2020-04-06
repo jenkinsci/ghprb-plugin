@@ -3,7 +3,7 @@
 This Jenkins plugin builds pull requests from GitHub and will report the results directly to the pull request via
 the [GitHub Commit Status API](http://developer.github.com/v3/repos/statuses/)
 
-When a new pull request is opened in the project and the author of the pull 
+When a new pull request is opened in the project and the author of the pull
 request isn't whitelisted, builder will ask `Can one of the
 admins verify this patch?`. One of the admins can comment `ok to test`
 to accept this pull request for testing, `test this please` for one time
