@@ -24,7 +24,6 @@ import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
-import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
@@ -78,7 +77,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * an integer for number of threads.  (default pool size: 5)
      */
     private static final ExecutorService POOL = Executors.newFixedThreadPool(
-            SystemProperties.getInteger(GhprbTrigger.class.getName() + ".poolSize", 5)
+            Integer.parseInt(System.getProperty(GhprbTrigger.class.getName() + ".poolSize", "5"))
     );
 
     /**
@@ -91,7 +90,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
      * (default: false)
      */
     private static final boolean DISABLE_REGISTER_ON_STARTUP =
-            SystemProperties.getBoolean(GhprbTrigger.class.getName() + ".disableRegisterOnStartup", false);
+            Boolean.parseBoolean(System.getProperty(GhprbTrigger.class.getName() + ".disableRegisterOnStartup", "false"));
 
     private final String adminlist;
 
@@ -331,7 +330,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                     new String[] {String.valueOf(DISABLE_REGISTER_ON_STARTUP)});
             if (GhprbTrigger.getDscp().getManageWebhooks() && (newInstance || !DISABLE_REGISTER_ON_STARTUP)) {
                 final String[] params = {
-                        String.valueOf(SystemProperties.getInteger(GhprbTrigger.class.getName() + ".poolSize", 5))
+                        String.valueOf(System.getProperty(GhprbTrigger.class.getName() + ".poolSize", "5"))
                 };
                 LOGGER.log(Level.FINEST, "Registering hook with GitHub.  Thread pool size: {0}", params);
                 POOL.submit(new StartHookRunnable(this.repository));
