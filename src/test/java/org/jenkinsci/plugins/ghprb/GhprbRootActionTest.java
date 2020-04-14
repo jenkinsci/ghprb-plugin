@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.ghprb;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.GitSCM;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +27,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URLEncoder;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.fest.assertions.Assertions.assertThat;
@@ -79,7 +81,11 @@ public class GhprbRootActionTest {
         given(commitPointer.getRef()).willReturn("ref");
         given(ghRepository.getName()).willReturn("dropwizard");
 
-        GhprbTestUtil.mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
+        GhprbTestUtil.mockPR(ghPullRequest,
+                commitPointer,
+                ZonedDateTime.now(ZoneOffset.UTC),
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(1, ChronoUnit.DAYS));
 
         given(ghRepository.getPullRequests(eq(OPEN))).willReturn(newArrayList(ghPullRequest)).willReturn(newArrayList(ghPullRequest));
 
