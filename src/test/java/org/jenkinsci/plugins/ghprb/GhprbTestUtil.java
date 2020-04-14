@@ -20,7 +20,6 @@ import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.UserRemoteConfig;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRateLimit;
@@ -39,7 +38,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,7 +254,7 @@ public final class GhprbTestUtil {
         Mockito.when(itr.hasNext()).thenReturn(false);
     }
 
-    public static void mockPR(GHPullRequest prToMock, GHCommitPointer commitPointer, DateTime... updatedDate) throws Exception {
+    public static void mockPR(GHPullRequest prToMock, GHCommitPointer commitPointer, ZonedDateTime... updatedDate) throws Exception {
 
         given(prToMock.getHead()).willReturn(commitPointer);
         given(prToMock.getBase()).willReturn(commitPointer);
@@ -262,13 +263,13 @@ public final class GhprbTestUtil {
 
         if (updatedDate.length > 1) {
             given(prToMock.getUpdatedAt())
-                    .willReturn(updatedDate[0].toDate())
-                    .willReturn(updatedDate[0].toDate())
-                    .willReturn(updatedDate[1].toDate())
-                    .willReturn(updatedDate[1].toDate())
-                    .willReturn(updatedDate[1].toDate());
+                    .willReturn(Date.from(updatedDate[0].toInstant()))
+                    .willReturn(Date.from(updatedDate[0].toInstant()))
+                    .willReturn(Date.from(updatedDate[1].toInstant()))
+                    .willReturn(Date.from(updatedDate[1].toInstant()))
+                    .willReturn(Date.from(updatedDate[1].toInstant()));
         } else {
-            given(prToMock.getUpdatedAt()).willReturn(updatedDate[0].toDate());
+            given(prToMock.getUpdatedAt()).willReturn(Date.from(updatedDate[0].toInstant()));
         }
     }
 

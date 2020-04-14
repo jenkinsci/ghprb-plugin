@@ -9,7 +9,6 @@ import hudson.util.Secret;
 import org.apache.commons.codec.binary.Hex;
 import org.fest.util.Collections;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +37,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -519,8 +521,14 @@ public class GhprbRepositoryTest {
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
 
-        Date later = new DateTime().plusHours(3).toDate();
-        Date tomorrow = new DateTime().plusDays(1).toDate();
+        Date later = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(3, ChronoUnit.HOURS)
+                        .toInstant());
+        Date tomorrow = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(1, ChronoUnit.DAYS)
+                        .toInstant());
 
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
@@ -616,8 +624,13 @@ public class GhprbRepositoryTest {
     public void testCheckMethodWhenPrWasUpdatedWithRetestPhrase() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
-        Date now = new Date();
-        Date tomorrow = new DateTime().plusDays(1).toDate();
+        Date now = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .toInstant());
+        Date tomorrow = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(1, ChronoUnit.DAYS)
+                        .toInstant());
 
         mockHeadAndBase();
         mockCommitList();
