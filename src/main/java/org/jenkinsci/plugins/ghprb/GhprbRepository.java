@@ -10,7 +10,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.SaveableListener;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import jenkins.util.SystemProperties;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
@@ -53,8 +52,8 @@ public class GhprbRepository implements Saveable {
 
     private static final transient EnumSet<GHEvent> HOOK_EVENTS = EnumSet.of(GHEvent.ISSUE_COMMENT, GHEvent.PULL_REQUEST);
 
-    private static final transient boolean INSECURE_WEBHOOKS = SystemProperties.getBoolean(
-            GhprbRepository.class.getName() + ".webhook.insecure", false);
+    private static final transient boolean INSECURE_WEBHOOKS = Boolean.parseBoolean(
+            System.getProperty(GhprbRepository.class.getName() + ".webhook.insecure", "false"));
 
     private final String reponame;
 

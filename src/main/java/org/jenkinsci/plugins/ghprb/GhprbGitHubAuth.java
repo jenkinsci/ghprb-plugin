@@ -19,8 +19,8 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
@@ -146,7 +146,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                 Mac mac = Mac.getInstance(algorithm);
                 mac.init(keySpec);
                 byte[] localSignatureBytes = mac.doFinal(body.getBytes("UTF-8"));
-                String localSignature = Hex.encodeHexString(localSignatureBytes);
+                String localSignature = Hex.toHexString(localSignatureBytes);
                 if (!localSignature.equals(expected)) {
                     LOGGER.log(Level.SEVERE, "Local signature {0} does not match external signature {1}",
                             new Object[] {localSignature, expected});

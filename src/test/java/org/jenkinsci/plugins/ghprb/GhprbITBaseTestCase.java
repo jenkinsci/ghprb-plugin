@@ -5,7 +5,6 @@ import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.plugins.git.GitSCM;
-import org.joda.time.DateTime;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
@@ -16,6 +15,9 @@ import org.kohsuke.github.GitHub;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -78,7 +80,11 @@ public abstract class GhprbITBaseTestCase {
 
         given(ghRepository.getName()).willReturn("dropwizard");
 
-        GhprbTestUtil.mockPR(ghPullRequest, commitPointer, new DateTime(), new DateTime().plusDays(1));
+        GhprbTestUtil.mockPR(ghPullRequest,
+                commitPointer,
+                ZonedDateTime.now(ZoneOffset.UTC),
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(1, ChronoUnit.DAYS));
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN)))
                 .willReturn(newArrayList(ghPullRequest))

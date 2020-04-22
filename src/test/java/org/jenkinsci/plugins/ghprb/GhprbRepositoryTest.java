@@ -9,7 +9,6 @@ import hudson.util.Secret;
 import org.apache.commons.codec.binary.Hex;
 import org.fest.util.Collections;
 import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +37,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -519,8 +521,14 @@ public class GhprbRepositoryTest {
         mockCommitList();
         GhprbBuilds builds = mockBuilds();
 
-        Date later = new DateTime().plusHours(3).toDate();
-        Date tomorrow = new DateTime().plusDays(1).toDate();
+        Date later = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(3, ChronoUnit.HOURS)
+                        .toInstant());
+        Date tomorrow = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(1, ChronoUnit.DAYS)
+                        .toInstant());
 
 
         given(ghRepository.getPullRequests(eq(GHIssueState.OPEN))).willReturn(ghPullRequests);
@@ -616,8 +624,13 @@ public class GhprbRepositoryTest {
     public void testCheckMethodWhenPrWasUpdatedWithRetestPhrase() throws Exception {
         // GIVEN
         List<GHPullRequest> ghPullRequests = createListWithMockPR();
-        Date now = new Date();
-        Date tomorrow = new DateTime().plusDays(1).toDate();
+        Date now = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .toInstant());
+        Date tomorrow = Date.from(
+                ZonedDateTime.now(ZoneOffset.UTC)
+                        .plus(1, ChronoUnit.DAYS)
+                        .toInstant());
 
         mockHeadAndBase();
         mockCommitList();
@@ -665,7 +678,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
-        verify(ghPullRequest, times(5)).getUser();
+        verify(ghPullRequest, times(6)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(9)).getHead();
         verify(ghPullRequest, times(7)).getBase();
@@ -676,7 +689,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getLabels();
 
         verify(ghPullRequest, times(1)).getId();
-        verify(ghPullRequest, times(1)).getComments();
+        verify(ghPullRequest, times(2)).getComments();
         verify(ghPullRequest, times(4)).listCommits();
 
         verify(ghPullRequest, times(2)).getBody();
@@ -702,7 +715,7 @@ public class GhprbRepositoryTest {
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
         verify(ghUser, times(2)).getLogin();
-        verify(ghUser, times(2)).getName();
+        verify(ghUser, times(3)).getName();
         verifyNoMoreInteractions(ghUser);
 
         verify(builds, times(2)).build(any(GhprbPullRequest.class), any(GHUser.class), any(String.class));
