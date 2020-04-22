@@ -1,5 +1,15 @@
 ### Updates
 
+### -> 1.42.1
+
+* No longer use deprecated github-api API `gitHttpTransportUrl()` ([#772][#772])
+
+[#772]: https://github.com/jenkinsci/ghprb-plugin/pull/772
+
+### -> 1.42.0
+
+- SECURITY-805 fix
+
 ### -> 1.41.0
 
 * Fix for stale ghprbCommentBody values ([#504][#504])
