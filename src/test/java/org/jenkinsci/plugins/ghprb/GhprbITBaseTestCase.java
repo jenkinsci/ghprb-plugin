@@ -54,7 +54,8 @@ public abstract class GhprbITBaseTestCase {
 
     protected GhprbTrigger trigger;
 
-    protected GHRateLimit ghRateLimit = new GHRateLimit();
+    @Mock
+    protected GHRateLimit ghRateLimit;
 
     protected void beforeTest(
             Map<String, Object> globalConfig,
@@ -88,7 +89,8 @@ public abstract class GhprbITBaseTestCase {
         given(ghUser.getEmail()).willReturn("email@email.com");
         given(ghUser.getLogin()).willReturn("user");
 
-        ghRateLimit.remaining = GhprbTestUtil.INITIAL_RATE_LIMIT;
+
+        given(ghRateLimit.getRemaining()).willReturn(GhprbTestUtil.INITIAL_RATE_LIMIT);
 
         GhprbTestUtil.mockCommitList(ghPullRequest);
 

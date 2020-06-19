@@ -422,8 +422,9 @@ public final class GhprbTestUtil {
 
         GhprbTrigger trigger = spy(req.bindJSON(GhprbTrigger.class, defaults));
 
-        GHRateLimit limit = new GHRateLimit();
-        limit.remaining = INITIAL_RATE_LIMIT;
+
+        GHRateLimit limit = Mockito.mock(GHRateLimit.class);
+        given(limit.getRemaining()).willReturn(INITIAL_RATE_LIMIT);
 
         GitHub github = Mockito.mock(GitHub.class);
         given(github.getRateLimit()).willReturn(limit);

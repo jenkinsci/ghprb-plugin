@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.2</version>
+        <version>4.2</version>
         <relativePath />
     </parent>
 
@@ -51,12 +51,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <workflow.version>1.4</workflow.version>
-        <jenkins.version>2.7</jenkins.version>
+        <jenkins.version>2.164.3</jenkins.version>
         <powermock.version>1.6.2</powermock.version>
-        <java.level>7</java.level>
+        <java.level>8</java.level>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <checkstyle.version>6.7</checkstyle.version>
-        <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
+        <checkstyle.version>8.33</checkstyle.version>
+        <checkstyle.plugin.version>3.1.1</checkstyle.plugin.version>
+        <!-- this plugin use jenkins.utils.SystemProperties, which is marked "NoExternalUse" -->
+        <!-- See https://issues.jenkins-ci.org/browse/JENKINS-52704 -->
+        <access-modifier-checker.skip>true</access-modifier-checker.skip>
     </properties>
 
     <!--
@@ -73,56 +76,6 @@
 
     <dependencies>
 
-        <!-- added dependencies because of maven enforcer plugin -->
-
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>scm-api</artifactId>
-            <version>2.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci</groupId>
-            <artifactId>symbol-annotation</artifactId>
-            <version>1.9</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci</groupId>
-            <artifactId>annotation-indexer</artifactId>
-            <version>1.12</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <version>1.25</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>2.4.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant</artifactId>
-            <version>1.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-utils</artifactId>
-            <version>3.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-classworlds</artifactId>
-            <version>2.4.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>bouncycastle-api</artifactId>
-            <version>2.16.1</version>
-        </dependency>
-
-        <!-- end added dependencies because of maven enforcer plugin -->
-
         <dependency>
             <groupId>com.coravy.hudson.plugins.github</groupId>
             <artifactId>github</artifactId>
@@ -136,7 +89,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-api</artifactId>
-            <version>1.92</version>
+            <version>1.114.2</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -152,7 +105,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -208,17 +161,58 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>scm-api</artifactId>
+                <version>2.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci</groupId>
+                <artifactId>symbol-annotation</artifactId>
+                <version>1.9</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci</groupId>
+                <artifactId>annotation-indexer</artifactId>
+                <version>1.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>script-security</artifactId>
+                <version>1.25</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.9</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>2.4.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>2.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
+                <version>3.0.0-M4</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
                         <artifactId>surefire-junit47</artifactId>
-                        <version>2.16</version>
+                        <version>3.0.0-M4</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -255,15 +249,6 @@
                         <version>1.9.1</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

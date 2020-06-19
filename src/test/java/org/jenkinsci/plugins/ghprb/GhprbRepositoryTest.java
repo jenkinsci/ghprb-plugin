@@ -759,7 +759,8 @@ public class GhprbRepositoryTest {
     public void testExceedRateLimit() throws Exception {
         // GIVEN
         getNewTrigger();
-        rateLimit.remaining = 0;
+
+        given(rateLimit.getRemaining()).willReturn(0);
         verify(gt, times(1)).getRateLimit();
 
         // WHEN

@@ -172,7 +172,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     private static GitHubBuilder getBuilder(Item context, String serverAPIUrl, String credentialsId) {
         GitHubBuilder builder = new GitHubBuilder()
                 .withEndpoint(serverAPIUrl)
-                .withConnector(new HttpConnectorWithJenkinsProxy());
+                .withConnector(new HttpConnectorWithJenkinsProxy(serverAPIUrl));
         String contextName = context == null ? "(Jenkins.instance)" : context.getFullDisplayName();
 
         if (StringUtils.isEmpty(credentialsId)) {
@@ -285,7 +285,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
 
                 GitHubBuilder builder = new GitHubBuilder()
                         .withEndpoint(serverAPIUrl)
-                        .withConnector(new HttpConnectorWithJenkinsProxy());
+                        .withConnector(new HttpConnectorWithJenkinsProxy(serverAPIUrl));
 
                 if (StringUtils.isEmpty(credentialsId)) {
                     if (StringUtils.isEmpty(username) || StringUtils.isEmpty(password)) {
