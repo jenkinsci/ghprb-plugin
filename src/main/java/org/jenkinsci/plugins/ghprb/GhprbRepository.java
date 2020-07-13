@@ -101,7 +101,7 @@ public class GhprbRepository implements Saveable {
         }
 
         try {
-            if (gitHub.getRateLimit().remaining == 0) {
+            if (gitHub.getRateLimit().getRemaining() == 0) {
                 LOGGER.log(Level.INFO, "Exceeded rate limit for repository");
                 return false;
             }

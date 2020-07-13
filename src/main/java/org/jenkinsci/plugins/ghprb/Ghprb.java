@@ -132,7 +132,6 @@ public class Ghprb {
         Set<String> authors = getBlacklistedCommitAuthors();
         authors.remove("");
 
-        Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
         for (String s : authors) {
             s = s.trim();
             if (compilePattern(s).matcher(author).matches()) {

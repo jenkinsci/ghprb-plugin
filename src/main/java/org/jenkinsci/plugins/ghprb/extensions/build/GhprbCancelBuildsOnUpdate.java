@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.ghprb.extensions.build;
 
 import hudson.Extension;
 import hudson.model.Cause;
+import hudson.model.Executor;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Result;
@@ -98,7 +99,10 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements
                                     + project.getName() + " for PR # " + cause.getPullID()
                     );
                     run.addAction(this);
-                    run.getExecutor().interrupt(Result.ABORTED);
+                    Executor executor = run.getExecutor();
+                    if (executor != null) {
+                        executor.interrupt(Result.ABORTED);
+                    }
                 } catch (Exception e) {
                     LOGGER.log(Level.SEVERE, "Error while trying to interrupt build!", e);
                 }

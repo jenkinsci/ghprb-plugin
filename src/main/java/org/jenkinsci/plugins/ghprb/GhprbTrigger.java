@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -248,7 +249,9 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     @SuppressWarnings("deprecation")
     private void initState() throws IOException {
 
-        final GithubProjectProperty ghpp = super.job.getProperty(GithubProjectProperty.class);
+        final Job<?, ?> job = super.job;
+        Objects.requireNonNull(job);
+        final GithubProjectProperty ghpp = job.getProperty(GithubProjectProperty.class);
         if (ghpp == null || ghpp.getProjectUrl() == null) {
             throw new IllegalStateException("A GitHub project url is required.");
         }
@@ -266,7 +269,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.pullRequests = null;
 
         try {
-            Map<Integer, GhprbPullRequest> prs = getDescriptor().getPullRequests(super.job.getFullName());
+            Map<Integer, GhprbPullRequest> prs = getDescriptor().getPullRequests(job.getFullName());
             if (prs != null) {
                 prs = new ConcurrentHashMap<Integer, GhprbPullRequest>(prs);
                 if (pulls == null) {
@@ -366,7 +369,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             return;
         }
 
-        LOGGER.log(Level.FINE, "Running trigger for {0}", super.job.getFullName());
+        Job<?, ?> job = this.job;
+        LOGGER.log(Level.FINE, "Running trigger for {0}", job == null ? "unknown Job" : job.getFullName());
 
         this.repository.check();
     }
@@ -480,10 +484,13 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     private ArrayList<ParameterValue> getDefaultParameters() {
         ArrayList<ParameterValue> values = new ArrayList<ParameterValue>();
-        ParametersDefinitionProperty pdp = this.job.getProperty(ParametersDefinitionProperty.class);
-        if (pdp != null) {
-            for (ParameterDefinition pd : pdp.getParameterDefinitions()) {
-                values.add(pd.getDefaultParameterValue());
+        Job<?, ?> job = this.job;
+        if (job != null) {
+            ParametersDefinitionProperty pdp = job.getProperty(ParametersDefinitionProperty.class);
+            if (pdp != null) {
+                for (ParameterDefinition pd : pdp.getParameterDefinitions()) {
+                    values.add(pd.getDefaultParameterValue());
+                }
             }
         }
         return values;
@@ -518,10 +525,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public void addWhitelist(String author) {
-        whitelist = whitelist + " " + author;
         try {
-            this.job.save();
-        } catch (IOException ex) {
+            Job<?, ?> job = Objects.requireNonNull(this.job);
+            whitelist = whitelist + " " + author;
+            job.save();
+        } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Failed to save new whitelist", ex);
         }
     }
