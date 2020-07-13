@@ -15,6 +15,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppender, GhprbProjectExtension {
     @Extension
@@ -35,15 +36,15 @@ public class GhprbCommentFile extends GhprbExtension implements GhprbCommentAppe
         return false;
     }
 
-    public String postBuildComment(Run<?, ?> build, TaskListener listener) {
+    public String postBuildComment(final Run<?, ?> build, TaskListener listener) {
         StringBuilder msg = new StringBuilder();
         if (commentFilePath != null && !commentFilePath.isEmpty()) {
-            String scriptFilePathResolved = Ghprb.replaceMacros(build, listener, commentFilePath);
-
+            final String scriptFilePathResolved = Objects.requireNonNull(Ghprb.replaceMacros(build, listener, commentFilePath));
             try {
                 String content = null;
                 if (build instanceof Build<?, ?>) {
                     final FilePath workspace = ((Build<?, ?>) build).getWorkspace();
+                    assert workspace != null;
                     final FilePath path = workspace.child(scriptFilePathResolved);
 
                     if (path.exists()) {

@@ -152,7 +152,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
                             new Object[] {localSignature, expected});
                     return false;
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOGGER.log(Level.SEVERE, "Couldn't match both signatures");
                 return false;
             }

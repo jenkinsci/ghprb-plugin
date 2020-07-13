@@ -235,7 +235,9 @@ public class GhprbPullRequest {
                         LOGGER.log(Level.INFO,
                                 "Found label {0} in ignore list, pull request will be ignored.",
                                 label.getName());
-                        shouldRun = false;
+                        synchronized (this) {
+                            shouldRun = false;
+                        }
                     }
                 }
             } catch (Error e) {
@@ -262,7 +264,9 @@ public class GhprbPullRequest {
 
                 if (!containsWhiteListLabel) {
                     LOGGER.log(Level.INFO, "Can't find any of whitelist label.");
-                    shouldRun = false;
+                    synchronized (this) {
+                        shouldRun = false;
+                    }
                 }
             } catch (Error e) {
                 LOGGER.log(Level.SEVERE, "Failed to read whitelist labels", e);
@@ -330,20 +334,20 @@ public class GhprbPullRequest {
     private void updatePR(GHPullRequest ghpr, GHIssueComment comment, boolean isWebhook) {
         // Get the updated time
         try {
-            Date lastUpdateTime = updated;
-            Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
-            // Don't log unless it was actually updated
-            if (updated == null || updated.compareTo(updatedDate) < 0) {
-                String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
-                LOGGER.log(
-                        Level.INFO,
-                        "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
-                        new Object[] {this.id, this.repo.getName(), updatedDate, user,
-                                comment != null ? "comment" : "PR update"}
-                );
-            }
-
             synchronized (this) {
+                Date lastUpdateTime = updated;
+                Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
+                // Don't log unless it was actually updated
+                if (updated == null || updated.compareTo(updatedDate) < 0) {
+                    String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
+                    LOGGER.log(
+                            Level.INFO,
+                            "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
+                            new Object[] {this.id, this.repo.getName(), updatedDate, user,
+                                    comment != null ? "comment" : "PR update"}
+                    );
+                }
+
                 boolean wasUpdated = setUpdated(updatedDate);
 
                 // Update the PR object with the new pull request object if

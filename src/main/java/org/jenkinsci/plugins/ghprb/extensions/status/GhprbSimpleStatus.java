@@ -124,7 +124,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         }
 
         String statusUrl = getDescriptor().getStatusUrlDefault(this);
-        if (commitStatusContext == "") {
+        if ("".equals(commitStatusContext)) {
             commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
         }
 
