@@ -14,7 +14,7 @@
     <version>1.42.3-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
-    <url>https://github.com/jenkinsci/ghprb-plugin/blob/master/README.md</url>
+    <url>https://github.com/jenkinsci/ghprb-plugin</url>
 
     <!--
       The developers show up as current maintainers in the Jenkins wiki.
