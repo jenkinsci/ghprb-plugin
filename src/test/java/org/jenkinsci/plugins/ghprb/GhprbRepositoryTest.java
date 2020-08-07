@@ -239,6 +239,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(gt);
 
         verify(ghUser, times(1)).getName();
+        verify(ghUser, times(1)).getLogin();
         verifyNoMoreInteractions(ghUser);
         verifyZeroInteractions(ghUser);
     }
@@ -599,7 +600,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(2)).getLogin();
+        verify(ghUser, times(4)).getLogin();
         verify(ghUser, times(3)).getName();
         verifyNoMoreInteractions(ghUser);
     }
@@ -701,7 +702,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(2)).getLogin();
+        verify(ghUser, times(3)).getLogin();
         verify(ghUser, times(2)).getName();
         verifyNoMoreInteractions(ghUser);
 
