@@ -57,6 +57,7 @@ import java.util.regex.Pattern;
  * @author janinko
  */
 public class Ghprb {
+    private static final String DEPENDABOT_USERNAME = "dependabot[bot]";
     private static final Logger LOGGER = Logger.getLogger(Ghprb.class.getName());
 
     static final Pattern GITHUB_USER_REPO_PATTERN = Pattern.compile("^(http[s]?://[^/]*)/([^/]*/[^/]*).*");
@@ -267,9 +268,12 @@ public class Ghprb {
     }
 
     public boolean isWhitelisted(GHUser user) {
+        String username = user.getLogin().toLowerCase();
+
         return trigger.getPermitAll()
-                || whitelisted().contains(user.getLogin().toLowerCase())
-                || admins().contains(user.getLogin().toLowerCase())
+                || isDependabotUser(user)
+                || whitelisted().contains(username)
+                || admins().contains(username)
                 || isInWhitelistedOrganisation(user);
     }
 
@@ -277,6 +281,10 @@ public class Ghprb {
         return admins().contains(user.getLogin().toLowerCase())
                 || (trigger.getAllowMembersOfWhitelistedOrgsAsAdmin()
                 && isInWhitelistedOrganisation(user));
+    }
+
+    public boolean isDependabotUser(GHUser user) {
+        return user != null && user.getLogin().equals(DEPENDABOT_USERNAME);
     }
 
     public boolean isBotUser(GHUser user) {
