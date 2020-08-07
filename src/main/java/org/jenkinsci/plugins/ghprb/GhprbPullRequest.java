@@ -340,11 +340,12 @@ public class GhprbPullRequest {
             Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
             // Don't log unless it was actually updated
             if (updated == null || updated.compareTo(updatedDate) < 0) {
-                String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
+                GHUser user = comment != null ? comment.getUser() : ghpr.getUser();
+                String name = StringUtils.defaultIfBlank(user.getName(), user.getLogin());
                 LOGGER.log(
                         Level.INFO,
                         "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
-                        new Object[] {this.id, this.repo.getName(), updatedDate, user,
+                        new Object[] {this.id, this.repo.getName(), updatedDate, name,
                                 comment != null ? "comment" : "PR update"}
                 );
             }
