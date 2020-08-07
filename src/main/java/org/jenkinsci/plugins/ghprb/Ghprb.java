@@ -58,6 +58,7 @@ import java.util.regex.Pattern;
  */
 public class Ghprb {
     private static final String DEPENDABOT_USERNAME = "dependabot[bot]";
+
     private static final Logger LOGGER = Logger.getLogger(Ghprb.class.getName());
 
     static final Pattern GITHUB_USER_REPO_PATTERN = Pattern.compile("^(http[s]?://[^/]*)/([^/]*/[^/]*).*");
