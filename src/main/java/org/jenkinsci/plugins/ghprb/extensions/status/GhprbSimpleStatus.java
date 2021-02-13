@@ -250,6 +250,7 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         Map<String, String> envVars = Ghprb.getEnvVars(build, listener);
 
         String sha1 = envVars.get("ghprbActualCommit");
+        String statusUrl = getDescriptor().getStatusUrlDefault(this);
         Integer pullId = Integer.parseInt(envVars.get("ghprbPullId"));
 
         String url = envVars.get("BUILD_URL");
