@@ -694,6 +694,7 @@ public class GhprbRepositoryTest {
 
         verify(helper).isWhitelistPhrase(eq("test this please"));
         verify(helper).isOktotestPhrase(eq("test this please"));
+        verify(helper).isTriggerPhrase(eq("test this please"));
         verify(helper).isRetestPhrase(eq("test this please"));
         verify(helper).isAdmin(eq(ghUser));
         verify(helper, times(4)).isProjectDisabled();
