@@ -88,6 +88,10 @@ f.advanced() {
   f.entry(field: "excludedRegions", title: _("Excluded regions")) {
     f.textarea()
   }
+  f.entry(field: "reportSuccessIfNotRegion",
+          title: _("Report success if build is not triggered due to include/exclude region")) {
+    f.checkbox()
+  }
 }
 f.advanced(title: _("Trigger Setup")) {
   f.entry(title: _("Trigger Setup")) {

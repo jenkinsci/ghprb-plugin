@@ -11,7 +11,7 @@ import hudson.plugins.git.util.BuildData;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommentAppender;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
+import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.kohsuke.github.GHCommitState;
@@ -76,10 +76,10 @@ public class GhprbBuilds {
                 repo.getName(),
                 trigger.getGitHubApiAuth().getCredentialsId());
 
-        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
-            if (ext instanceof GhprbCommitStatus) {
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbSimpleStatus.class)) {
+            if (ext instanceof GhprbSimpleStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onBuildTriggered(
+                    ((GhprbSimpleStatus) ext).onBuildTriggered(
                             trigger.getActualProject(),
                             pr.getHead(),
                             pr.isMergeable(),
@@ -138,10 +138,10 @@ public class GhprbBuilds {
             e.printStackTrace(logger);
         }
 
-        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
-            if (ext instanceof GhprbCommitStatus) {
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbSimpleStatus.class)) {
+            if (ext instanceof GhprbSimpleStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onBuildStart(build, listener, repo.getGitHubRepo());
+                    ((GhprbSimpleStatus) ext).onBuildStart(build, listener, repo.getGitHubRepo());
                 } catch (GhprbCommitStatusException e) {
                     repo.commentOnFailure(build, listener, e);
                 }
@@ -199,10 +199,10 @@ public class GhprbBuilds {
             }
         }
 
-        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
-            if (ext instanceof GhprbCommitStatus) {
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbSimpleStatus.class)) {
+            if (ext instanceof GhprbSimpleStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onBuildComplete(build, listener, repo.getGitHubRepo());
+                    ((GhprbSimpleStatus) ext).onBuildComplete(build, listener, repo.getGitHubRepo());
                 } catch (GhprbCommitStatusException e) {
                     repo.commentOnFailure(build, listener, e);
                 }
@@ -260,10 +260,10 @@ public class GhprbBuilds {
 
         LOGGER.log(Level.FINE, "Job: " + build.getFullDisplayName() + " Attempting to send GitHub commit status");
 
-        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbCommitStatus.class)) {
-            if (ext instanceof GhprbCommitStatus) {
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbSimpleStatus.class)) {
+            if (ext instanceof GhprbSimpleStatus) {
                 try {
-                    ((GhprbCommitStatus) ext).onEnvironmentSetup(build, listener, repo.getGitHubRepo());
+                    ((GhprbSimpleStatus) ext).onEnvironmentSetup(build, listener, repo.getGitHubRepo());
                 } catch (GhprbCommitStatusException e) {
                     repo.commentOnFailure(build, listener, e);
                 }

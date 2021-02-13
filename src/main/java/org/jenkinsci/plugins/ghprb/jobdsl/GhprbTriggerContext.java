@@ -48,6 +48,8 @@ class GhprbTriggerContext implements Context {
 
     String excludedRegions;
 
+    boolean reportSuccessIfNotRegion;
+
     GhprbExtensionContext extensionContext = new GhprbExtensionContext();
 
     /**

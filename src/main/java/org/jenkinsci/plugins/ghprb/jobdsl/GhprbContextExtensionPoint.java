@@ -45,7 +45,8 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
                 Joiner.on("\n").join(context.whiteListLabels),
                 context.extensionContext.getExtensions(),
                 context.includedRegions,
-                context.excludedRegions
+                context.excludedRegions,
+                context.reportSuccessIfNotRegion
         );
     }
 
