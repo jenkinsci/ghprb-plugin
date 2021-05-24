@@ -22,6 +22,8 @@ import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import org.jenkinsci.plugins.github_branch_source.GitHubAppCredentials;
+import org.jenkinsci.plugins.github_branch_source.Connector;
 import org.kohsuke.github.GHAuthorization;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssue;
@@ -201,24 +203,32 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
     }
 
     private void buildConnection(Item context) {
-        GitHubBuilder builder = getBuilder(context, serverAPIUrl, credentialsId);
-        if (builder == null) {
-            LOGGER.log(Level.SEVERE, "Unable to get builder using credentials: {0}", credentialsId);
-            return;
-        }
-        try {
-            gh = builder.build();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Unable to connect using credentials: " + credentialsId, e);
+        StandardCredentials credentials = Ghprb.lookupCredentials(context, credentialsId, serverAPIUrl);
+        if (credentials instanceof GitHubAppCredentials) {
+            LOGGER.log(Level.FINEST, "Using GithubApp Credentials:" + credentialsId);
+            GitHubAppCredentials appCredentials = (GitHubAppCredentials) credentials;
+            try {
+                gh = Connector.connect(serverAPIUrl, appCredentials); 
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Unable to connect using credentials: " + credentialsId, e);
+            } 
+        } else {
+            GitHubBuilder builder = getBuilder(context, serverAPIUrl, credentialsId);
+            if (builder == null) {
+                LOGGER.log(Level.SEVERE, "Unable to get builder using credentials: {0}", credentialsId);
+                return;
+            }
+            try {
+                gh = builder.build();
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Unable to connect using credentials: " + credentialsId, e);
+            }
         }
     }
 
     public GitHub getConnection(Item context) throws IOException {
         synchronized (this) {
-            if (gh == null) {
-                buildConnection(context);
-            }
-
+            buildConnection(context);
             return gh;
         }
     }
@@ -257,6 +267,7 @@ public class GhprbGitHubAuth extends AbstractDescribableImpl<GhprbGitHubAuth> {
 
             matchers.add(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
             matchers.add(CredentialsMatchers.instanceOf(StringCredentials.class));
+            matchers.add(CredentialsMatchers.instanceOf(GitHubAppCredentials.class));
 
             List<StandardCredentials> credentials = CredentialsProvider.lookupCredentials(
                     StandardCredentials.class,

@@ -499,12 +499,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public GhprbGitHubAuth getGitHubApiAuth() {
-        if (gitHubAuthId == null) {
-            for (GhprbGitHubAuth auth : getDescriptor().getGithubAuth()) {
-                gitHubAuthId = auth.getId();
-                getDescriptor().save();
-                return auth;
-            }
+        for (GhprbGitHubAuth auth : getDescriptor().getGithubAuth()) {
+            gitHubAuthId = auth.getId();
+            getDescriptor().save();
+            return auth;
         }
         return getDescriptor().getGitHubAuth(gitHubAuthId);
     }
@@ -704,7 +702,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public GhprbRepository getRepository() {
-        if (this.repository == null && super.job != null && super.job.isBuildable()) {
+        if (super.job != null && super.job.isBuildable()) {
             try {
                 this.initState();
             } catch (IOException e) {
