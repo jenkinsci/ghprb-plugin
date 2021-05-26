@@ -31,6 +31,7 @@ For more details, see https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+re
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/ghprb-plugin/master)](https://ci.jenkins.io/job/Plugins/job/ghprb-plugin/job/master/)
 
 ### Required Jenkins Plugins:
+* github-branch-source plugin (https://plugins.jenkins.io/github-branch-source/)
 * github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
 * github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
 * git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
@@ -97,6 +98,10 @@ descriptor.save()
         * Jenkins will create a token credential, and give you the id of the newly created credentials.  The default description is: `serverAPIUrl + " GitHub auto generated token credentials"`.
     * For username/password use `Kind` -> `Username with password`
       * The scope determines what has access to the credentials you are about to create
+    * For Github App use `Kind` -> `Github App`
+      * For App ID use the App ID associated with the Github App you've created
+      * For secret, copy and paste the contents of the pem file you generated from your Github App
+      * Option to select `Advanced` and add an Owner
     * The first part of the description is used to show different credentials in the drop down, so use something semi-descriptive
     * Click `Add`
   * Credentials will automatically be created in the domain given by the `GitHub Server API URL` field.
