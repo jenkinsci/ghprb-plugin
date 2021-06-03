@@ -288,6 +288,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         this.repository.init();
         this.ghprbGitHub = new GhprbGitHub(this);
+
     }
 
 
@@ -702,13 +703,14 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public GhprbRepository getRepository() {
-        if (super.job != null && super.job.isBuildable()) {
+        if (this.repository == null && super.job != null && super.job.isBuildable()) {
             try {
                 this.initState();
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Unable to init trigger state!", e);
             }
         }
+        this.ghprbGitHub = new GhprbGitHub(this);
         return this.repository;
     }
 
@@ -727,13 +729,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public void handleComment(IssueComment issueComment) throws IOException {
         GhprbRepository repo = getRepository();
-
         LOGGER.log(
                 Level.INFO,
                 "Checking comment on PR #{0} for job {1}",
                 new Object[] {issueComment.getIssue().getNumber(), getProjectName()}
         );
-
         repo.onIssueCommentHook(issueComment);
     }
 
