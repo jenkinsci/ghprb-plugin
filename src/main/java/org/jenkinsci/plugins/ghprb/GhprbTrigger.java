@@ -710,7 +710,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                 LOGGER.log(Level.SEVERE, "Unable to init trigger state!", e);
             }
         }
-        this.ghprbGitHub = new GhprbGitHub(this);
         return this.repository;
     }
 
