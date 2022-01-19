@@ -110,13 +110,13 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     private final Boolean permitAll;
 
+    private final Boolean dontPublishTestingPhrase;
+
     private String whitelist;
 
     private Boolean autoCloseFailedPullRequests;
 
     private Boolean displayBuildErrorsOnDownstreamBuilds;
-
-    private Boolean dontPublishTestingPhrase;
 
     private List<GhprbBranch> whiteListTargetBranches;
 
@@ -620,6 +620,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return permitAll != null && permitAll;
     }
 
+    public Boolean getDontPublishTestingPhrase() {
+        return dontPublishTestingPhrase != null && dontPublishTestingPhrase;
+    }
+
     public Boolean getAutoCloseFailedPullRequests() {
         if (autoCloseFailedPullRequests == null) {
             Boolean autoClose = getDescriptor().getAutoCloseFailedPullRequests();
@@ -798,8 +802,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         private Boolean autoCloseFailedPullRequests = false;
 
         private Boolean displayBuildErrorsOnDownstreamBuilds = false;
-
-        private Boolean dontPublishTestingPhrase = false;
 
         private String blackListLabels;
 
@@ -993,7 +995,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
             unstableAs = GHCommitState.valueOf(formData.getString("unstableAs"));
             autoCloseFailedPullRequests = formData.getBoolean("autoCloseFailedPullRequests");
             displayBuildErrorsOnDownstreamBuilds = formData.getBoolean("displayBuildErrorsOnDownstreamBuilds");
-            dontPublishTestingPhrase = formData.getBoolean("dontPublishTestingPhrase");
             blackListLabels = formData.getString("blackListLabels");
             whiteListLabels = formData.getString("whiteListLabels");
 
@@ -1097,10 +1098,6 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         public Boolean getDisplayBuildErrorsOnDownstreamBuilds() {
             return displayBuildErrorsOnDownstreamBuilds;
-        }
-
-        public Boolean getDontPublishTestingPhrase() {
-            return dontPublishTestingPhrase;
         }
 
         public GHCommitState getUnstableAs() {
