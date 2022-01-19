@@ -283,13 +283,6 @@ class GhprbTriggerContext implements Context {
      * Disallow this job to comment on github asking for the testing phrase
      */
     public void dontPublishTestingPhrase(boolean dontPublishTestingPhrase) {
-        this.dontPublishTestingPhrase = dontPublishTestingPhrase;
-    }
-
-    /**
-     * Disallow this job to comment on github asking for the testing phrase
-     */
-    public void dontPublishTestingPhrase(boolean dontPublishTestingPhrase) {
         dontPublishTestingPhrase(false);
     }
 
