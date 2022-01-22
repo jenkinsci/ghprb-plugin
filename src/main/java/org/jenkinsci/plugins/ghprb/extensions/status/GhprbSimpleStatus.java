@@ -11,7 +11,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbCause;
 import org.jenkinsci.plugins.ghprb.GhprbTrigger;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
@@ -32,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GhprbSimpleStatus extends GhprbExtension implements
-        GhprbCommitStatus, GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
+        GhprbGlobalExtension, GhprbProjectExtension, GhprbGlobalDefault {
 
     @Extension
     public static final DescriptorImpl /*GhprbSimpleStatusDescriptor*/ DESCRIPTOR = new DescriptorImpl();
@@ -108,7 +107,6 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         return true;
     }
 
-    @Override
     public void onBuildTriggered(Job<?, ?> project,
                                  String commitSha,
                                  boolean isMergeable,
@@ -123,14 +121,6 @@ public class GhprbSimpleStatus extends GhprbExtension implements
             return;
         }
 
-        String statusUrl = getDescriptor().getStatusUrlDefault(this);
-        if (commitStatusContext == "") {
-            commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
-        }
-
-        String context = Util.fixEmpty(commitStatusContext);
-        context = Ghprb.replaceMacros(project, context);
-
         if (!StringUtils.isEmpty(triggeredStatus)) {
             sb.append(Ghprb.replaceMacros(project, triggeredStatus));
         } else {
@@ -142,20 +132,10 @@ public class GhprbSimpleStatus extends GhprbExtension implements
             }
         }
 
-        String url = Ghprb.replaceMacros(project, statusUrl);
-        if (StringUtils.equals(statusUrl, "--none--")) {
-            url = "";
-        }
-
         String message = sb.toString();
-        try {
-            ghRepository.createCommitStatus(commitSha, state, url, message, context);
-        } catch (IOException e) {
-            throw new GhprbCommitStatusException(e, state, message, prId);
-        }
+        createCommitStatus(project, prId, commitSha, state, ghRepository, message);
     }
 
-    @Override
     public void onEnvironmentSetup(Run<?, ?> build,
                                    TaskListener listener,
                                    GHRepository repo) throws GhprbCommitStatusException {
@@ -163,7 +143,6 @@ public class GhprbSimpleStatus extends GhprbExtension implements
         // soon and will respect's the user's settings for startedStatus.
     }
 
-    @Override
     public void onBuildStart(Run<?, ?> build,
                              TaskListener listener,
                              GHRepository repo) throws GhprbCommitStatusException {
@@ -283,6 +262,33 @@ public class GhprbSimpleStatus extends GhprbExtension implements
             repo.createCommitStatus(sha1, state, url, message, context);
         } catch (IOException e) {
             throw new GhprbCommitStatusException(e, state, message, pullId);
+        }
+    }
+
+    public void createCommitStatus(Job<?, ?> project,
+                                   int prId,
+                                   String commitSha,
+                                   GHCommitState state,
+                                   GHRepository ghRepository,
+                                   String message) throws GhprbCommitStatusException {
+        String statusUrl = getDescriptor().getStatusUrlDefault(this);
+        if (commitStatusContext == "") {
+            commitStatusContext = getDescriptor().getCommitStatusContextDefault(this);
+        }
+
+        String context = Util.fixEmpty(commitStatusContext);
+        context = Ghprb.replaceMacros(project, context);
+
+        String url = Ghprb.replaceMacros(project, statusUrl);
+        // "--none--" means the user does not want a message, "Jenkins" is the default when we don't have a URL.
+        if (StringUtils.equals(statusUrl, "--none--") || StringUtils.equals(statusUrl, "Jenkins")) {
+            url = "";
+        }
+
+        try {
+            ghRepository.createCommitStatus(commitSha, state, url, message, context);
+        } catch (IOException e) {
+            throw new GhprbCommitStatusException(e, state, message, prId);
         }
     }
 
