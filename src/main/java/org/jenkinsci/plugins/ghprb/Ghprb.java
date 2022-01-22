@@ -326,6 +326,10 @@ public class Ghprb {
         return patterns;
     }
 
+    public boolean getReportSuccessIfNotRegion() {
+        return trigger.getReportSuccessIfNotRegion();
+    }
+
     public static String replaceMacros(Run<?, ?> build, TaskListener listener, String inputString) {
         String returnString = inputString;
         if (build != null && inputString != null) {
