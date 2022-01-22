@@ -19,6 +19,8 @@ import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHPullRequestReview;
+import org.kohsuke.github.GHPullRequestReviewState;
 import org.kohsuke.github.GHRef;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
@@ -48,9 +50,11 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
     private final Boolean allowMergeWithoutTriggerPhrase;
 
+    private final Boolean onlyApprovedCode;
+
     @DataBoundConstructor
     public GhprbPullRequestMerge(String mergeComment, boolean onlyAdminsMerge, boolean disallowOwnCode, boolean failOnNonMerge,
-                                 boolean deleteOnMerge, boolean allowMergeWithoutTriggerPhrase) {
+                                 boolean deleteOnMerge, boolean allowMergeWithoutTriggerPhrase, boolean onlyApprovedCode) {
 
         this.mergeComment = mergeComment;
         this.onlyAdminsMerge = onlyAdminsMerge;
@@ -58,6 +62,7 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
         this.failOnNonMerge = failOnNonMerge;
         this.deleteOnMerge = deleteOnMerge;
         this.allowMergeWithoutTriggerPhrase = allowMergeWithoutTriggerPhrase;
+        this.onlyApprovedCode = onlyApprovedCode;
     }
 
     public String getMergeComment() {
@@ -78,6 +83,10 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
 
     public boolean getDeleteOnMerge() {
         return deleteOnMerge == null ? false : deleteOnMerge;
+    }
+
+    public boolean getOnlyApprovedCode() {
+        return onlyApprovedCode == null ? false : onlyApprovedCode;
     }
 
     public Boolean getAllowMergeWithoutTriggerPhrase() {
@@ -150,6 +159,11 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
             listener.getLogger().println("The comment does not contain the required trigger phrase.");
         } else {
             intendToMerge = true;
+        }
+
+        if (intendToMerge && getOnlyApprovedCode() && !isApproved(pr)) {
+            canMerge = false;
+            listener.getLogger().println("Pull request is not approved.");
         }
 
         // If there is no intention to merge there is no point checking
@@ -226,6 +240,15 @@ public class GhprbPullRequestMerge extends Recorder implements SimpleBuildStep {
             run.setResult(Result.FAILURE);
             return;
         }
+    }
+
+    private boolean isApproved(GHPullRequest pr) {
+        for (GHPullRequestReview review : pr.listReviews()) {
+            if (review.getState() == GHPullRequestReviewState.APPROVED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void deleteBranch(Run<?, ?> build, Launcher launcher, final TaskListener listener) {

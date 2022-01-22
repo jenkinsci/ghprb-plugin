@@ -20,6 +20,8 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestCommitDetail.Commit;
+import org.kohsuke.github.GHPullRequestReview;
+import org.kohsuke.github.GHPullRequestReviewState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
@@ -63,6 +65,9 @@ public class GhprbPullRequestMergeTest {
 
     @Mock
     private GHPullRequest pr;
+
+    @Mock
+    private GHPullRequestReview pullRequestReview;
 
     @Mock
     private GitUser committer;
@@ -190,9 +195,32 @@ public class GhprbPullRequestMergeTest {
         given(helper.isBotUser(any(GHUser.class))).willReturn(false);
     }
 
+    @SuppressWarnings(value = {"rawtypes", "unchecked"})
+    private void mockReviewList() {
+        PagedIterator itr = Mockito.mock(PagedIterator.class);
+        PagedIterable pagedItr = Mockito.mock(PagedIterable.class);
+        Mockito.when(pr.listReviews()).thenReturn(pagedItr);
+        Mockito.when(pagedItr.iterator()).thenReturn(itr);
+
+        given(itr.hasNext()).willReturn(true, false);
+        given(itr.next()).willReturn(pullRequestReview);
+    }
+
     @After
     public void afterClass() {
 
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setupConditions(
+        String prUserLogin,
+        String triggerLogin,
+        String committerName,
+        String committerEmail,
+        String comment
+    ) throws IOException {
+        setupConditions(prUserLogin, triggerLogin, committerName, committerEmail,
+            comment, GHPullRequestReviewState.PENDING);
     }
 
     @SuppressWarnings("unchecked")
@@ -201,7 +229,8 @@ public class GhprbPullRequestMergeTest {
             String triggerLogin,
             String committerName,
             String committerEmail,
-            String comment
+            String comment,
+            GHPullRequestReviewState reviewState
     ) throws IOException {
         given(triggerSender.getLogin()).willReturn(triggerLogin);
         given(triggerSender.getName()).willReturn(committerName);
@@ -228,6 +257,9 @@ public class GhprbPullRequestMergeTest {
         given(commit.getCommitter()).willReturn(committer);
 
         given(cause.getCommentBody()).willReturn(comment);
+
+        mockReviewList();
+        Mockito.when(pullRequestReview.getState()).thenReturn(reviewState);
     }
 
     private void setupConditions(String triggerLogin, String committerName, String committerEmail, String comment) throws IOException {
@@ -239,7 +271,8 @@ public class GhprbPullRequestMergeTest {
             boolean disallowOwnCode,
             boolean failOnNonMerge,
             boolean deleteOnMerge,
-            boolean allowMergeWithoutTriggerPhrase
+            boolean allowMergeWithoutTriggerPhrase,
+            boolean onlyApprovedCode
     ) {
 
         GhprbPullRequestMerge merger = spy(new GhprbPullRequestMerge(
@@ -248,7 +281,8 @@ public class GhprbPullRequestMergeTest {
                 disallowOwnCode,
                 failOnNonMerge,
                 deleteOnMerge,
-                allowMergeWithoutTriggerPhrase));
+                allowMergeWithoutTriggerPhrase,
+                onlyApprovedCode));
 
         merger.setHelper(helper);
 
@@ -259,7 +293,7 @@ public class GhprbPullRequestMergeTest {
     private GhprbPullRequestMerge setupMerger(
             boolean onlyAdminsMerge,
             boolean disallowOwnCode) {
-        return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false, false);
+        return setupMerger(onlyAdminsMerge, disallowOwnCode, false, false, false, false);
     }
 
     @Test
@@ -400,12 +434,28 @@ public class GhprbPullRequestMergeTest {
     }
 
     @Test
-    public void testFailOnNonMerge() throws Exception {
+    public void testOnlyApprovedCode() throws Exception {
+        boolean onlyApprovedCode = true;
+        GhprbPullRequestMerge merger = setupMerger(false, false,
+            false, false, false, onlyApprovedCode);
 
+        setupConditions(nonCommitterName, adminLogin, committerName, committerEmail, triggerPhrase);
+        merger.perform(build, mockFilePath, launcher, listener);
+        verify(pr, times(0)).merge(mergeComment);
+
+        setupConditions(nonCommitterName, adminLogin, committerName, committerEmail, triggerPhrase, GHPullRequestReviewState.APPROVED);
+        merger.perform(build, mockFilePath, launcher, listener);
+        verify(pr, times(1)).merge(mergeComment);
+
+    }
+
+    @Test
+    public void testFailOnNonMerge() throws Exception {
         GhprbPullRequestMerge merger = setupMerger(
             true,
             true,
             true,
+            false,
             false,
             false
         );

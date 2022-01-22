@@ -18,4 +18,7 @@
     <f:entry title="Allow merge without trigger phrase?" field="allowMergeWithoutTriggerPhrase">
         <f:checkbox />
     </f:entry>
+    <f:entry title="Merge only approved code" field="onlyApprovedCode">
+        <f:checkbox />
+    </f:entry>
 </j:jelly>
