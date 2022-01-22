@@ -5,6 +5,8 @@ import javaposse.jobdsl.dsl.Context;
 public class GhprbPullRequestMergeContext implements Context {
     String mergeComment;
 
+    String mergeMethod;
+
     boolean onlyAdminsMerge;
 
     boolean disallowOwnCode;
@@ -20,6 +22,13 @@ public class GhprbPullRequestMergeContext implements Context {
      */
     public void mergeComment(String mergeComment) {
         this.mergeComment = mergeComment;
+    }
+
+    /**
+     * @param mergeMethod Sets a merge method that should be used when the merge command is sent to GitHub.
+     */
+    public void mergeMethod(String mergeMethod) {
+        this.mergeMethod = mergeMethod;
     }
 
     /**
