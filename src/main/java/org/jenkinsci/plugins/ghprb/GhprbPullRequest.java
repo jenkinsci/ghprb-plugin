@@ -285,11 +285,12 @@ public class GhprbPullRequest {
             if (commitAuthor == null) {
                 return;
             }
-            String blackListCommitAuthor = helper.checkBlackListCommitAuthor(commitAuthor.getName());
-            if (!StringUtils.isEmpty(blackListCommitAuthor)) {
+            String author = commitAuthor.getName();
+            boolean blackListCommitAuthor = helper.checkBlackListCommitAuthor(author);
+            if (blackListCommitAuthor) {
                 LOGGER.log(Level.FINE,
                         "Pull request triggered by user: {0}. Skipping build because that user is blacklisted.",
-                        blackListCommitAuthor);
+                        author);
                 shouldRun = false;
             }
         }

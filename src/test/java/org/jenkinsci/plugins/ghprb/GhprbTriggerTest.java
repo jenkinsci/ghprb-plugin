@@ -183,12 +183,12 @@ public class GhprbTriggerTest {
         prHelper.set(pr, helper);
 
         given(helper.getBlacklistedCommitAuthors()).willReturn(new HashSet<String>(Arrays.asList("bot1", "bot2")));
-        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn(null);
+        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn(false);
         shouldRun.set(pr, true);
         checkSkip.invoke(pr);
         assertThat(shouldRun.get(pr)).isEqualTo(true);
 
-        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn("bot2");
+        given(helper.checkBlackListCommitAuthor(user.getName())).willReturn(true);
         shouldRun.set(pr, true);
         checkSkip.invoke(pr);
         assertThat(shouldRun.get(pr)).isEqualTo(false);
