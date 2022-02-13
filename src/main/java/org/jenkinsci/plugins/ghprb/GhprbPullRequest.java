@@ -285,11 +285,12 @@ public class GhprbPullRequest {
             if (commitAuthor == null) {
                 return;
             }
-            String blackListCommitAuthor = helper.checkBlackListCommitAuthor(commitAuthor.getName());
-            if (!StringUtils.isEmpty(blackListCommitAuthor)) {
+            String author = commitAuthor.getName();
+            boolean blackListCommitAuthor = helper.checkBlackListCommitAuthor(author);
+            if (blackListCommitAuthor) {
                 LOGGER.log(Level.FINE,
                         "Pull request triggered by user: {0}. Skipping build because that user is blacklisted.",
-                        blackListCommitAuthor);
+                        author);
                 shouldRun = false;
             }
         }
@@ -357,7 +358,9 @@ public class GhprbPullRequest {
                 GHPullRequest pullRequest = getPullRequest();
 
                 // the author of the PR could have been whitelisted since its creation
-                if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
+                GHUser pullRequestAuthor = getPullRequestAuthor();
+                String pullRequestAuthorName = pullRequestAuthor.getLogin();
+                if (!accepted && !helper.checkBlackListCommitAuthor(pullRequestAuthorName) && helper.isWhitelisted(pullRequestAuthor)) {
                     LOGGER.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[] {id});
                     setAccepted(false);
                 }
