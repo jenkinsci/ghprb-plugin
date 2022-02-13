@@ -222,7 +222,7 @@ public class GhprbRepositoryTest {
         verify(ghPullRequest, times(2)).getHead();
         verify(ghPullRequest, times(2)).getNumber();
         verify(ghPullRequest, times(1)).getUpdatedAt();
-        verify(ghPullRequest, times(1)).getUser();
+        verify(ghPullRequest, times(2)).getUser();
         verify(ghPullRequest, times(2)).getBase();
         verify(ghPullRequest, times(1)).getComments();
         verify(ghPullRequest, times(1)).listCommits();
@@ -239,6 +239,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(gt);
 
         verify(ghUser, times(1)).getName();
+        verify(ghUser, times(1)).getLogin();
         verifyNoMoreInteractions(ghUser);
         verifyZeroInteractions(ghUser);
     }
@@ -290,7 +291,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(3)).getUser();
+        verify(ghPullRequest, times(5)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(6)).getBase();
@@ -318,7 +319,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
+        verify(ghUser, times(3)).getLogin();
         verifyNoMoreInteractions(ghUser);
     }
 
@@ -471,7 +472,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(3)).getUser();
+        verify(ghPullRequest, times(5)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(6)).getBase();
@@ -499,7 +500,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(1)).getLogin();
+        verify(ghUser, times(3)).getLogin();
         verifyNoMoreInteractions(ghUser);
     }
 
@@ -563,7 +564,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(1)).getTitle();
-        verify(ghPullRequest, times(5)).getUser();
+        verify(ghPullRequest, times(7)).getUser();
         verify(ghPullRequest, times(1)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(7)).getHead();
         verify(ghPullRequest, times(6)).getBase();
@@ -599,7 +600,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(2)).getLogin();
+        verify(ghUser, times(4)).getLogin();
         verify(ghUser, times(3)).getName();
         verifyNoMoreInteractions(ghUser);
     }
@@ -665,7 +666,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(ghRepository);
 
         verify(ghPullRequest, times(2)).getTitle();
-        verify(ghPullRequest, times(5)).getUser();
+        verify(ghPullRequest, times(7)).getUser();
         verify(ghPullRequest, times(2)).getMergeable(); // Call to Github API
         verify(ghPullRequest, times(9)).getHead();
         verify(ghPullRequest, times(7)).getBase();
@@ -701,7 +702,7 @@ public class GhprbRepositoryTest {
         verifyNoMoreInteractions(helper);
 
         verify(ghUser, times(1)).getEmail(); // Call to Github API
-        verify(ghUser, times(2)).getLogin();
+        verify(ghUser, times(4)).getLogin();
         verify(ghUser, times(2)).getName();
         verifyNoMoreInteractions(ghUser);
 
