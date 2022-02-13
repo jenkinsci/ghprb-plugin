@@ -358,7 +358,8 @@ public class GhprbPullRequest {
                 GHPullRequest pullRequest = getPullRequest();
 
                 // the author of the PR could have been whitelisted since its creation
-                if (!accepted && helper.isWhitelisted(getPullRequestAuthor())) {
+                GHUser pullRequestAuthor = getPullRequestAuthor();
+                if (!accepted && helper.isWhitelisted(pullRequestAuthor)) {
                     LOGGER.log(Level.INFO, "Pull request #{0}'s author has been whitelisted", new Object[] {id});
                     setAccepted(false);
                 }
