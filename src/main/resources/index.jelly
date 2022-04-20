@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+  This Jenkins plugin builds pull requests from GitHub and will report the results directly to the pull request.
+</div>
