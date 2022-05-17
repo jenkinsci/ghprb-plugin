@@ -240,7 +240,7 @@ public class GhprbPullRequest {
                 }
             } catch (Error e) {
                 LOGGER.log(Level.SEVERE, "Failed to read blacklist labels", e);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to read blacklist labels", e);
             }
         }
@@ -266,7 +266,7 @@ public class GhprbPullRequest {
                 }
             } catch (Error e) {
                 LOGGER.log(Level.SEVERE, "Failed to read whitelist labels", e);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to read whitelist labels", e);
             }
         }

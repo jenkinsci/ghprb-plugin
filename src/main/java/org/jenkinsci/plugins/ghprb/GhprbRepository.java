@@ -82,10 +82,6 @@ public class GhprbRepository implements Saveable {
     }
 
     private boolean initGhRepository() {
-        if (ghRepository != null) {
-            return true;
-        }
-
         GitHub gitHub = null;
 
         try {

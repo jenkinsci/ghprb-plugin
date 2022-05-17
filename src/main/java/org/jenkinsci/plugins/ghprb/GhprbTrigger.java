@@ -288,6 +288,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         this.repository.init();
         this.ghprbGitHub = new GhprbGitHub(this);
+
     }
 
 
@@ -499,12 +500,10 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
     }
 
     public GhprbGitHubAuth getGitHubApiAuth() {
-        if (gitHubAuthId == null) {
-            for (GhprbGitHubAuth auth : getDescriptor().getGithubAuth()) {
-                gitHubAuthId = auth.getId();
-                getDescriptor().save();
-                return auth;
-            }
+        for (GhprbGitHubAuth auth : getDescriptor().getGithubAuth()) {
+            gitHubAuthId = auth.getId();
+            getDescriptor().save();
+            return auth;
         }
         return getDescriptor().getGitHubAuth(gitHubAuthId);
     }
@@ -729,13 +728,11 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     public void handleComment(IssueComment issueComment) throws IOException {
         GhprbRepository repo = getRepository();
-
         LOGGER.log(
                 Level.INFO,
                 "Checking comment on PR #{0} for job {1}",
                 new Object[] {issueComment.getIssue().getNumber(), getProjectName()}
         );
-
         repo.onIssueCommentHook(issueComment);
     }
 
