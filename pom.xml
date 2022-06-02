@@ -93,7 +93,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.25</version>
+            <version>1.56</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
