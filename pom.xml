@@ -51,7 +51,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <workflow.version>1.4</workflow.version>
-        <jenkins.version>2.7</jenkins.version>
+        <jenkins.version>2.361.4</jenkins.version>
         <powermock.version>1.6.2</powermock.version>
         <java.level>7</java.level>
         <findbugs.failOnError>false</findbugs.failOnError>
