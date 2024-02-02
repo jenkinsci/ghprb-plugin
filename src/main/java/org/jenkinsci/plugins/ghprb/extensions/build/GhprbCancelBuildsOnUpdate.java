@@ -6,8 +6,11 @@ import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
+import hudson.security.ACL;
 import hudson.util.RunList;
 import jenkins.model.Jenkins;
+import org.acegisecurity.context.SecurityContext;
+import org.acegisecurity.context.SecurityContextHolder;
 import org.jenkinsci.plugins.ghprb.Ghprb;
 import org.jenkinsci.plugins.ghprb.GhprbCause;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
@@ -99,12 +102,18 @@ public class GhprbCancelBuildsOnUpdate extends GhprbExtension implements
                     );
                     run.addAction(this);
                     run.getExecutor().interrupt(Result.ABORTED);
+                    // Save the current security context before changing it
+                    SecurityContext origContext = SecurityContextHolder.getContext();
+                    // Switch current security context to 'SYSTEM' to have privileges to update build's description
+                    SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
+                    run.setDescription(run.getDescription() + "<br>Cancelled by ghprb plugin due to PR update");
+                    // Reset current security context
+                    SecurityContextHolder.setContext(origContext);
                 } catch (Exception e) {
                     LOGGER.log(Level.SEVERE, "Error while trying to interrupt build!", e);
                 }
             }
         }
-
     }
 
     public void onScheduleBuild(Job<?, ?> project, GhprbCause cause) {
