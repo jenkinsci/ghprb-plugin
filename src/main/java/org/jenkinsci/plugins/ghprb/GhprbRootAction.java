@@ -161,6 +161,13 @@ public class GhprbRootAction implements UnprotectedRootAction {
             } else if (StringUtils.equalsIgnoreCase("pull_request", event)) {
 
                 pr = getPullRequest(payload, gh);
+                GHIssueState state = pr.getPullRequest().getState();
+
+                if (state == GHIssueState.CLOSED) {
+                    LOGGER.log(Level.INFO, "Skip ''{0}'' event on closed PR", event);
+                    return;
+                }
+
                 repoName = pr.getRepository().getFullName();
 
                 LOGGER.log(Level.INFO, "Checking PR #{1} for {0}", new Object[] {repoName, pr.getNumber()});
