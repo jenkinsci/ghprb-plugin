@@ -17,6 +17,7 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
+import hudson.model.Cause.UpstreamCause;
 import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Result;
@@ -405,6 +406,27 @@ public class Ghprb {
             return null;
         }
         return (GhprbCause) cause;
+    }
+
+    /**
+    * Return a GhprbCause if the build is a downstream build that has been trigger
+    * by Ghprb plugin
+    * @param build to validate
+    * @return ghprbCause
+    */
+    public static GhprbCause isDownstreamBuild(Run<?, ?> build) {
+        Cause cause = build.getCause(UpstreamCause.class);
+        if (cause == null) {
+            return null;
+        }
+
+        UpstreamCause upstreamCause = (UpstreamCause) cause;
+        for (Cause itemCause: upstreamCause.getUpstreamCauses()) {
+            if (itemCause instanceof GhprbCause) {
+                return (GhprbCause) cause;
+            }
+        }
+        return null;
     }
 
 
