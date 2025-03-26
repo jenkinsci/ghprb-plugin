@@ -627,6 +627,11 @@ public class GhprbPullRequest {
                 shouldRun = true;
                 triggered = true;
             }
+            // No matter what, if the skip trigger phrase is in the comment, do not run the build:
+            if (body.contains("[skip trigger]")) {
+              LOGGER.log(Level.FINEST, "comment contains skip trigger, so not doing build.", sender);
+              shouldRun = false;
+            }
         }
 
         if (shouldRun) {
