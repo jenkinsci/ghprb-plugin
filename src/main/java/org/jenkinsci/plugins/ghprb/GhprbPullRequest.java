@@ -1,15 +1,21 @@
 package org.jenkinsci.plugins.ghprb;
 
 import com.google.common.base.Joiner;
+import hudson.model.Job;
 import hudson.model.Run;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.ghprb.extensions.status.GhprbSimpleStatus;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatusException;
+import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.kohsuke.github.GHCommitPointer;
+import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHLabel;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestFileDetail;
+import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitUser;
 
@@ -334,11 +340,12 @@ public class GhprbPullRequest {
             Date updatedDate = comment != null ? comment.getUpdatedAt() : ghpr.getUpdatedAt();
             // Don't log unless it was actually updated
             if (updated == null || updated.compareTo(updatedDate) < 0) {
-                String user = comment != null ? comment.getUser().getName() : ghpr.getUser().getName();
+                GHUser user = comment != null ? comment.getUser() : ghpr.getUser();
+                String name = StringUtils.defaultIfBlank(user.getName(), user.getLogin());
                 LOGGER.log(
                         Level.INFO,
                         "Pull request #{0} was updated/initialized on {1} at {2} by {3} ({4})",
-                        new Object[] {this.id, this.repo.getName(), updatedDate, user,
+                        new Object[] {this.id, this.repo.getName(), updatedDate, name,
                                 comment != null ? "comment" : "PR update"}
                 );
             }
@@ -511,7 +518,7 @@ public class GhprbPullRequest {
         }
     }
 
-    private void tryBuild() {
+    void tryBuild() {
         synchronized (this) {
             if (helper.isProjectDisabled()) {
                 LOGGER.log(Level.FINEST, "Project is disabled, not trying to build");
@@ -530,7 +537,7 @@ public class GhprbPullRequest {
             }
 
             if (shouldRun && !containsWatchedPaths(pr)) {
-                LOGGER.log(Level.FINEST, "Pull request contains no watched paths, skipping the build");
+                skipBuildForWatchedPaths();
                 shouldRun = false;
             }
 
@@ -688,6 +695,31 @@ public class GhprbPullRequest {
             LOGGER.log(Level.SEVERE, "Couldn't obtain mergeable status.", e);
         }
         return mergeable;
+    }
+
+    void skipBuildForWatchedPaths() {
+        if (helper.getReportSuccessIfNotRegion()) {
+            LOGGER.log(Level.FINEST, "Pull request contains no watched paths, skipping the build and reporting success.");
+            createCommitStatus(GHCommitState.SUCCESS, "Skipped, no pertinent files changed.");
+        } else {
+            LOGGER.log(Level.FINEST,
+                    "Pull request contains no watched paths, skipping the build");
+        }
+    }
+
+    public void createCommitStatus(GHCommitState state, String message) {
+        GHRepository ghRepository = repo.getGitHubRepo();
+        GhprbTrigger trigger = helper.getTrigger();
+        Job<?, ?> actualProject = trigger.getActualProject();
+        for (GhprbExtension ext : Ghprb.getJobExtensions(trigger, GhprbSimpleStatus.class)) {
+            if (ext instanceof GhprbSimpleStatus) {
+                try {
+                    ((GhprbSimpleStatus) ext).createCommitStatus(actualProject, id, head, state, ghRepository, message);
+                } catch (GhprbCommitStatusException e) {
+                    repo.commentOnFailure(null, null, e);
+                }
+            }
+        }
     }
 
     @Override
