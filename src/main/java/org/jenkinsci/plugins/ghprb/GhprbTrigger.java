@@ -28,7 +28,6 @@ import jenkins.util.SystemProperties;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbBuildStep;
-import org.jenkinsci.plugins.ghprb.extensions.GhprbCommitStatus;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtension;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbExtensionDescriptor;
 import org.jenkinsci.plugins.ghprb.extensions.GhprbGlobalDefault;
@@ -136,6 +135,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
     private String excludedRegions;
 
+    private Boolean reportSuccessIfNotRegion;
+
 
     private transient Ghprb helper;
 
@@ -162,7 +163,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
         // Filter out items that we only want one of, like the status updater.
         this.extensions = Ghprb.onlyOneEntry(rawList,
-                GhprbCommitStatus.class
+                GhprbSimpleStatus.class
         );
 
         // Make sure we have at least one of the types we need one of.
@@ -199,7 +200,8 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
                         String whiteListLabels,
                         List<GhprbExtension> extensions,
                         String includedRegions,
-                        String excludedRegions
+                        String excludedRegions,
+                        Boolean reportSuccessIfNotRegion
     ) throws ANTLRException {
         super(cron);
         this.adminlist = adminlist;
@@ -223,6 +225,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         this.whiteListLabels = whiteListLabels;
         this.includedRegions = includedRegions;
         this.excludedRegions = excludedRegions;
+        this.reportSuccessIfNotRegion = reportSuccessIfNotRegion;
         setExtensions(extensions);
         configVersion = LATEST_VERSION;
     }
@@ -662,6 +665,13 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
         return excludedRegions;
     }
 
+    public Boolean getReportSuccessIfNotRegion() {
+        if (reportSuccessIfNotRegion == null) {
+            return false;
+        }
+        return reportSuccessIfNotRegion;
+    }
+
     @Override
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
@@ -996,8 +1006,7 @@ public class GhprbTrigger extends GhprbTriggerBackwardsCompatible {
 
             try {
                 extensions.rebuildHetero(req, formData, getGlobalExtensionDescriptors(), "extensions");
-                // Now make sure we have at least one of the types we need one of.
-                Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(), GhprbCommitStatus.class);
+                Ghprb.addIfMissing(this.extensions, new GhprbSimpleStatus(), GhprbSimpleStatus.class);
             } catch (IOException e) {
                 e.printStackTrace();
             }
