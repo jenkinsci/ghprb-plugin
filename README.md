@@ -3,6 +3,12 @@
 This Jenkins plugin builds pull requests from GitHub and will report the results directly to the pull request via
 the [GitHub Commit Status API](http://developer.github.com/v3/repos/statuses/)
 
+## Deprecated
+
+This plugin is **deprecated**. It has been replaced by the [GitHub Branch Source Plugin](https://plugins.jenkins.io/github-branch-source/). It has known security vulnerabilities and is no longer being maintained. Users should migrate to the [GitHub Branch Source Plugin](https://plugins.jenkins.io/github-branch-source/).
+
+## Deprecated
+
 When a new pull request is opened in the project and the author of the pull
 request isn't whitelisted, builder will ask `Can one of the
 admins verify this patch?`. One of the admins can comment `ok to test`
