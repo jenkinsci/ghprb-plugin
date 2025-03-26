@@ -126,20 +126,23 @@ public class Ghprb {
      * Checks for skip build commit author.
      *
      * @param author The GitHub commit author
-     * @return the skip sender or null if should not skip
+     * @return is author in black list
      */
-    public String checkBlackListCommitAuthor(String author) {
+    public boolean checkBlackListCommitAuthor(String author) {
         Set<String> authors = getBlacklistedCommitAuthors();
         authors.remove("");
 
         Map<Pattern, String> skipPatterns = new HashMap<Pattern, String>();
+        String result = null;
         for (String s : authors) {
             s = s.trim();
             if (compilePattern(s).matcher(author).matches()) {
-                return s;
+                result = s;
+                break;
             }
         }
-        return null;
+
+        return !StringUtils.isEmpty(result);
     }
 
     /**
