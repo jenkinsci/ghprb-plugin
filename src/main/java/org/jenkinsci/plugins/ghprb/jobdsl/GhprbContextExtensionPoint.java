@@ -56,6 +56,7 @@ public class GhprbContextExtensionPoint extends ContextExtensionPoint {
 
         return new GhprbPullRequestMerge(
                 context.mergeComment,
+                context.mergeMethod,
                 context.onlyAdminsMerge,
                 context.disallowOwnCode,
                 context.failOnNonMerge,
