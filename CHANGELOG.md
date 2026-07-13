@@ -1,5 +1,10 @@
 ### Updates
 
+### -> NEXT
+
+* Trigger builds when a draft PR is marked ready for review (`ready_for_review` webhook action)
+
+
 ### -> 1.42.1
 
 * No longer use deprecated github-api API `gitHttpTransportUrl()` ([#772][#772])

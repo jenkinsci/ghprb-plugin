@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.github.GHCommitPointer;
+import org.kohsuke.github.GHEventPayload.PullRequest;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHIssueState;
@@ -828,6 +829,51 @@ public class GhprbRepositoryTest {
 
         // Reset mocks not to mix init data invocations with tests
         reset(ghPullRequest, ghUser, helper, head, base);
+    }
+
+
+    @Test
+    public void testOnPullRequestHookReadyForReviewTriggersCheck() throws Exception {
+        doReturn(true).when(trigger).isActive();
+        Mockito.doNothing().when(ghprbRepository).save();
+
+        GhprbPullRequest existing = spy(ghprbPullRequest);
+        Mockito.doNothing().when(existing).check(any(GHPullRequest.class), eq(true));
+
+        ConcurrentMap<Integer, GhprbPullRequest> existingPulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
+        existingPulls.put(42, existing);
+        ghprbRepository.addPullRequests(existingPulls);
+
+        PullRequest payload = mock(PullRequest.class);
+        given(payload.getAction()).willReturn("ready_for_review");
+        given(payload.getNumber()).willReturn(42);
+        given(payload.getPullRequest()).willReturn(ghPullRequest);
+
+        ghprbRepository.onPullRequestHook(payload);
+
+        verify(existing, times(1)).check(eq(ghPullRequest), eq(true));
+    }
+
+    @Test
+    public void testOnPullRequestHookIgnoresConvertedToDraft() throws Exception {
+        doReturn(true).when(trigger).isActive();
+        Mockito.doNothing().when(ghprbRepository).save();
+
+        GhprbPullRequest existing = spy(ghprbPullRequest);
+        Mockito.doNothing().when(existing).check(any(GHPullRequest.class), eq(true));
+
+        ConcurrentMap<Integer, GhprbPullRequest> existingPulls = new ConcurrentHashMap<Integer, GhprbPullRequest>();
+        existingPulls.put(42, existing);
+        ghprbRepository.addPullRequests(existingPulls);
+
+        PullRequest payload = mock(PullRequest.class);
+        given(payload.getAction()).willReturn("converted_to_draft");
+        given(payload.getNumber()).willReturn(42);
+        given(payload.getPullRequest()).willReturn(ghPullRequest);
+
+        ghprbRepository.onPullRequestHook(payload);
+
+        verify(existing, times(0)).check(any(GHPullRequest.class), eq(true));
     }
 
     // Verifications
