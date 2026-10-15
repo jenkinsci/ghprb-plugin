@@ -19,6 +19,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -146,6 +148,35 @@ public class GhprbPullRequestTest {
 
         // Mocks for GhprbRepository
         doNothing().when(repo).addComment(Mockito.anyInt(), anyString());
+    }
+
+    @Test
+    public void unrelatedCommentDoesNotReplaceTriggerComment() throws Exception {
+        String triggerBody = "jenkins build this opm-tests=1666 please";
+        GHUser triggerUser = mock(GHUser.class);
+        GHUser otherUser = mock(GHUser.class);
+        GHIssueComment triggerComment = mock(GHIssueComment.class);
+        GHIssueComment otherComment = mock(GHIssueComment.class);
+
+        given(triggerComment.getUser()).willReturn(triggerUser);
+        given(triggerComment.getBody()).willReturn(triggerBody);
+        given(otherComment.getUser()).willReturn(otherUser);
+        given(otherComment.getBody()).willReturn("Is the reference ready?");
+        given(helper.isTriggerPhrase(triggerBody)).willReturn(true);
+        given(helper.isAdmin(triggerUser)).willReturn(true);
+
+        GhprbPullRequest pullRequest = new GhprbPullRequest(pr, helper, repo);
+        Method checkComment = GhprbPullRequest.class.getDeclaredMethod("checkComment", GHIssueComment.class);
+        checkComment.setAccessible(true);
+        checkComment.invoke(pullRequest, triggerComment);
+        checkComment.invoke(pullRequest, otherComment);
+
+        Field commentBody = GhprbPullRequest.class.getDeclaredField("commentBody");
+        commentBody.setAccessible(true);
+        Field triggerSender = GhprbPullRequest.class.getDeclaredField("triggerSender");
+        triggerSender.setAccessible(true);
+        assertThat(commentBody.get(pullRequest)).isEqualTo(triggerBody);
+        assertThat(triggerSender.get(pullRequest)).isSameAs(triggerUser);
     }
 
     @Test

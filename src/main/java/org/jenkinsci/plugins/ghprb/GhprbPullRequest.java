@@ -587,6 +587,8 @@ public class GhprbPullRequest {
         String senderName = sender.getName();
         LOGGER.log(Level.FINEST, "[{0}] Added comment: {1}", new Object[] {senderName != null ? senderName : sender.getLogin(), body});
 
+        boolean thisCommentRequestsBuild = false;
+
         // Disabled until more advanced configs get set up
         // ignore comments from bot user, this fixes an issue where the bot would auto-whitelist
         // a user or trigger a build when the 'request for testing' phrase contains the
@@ -604,32 +606,38 @@ public class GhprbPullRequest {
                 helper.addWhitelist(author.getLogin());
             }
             setAccepted(true);
+            thisCommentRequestsBuild = true;
         } else if (helper.isOktotestPhrase(body) && helper.isAdmin(sender)) { // ok to test
             LOGGER.log(Level.FINEST, "Admin {0} gave OK to test", sender);
             setAccepted(true);
+            thisCommentRequestsBuild = true;
         } else if (helper.isRetestPhrase(body)) { // test this please
             LOGGER.log(Level.FINEST, "Retest phrase");
             if (helper.isAdmin(sender)) {
                 LOGGER.log(Level.FINEST, "Admin {0} gave retest phrase", sender);
                 shouldRun = true;
+                thisCommentRequestsBuild = true;
             } else if (accepted && helper.isWhitelisted(sender)) {
                 LOGGER.log(Level.FINEST, "Retest accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
+                thisCommentRequestsBuild = true;
             }
         } else if (helper.isTriggerPhrase(body)) { // trigger phrase
             LOGGER.log(Level.FINEST, "Trigger phrase");
             if (helper.isAdmin(sender)) {
                 LOGGER.log(Level.FINEST, "Admin {0} ran trigger phrase", sender);
                 shouldRun = true;
+                thisCommentRequestsBuild = true;
                 triggered = true;
             } else if (accepted && helper.isWhitelisted(sender)) {
                 LOGGER.log(Level.FINEST, "Trigger accepted and user {0} is whitelisted", sender);
                 shouldRun = true;
+                thisCommentRequestsBuild = true;
                 triggered = true;
             }
         }
 
-        if (shouldRun) {
+        if (thisCommentRequestsBuild) {
             triggerSender = sender;
             commentBody = body;
         }
